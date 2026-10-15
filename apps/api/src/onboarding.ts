@@ -1,7 +1,8 @@
-import { displayName, type ErrorCode, slugify } from "@coverband/shared";
-import { eq, sql } from "drizzle-orm";
+import { displayName, type ErrorCode } from "@coverband/shared";
+import { and, eq } from "drizzle-orm";
 import type { AppDeps } from "./app";
 import type { SessionUser } from "./auth";
+import { BandNameTakenError, createBand } from "./bands";
 import { accounts, bandMembers, bands, invitations, users } from "./db/schema";
 import { hashToken, invitationStatus } from "./invitations";
 
@@ -58,17 +59,10 @@ export async function getInvitation({ db, now = () => new Date() }: Deps, token:
   };
 }
 
-export async function isBandNameAvailable({ db }: Pick<Deps, "db">, name: string) {
-  const [taken] = await db
-    .select({ id: bands.id })
-    .from(bands)
-    .where(eq(sql`lower(${bands.name})`, name.trim().toLowerCase()));
-  return taken === undefined;
-}
-
-export type LeaderOnboardingInput = {
+export type OnboardingInput = {
   instrument: string;
-  bandName: string;
+  /** Leaders only: the band they create. */
+  bandName?: string | undefined;
   genre?: string | undefined;
   /** Only for someone without an account yet. */
   newAccount?:
@@ -77,14 +71,15 @@ export type LeaderOnboardingInput = {
 };
 
 /**
- * Accepts a band leader invitation: creates the account (if needed), the band and the leader
- * membership, and consumes the invitation, all in one transaction. Someone who already has an
- * account must be logged in with it.
+ * Accepts an invitation, all in one transaction: creates the account (if needed), then either the
+ * band and the leader membership (band leader invitation) or the musician membership of the
+ * inviting band, and consumes the invitation. Someone who already has an account must be logged
+ * in with it.
  */
-export async function acceptLeaderInvitation(
+export async function acceptInvitation(
   deps: Deps,
   token: string,
-  input: LeaderOnboardingInput,
+  input: OnboardingInput,
   sessionUser: SessionUser | null,
 ) {
   const now = deps.now?.() ?? new Date();
@@ -93,25 +88,19 @@ export async function acceptLeaderInvitation(
     : null;
 
   try {
-    return await createLeader(deps, token, input, sessionUser, now, passwordHash);
+    return await createMembership(deps, token, input, sessionUser, now, passwordHash);
   } catch (error) {
-    // Two people creating the same band name at the same moment: the unique index decides.
-    if (isUniqueViolation(error, "bands_name_lower_unique")) {
+    if (error instanceof BandNameTakenError) {
       throw new OnboardingError(409, "band_name_taken", "Band name already taken");
     }
     throw error;
   }
 }
 
-function isUniqueViolation(error: unknown, constraint: string): boolean {
-  const cause = (error as { cause?: { code?: string; constraint_name?: string } })?.cause;
-  return cause?.code === "23505" && cause.constraint_name === constraint;
-}
-
-function createLeader(
+function createMembership(
   deps: Deps,
   token: string,
-  input: LeaderOnboardingInput,
+  input: OnboardingInput,
   sessionUser: SessionUser | null,
   now: Date,
   passwordHash: string | null,
@@ -125,7 +114,6 @@ function createLeader(
     if (!invitation) throw notFound();
     const status = invitationStatus(invitation, now);
     if (status !== "pending") throw PROBLEMS[status];
-    if (invitation.role !== "leader") throw notFound();
 
     const [existing] = await tx
       .select({ id: users.id })
@@ -170,24 +158,34 @@ function createLeader(
         .values({ userId, accountId: userId, providerId: "credential", password: passwordHash });
     }
 
-    const bandName = input.bandName.trim();
-    const [taken] = await tx
-      .select({ id: bands.id })
-      .from(bands)
-      .where(eq(sql`lower(${bands.name})`, bandName.toLowerCase()));
-    if (taken) {
-      throw new OnboardingError(409, "band_name_taken", "Band name already taken");
+    let band: { id: string; slug: string };
+    if (invitation.role === "leader") {
+      if (!input.bandName) {
+        throw new OnboardingError(400, "bad_request", "Band name is required");
+      }
+      band = await createBand(tx, { name: input.bandName, genre: input.genre });
+    } else {
+      const [joined] = await tx
+        .select({ id: bands.id, slug: bands.slug })
+        .from(bands)
+        .where(eq(bands.id, invitation.bandId ?? ""));
+      if (!joined) throw notFound();
+      const [member] = await tx
+        .select({ userId: bandMembers.userId })
+        .from(bandMembers)
+        .where(and(eq(bandMembers.bandId, joined.id), eq(bandMembers.userId, userId)));
+      if (member) {
+        throw new OnboardingError(409, "already_member", "Already a member of this band");
+      }
+      band = joined;
     }
-    const slug = await freeSlug(tx, slugify(bandName));
-    const [band] = await tx
-      .insert(bands)
-      .values({ name: bandName, slug, genre: input.genre?.trim() || null })
-      .returning({ id: bands.id, slug: bands.slug });
-    if (!band) throw new Error("Band insert returned nothing");
 
-    await tx
-      .insert(bandMembers)
-      .values({ bandId: band.id, userId, role: "leader", instrument: input.instrument.trim() });
+    await tx.insert(bandMembers).values({
+      bandId: band.id,
+      userId,
+      role: invitation.role,
+      instrument: input.instrument.trim(),
+    });
     await tx
       .update(invitations)
       .set({ acceptedAt: now, bandId: band.id })
@@ -195,20 +193,4 @@ function createLeader(
 
     return { userId, email: invitation.email, bandSlug: band.slug, newAccount: !existing };
   });
-}
-
-type Tx = Parameters<Parameters<Deps["db"]["transaction"]>[0]>[0];
-
-/** The slug itself if free, else slug-2, slug-3... (two names can give the same slug). */
-async function freeSlug(tx: Tx, base: string): Promise<string> {
-  const rows = await tx
-    .select({ slug: bands.slug })
-    .from(bands)
-    .where(sql`${bands.slug} = ${base} or ${bands.slug} like ${`${base}-%`}`);
-  const used = new Set(rows.map((row) => row.slug));
-  let slug = base;
-  for (let n = 2; used.has(slug); n++) {
-    slug = `${base}-${n}`;
-  }
-  return slug;
 }

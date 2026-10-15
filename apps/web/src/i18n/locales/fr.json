@@ -1,4 +1,10 @@
 {
+  "common": {
+    "loading": "Chargement…",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…"
+  },
   "home": {
     "title": "Bienvenue sur CoverBand",
     "greeting": "Bonjour {{name}}",
@@ -9,10 +15,30 @@
     "welcome": "Bienvenue dans {{band}} !",
     "you": "Vous : {{role}} · {{instrument}}",
     "notFound": "Ce groupe n'existe pas ou vous n'en faites pas partie.",
-    "comingSoon": "Le line-up, le répertoire, les setlists et les concerts arrivent bientôt.",
+    "comingSoon": "Le répertoire, les setlists et les concerts arrivent bientôt.",
     "roles": {
       "leader": "band leader",
       "musician": "musicien·ne"
+    },
+    "home": "Accueil",
+    "switch": "Changer de groupe",
+    "allBands": "Tous mes groupes",
+    "edit": {
+      "button": "Modifier le groupe",
+      "title": "Informations du groupe",
+      "name": "Nom du groupe",
+      "genre": "Style",
+      "genreHint": "Facultatif.",
+      "saved": "Groupe mis à jour"
+    }
+  },
+  "lineup": {
+    "title": "Line-up",
+    "you": "vous",
+    "invite": {
+      "new": "Inviter un musicien ou une musicienne",
+      "title": "Inviter dans le groupe",
+      "description": "Cette personne recevra un e-mail pour rejoindre {{band}}. Le lien est valable 48 heures."
     }
   },
   "login": {
@@ -30,7 +56,6 @@
     "loading": "Chargement de votre invitation…",
     "unavailable": "Invitation indisponible",
     "goToLogin": "Aller à la connexion",
-    "musicianSoon": "Rejoindre un groupe par invitation arrive bientôt.",
     "title": "Créez votre groupe",
     "intro": "{{inviter}} vous invite à créer votre groupe sur CoverBand.",
     "hasAccount": "Vous avez déjà un compte CoverBand avec {{email}}. Connectez-vous pour créer votre groupe.",
@@ -42,7 +67,8 @@
       "profile": "Votre profil",
       "band": "Votre groupe",
       "password": "Votre mot de passe",
-      "review": "Confirmation"
+      "review": "Confirmation",
+      "instrument": "Votre instrument"
     },
     "back": "Retour",
     "next": "Suivant",
@@ -68,7 +94,14 @@
     "band": "Groupe",
     "none": "—",
     "create": "Créer mon groupe",
-    "creating": "Création…"
+    "creating": "Création…",
+    "join": {
+      "title": "Rejoindre {{band}}",
+      "intro": "{{inviter}} vous invite à rejoindre {{band}} sur CoverBand.",
+      "hasAccount": "Vous avez déjà un compte CoverBand avec {{email}}. Connectez-vous pour rejoindre {{band}}.",
+      "submit": "Rejoindre le groupe",
+      "submitting": "Envoi…"
+    }
   },
   "account": {
     "menu": "Compte",
@@ -77,32 +110,10 @@
   "admin": {
     "title": "Administration",
     "description": "Invitations des band leaders et utilisateurs.",
-    "loading": "Chargement…",
-    "cancel": "Annuler",
     "invite": {
       "new": "Nouveau band leader",
       "title": "Inviter un band leader",
-      "description": "Cette personne recevra un e-mail pour créer son groupe. Le lien est valable 48 heures.",
-      "email": "E-mail",
-      "language": "Langue de l'e-mail",
-      "submit": "Envoyer l'invitation",
-      "sending": "Envoi…",
-      "sent": "Invitation envoyée à {{email}}"
-    },
-    "invitations": {
-      "title": "Invitations en attente",
-      "empty": "Aucune invitation en attente.",
-      "pending": "En attente",
-      "expired": "Expirée",
-      "expiresOn": "Expire le {{date}}",
-      "expiredOn": "Expirée le {{date}}",
-      "invitedBy": "envoyée par {{name}}",
-      "resend": "Renvoyer",
-      "resent": "Nouveau lien envoyé à {{email}}",
-      "revoke": "Révoquer",
-      "revokeTitle": "Révoquer cette invitation ?",
-      "revokeDescription": "Le lien envoyé à {{email}} ne fonctionnera plus.",
-      "revoked": "Invitation révoquée"
+      "description": "Cette personne recevra un e-mail pour créer son groupe. Le lien est valable 48 heures."
     },
     "users": {
       "title": "Utilisateurs",
@@ -110,6 +121,26 @@
       "joined": "membre depuis le {{date}}",
       "roleInBand": "{{band}} · {{role}}"
     }
+  },
+  "invitations": {
+    "email": "E-mail",
+    "language": "Langue de l'e-mail",
+    "submit": "Envoyer l'invitation",
+    "sending": "Envoi…",
+    "sent": "Invitation envoyée à {{email}}",
+    "title": "Invitations en attente",
+    "empty": "Aucune invitation en attente.",
+    "pending": "En attente",
+    "expired": "Expirée",
+    "expiresOn": "Expire le {{date}}",
+    "expiredOn": "Expirée le {{date}}",
+    "invitedBy": "envoyée par {{name}}",
+    "resend": "Renvoyer",
+    "resent": "Nouveau lien envoyé à {{email}}",
+    "revoke": "Révoquer",
+    "revokeTitle": "Révoquer cette invitation ?",
+    "revokeDescription": "Le lien envoyé à {{email}} ne fonctionnera plus.",
+    "revoked": "Invitation révoquée"
   },
   "theme": {
     "change": "Changer de thème",
@@ -133,6 +164,7 @@
     "invitation_revoked": "Cette invitation a été annulée.",
     "invitation_used": "Cette invitation a déjà été utilisée. Connectez-vous pour continuer.",
     "invitation_wrong_account": "Vous utilisez un autre compte que celui qui a été invité.",
-    "band_name_taken": "Ce nom de groupe est déjà pris."
+    "band_name_taken": "Ce nom de groupe est déjà pris.",
+    "already_member": "Cette personne fait déjà partie du groupe."
   }
 }

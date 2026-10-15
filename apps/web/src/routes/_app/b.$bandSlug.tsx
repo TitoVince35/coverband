@@ -1,15 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BandSwitcher } from "@/components/band/band-switcher";
+import { EditBandDialog } from "@/components/band/edit-band-dialog";
 import { bandQuery } from "@/lib/bands";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
 
-// Band home page. Lineup (#7), repertoire, setlists and gigs come later.
+// Layout of every band page: band name (with the switcher), leader tools and tabs.
 export const Route = createFileRoute("/_app/b/$bandSlug")({
-  component: BandPage,
+  component: BandLayout,
 });
 
-function BandPage() {
+// TanStack Router marks the current tab with data-status="active".
+const tab =
+  "border-b-2 border-transparent px-1 pb-2 text-muted-foreground text-sm hover:text-foreground data-[status=active]:border-primary data-[status=active]:text-foreground";
+
+function BandLayout() {
   const { t } = useTranslation();
   const { bandSlug } = Route.useParams();
   const query = useQuery(bandQuery(bandSlug));
@@ -28,20 +34,28 @@ function BandPage() {
 
   const { band, membership } = query.data;
   return (
-    <section className="space-y-4">
-      <div className="space-y-1">
-        <h1 className="font-bold text-2xl tracking-tight">
-          {t("band.welcome", { band: band.name })}
-        </h1>
-        {band.genre && <p className="text-muted-foreground">{band.genre}</p>}
+    <div className="space-y-6">
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <BandSwitcher current={band} />
+          {band.genre && <p className="text-muted-foreground">{band.genre}</p>}
+        </div>
+        {membership.role === "leader" && <EditBandDialog band={band} />}
       </div>
-      <p>
-        {t("band.you", {
-          role: t(`band.roles.${membership.role}`),
-          instrument: membership.instrument,
-        })}
-      </p>
-      <p className="text-muted-foreground text-sm">{t("band.comingSoon")}</p>
-    </section>
+      <nav className="flex gap-4 border-b">
+        <Link
+          to="/b/$bandSlug"
+          params={{ bandSlug }}
+          activeOptions={{ exact: true }}
+          className={tab}
+        >
+          {t("band.home")}
+        </Link>
+        <Link to="/b/$bandSlug/lineup" params={{ bandSlug }} className={tab}>
+          {t("lineup.title")}
+        </Link>
+      </nav>
+      <Outlet />
+    </div>
   );
 }
