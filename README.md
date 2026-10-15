@@ -1,5 +1,7 @@
 # CoverBand
 
+[![CI](https://github.com/TitoVince35/coverband/actions/workflows/ci.yml/badge.svg)](https://github.com/TitoVince35/coverband/actions/workflows/ci.yml)
+
 An installable web app (PWA) to help music bands manage their activities: repertoire, setlists, gigs and members.
 
 ## Status
