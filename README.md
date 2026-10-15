@@ -12,6 +12,15 @@ Early stage: technical choices are being made. See [`briefs/`](briefs/) for the 
 
 TypeScript and Bun end to end: Hono API, React + Vite PWA, PostgreSQL with Drizzle, Better Auth. Hosted on Scaleway (Paris).
 
+## Development
+
+Requires [Bun](https://bun.sh) 1.4+.
+
+```sh
+bun install
+bun run check   # lint + typecheck + tests
+```
+
 ## License
 
 [AGPL-3.0](LICENSE)
