@@ -1,0 +1,68 @@
+# CoverBand
+
+An installable web app (PWA) for music bands: repertoire, setlists, gigs, members.
+Multi-tenant: each band's data is private; a musician can belong to several bands.
+
+Product briefs and technical decisions live in `briefs/` (see below). Read them before making structural choices.
+
+## Stack
+
+- **Bun** workspaces monorepo, TypeScript strict everywhere
+- `apps/api`: Hono on Bun, serves the API and the built web app (single container)
+- `apps/web`: React + Vite + TanStack Router/Query, Tailwind + shadcn/ui, vite-plugin-pwa
+- `packages/shared`: code shared by both apps (Zod schemas, types, helpers)
+- PostgreSQL + **Drizzle** ORM, **Better Auth** (organization plugin: band = organization)
+- Hosting: Scaleway (Paris), Serverless Containers + Serverless SQL Database + Object Storage
+- Tooling: Biome (lint + format), `tsc` for typechecking, `bun test`, Playwright for end-to-end tests
+
+## Commands
+
+```sh
+bun install          # install all workspaces
+bun run check        # lint + typecheck + tests (run before every commit)
+bun run format       # apply Biome formatting and safe fixes
+bun test             # tests only
+```
+
+## Conventions
+
+- Code, comments, commits, issues and PRs in English.
+- Tests sit next to the code: `foo.ts` → `foo.test.ts`, using `bun:test`.
+- Workspace packages are imported by name (`@coverband/shared`), never by relative path across packages.
+- **Multi-tenancy:** every band-scoped table has a `band_id`; every band-scoped request checks that the user is a member of that band. The band is in the URL (`/b/:bandSlug/...`).
+- **Stateless server** (it runs on serverless containers): no in-memory sessions or caches that matter, no local file storage, no in-process cron. Sessions in Postgres, files in object storage.
+- Postgres goes through Scaleway's connection pooler: use the `postgres` driver with `prepare: false`.
+
+## Briefs
+
+- `briefs/vince/NNN_title.md`: Vince's briefs.
+- `briefs/claude/NNN_title.md`: Claude's proposals, same numbering.
+- Only save a reply to `briefs/claude/` when Vince explicitly asks.
+
+## Task workflow (GitHub Projects)
+
+Board: https://github.com/users/TitoVince35/projects/1. Columns: Backlog → Todo → In progress → In review → Done. Sprints are 2-week iterations (`Sprint` field).
+
+For each task (issue `#NN`):
+1. Move it to **In progress** and create a branch `NN-short-title` from `main`.
+2. Commit with `bun run check` passing.
+3. Push and open a PR whose body contains `Closes #NN`. The board automation moves it to **In review**.
+4. Vince reviews and merges. Automation moves the task to **Done** and closes the issue.
+
+New issues created in the repo are added to the Backlog automatically.
+
+Moving a task with `gh` (the only manual move is to In progress):
+
+```sh
+# find the item id of issue NN
+gh api graphql -f query='{ node(id:"PVT_kwHOADAgOs4BnNj-"){ ... on ProjectV2 { items(first:100){ nodes{ id content{ ... on Issue{ number } } } } } } }' \
+  --jq '.data.node.items.nodes[] | select(.content.number==NN) | .id'
+# set its status
+gh project item-edit --project-id PVT_kwHOADAgOs4BnNj- --id <item-id> \
+  --field-id PVTSSF_lAHOADAgOs4BnNj-zhlzNcM --single-select-option-id <option-id>
+```
+
+Status option ids: Backlog `68d1018a`, Todo `4690f79a`, In progress `0c86fcb5`, In review `cc8e2739`, Done `19ed2183`.
+Sprint field `PVTIF_lAHOADAgOs4BnNj-zhlzNx8`: Sprint 1 `3c4d0bab`, Sprint 2 `36e02d73`, Sprint 3 `964b06f5`.
+
+Newly added board items can take minutes to show up in the board API and views (GitHub indexing lag); `gh issue view NN --json projectItems` is reliable immediately.
