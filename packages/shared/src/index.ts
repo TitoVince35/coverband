@@ -1,4 +1,5 @@
 export { ADMIN_ROLE, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./auth";
+export { BAND_ROLES, type BandRole, displayName, FIELD_MAX_LENGTH, slugify } from "./bands";
 export { formatDuration } from "./duration";
 export {
   type ApiErrorBody,

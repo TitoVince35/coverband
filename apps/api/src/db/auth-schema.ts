@@ -28,6 +28,11 @@ export const users = pgTable("users", {
   emailVerified: boolean().default(false).notNull(),
   image: text(),
   ...timestamps,
+  // Profile, filled by the onboarding wizards (#23, #7). Null for the default admin.
+  // `name` (required by Better Auth) holds the display name: nickname, else first and last name.
+  firstName: text(),
+  lastName: text(),
+  nickname: text(),
   // Admin plugin: global role ("admin" or "user") and bans.
   role: text(),
   banned: boolean().default(false),

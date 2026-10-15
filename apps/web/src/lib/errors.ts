@@ -12,12 +12,15 @@ export class ApiRequestError extends Error {
   }
 }
 
-/** Throws an ApiRequestError for a non-2xx response, using the API's error code when present. */
+/**
+ * Throws an ApiRequestError for a non-2xx response, using the API's error code when present.
+ * Returns the response narrowed to its success types (typed client responses carry `ok`).
+ */
 export async function ensureOk<R extends { ok: boolean; status: number; json(): Promise<unknown> }>(
   res: R,
-): Promise<R> {
+): Promise<Exclude<R, { ok: false }>> {
   if (res.ok) {
-    return res;
+    return res as Exclude<R, { ok: false }>;
   }
   const body = (await res.json().catch(() => null)) as { error?: { code?: unknown } } | null;
   const code = isErrorCode(body?.error?.code) ? body.error.code : "internal_error";

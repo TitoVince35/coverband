@@ -16,7 +16,8 @@ export const resources = {
   fr: { translation: fr },
 } as const;
 
-function readStoredLanguage(): Language | null {
+/** The language explicitly chosen on this device, if any. */
+export function readStoredLanguage(): Language | null {
   try {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
     return isLanguage(stored) ? stored : null;

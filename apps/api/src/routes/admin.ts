@@ -1,10 +1,10 @@
 import { LANGUAGES, type Language } from "@coverband/shared";
 import { zValidator } from "@hono/zod-validator";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppDeps } from "../app";
-import { users } from "../db/schema";
+import { bandMembers, bands, users } from "../db/schema";
 import { apiError } from "../errors";
 import {
   AlreadyInvitedError,
@@ -38,7 +38,24 @@ export function adminRoutes(deps: AppDeps) {
         })
         .from(users)
         .orderBy(asc(users.createdAt));
-      return c.json({ users: rows });
+      const memberships = await deps.db
+        .select({
+          userId: bandMembers.userId,
+          bandName: bands.name,
+          bandSlug: bands.slug,
+          role: bandMembers.role,
+        })
+        .from(bandMembers)
+        .innerJoin(bands, eq(bands.id, bandMembers.bandId))
+        .orderBy(asc(bands.name));
+      return c.json({
+        users: rows.map((user) => ({
+          ...user,
+          bands: memberships
+            .filter((m) => m.userId === user.id)
+            .map(({ userId: _, ...band }) => band),
+        })),
+      });
     })
     .get("/invitations", async (c) => {
       return c.json({ invitations: await listLeaderInvitations(deps) });

@@ -1,6 +1,7 @@
 import { LANGUAGES, type Language } from "@coverband/shared";
 import { index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { users } from "./auth-schema";
+import { bands } from "./band-schema";
 
 /** Band role the invitation grants: a leader creates a band, a musician joins one (#7). */
 export const invitationRole = pgEnum("invitation_role", ["leader", "musician"]);
@@ -18,7 +19,7 @@ export const invitations = pgTable(
     email: text().notNull(),
     role: invitationRole().notNull(),
     // Band to join, for musician invitations (#7). Null for leaders, who create their band.
-    bandId: uuid(),
+    bandId: uuid().references(() => bands.id, { onDelete: "cascade" }),
     // Language of the email, and default language of the onboarding wizard.
     language: languageEnum().notNull(),
     invitedById: uuid()

@@ -7,7 +7,6 @@ import { adminUsersQuery } from "@/lib/admin";
 import { errorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/format";
 
-// Band memberships and roles (leader, musician) are added here with #23 and #7.
 export function UsersList() {
   const { t, i18n } = useTranslation();
   const users = useQuery(adminUsersQuery);
@@ -37,6 +36,18 @@ export function UsersList() {
                   {" · "}
                   {t("admin.users.joined", { date: formatDate(user.createdAt, i18n.language) })}
                 </p>
+                {user.bands.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {user.bands.map((band) => (
+                      <Badge key={band.bandSlug} variant="outline">
+                        {t("admin.users.roleInBand", {
+                          band: band.bandName,
+                          role: t(`band.roles.${band.role}`),
+                        })}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
