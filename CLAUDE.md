@@ -8,7 +8,7 @@ Product briefs and technical decisions live in `briefs/` (see below). Read them 
 ## Stack
 
 - **Bun** workspaces monorepo, TypeScript strict everywhere
-- `apps/api`: Hono on Bun, serves the API and the built web app (single container)
+- `apps/api`: Hono on Bun, REST API under `/api` plus the built web app (single container)
 - `apps/web`: React + Vite + TanStack Router/Query, Tailwind + shadcn/ui, vite-plugin-pwa
 - `packages/shared`: code shared by both apps (Zod schemas, types, helpers)
 - PostgreSQL + **Drizzle** ORM, **Better Auth** (organization plugin: band = organization)
@@ -20,6 +20,7 @@ Product briefs and technical decisions live in `briefs/` (see below). Read them 
 ```sh
 bun install          # install all workspaces
 bun run check        # lint + typecheck + tests (run before every commit)
+bun run dev:api      # API with watch mode on http://localhost:3000
 bun run format       # apply Biome formatting and safe fixes
 bun test             # tests only (DB integration tests are skipped when DATABASE_URL is unset)
 
@@ -36,6 +37,7 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 - Code, comments, commits, issues and PRs in English.
 - Tests sit next to the code: `foo.ts` → `foo.test.ts`, using `bun:test`.
 - Workspace packages are imported by name (`@coverband/shared`), never by relative path across packages.
+- **API:** REST under `/api` (resource URLs, HTTP verbs, status codes, JSON). One Hono sub-app per resource in `apps/api/src/routes/`, mounted in `src/app.ts` with chained calls so `AppType` keeps every route. The web app calls it through the typed client from `@coverband/api/client` (Hono calls this "RPC"; see `briefs/claude/003_rest-vs-rpc.md`). Errors are JSON `{ "error": string }`. No OpenAPI for now.
 - **Multi-tenancy:** every band-scoped table has a `band_id`; every band-scoped request checks that the user is a member of that band. The band is in the URL (`/b/:bandSlug/...`).
 - **Stateless server** (it runs on serverless containers): no in-memory sessions or caches that matter, no local file storage, no in-process cron. Sessions in Postgres, files in object storage.
 - Postgres goes through Scaleway's connection pooler: use the `postgres` driver with `prepare: false` (see `apps/api/src/db/client.ts`).
@@ -45,7 +47,7 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 ## Briefs
 
 - `briefs/vince/NNN_title.md`: Vince's briefs.
-- `briefs/claude/NNN_title.md`: Claude's proposals, same numbering.
+- `briefs/claude/NNN_title.md`: Claude's proposals and answers, numbered in their own sequence (not matched to Vince's numbers).
 - Only save a reply to `briefs/claude/` when Vince explicitly asks.
 
 ## Task workflow (GitHub Projects)

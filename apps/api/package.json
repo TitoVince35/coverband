@@ -3,7 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./client": "./src/client.ts"
+  },
   "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun src/db/migrate.ts",
@@ -11,7 +16,9 @@
   },
   "dependencies": {
     "@coverband/shared": "workspace:*",
+    "@hono/bun": "^1.0.1",
     "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.13",
     "postgres": "^3.4.9",
     "zod": "^4.6.7"
   },
