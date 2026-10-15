@@ -4,9 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "./app";
 import { createApiClient } from "./client";
+import { createTestDeps } from "./test-deps";
+
+const { deps } = createTestDeps();
 
 describe("API", () => {
-  const app = createApp({ log: false });
+  const app = createApp({ deps, log: false });
 
   test("GET /api/health returns ok", async () => {
     const res = await app.request("/api/health");
@@ -42,19 +45,21 @@ describe("web app serving", () => {
   afterAll(() => rm(dist, { recursive: true, force: true }));
 
   test("serves static files", async () => {
-    const res = await createApp({ webDistDir: dist, log: false }).request("/app.js");
+    const res = await createApp({ deps, webDistDir: dist, log: false }).request("/app.js");
     expect(res.status).toBe(200);
     expect(await res.text()).toContain("console.log");
   });
 
   test("falls back to index.html for client-side routes", async () => {
-    const res = await createApp({ webDistDir: dist, log: false }).request("/b/my-band/setlists");
+    const res = await createApp({ deps, webDistDir: dist, log: false }).request(
+      "/b/my-band/setlists",
+    );
     expect(res.status).toBe(200);
     expect(await res.text()).toContain("<title>CoverBand</title>");
   });
 
   test("keeps JSON 404s under /api", async () => {
-    const res = await createApp({ webDistDir: dist, log: false }).request("/api/nope");
+    const res = await createApp({ deps, webDistDir: dist, log: false }).request("/api/nope");
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: { code: "not_found", message: "Not found" } });
   });

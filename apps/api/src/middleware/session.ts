@@ -11,9 +11,9 @@ export type SessionEnv = {
 };
 
 /** Loads the session from the request cookies into `c.var.user` / `c.var.session` (null if none). */
-export function loadSession(auth: Auth | undefined) {
+export function loadSession(auth: Auth) {
   return createMiddleware<SessionEnv>(async (c, next) => {
-    const data = auth ? await auth.api.getSession({ headers: c.req.raw.headers }) : null;
+    const data = await auth.api.getSession({ headers: c.req.raw.headers });
     c.set("user", data?.user ?? null);
     c.set("session", data?.session ?? null);
     await next();

@@ -2,7 +2,8 @@ import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { ensureAdmin } from "./bootstrap";
 import { createDb } from "./db/client";
-import { loadEnv } from "./env";
+import { loadEnv, smtpConfig } from "./env";
+import { createSmtpMailer } from "./mail/mailer";
 
 const env = loadEnv();
 const { db } = createDb(env.DATABASE_URL);
@@ -13,7 +14,11 @@ if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
   console.log(`Default admin ${env.ADMIN_EMAIL}: ${result}`);
 }
 
-const app = createApp({ auth, webDistDir: env.WEB_DIST_DIR });
+const mailer = createSmtpMailer(smtpConfig(env));
+const app = createApp({
+  deps: { auth, db, mailer, appUrl: env.BETTER_AUTH_URL },
+  webDistDir: env.WEB_DIST_DIR,
+});
 
 console.log(`CoverBand API listening on http://localhost:${env.PORT}`);
 

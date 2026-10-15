@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Toaster } from "@/components/ui/sonner";
 import { UserMenu } from "@/components/user-menu";
 
 export type RouterContext = {
@@ -31,6 +32,7 @@ function RootLayout() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <Outlet />
       </main>
+      <Toaster position="top-center" />
     </div>
   );
 }
