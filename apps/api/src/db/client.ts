@@ -7,7 +7,7 @@ import * as schema from "./schema";
  * Scaleway Serverless SQL Database sits behind a transaction-mode connection pooler.
  */
 export function createDb(databaseUrl: string) {
-  const sql = postgres(databaseUrl, { prepare: false });
+  const sql = postgres(databaseUrl, { prepare: false, onnotice: () => {} });
   const db = drizzle(sql, { schema, casing: "snake_case" });
   return { db, sql };
 }

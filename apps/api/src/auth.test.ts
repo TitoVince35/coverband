@@ -2,24 +2,17 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { createApp } from "./app";
-import { createAuth } from "./auth";
 import { ensureAdmin } from "./bootstrap";
-import { createDb } from "./db/client";
 import { users } from "./db/schema";
 import { loadSession, requireAdmin, requireUser, type SessionEnv } from "./middleware/session";
+import { createTestDeps } from "./test-deps";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;
 
 describe.skipIf(!databaseUrl)("authentication", () => {
-  const { db, sql } = createDb(databaseUrl ?? "");
-  const auth = createAuth({
-    db,
-    secret: "test-secret-test-secret-test-secret",
-    baseURL: "http://localhost:3000",
-    rateLimit: false,
-  });
-  const app = createApp({ auth, log: false });
+  const { deps, db, sql, auth } = createTestDeps(databaseUrl);
+  const app = createApp({ deps, log: false });
 
   // Unique emails so tests never collide with development data; deleted afterwards.
   const run = crypto.randomUUID().slice(0, 8);

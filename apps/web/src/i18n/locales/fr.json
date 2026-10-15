@@ -18,7 +18,7 @@
     "submitting": "Connexion…",
     "invalidCredentials": "E-mail ou mot de passe incorrect.",
     "tooManyAttempts": "Trop de tentatives. Attendez une minute et réessayez.",
-    "invitationOnly": "Pas encore de compte ? CoverBand fonctionne uniquement sur invitation : demandez à votre leader."
+    "invitationOnly": "Pas encore de compte ? CoverBand fonctionne uniquement sur invitation : demandez à votre band leader."
   },
   "account": {
     "menu": "Compte",
@@ -26,7 +26,39 @@
   },
   "admin": {
     "title": "Administration",
-    "comingSoon": "La gestion des utilisateurs et les invitations de leaders arrivent bientôt."
+    "description": "Invitations des band leaders et utilisateurs.",
+    "loading": "Chargement…",
+    "cancel": "Annuler",
+    "invite": {
+      "new": "Nouveau band leader",
+      "title": "Inviter un band leader",
+      "description": "Cette personne recevra un e-mail pour créer son groupe. Le lien est valable 48 heures.",
+      "email": "E-mail",
+      "language": "Langue de l'e-mail",
+      "submit": "Envoyer l'invitation",
+      "sending": "Envoi…",
+      "sent": "Invitation envoyée à {{email}}"
+    },
+    "invitations": {
+      "title": "Invitations en attente",
+      "empty": "Aucune invitation en attente.",
+      "pending": "En attente",
+      "expired": "Expirée",
+      "expiresOn": "Expire le {{date}}",
+      "expiredOn": "Expirée le {{date}}",
+      "invitedBy": "envoyée par {{name}}",
+      "resend": "Renvoyer",
+      "resent": "Nouveau lien envoyé à {{email}}",
+      "revoke": "Révoquer",
+      "revokeTitle": "Révoquer cette invitation ?",
+      "revokeDescription": "Le lien envoyé à {{email}} ne fonctionnera plus.",
+      "revoked": "Invitation révoquée"
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "admin": "Admin",
+      "joined": "membre depuis le {{date}}"
+    }
   },
   "theme": {
     "change": "Changer de thème",
@@ -43,6 +75,7 @@
     "forbidden": "Vous n'avez pas accès à cette ressource.",
     "not_found": "Cette ressource n'existe pas.",
     "internal_error": "Une erreur est survenue. Veuillez réessayer.",
-    "network": "Impossible de joindre le serveur. Vérifiez votre connexion."
+    "network": "Impossible de joindre le serveur. Vérifiez votre connexion.",
+    "already_invited": "Cette adresse a déjà une invitation en attente. Renvoyez-la plutôt."
   }
 }

@@ -4,13 +4,24 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import type { Auth } from "./auth";
+import type { Db } from "./db/client";
 import { apiError } from "./errors";
+import type { Mailer } from "./mail/mailer";
 import { loadSession, type SessionEnv } from "./middleware/session";
+import { adminRoutes } from "./routes/admin";
 import { health } from "./routes/health";
 
+/** Services the API routes use. Tests can pass a database that is never connected to. */
+export type AppDeps = {
+  auth: Auth;
+  db: Db;
+  mailer: Mailer;
+  /** Public URL of the web app, for links in emails. */
+  appUrl: string;
+};
+
 export type AppOptions = {
-  /** Better Auth instance; without it (tests that don't need a database) nobody is logged in. */
-  auth?: Auth | undefined;
+  deps: AppDeps;
   /** Directory of the built web app; when set, it is served with an SPA fallback. */
   webDistDir?: string | undefined;
   /** Request logging, off in tests. */
@@ -19,13 +30,16 @@ export type AppOptions = {
 
 // REST API, mounted under /api. Chained so that AppType carries every route for the typed client.
 // Routes read the logged-in user from `c.var.user` and guard with requireUser / requireAdmin.
-function createApi(auth: Auth | undefined) {
-  return new Hono<SessionEnv>().use(loadSession(auth)).route("/health", health);
+function createApi(deps: AppDeps) {
+  return new Hono<SessionEnv>()
+    .use(loadSession(deps.auth))
+    .route("/health", health)
+    .route("/admin", adminRoutes(deps));
 }
 
 export type AppType = ReturnType<typeof createApi>;
 
-export function createApp({ auth, webDistDir, log = true }: AppOptions = {}) {
+export function createApp({ deps, webDistDir, log = true }: AppOptions) {
   const app = new Hono();
 
   if (log) {
@@ -41,10 +55,8 @@ export function createApp({ auth, webDistDir, log = true }: AppOptions = {}) {
   });
 
   // Better Auth endpoints (login, logout, session...), called by the web app's auth client.
-  if (auth) {
-    app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
-  }
-  app.route("/api", createApi(auth));
+  app.on(["GET", "POST"], "/api/auth/*", (c) => deps.auth.handler(c.req.raw));
+  app.route("/api", createApi(deps));
   // Unknown API routes stay JSON 404s, never the web app shell.
   app.all("/api/*", (c) => apiError(c, 404, "Not found"));
 

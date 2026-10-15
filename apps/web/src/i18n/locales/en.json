@@ -26,7 +26,39 @@
   },
   "admin": {
     "title": "Administration",
-    "comingSoon": "User management and band leader invitations are coming soon."
+    "description": "Band leader invitations and users.",
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "invite": {
+      "new": "New band leader",
+      "title": "Invite a band leader",
+      "description": "They'll receive an email to create their band. The link is valid for 48 hours.",
+      "email": "Email",
+      "language": "Email language",
+      "submit": "Send invitation",
+      "sending": "Sending…",
+      "sent": "Invitation sent to {{email}}"
+    },
+    "invitations": {
+      "title": "Pending invitations",
+      "empty": "No pending invitations.",
+      "pending": "Pending",
+      "expired": "Expired",
+      "expiresOn": "Expires {{date}}",
+      "expiredOn": "Expired {{date}}",
+      "invitedBy": "invited by {{name}}",
+      "resend": "Resend",
+      "resent": "New link sent to {{email}}",
+      "revoke": "Revoke",
+      "revokeTitle": "Revoke this invitation?",
+      "revokeDescription": "The link sent to {{email}} will stop working.",
+      "revoked": "Invitation revoked"
+    },
+    "users": {
+      "title": "Users",
+      "admin": "Admin",
+      "joined": "joined {{date}}"
+    }
   },
   "theme": {
     "change": "Change theme",
@@ -43,6 +75,7 @@
     "forbidden": "You don't have access to this.",
     "not_found": "This doesn't exist.",
     "internal_error": "Something went wrong. Please try again.",
-    "network": "Can't reach the server. Check your connection."
+    "network": "Can't reach the server. Check your connection.",
+    "already_invited": "This email already has a pending invitation. Resend it instead."
   }
 }

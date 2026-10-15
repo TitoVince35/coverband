@@ -10,6 +10,7 @@ export const ERROR_CODES = [
   "forbidden",
   "not_found",
   "internal_error",
+  "already_invited",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
