@@ -1,9 +1,9 @@
 import type { Language } from "@coverband/shared";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, type SQL, sql } from "drizzle-orm";
 import type { Db } from "./db/client";
-import { invitations, users } from "./db/schema";
+import { bandMembers, invitations, users } from "./db/schema";
 import type { Mailer } from "./mail/mailer";
-import { leaderInvitationEmail } from "./mail/templates";
+import { leaderInvitationEmail, musicianInvitationEmail } from "./mail/templates";
 
 /** How long an invitation link stays valid (brief 004). */
 export const INVITATION_TTL_MS = 48 * 60 * 60 * 1000;
@@ -18,9 +18,25 @@ export type InvitationDeps = {
   now?: () => Date;
 };
 
+/**
+ * Which invitations an operation is about: band leaders (sent by admins, #22) or the musicians
+ * of one band (sent by its leader, #7). An id from another scope is treated as not found.
+ */
+export type InvitationScope =
+  | { role: "leader" }
+  | { role: "musician"; band: { id: string; name: string } };
+
+export const LEADER_INVITATIONS: InvitationScope = { role: "leader" };
+
 export class AlreadyInvitedError extends Error {
   constructor(email: string) {
     super(`${email} already has a pending invitation`);
+  }
+}
+
+export class AlreadyMemberError extends Error {
+  constructor(email: string) {
+    super(`${email} is already a member of this band`);
   }
 }
 
@@ -47,8 +63,20 @@ export function invitationStatus(
   return invitation.expiresAt <= now ? "expired" : "pending";
 }
 
-/** Open leader invitations (neither accepted nor revoked), newest first, with their status. */
-export async function listLeaderInvitations({ db, now = () => new Date() }: InvitationDeps) {
+function inScope(scope: InvitationScope): SQL | undefined {
+  return scope.role === "leader"
+    ? and(eq(invitations.role, "leader"), isNull(invitations.bandId))
+    : and(eq(invitations.role, "musician"), eq(invitations.bandId, scope.band.id));
+}
+
+/** Neither accepted nor revoked (but possibly expired). */
+const open = () => and(isNull(invitations.acceptedAt), isNull(invitations.revokedAt));
+
+/** Open invitations of a scope, newest first, with their status. */
+export async function listInvitations(
+  { db, now = () => new Date() }: InvitationDeps,
+  scope: InvitationScope,
+) {
   const rows = await db
     .select({
       id: invitations.id,
@@ -62,13 +90,7 @@ export async function listLeaderInvitations({ db, now = () => new Date() }: Invi
     })
     .from(invitations)
     .innerJoin(users, eq(users.id, invitations.invitedById))
-    .where(
-      and(
-        eq(invitations.role, "leader"),
-        isNull(invitations.acceptedAt),
-        isNull(invitations.revokedAt),
-      ),
-    )
+    .where(and(inScope(scope), open()))
     .orderBy(desc(invitations.createdAt));
   const at = now();
   return rows.map(({ acceptedAt, revokedAt, ...row }) => ({
@@ -77,8 +99,9 @@ export async function listLeaderInvitations({ db, now = () => new Date() }: Invi
   }));
 }
 
-async function sendLeaderInvitation(
+async function sendInvitation(
   deps: InvitationDeps,
+  scope: InvitationScope,
   invitation: { email: string; language: Language; invitedById: string },
   token: string,
 ) {
@@ -86,20 +109,26 @@ async function sendLeaderInvitation(
     .select({ name: users.name })
     .from(users)
     .where(eq(users.id, invitation.invitedById));
+  const inviterName = inviter?.name ?? "CoverBand";
+  const url = invitationUrl(deps.appUrl, token);
   await deps.mailer.send(
-    leaderInvitationEmail(invitation.email, invitation.language, {
-      inviterName: inviter?.name ?? "CoverBand",
-      url: invitationUrl(deps.appUrl, token),
-    }),
+    scope.role === "leader"
+      ? leaderInvitationEmail(invitation.email, invitation.language, { inviterName, url })
+      : musicianInvitationEmail(invitation.email, invitation.language, {
+          inviterName,
+          bandName: scope.band.name,
+          url,
+        }),
   );
 }
 
 /**
- * Invites someone to become a band leader. The email may already have an account: that user will
- * only create a band (#23). One open, unexpired leader invitation per email.
+ * Invites someone, by email. The email may already have an account: a leader then only creates a
+ * band (#23), a musician only joins (#7). One open, unexpired invitation per email and scope.
  */
-export async function inviteLeader(
+export async function invite(
   deps: InvitationDeps,
+  scope: InvitationScope,
   input: { email: string; language: Language; invitedById: string },
 ) {
   const now = deps.now?.() ?? new Date();
@@ -109,25 +138,27 @@ export async function inviteLeader(
   const invitation = await deps.db.transaction(async (tx) => {
     // Serializes concurrent invitations of the same email.
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`invite:${email}`}))`);
-    const open = await tx
+    if (scope.role === "musician") {
+      const [member] = await tx
+        .select({ id: users.id })
+        .from(bandMembers)
+        .innerJoin(users, eq(users.id, bandMembers.userId))
+        .where(and(eq(bandMembers.bandId, scope.band.id), eq(users.email, email)));
+      if (member) throw new AlreadyMemberError(email);
+    }
+    const pending = await tx
       .select({ expiresAt: invitations.expiresAt })
       .from(invitations)
-      .where(
-        and(
-          eq(invitations.email, email),
-          eq(invitations.role, "leader"),
-          isNull(invitations.acceptedAt),
-          isNull(invitations.revokedAt),
-        ),
-      );
-    if (open.some((row) => row.expiresAt > now)) {
+      .where(and(eq(invitations.email, email), inScope(scope), open()));
+    if (pending.some((row) => row.expiresAt > now)) {
       throw new AlreadyInvitedError(email);
     }
     const [created] = await tx
       .insert(invitations)
       .values({
         email,
-        role: "leader",
+        role: scope.role,
+        bandId: scope.role === "musician" ? scope.band.id : null,
         language: input.language,
         invitedById: input.invitedById,
         tokenHash,
@@ -139,9 +170,9 @@ export async function inviteLeader(
   });
 
   try {
-    await sendLeaderInvitation(deps, invitation, token);
+    await sendInvitation(deps, scope, invitation, token);
   } catch (error) {
-    // Not sent: drop it so the admin can simply try again.
+    // Not sent: drop it so the inviter can simply try again.
     await deps.db.delete(invitations).where(eq(invitations.id, invitation.id));
     throw error;
   }
@@ -149,40 +180,38 @@ export async function inviteLeader(
 }
 
 /** Sends a new link valid for another 48 hours; the previous link stops working. */
-export async function resendLeaderInvitation(deps: InvitationDeps, id: string) {
+export async function resendInvitation(deps: InvitationDeps, scope: InvitationScope, id: string) {
   const now = deps.now?.() ?? new Date();
   const { token, tokenHash } = newToken();
   const [invitation] = await deps.db
     .update(invitations)
     .set({ tokenHash, expiresAt: new Date(now.getTime() + INVITATION_TTL_MS) })
-    .where(
-      and(
-        eq(invitations.id, id),
-        eq(invitations.role, "leader"),
-        isNull(invitations.acceptedAt),
-        isNull(invitations.revokedAt),
-      ),
-    )
+    .where(and(eq(invitations.id, id), inScope(scope), open()))
     .returning();
   if (!invitation) return null;
-  await sendLeaderInvitation(deps, invitation, token);
+  await sendInvitation(deps, scope, invitation, token);
   return invitation;
 }
 
 /** Revokes an open invitation: its link stops working. Returns false if there was none. */
-export async function revokeLeaderInvitation(deps: InvitationDeps, id: string) {
+export async function revokeInvitation(deps: InvitationDeps, scope: InvitationScope, id: string) {
   const now = deps.now?.() ?? new Date();
   const revoked = await deps.db
     .update(invitations)
     .set({ revokedAt: now })
-    .where(
-      and(
-        eq(invitations.id, id),
-        eq(invitations.role, "leader"),
-        isNull(invitations.acceptedAt),
-        isNull(invitations.revokedAt),
-      ),
-    )
+    .where(and(eq(invitations.id, id), inScope(scope), open()))
     .returning({ id: invitations.id });
   return revoked.length > 0;
 }
+
+// Band leader invitations, sent by admins (#22).
+export const listLeaderInvitations = (deps: InvitationDeps) =>
+  listInvitations(deps, LEADER_INVITATIONS);
+export const inviteLeader = (
+  deps: InvitationDeps,
+  input: { email: string; language: Language; invitedById: string },
+) => invite(deps, LEADER_INVITATIONS, input);
+export const resendLeaderInvitation = (deps: InvitationDeps, id: string) =>
+  resendInvitation(deps, LEADER_INVITATIONS, id);
+export const revokeLeaderInvitation = (deps: InvitationDeps, id: string) =>
+  revokeInvitation(deps, LEADER_INVITATIONS, id);

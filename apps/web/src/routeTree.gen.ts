@@ -15,6 +15,8 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppBBandSlugRouteImport } from './routes/_app/b.$bandSlug'
+import { Route as AppBBandSlugIndexRouteImport } from './routes/_app/b.$bandSlug/index'
+import { Route as AppBBandSlugLineupRouteImport } from './routes/_app/b.$bandSlug/lineup'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -45,20 +47,33 @@ const AppBBandSlugRoute = AppBBandSlugRouteImport.update({
   path: '/b/$bandSlug',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBBandSlugIndexRoute = AppBBandSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
+const AppBBandSlugLineupRoute = AppBBandSlugLineupRouteImport.update({
+  id: '/lineup',
+  path: '/lineup',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/admin': typeof AppAdminRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/b/$bandSlug': typeof AppBBandSlugRoute
+  '/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
+  '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
+  '/b/$bandSlug/': typeof AppBBandSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admin': typeof AppAdminRoute
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AppIndexRoute
-  '/b/$bandSlug': typeof AppBBandSlugRoute
+  '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
+  '/b/$bandSlug': typeof AppBBandSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -67,13 +82,28 @@ export interface FileRoutesById {
   '/_app/admin': typeof AppAdminRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_app/': typeof AppIndexRoute
-  '/_app/b/$bandSlug': typeof AppBBandSlugRoute
+  '/_app/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
+  '/_app/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
+  '/_app/b/$bandSlug/': typeof AppBBandSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/admin' | '/invite/$token' | '/b/$bandSlug'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/admin'
+    | '/invite/$token'
+    | '/b/$bandSlug'
+    | '/b/$bandSlug/lineup'
+    | '/b/$bandSlug/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/admin' | '/invite/$token' | '/' | '/b/$bandSlug'
+  to:
+    | '/login'
+    | '/admin'
+    | '/invite/$token'
+    | '/'
+    | '/b/$bandSlug/lineup'
+    | '/b/$bandSlug'
   id:
     | '__root__'
     | '/_app'
@@ -82,6 +112,8 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_app/'
     | '/_app/b/$bandSlug'
+    | '/_app/b/$bandSlug/lineup'
+    | '/_app/b/$bandSlug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -134,19 +166,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/b/$bandSlug/': {
+      id: '/_app/b/$bandSlug/'
+      path: '/'
+      fullPath: '/b/$bandSlug/'
+      preLoaderRoute: typeof AppBBandSlugIndexRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
+    '/_app/b/$bandSlug/lineup': {
+      id: '/_app/b/$bandSlug/lineup'
+      path: '/lineup'
+      fullPath: '/b/$bandSlug/lineup'
+      preLoaderRoute: typeof AppBBandSlugLineupRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
   }
 }
+
+interface AppBBandSlugRouteChildren {
+  AppBBandSlugLineupRoute: typeof AppBBandSlugLineupRoute
+  AppBBandSlugIndexRoute: typeof AppBBandSlugIndexRoute
+}
+
+const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
+  AppBBandSlugLineupRoute: AppBBandSlugLineupRoute,
+  AppBBandSlugIndexRoute: AppBBandSlugIndexRoute,
+}
+
+const AppBBandSlugRouteWithChildren = AppBBandSlugRoute._addFileChildren(
+  AppBBandSlugRouteChildren,
+)
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppIndexRoute: typeof AppIndexRoute
-  AppBBandSlugRoute: typeof AppBBandSlugRoute
+  AppBBandSlugRoute: typeof AppBBandSlugRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppIndexRoute: AppIndexRoute,
-  AppBBandSlugRoute: AppBBandSlugRoute,
+  AppBBandSlugRoute: AppBBandSlugRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

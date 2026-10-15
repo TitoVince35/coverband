@@ -67,3 +67,34 @@ export function leaderInvitationEmail(
   };
   return build(to, language, content[language]);
 }
+
+/** A band leader invites a musician to join their band (#7). */
+export function musicianInvitationEmail(
+  to: string,
+  language: Language,
+  { inviterName, bandName, url }: { inviterName: string; bandName: string; url: string },
+): Mail {
+  const content: Record<Language, EmailContent> = {
+    en: {
+      subject: `Join ${bandName} on CoverBand`,
+      heading: `${inviterName} invites you to join ${bandName}`,
+      paragraphs: [
+        `${inviterName} invites you to join ${bandName} on CoverBand, the app where your band shares its repertoire, setlists and gigs.`,
+        "This invitation is valid for 48 hours.",
+      ],
+      action: { label: "Join the band", url },
+      footer: `You received this email because ${to} was invited to CoverBand. If you weren't expecting it, you can ignore it.`,
+    },
+    fr: {
+      subject: `Rejoignez ${bandName} sur CoverBand`,
+      heading: `${inviterName} vous invite à rejoindre ${bandName}`,
+      paragraphs: [
+        `${inviterName} vous invite à rejoindre ${bandName} sur CoverBand, l'application où votre groupe partage son répertoire, ses setlists et ses concerts.`,
+        "Cette invitation est valable 48 heures.",
+      ],
+      action: { label: "Rejoindre le groupe", url },
+      footer: `Vous recevez cet e-mail car ${to} a reçu une invitation sur CoverBand. Si vous ne vous y attendiez pas, vous pouvez l'ignorer.`,
+    },
+  };
+  return build(to, language, content[language]);
+}
