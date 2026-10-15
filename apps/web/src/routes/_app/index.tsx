@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { ensureOk } from "@/lib/errors";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_app/")({
   component: HomePage,
 });
 
 function HomePage() {
   const { t } = useTranslation();
+  const { user } = Route.useRouteContext();
   const health = useQuery({
     queryKey: ["health"],
     queryFn: async () => (await ensureOk(await api.health.$get())).json(),
@@ -25,6 +26,7 @@ function HomePage() {
   return (
     <section className="space-y-4">
       <h1 className="font-bold text-2xl tracking-tight">{t("home.title")}</h1>
+      <p>{t("home.greeting", { name: user.name })}</p>
       <p className="text-muted-foreground">{t("home.tagline")}</p>
       <div className="flex items-center gap-3 text-muted-foreground text-sm">
         <span>{t("home.apiStatus", { status })}</span>
