@@ -17,7 +17,7 @@ describe("API", () => {
   test("unknown API routes return a JSON 404", async () => {
     const res = await app.request("/api/nope");
     expect(res.status).toBe(404);
-    expect(await res.json()).toEqual({ error: "Not found" });
+    expect(await res.json()).toEqual({ error: { code: "not_found", message: "Not found" } });
   });
 
   test("typed client calls the REST routes", async () => {
@@ -56,6 +56,6 @@ describe("web app serving", () => {
   test("keeps JSON 404s under /api", async () => {
     const res = await createApp({ webDistDir: dist, log: false }).request("/api/nope");
     expect(res.status).toBe(404);
-    expect(await res.json()).toEqual({ error: "Not found" });
+    expect(await res.json()).toEqual({ error: { code: "not_found", message: "Not found" } });
   });
 });
