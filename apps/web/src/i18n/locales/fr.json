@@ -18,7 +18,7 @@
     "submitting": "Connexion…",
     "invalidCredentials": "E-mail ou mot de passe incorrect.",
     "tooManyAttempts": "Trop de tentatives. Attendez une minute et réessayez.",
-    "invitationOnly": "Pas encore de compte ? CoverBand fonctionne uniquement sur invitation : demandez à votre leader."
+    "invitationOnly": "Pas encore de compte ? CoverBand fonctionne uniquement sur invitation : demandez à votre band leader."
   },
   "account": {
     "menu": "Compte",
@@ -26,12 +26,12 @@
   },
   "admin": {
     "title": "Administration",
-    "description": "Invitations des leaders et utilisateurs.",
+    "description": "Invitations des band leaders et utilisateurs.",
     "loading": "Chargement…",
     "cancel": "Annuler",
     "invite": {
-      "new": "Nouveau leader",
-      "title": "Inviter un leader",
+      "new": "Nouveau band leader",
+      "title": "Inviter un band leader",
       "description": "Cette personne recevra un e-mail pour créer son groupe. Le lien est valable 48 heures.",
       "email": "E-mail",
       "language": "Langue de l'e-mail",
@@ -46,7 +46,7 @@
       "expired": "Expirée",
       "expiresOn": "Expire le {{date}}",
       "expiredOn": "Expirée le {{date}}",
-      "invitedBy": "invité par {{name}}",
+      "invitedBy": "envoyée par {{name}}",
       "resend": "Renvoyer",
       "resent": "Nouveau lien envoyé à {{email}}",
       "revoke": "Révoquer",
@@ -57,7 +57,7 @@
     "users": {
       "title": "Utilisateurs",
       "admin": "Admin",
-      "joined": "inscrit le {{date}}"
+      "joined": "membre depuis le {{date}}"
     }
   },
   "theme": {
