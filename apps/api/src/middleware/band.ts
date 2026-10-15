@@ -1,0 +1,43 @@
+import type { BandRole } from "@coverband/shared";
+import { and, eq } from "drizzle-orm";
+import { createMiddleware } from "hono/factory";
+import type { Db } from "../db/client";
+import { bandMembers, bands } from "../db/schema";
+import { apiError } from "../errors";
+import type { SessionEnv } from "./session";
+
+export type BandEnv = SessionEnv & {
+  Variables: {
+    band: typeof bands.$inferSelect;
+    membership: { role: BandRole; instrument: string };
+  };
+};
+
+/**
+ * For routes under /bands/:bandSlug: loads the band into `c.var.band` and the user's membership
+ * into `c.var.membership`. Someone who isn't a member gets a 404, as if the band didn't exist,
+ * so band names can't be probed.
+ */
+export function requireMember(db: Db) {
+  return createMiddleware<BandEnv>(async (c, next) => {
+    const user = c.var.user;
+    if (!user) {
+      return apiError(c, 401, "Not logged in");
+    }
+    const slug = c.req.param("bandSlug") ?? "";
+    const [row] = await db
+      .select({ band: bands, role: bandMembers.role, instrument: bandMembers.instrument })
+      .from(bands)
+      .innerJoin(
+        bandMembers,
+        and(eq(bandMembers.bandId, bands.id), eq(bandMembers.userId, user.id)),
+      )
+      .where(eq(bands.slug, slug));
+    if (!row) {
+      return apiError(c, 404, "Band not found");
+    }
+    c.set("band", row.band);
+    c.set("membership", { role: row.role, instrument: row.instrument });
+    await next();
+  });
+}

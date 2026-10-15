@@ -1,13 +1,19 @@
 {
   "home": {
     "title": "Welcome to CoverBand",
-    "tagline": "Repertoire, setlists and gigs for your band. Coming soon.",
-    "apiStatus": "API: {{status}}",
-    "apiChecking": "checking…",
-    "apiOk": "ok",
-    "apiUnreachable": "unreachable",
-    "checkAgain": "Check again",
-    "greeting": "Hello {{name}}"
+    "greeting": "Hello {{name}}",
+    "yourBands": "Your bands",
+    "noBands": "You're not in a band yet. Bands are joined through an invitation."
+  },
+  "band": {
+    "welcome": "Welcome to {{band}}!",
+    "you": "You: {{role}} · {{instrument}}",
+    "notFound": "This band doesn't exist or you're not a member.",
+    "comingSoon": "Lineup, repertoire, setlists and gigs are coming soon.",
+    "roles": {
+      "leader": "band leader",
+      "musician": "musician"
+    }
   },
   "login": {
     "title": "Log in",
@@ -19,6 +25,50 @@
     "invalidCredentials": "Wrong email or password.",
     "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
     "invitationOnly": "No account yet? CoverBand is by invitation only: ask your band leader."
+  },
+  "invite": {
+    "loading": "Loading your invitation…",
+    "unavailable": "Invitation unavailable",
+    "goToLogin": "Go to login",
+    "musicianSoon": "Joining a band through an invitation is coming soon.",
+    "title": "Create your band",
+    "intro": "{{inviter}} invites you to create your band on CoverBand.",
+    "hasAccount": "You already have a CoverBand account with {{email}}. Log in to create your band.",
+    "login": "Log in",
+    "wrongAccount": "This invitation is for {{email}}, but you're logged in as {{current}}.",
+    "logout": "Log out",
+    "step": "Step {{current}} of {{total}}",
+    "steps": {
+      "profile": "Your profile",
+      "band": "Your band",
+      "password": "Your password",
+      "review": "Confirmation"
+    },
+    "back": "Back",
+    "next": "Next",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "nickname": "Nickname",
+    "nicknameHint": "Optional. Shown to your band instead of your name.",
+    "instrument": "Instrument",
+    "instrumentHint": "What you play in this band.",
+    "instrumentSuggestions": "Vocals,Guitar,Bass,Drums,Keyboards,Saxophone,Trumpet,Violin,Percussion",
+    "bandName": "Band name",
+    "bandUrl": "Your band's page: /b/{{slug}}",
+    "genre": "Genre",
+    "genreHint": "Optional.",
+    "genreSuggestions": "Rock,Pop,Funk,Soul,Blues,Jazz,Reggae,Metal,Folk,French pop",
+    "checking": "Checking…",
+    "password": "Password",
+    "passwordHint": "At least {{min}} characters.",
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "The passwords don't match.",
+    "email": "Email",
+    "name": "Name",
+    "band": "Band",
+    "none": "—",
+    "create": "Create my band",
+    "creating": "Creating…"
   },
   "account": {
     "menu": "Account",
@@ -57,7 +107,8 @@
     "users": {
       "title": "Users",
       "admin": "Admin",
-      "joined": "joined {{date}}"
+      "joined": "joined {{date}}",
+      "roleInBand": "{{band}} · {{role}}"
     }
   },
   "theme": {
@@ -76,6 +127,12 @@
     "not_found": "This doesn't exist.",
     "internal_error": "Something went wrong. Please try again.",
     "network": "Can't reach the server. Check your connection.",
-    "already_invited": "This email already has a pending invitation. Resend it instead."
+    "already_invited": "This email already has a pending invitation. Resend it instead.",
+    "invitation_not_found": "This invitation link isn't valid. Check that you copied it completely.",
+    "invitation_expired": "This invitation has expired. Ask for a new one.",
+    "invitation_revoked": "This invitation has been cancelled.",
+    "invitation_used": "This invitation has already been used. Log in to continue.",
+    "invitation_wrong_account": "You're logged in with a different account from the one invited.",
+    "band_name_taken": "This band name is already taken."
   }
 }

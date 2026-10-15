@@ -11,6 +11,12 @@ export const ERROR_CODES = [
   "not_found",
   "internal_error",
   "already_invited",
+  "invitation_not_found",
+  "invitation_expired",
+  "invitation_revoked",
+  "invitation_used",
+  "invitation_wrong_account",
+  "band_name_taken",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

@@ -13,6 +13,8 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as AppBBandSlugRouteImport } from './routes/_app/b.$bandSlug'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -33,35 +35,59 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppBBandSlugRoute = AppBBandSlugRouteImport.update({
+  id: '/b/$bandSlug',
+  path: '/b/$bandSlug',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/admin': typeof AppAdminRoute
+  '/invite/$token': typeof InviteTokenRoute
+  '/b/$bandSlug': typeof AppBBandSlugRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admin': typeof AppAdminRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/': typeof AppIndexRoute
+  '/b/$bandSlug': typeof AppBBandSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/admin': typeof AppAdminRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/b/$bandSlug': typeof AppBBandSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/admin'
+  fullPaths: '/' | '/login' | '/admin' | '/invite/$token' | '/b/$bandSlug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/admin' | '/'
-  id: '__root__' | '/_app' | '/login' | '/_app/admin' | '/_app/'
+  to: '/login' | '/admin' | '/invite/$token' | '/' | '/b/$bandSlug'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/login'
+    | '/_app/admin'
+    | '/invite/$token'
+    | '/_app/'
+    | '/_app/b/$bandSlug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -94,17 +120,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/b/$bandSlug': {
+      id: '/_app/b/$bandSlug'
+      path: '/b/$bandSlug'
+      fullPath: '/b/$bandSlug'
+      preLoaderRoute: typeof AppBBandSlugRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppBBandSlugRoute: typeof AppBBandSlugRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppIndexRoute: AppIndexRoute,
+  AppBBandSlugRoute: AppBBandSlugRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -112,6 +154,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

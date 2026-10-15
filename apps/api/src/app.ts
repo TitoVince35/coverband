@@ -9,7 +9,9 @@ import { apiError } from "./errors";
 import type { Mailer } from "./mail/mailer";
 import { loadSession, type SessionEnv } from "./middleware/session";
 import { adminRoutes } from "./routes/admin";
+import { bandRoutes } from "./routes/bands";
 import { health } from "./routes/health";
+import { invitationRoutes } from "./routes/invitations";
 
 /** Services the API routes use. Tests can pass a database that is never connected to. */
 export type AppDeps = {
@@ -34,7 +36,9 @@ function createApi(deps: AppDeps) {
   return new Hono<SessionEnv>()
     .use(loadSession(deps.auth))
     .route("/health", health)
-    .route("/admin", adminRoutes(deps));
+    .route("/admin", adminRoutes(deps))
+    .route("/invitations", invitationRoutes(deps))
+    .route("/bands", bandRoutes(deps));
 }
 
 export type AppType = ReturnType<typeof createApi>;

@@ -32,6 +32,14 @@ export function createAuth({ db, secret, baseURL, rateLimit = true }: AuthOption
       minPasswordLength: PASSWORD_MIN_LENGTH,
       maxPasswordLength: PASSWORD_MAX_LENGTH,
     },
+    // Profile fields, set by the onboarding wizards only (not through Better Auth endpoints).
+    user: {
+      additionalFields: {
+        firstName: { type: "string", required: false, input: false },
+        lastName: { type: "string", required: false, input: false },
+        nickname: { type: "string", required: false, input: false },
+      },
+    },
     // Global roles only ("admin" or "user"); band roles are per membership.
     plugins: [admin({ adminRoles: [ADMIN_ROLE] })],
     rateLimit: { enabled: rateLimit, storage: "database" },
