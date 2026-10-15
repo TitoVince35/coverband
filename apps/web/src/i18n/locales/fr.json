@@ -6,7 +6,27 @@
     "apiChecking": "vérification…",
     "apiOk": "ok",
     "apiUnreachable": "injoignable",
-    "checkAgain": "Vérifier à nouveau"
+    "checkAgain": "Vérifier à nouveau",
+    "greeting": "Bonjour {{name}}"
+  },
+  "login": {
+    "title": "Connexion",
+    "description": "Bon retour sur CoverBand.",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "submitting": "Connexion…",
+    "invalidCredentials": "E-mail ou mot de passe incorrect.",
+    "tooManyAttempts": "Trop de tentatives. Attendez une minute et réessayez.",
+    "invitationOnly": "Pas encore de compte ? CoverBand fonctionne uniquement sur invitation : demandez à votre leader."
+  },
+  "account": {
+    "menu": "Compte",
+    "logout": "Se déconnecter"
+  },
+  "admin": {
+    "title": "Administration",
+    "comingSoon": "La gestion des utilisateurs et les invitations de leaders arrivent bientôt."
   },
   "theme": {
     "change": "Changer de thème",

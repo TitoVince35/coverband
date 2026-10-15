@@ -6,7 +6,27 @@
     "apiChecking": "checking…",
     "apiOk": "ok",
     "apiUnreachable": "unreachable",
-    "checkAgain": "Check again"
+    "checkAgain": "Check again",
+    "greeting": "Hello {{name}}"
+  },
+  "login": {
+    "title": "Log in",
+    "description": "Welcome back to CoverBand.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "submitting": "Logging in…",
+    "invalidCredentials": "Wrong email or password.",
+    "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
+    "invitationOnly": "No account yet? CoverBand is by invitation only: ask your band leader."
+  },
+  "account": {
+    "menu": "Account",
+    "logout": "Log out"
+  },
+  "admin": {
+    "title": "Administration",
+    "comingSoon": "User management and band leader invitations are coming soon."
   },
   "theme": {
     "change": "Change theme",
