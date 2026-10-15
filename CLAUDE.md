@@ -24,7 +24,7 @@ bun run dev          # API (http://localhost:3000) + web app (http://localhost:5
 bun run dev:api      # API only, watch mode
 bun run dev:web      # web app only (Vite)
 bun run build        # build the web app into apps/web/dist
-bun run serve        # production-like: the API serves apps/web/dist on :3000
+bun run serve        # production-like: the API serves apps/web/dist on :3000 (open http://localhost:3000)
 bun run format       # apply Biome formatting and safe fixes
 bun test             # tests only (DB integration tests are skipped when DATABASE_URL is unset)
 
