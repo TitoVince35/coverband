@@ -29,10 +29,11 @@ bun run format       # apply Biome formatting and safe fixes
 bun test             # tests only (DB integration tests are skipped when DATABASE_URL is unset)
 
 cp .env.example .env # first time only
-bun run db:up        # start local Postgres (Docker, port 5432)
+bun run db:up        # start local Postgres (port 5432) and Mailpit (SMTP 1025, emails at http://localhost:8025)
 bun run db:generate  # generate a SQL migration from apps/api/src/db/schema.ts
 bun run db:migrate   # apply pending migrations
 bun run db:studio    # browse the database
+bun run mail:test you@example.com fr   # send a test email (lands in Mailpit locally)
 bun run db:down      # stop Postgres (add -v to docker compose down to wipe data)
 ```
 
@@ -48,6 +49,7 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 - **PWA:** configured in `apps/web/vite.config.ts` (vite-plugin-pwa, auto-update). Icons in `apps/web/public/` are generated from `public/logo.svg` with `bunx pwa-assets-generator --preset minimal-2023 public/logo.svg`.
 - **i18n (from day one):** English (default and fallback) and French. Never hardcode user-visible text: add the key to both `apps/web/src/i18n/locales/en.json` and `fr.json` and use `t("section.key")` from `useTranslation()`. Keys are typed from `en.json` (a typo fails the typecheck) and a test checks both files have the same keys. Language = saved choice (`localStorage` `coverband-language`), else the browser's languages, else English. Format dates and numbers with `Intl` and `i18n.language`; durations stay `m:ss` via `formatDuration`. Display API errors with `errorMessage(t, error)` from `@/lib/errors` (use `ensureOk(res)` on API responses). A new API error code needs a translation in both files (tested). Language names in the switch stay in their own language.
 - **Authentication:** Better Auth in `apps/api/src/auth.ts`, mounted at `/api/auth/*`; tables in `src/db/auth-schema.ts` (generated with `npx auth generate`, then adapted: regenerate and compare when adding a Better Auth plugin). Email + password, sessions in Postgres, **no public sign-up** (accounts only come from invitations), password policy from `@coverband/shared` (`PASSWORD_MIN_LENGTH`). Global role on the user: `admin` or `user` (admin plugin); band roles (leader, musician) live on the band membership, never on the user. The default admin is created at startup from `ADMIN_EMAIL` / `ADMIN_PASSWORD` only if missing (`src/bootstrap.ts`). API routes read `c.var.user` and guard with `requireUser` / `requireAdmin` (`src/middleware/session.ts`). Web: `authClient` and `sessionQuery` from `@/lib/auth`; pages needing a login go under `routes/_app/` (pathless layout that redirects to `/login`), public pages (login, invitations) outside it.
+- **Emails:** sent over SMTP by a `Mailer` (`apps/api/src/mail/mailer.ts`): Mailpit locally, Scaleway TEM in production, so the provider is only `SMTP_*` configuration. One function per email in `src/mail/templates.ts` returning an `EmailContent` per language (`Record<Language, ...>`, so a missing translation fails the typecheck), rendered by `renderEmail` (`src/mail/layout.ts`: inline-styled HTML + plain text, every value escaped). Send an email in the recipient's language. Tests use `createMemoryMailer()`; the Mailpit integration test runs when `MAILPIT_URL` is set (locally and in CI). Supported languages come from `@coverband/shared` (`LANGUAGES`), shared with the web app.
 - **Multi-tenancy:** every band-scoped table has a `band_id`; every band-scoped request checks that the user is a member of that band. The band is in the URL (`/b/:bandSlug/...`).
 - **Stateless server** (it runs on serverless containers): no in-memory sessions or caches that matter, no local file storage, no in-process cron. Sessions in Postgres, files in object storage.
 - Postgres goes through Scaleway's connection pooler: use the `postgres` driver with `prepare: false` (see `apps/api/src/db/client.ts`).

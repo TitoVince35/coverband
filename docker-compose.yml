@@ -1,4 +1,4 @@
-# Local development services. Production uses Scaleway Serverless SQL Database.
+# Local development services. Production uses Scaleway Serverless SQL Database and Scaleway TEM.
 services:
   db:
     image: postgres:16-alpine
@@ -15,6 +15,13 @@ services:
       interval: 2s
       timeout: 5s
       retries: 15
+
+  # Catches every email sent locally: SMTP on 1025, web UI and API on http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:v1.31
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   db-data:

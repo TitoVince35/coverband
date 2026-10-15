@@ -5,6 +5,9 @@ const valid = {
   DATABASE_URL: "postgres://u:p@localhost:5432/db",
   BETTER_AUTH_SECRET: "s".repeat(32),
   BETTER_AUTH_URL: "http://localhost:5173",
+  SMTP_HOST: "localhost",
+  SMTP_PORT: "1025",
+  MAIL_FROM: "CoverBand <noreply@coverband.localhost>",
 };
 
 describe("loadEnv", () => {
@@ -32,6 +35,14 @@ describe("loadEnv", () => {
     expect(() => loadEnv({ ...valid, ...admin, ADMIN_PASSWORD: "short" })).toThrow(
       /ADMIN_PASSWORD/,
     );
+  });
+
+  test("SMTP: port as a number, implicit TLS off unless asked", () => {
+    const env = loadEnv(valid);
+    expect(env.SMTP_PORT).toBe(1025);
+    expect(env.SMTP_SECURE).toBe(false);
+    expect(loadEnv({ ...valid, SMTP_PORT: "465", SMTP_SECURE: "true" }).SMTP_SECURE).toBe(true);
+    expect(() => loadEnv({ ...valid, SMTP_HOST: undefined })).toThrow(/SMTP_HOST/);
   });
 });
 

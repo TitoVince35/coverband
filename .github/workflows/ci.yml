@@ -34,8 +34,17 @@ jobs:
           --health-timeout 5s
           --health-retries 15
 
+      mailpit:
+        image: axllent/mailpit:v1.31
+        ports:
+          - 1025:1025
+          - 8025:8025
+
     env:
       DATABASE_URL: postgres://coverband:coverband@localhost:5432/coverband
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      MAILPIT_URL: http://localhost:8025
 
     steps:
       - uses: actions/checkout@v7

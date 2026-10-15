@@ -18,10 +18,11 @@
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun test",
     "check": "bun run lint && bun run typecheck && bun run test",
-    "db:up": "docker compose up -d --wait db",
+    "db:up": "docker compose up -d --wait db mailpit",
     "db:down": "docker compose down",
     "db:generate": "bun --env-file=.env run --filter @coverband/api db:generate",
     "db:migrate": "bun --env-file=.env run --filter @coverband/api db:migrate",
+    "mail:test": "bun --env-file=.env apps/api/src/mail/send-test.ts",
     "db:studio": "bun --env-file=.env run --filter @coverband/api db:studio"
   },
   "devDependencies": {
