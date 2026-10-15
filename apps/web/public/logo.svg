@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <title>CoverBand</title>
-  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  <rect width="512" height="512" rx="112" fill="#007a55"/>
   <g fill="#ffffff">
     <path d="M196 150 L376 116 L376 162 L196 196 Z"/>
     <rect x="196" y="150" width="22" height="210"/>

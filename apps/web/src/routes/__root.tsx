@@ -14,7 +14,7 @@ function RootLayout() {
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <header className="sticky top-0 z-10 border-b bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-2 px-4">
-          <Link to="/" className="flex items-center gap-2 font-semibold text-lg">
+          <Link to="/" className="flex items-center gap-2 font-heading font-semibold text-lg">
             <img src="/logo.svg" alt="" className="size-7" />
             CoverBand
           </Link>
