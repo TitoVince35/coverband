@@ -14,11 +14,14 @@ TypeScript and Bun end to end: Hono API, React + Vite PWA, PostgreSQL with Drizz
 
 ## Development
 
-Requires [Bun](https://bun.sh) 1.4+.
+Requires [Bun](https://bun.sh) 1.4+ and Docker.
 
 ```sh
 bun install
-bun run check   # lint + typecheck + tests
+cp .env.example .env
+bun run db:up       # local Postgres
+bun run db:migrate
+bun run check       # lint + typecheck + tests
 ```
 
 ## License
