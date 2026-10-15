@@ -4,7 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppDeps } from "../app";
-import { BandNameTakenError, updateBand } from "../bands";
+import { updateBandGenre } from "../bands";
 import { bandMembers, bands, users } from "../db/schema";
 import { apiError } from "../errors";
 import {
@@ -27,16 +27,14 @@ const inviteBody = z.object({
 
 const idParam = z.object({ bandSlug: z.string(), id: z.uuid() });
 
-const bandBody = z
-  .object({
-    name: z.string().trim().min(1).max(FIELD_MAX_LENGTH.bandName).optional(),
-    genre: z.string().trim().max(FIELD_MAX_LENGTH.genre).nullable().optional(),
-  })
-  .refine((body) => body.name !== undefined || body.genre !== undefined, "Nothing to change");
+// Only the genre can change: a band name is forever (it is also the band's URL).
+const bandBody = z.object({
+  genre: z.string().trim().max(FIELD_MAX_LENGTH.genre).nullable(),
+});
 
 /**
  * The logged-in user's bands (/api/bands). Everything under /:bandSlug requires membership
- * (404 otherwise); inviting musicians and editing the band require the band leader role.
+ * (404 otherwise); inviting musicians and changing the genre require the band leader role.
  */
 export function bandRoutes(deps: AppDeps) {
   const { db } = deps;
@@ -73,14 +71,8 @@ export function bandRoutes(deps: AppDeps) {
       requireLeader,
       zValidator("json", bandBody, validationHook),
       async (c) => {
-        try {
-          return c.json({ band: await updateBand(db, c.var.band.id, c.req.valid("json")) });
-        } catch (error) {
-          if (error instanceof BandNameTakenError) {
-            return apiError(c, 409, error.message, "band_name_taken");
-          }
-          throw error;
-        }
+        const { genre } = c.req.valid("json");
+        return c.json({ band: await updateBandGenre(db, c.var.band.id, genre) });
       },
     )
     .get("/:bandSlug/members", member, async (c) => {

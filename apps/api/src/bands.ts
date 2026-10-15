@@ -1,5 +1,5 @@
 import { slugify } from "@coverband/shared";
-import { and, eq, ne, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Db } from "./db/client";
 import { bands } from "./db/schema";
 
@@ -11,23 +11,22 @@ export class BandNameTakenError extends Error {
   }
 }
 
-/** Band names are unique regardless of case. `exceptId` ignores the band being renamed. */
-export async function isBandNameAvailable(db: Db | Tx, name: string, exceptId?: string) {
-  const sameName = eq(sql`lower(${bands.name})`, name.trim().toLowerCase());
+/** Band names are unique regardless of case. */
+export async function isBandNameAvailable(db: Db | Tx, name: string) {
   const [taken] = await db
     .select({ id: bands.id })
     .from(bands)
-    .where(exceptId ? and(sameName, ne(bands.id, exceptId)) : sameName);
+    .where(eq(sql`lower(${bands.name})`, name.trim().toLowerCase()));
   return taken === undefined;
 }
 
 /** The slug itself if free, else slug-2, slug-3... (two names can give the same slug). */
-async function freeSlug(tx: Tx, base: string, exceptId?: string): Promise<string> {
+async function freeSlug(tx: Tx, base: string): Promise<string> {
   const rows = await tx
-    .select({ id: bands.id, slug: bands.slug })
+    .select({ slug: bands.slug })
     .from(bands)
     .where(sql`${bands.slug} = ${base} or ${bands.slug} like ${`${base}-%`}`);
-  const used = new Set(rows.filter((row) => row.id !== exceptId).map((row) => row.slug));
+  const used = new Set(rows.map((row) => row.slug));
   let slug = base;
   for (let n = 2; used.has(slug); n++) {
     slug = `${base}-${n}`;
@@ -59,36 +58,17 @@ export async function createBand(
   }
 }
 
-/**
- * Renames a band and/or changes its genre. A new name gives a new slug, so the band's URL
- * changes: the caller sends the new slug back.
- */
-export async function updateBand(
+/** Changes a band's genre. The name (and so the URL) never changes: choose it carefully. */
+export async function updateBandGenre(
   db: Db,
   id: string,
-  input: { name?: string | undefined; genre?: string | null | undefined },
+  genre: string | null,
 ): Promise<{ name: string; slug: string; genre: string | null }> {
-  try {
-    return await db.transaction(async (tx) => {
-      const changes: { name?: string; slug?: string; genre?: string | null } = {};
-      if (input.name !== undefined) {
-        const name = input.name.trim();
-        if (!(await isBandNameAvailable(tx, name, id))) throw new BandNameTakenError();
-        changes.name = name;
-        changes.slug = await freeSlug(tx, slugify(name), id);
-      }
-      if (input.genre !== undefined) {
-        changes.genre = input.genre?.trim() || null;
-      }
-      const [band] = await tx
-        .update(bands)
-        .set(changes)
-        .where(eq(bands.id, id))
-        .returning({ name: bands.name, slug: bands.slug, genre: bands.genre });
-      if (!band) throw new Error("Band update returned nothing");
-      return band;
-    });
-  } catch (error) {
-    throw isNameClash(error) ? new BandNameTakenError() : error;
-  }
+  const [band] = await db
+    .update(bands)
+    .set({ genre: genre?.trim() || null })
+    .where(eq(bands.id, id))
+    .returning({ name: bands.name, slug: bands.slug, genre: bands.genre });
+  if (!band) throw new Error("Band update returned nothing");
+  return band;
 }

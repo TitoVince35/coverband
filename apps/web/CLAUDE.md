@@ -16,7 +16,7 @@ React + Vite + TanStack Router/Query. Cross-cutting rules are in the root `CLAUD
 - shadcn/ui (Radix base) in `src/components/ui/`, added with `bunx --bun shadcn@latest add <name>` from `apps/web`. Icons from `lucide-react`. `cn()` comes from shadcn's `cn` package.
 - Theme from shadcn preset `b6p43rVk5Q` (style `radix-maia`, mauve neutrals, emerald primary, Noto Sans body, Montserrat headings via `font-heading`); theme tokens live in `src/index.css`. Brand colour `#007a55` (emerald-700) is used for the logo and the light-mode `theme-color`.
 - **Colour theme:** dark by default, with a Light / Dark / System switch in the header, saved in `localStorage` (`coverband-theme`). Logic in `src/lib/theme.ts`, duplicated in an inline script in `index.html` that applies it before first paint: **keep both in sync**. Always style for both themes (`dark:` variants or theme tokens like `bg-background`).
-- Invitation UI is shared by admins and band leaders: `src/components/invitations/` (the "+" modal and the pending list). The onboarding wizard: `routes/invite.$token.tsx` + `src/components/onboarding/`; it shows in the invitation's language unless the device has a saved choice.
+- Invitation UI is shared by admins and band leaders: `src/components/invitations/` (the "+" modal and the pending list). The onboarding wizard: `routes/invite.$token.tsx` + `src/components/onboarding/`; it shows in the invitation's language unless the device has a saved choice. It tells band leaders to choose the band name carefully (it can't change).
 
 ## i18n
 

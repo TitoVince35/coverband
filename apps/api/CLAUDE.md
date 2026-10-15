@@ -34,7 +34,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 
 ## Bands
 
-Name and slug logic in `src/bands.ts` (renaming changes the slug, so the URL). Band names are unique case-insensitively; the slug comes from `slugify` in `@coverband/shared`.
+Name and slug logic in `src/bands.ts`. Band names are unique case-insensitively; the slug comes from `slugify` in `@coverband/shared`.
 
 ## Emails
 

@@ -18,7 +18,7 @@
     "comingSoon": "Le répertoire, les setlists et les concerts arrivent bientôt.",
     "roles": {
       "leader": "band leader",
-      "musician": "musicien·ne"
+      "musician": "zicos"
     },
     "home": "Accueil",
     "switch": "Changer de groupe",
@@ -29,14 +29,15 @@
       "name": "Nom du groupe",
       "genre": "Style",
       "genreHint": "Facultatif.",
-      "saved": "Groupe mis à jour"
+      "saved": "Groupe mis à jour",
+      "nameForever": "Le nom d'un groupe, c'est pour toujours : il ne peut pas être modifié."
     }
   },
   "lineup": {
     "title": "Line-up",
     "you": "vous",
     "invite": {
-      "new": "Inviter un musicien ou une musicienne",
+      "new": "Inviter un zicos",
       "title": "Inviter dans le groupe",
       "description": "Cette personne recevra un e-mail pour rejoindre {{band}}. Le lien est valable 48 heures."
     }
@@ -101,7 +102,8 @@
       "hasAccount": "Vous avez déjà un compte CoverBand avec {{email}}. Connectez-vous pour rejoindre {{band}}.",
       "submit": "Rejoindre le groupe",
       "submitting": "Envoi…"
-    }
+    },
+    "bandNameHint": "Choisissez bien : le nom d'un groupe, c'est pour toujours."
   },
   "account": {
     "menu": "Compte",

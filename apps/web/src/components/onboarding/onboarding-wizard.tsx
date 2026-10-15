@@ -217,11 +217,12 @@ export function OnboardingWizard({
         >
           <Field
             label={t("invite.bandName")}
-            hint={
-              values.bandName.trim()
-                ? t("invite.bandUrl", { slug: slugify(values.bandName) })
-                : undefined
-            }
+            hint={[
+              t("invite.bandNameHint"),
+              values.bandName.trim() ? t("invite.bandUrl", { slug: slugify(values.bandName) }) : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             error={bandError}
           >
             {(id) => (

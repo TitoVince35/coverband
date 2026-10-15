@@ -1,6 +1,5 @@
 import { FIELD_MAX_LENGTH } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Pencil } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,30 +21,23 @@ import { ensureOk, errorMessage } from "@/lib/errors";
 
 type Band = { name: string; slug: string; genre: string | null };
 
-/** Band leader only: edit the band's name and genre. A new name changes the band's URL. */
+/** Band leader only: edit the band's genre. The name is forever (it is also the band's URL). */
 export function EditBandDialog({ band }: { band: Band }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [open, setOpen] = useState(false);
 
   const save = useMutation({
-    mutationFn: async (values: { name: string; genre: string }) => {
+    mutationFn: async (genre: string) => {
       const res = await api.bands[":bandSlug"].$patch({
         param: { bandSlug: band.slug },
-        json: { name: values.name, genre: values.genre || null },
+        json: { genre: genre || null },
       });
       return (await (await ensureOk(res)).json()).band;
     },
-    onSuccess: async (updated) => {
+    onSuccess: async () => {
       toast.success(t("band.edit.saved"));
       setOpen(false);
-      if (updated.slug !== band.slug) {
-        // Same page, at the band's new address. The old address no longer exists.
-        await navigate({ to: pathname.replace(`/b/${band.slug}`, `/b/${updated.slug}`) });
-        queryClient.removeQueries({ queryKey: ["bands", band.slug] });
-      }
       await queryClient.invalidateQueries({ queryKey: ["bands"] });
     },
   });
@@ -57,8 +49,7 @@ export function EditBandDialog({ band }: { band: Band }) {
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    save.mutate({ name: String(form.get("name")), genre: String(form.get("genre")) });
+    save.mutate(String(new FormData(event.currentTarget).get("genre")));
   }
 
   return (
@@ -80,15 +71,8 @@ export function EditBandDialog({ band }: { band: Band }) {
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="band-name">{t("band.edit.name")}</Label>
-            <Input
-              id="band-name"
-              name="name"
-              defaultValue={band.name}
-              maxLength={FIELD_MAX_LENGTH.bandName}
-              required
-              autoComplete="off"
-              onChange={() => save.isError && save.reset()}
-            />
+            <Input id="band-name" value={band.name} disabled />
+            <p className="text-muted-foreground text-xs">{t("band.edit.nameForever")}</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="band-genre">{t("band.edit.genre")}</Label>
