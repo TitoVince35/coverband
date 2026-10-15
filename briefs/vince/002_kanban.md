@@ -12,4 +12,4 @@ I want to be able to create tasks in simple Trello-like Kanban-style tool that c
 
 - It must be free or self hosted on my Raspberry Pi.
 
--> decided to Githb Projects
+-> decided to GitHub Projects
