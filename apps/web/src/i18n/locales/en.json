@@ -30,6 +30,7 @@
     "loading": "Loading…",
     "cancel": "Cancel",
     "invite": {
+      "new": "New band leader",
       "title": "Invite a band leader",
       "description": "They'll receive an email to create their band. The link is valid for 48 hours.",
       "email": "Email",

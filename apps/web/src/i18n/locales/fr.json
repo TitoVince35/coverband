@@ -30,6 +30,7 @@
     "loading": "Chargement…",
     "cancel": "Annuler",
     "invite": {
+      "new": "Nouveau leader",
       "title": "Inviter un leader",
       "description": "Cette personne recevra un e-mail pour créer son groupe. Le lien est valable 48 heures.",
       "email": "E-mail",
