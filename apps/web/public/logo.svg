@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>CoverBand</title>
+  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  <g fill="#ffffff">
+    <path d="M196 150 L376 116 L376 162 L196 196 Z"/>
+    <rect x="196" y="150" width="22" height="210"/>
+    <rect x="354" y="116" width="22" height="210"/>
+    <ellipse cx="172" cy="360" rx="50" ry="38" transform="rotate(-20 172 360)"/>
+    <ellipse cx="330" cy="326" rx="50" ry="38" transform="rotate(-20 330 326)"/>
+  </g>
+</svg>

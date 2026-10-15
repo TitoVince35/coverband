@@ -22,6 +22,7 @@ cp .env.example .env
 bun run db:up       # local Postgres
 bun run db:migrate
 bun run check       # lint + typecheck + tests
+bun run dev         # API on :3000, web app on :5173
 ```
 
 ## License
