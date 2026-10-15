@@ -21,7 +21,14 @@ Product briefs and technical decisions live in `briefs/` (see below). Read them 
 bun install          # install all workspaces
 bun run check        # lint + typecheck + tests (run before every commit)
 bun run format       # apply Biome formatting and safe fixes
-bun test             # tests only
+bun test             # tests only (DB integration tests are skipped when DATABASE_URL is unset)
+
+cp .env.example .env # first time only
+bun run db:up        # start local Postgres (Docker, port 5432)
+bun run db:generate  # generate a SQL migration from apps/api/src/db/schema.ts
+bun run db:migrate   # apply pending migrations
+bun run db:studio    # browse the database
+bun run db:down      # stop Postgres (add -v to docker compose down to wipe data)
 ```
 
 ## Conventions
@@ -31,7 +38,9 @@ bun test             # tests only
 - Workspace packages are imported by name (`@coverband/shared`), never by relative path across packages.
 - **Multi-tenancy:** every band-scoped table has a `band_id`; every band-scoped request checks that the user is a member of that band. The band is in the URL (`/b/:bandSlug/...`).
 - **Stateless server** (it runs on serverless containers): no in-memory sessions or caches that matter, no local file storage, no in-process cron. Sessions in Postgres, files in object storage.
-- Postgres goes through Scaleway's connection pooler: use the `postgres` driver with `prepare: false`.
+- Postgres goes through Scaleway's connection pooler: use the `postgres` driver with `prepare: false` (see `apps/api/src/db/client.ts`).
+- Drizzle uses `casing: "snake_case"`: write camelCase in TypeScript, get snake_case columns. Commit generated migrations in `apps/api/drizzle/`; never edit an applied one.
+- Environment variables are validated with Zod in `apps/api/src/env.ts`; add new ones there and in `.env.example`.
 
 ## Briefs
 
