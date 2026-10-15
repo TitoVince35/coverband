@@ -8,7 +8,11 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "bun --env-file=.env run --filter './apps/*' dev",
     "dev:api": "bun --env-file=.env run --filter @coverband/api dev",
+    "dev:web": "bun run --filter @coverband/web dev",
+    "build": "bun run --filter @coverband/web build",
+    "serve": "WEB_DIST_DIR=apps/web/dist bun --env-file=.env apps/api/src/index.ts",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "bun run --filter '*' typecheck",
