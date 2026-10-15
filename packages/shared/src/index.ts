@@ -7,3 +7,4 @@ export {
   errorCodeForStatus,
   isErrorCode,
 } from "./errors";
+export { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language, pickLanguage } from "./languages";
