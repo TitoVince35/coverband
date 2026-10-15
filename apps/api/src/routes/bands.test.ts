@@ -15,7 +15,7 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
   const email = (name: string) => `${name}-${run}@test.localhost`;
   const password = "correct horse battery";
   const cookies: Record<string, string> = {};
-  let bandSlug = `band-${run}`;
+  const bandSlug = `band-${run}`;
   const otherSlug = `other-${run}`;
 
   async function login(address: string) {
@@ -255,30 +255,29 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
     );
   });
 
-  test("the band leader edits the band: a new name gives a new URL, taken names are refused", async () => {
-    const taken = await call(`/bands/${bandSlug}`, "leader", {
-      method: "PATCH",
-      body: { name: `${otherSlug.toUpperCase()} NAME` },
-    });
-    expect(taken.status).toBe(409);
-    expect(await errorCode(taken)).toBe("band_name_taken");
-
+  test("the band leader changes the genre; the name can't change", async () => {
     const res = await call(`/bands/${bandSlug}`, "leader", {
       method: "PATCH",
-      body: { name: `Renamed ${run}`, genre: "Funk" },
+      body: { genre: "Funk" },
     });
     expect(res.status).toBe(200);
-    const { band } = (await res.json()) as { band: { name: string; slug: string; genre: string } };
-    expect(band).toEqual({ name: `Renamed ${run}`, slug: `renamed-${run}`, genre: "Funk" });
-    bandSlug = band.slug;
-
-    const cleared = await call(`/bands/${bandSlug}`, "leader", {
-      method: "PATCH",
-      body: { genre: null },
+    expect(((await res.json()) as { band: unknown }).band).toEqual({
+      name: `${bandSlug} name`,
+      slug: bandSlug,
+      genre: "Funk",
     });
-    expect(((await cleared.json()) as { band: { genre: string | null } }).band.genre).toBeNull();
-    expect((await call(`/bands/${bandSlug}`, "leader", { method: "PATCH", body: {} })).status).toBe(
-      400,
-    );
+
+    // A name in the body is ignored: band names are forever.
+    const renamed = await call(`/bands/${bandSlug}`, "leader", {
+      method: "PATCH",
+      body: { name: "Renamed", genre: null },
+    });
+    expect(((await renamed.json()) as { band: unknown }).band).toEqual({
+      name: `${bandSlug} name`,
+      slug: bandSlug,
+      genre: null,
+    });
+    const empty = await call(`/bands/${bandSlug}`, "leader", { method: "PATCH", body: {} });
+    expect(empty.status).toBe(400);
   });
 });

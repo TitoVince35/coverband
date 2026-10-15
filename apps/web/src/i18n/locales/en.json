@@ -29,7 +29,8 @@
       "name": "Band name",
       "genre": "Genre",
       "genreHint": "Optional.",
-      "saved": "Band updated"
+      "saved": "Band updated",
+      "nameForever": "A band name is forever: it can't be changed."
     }
   },
   "lineup": {
@@ -101,7 +102,8 @@
       "hasAccount": "You already have a CoverBand account with {{email}}. Log in to join {{band}}.",
       "submit": "Join the band",
       "submitting": "Joining…"
-    }
+    },
+    "bandNameHint": "Choose carefully: a band name is forever."
   },
   "account": {
     "menu": "Account",
