@@ -3,6 +3,7 @@ import { serveStatic } from "@hono/bun";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
+import { apiError } from "./errors";
 import { health } from "./routes/health";
 
 export type AppOptions = {
@@ -26,15 +27,15 @@ export function createApp({ webDistDir, log = true }: AppOptions = {}) {
 
   app.onError((err, c) => {
     if (err instanceof HTTPException) {
-      return c.json({ error: err.message }, err.status);
+      return apiError(c, err.status, err.message);
     }
     console.error(err);
-    return c.json({ error: "Internal server error" }, 500);
+    return apiError(c, 500, "Internal server error");
   });
 
   app.route("/api", api);
   // Unknown API routes stay JSON 404s, never the web app shell.
-  app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
+  app.all("/api/*", (c) => apiError(c, 404, "Not found"));
 
   if (webDistDir) {
     const root = resolve(webDistDir);

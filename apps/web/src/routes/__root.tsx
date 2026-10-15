@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
+import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export type RouterContext = {
@@ -19,7 +20,8 @@ function RootLayout() {
             <img src="/logo.svg" alt="" className="size-7" />
             CoverBand
           </Link>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
+            <LanguageToggle />
             <ThemeToggle />
           </div>
         </div>
