@@ -22,8 +22,9 @@ export default defineConfig({
         start_url: "/",
         scope: "/",
         display: "standalone",
-        background_color: "#ffffff",
-        theme_color: "#007a55",
+        // Dark by default: splash screen and title bar match the dark theme.
+        background_color: "#0c090c",
+        theme_color: "#0c090c",
         icons: [
           { src: "pwa-64x64.png", sizes: "64x64", type: "image/png" },
           { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },

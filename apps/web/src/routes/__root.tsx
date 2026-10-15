@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export type RouterContext = {
   queryClient: QueryClient;
@@ -18,6 +19,9 @@ function RootLayout() {
             <img src="/logo.svg" alt="" className="size-7" />
             CoverBand
           </Link>
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
