@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { isLanguage, LANGUAGES, type Language } from "@/i18n/languages";
+import { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language } from "@/i18n/languages";
 import { adminInvitationsQuery } from "@/lib/admin";
 import { api } from "@/lib/api";
 import { ensureOk, errorMessage } from "@/lib/errors";
@@ -21,8 +21,12 @@ import { ensureOk, errorMessage } from "@/lib/errors";
 export function InviteLeaderForm() {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
-  const current = i18n.resolvedLanguage;
-  const [language, setLanguage] = useState<Language>(isLanguage(current) ? current : "en");
+  // The email's language defaults to the admin's own language, and follows it until changed.
+  const adminLanguage = isLanguage(i18n.resolvedLanguage)
+    ? i18n.resolvedLanguage
+    : DEFAULT_LANGUAGE;
+  const [chosen, setChosen] = useState<Language | null>(null);
+  const language = chosen ?? adminLanguage;
 
   const invite = useMutation({
     mutationFn: async (email: string) =>
@@ -37,7 +41,12 @@ export function InviteLeaderForm() {
     event.preventDefault();
     const form = event.currentTarget;
     const email = String(new FormData(form).get("email"));
-    invite.mutate(email, { onSuccess: () => form.reset() });
+    invite.mutate(email, {
+      onSuccess: () => {
+        form.reset();
+        setChosen(null);
+      },
+    });
   }
 
   return (
@@ -64,7 +73,7 @@ export function InviteLeaderForm() {
               <Label htmlFor="invite-language">{t("admin.invite.language")}</Label>
               <Select
                 value={language}
-                onValueChange={(value) => isLanguage(value) && setLanguage(value)}
+                onValueChange={(value) => isLanguage(value) && setChosen(value)}
               >
                 <SelectTrigger id="invite-language" className="w-full sm:w-36">
                   <SelectValue />
