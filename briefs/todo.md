@@ -11,3 +11,5 @@ This is a reminder of the briefs to be created.
 - [ ] UI : User homepage, Band homepage
 - [ ] Feature : internal chat ?
 - [ ] UI : admin console (hompage, features)
+- [ ] Feature : Activity - events logs (Johnny added a media to "Born to be wild")
+- [ ] Tech : Push notifications for the events
