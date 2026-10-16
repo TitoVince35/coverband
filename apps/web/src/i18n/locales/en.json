@@ -51,7 +51,32 @@
     "submitting": "Logging in…",
     "invalidCredentials": "Wrong email or password.",
     "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
-    "invitationOnly": "No account yet? CoverBand is by invitation only: ask your band leader."
+    "invitationOnly": "No account yet? CoverBand is by invitation only: ask your band leader.",
+    "forgotPassword": "Forgot password?"
+  },
+  "forgotPassword": {
+    "title": "Forgot your password?",
+    "description": "Enter your account's email: we'll send you a link to choose a new password.",
+    "submit": "Send the link",
+    "submitting": "Sending…",
+    "sent": "If an account exists for {{email}}, a link has been sent to it. It's valid for 1 hour.",
+    "backToLogin": "Back to login"
+  },
+  "resetPassword": {
+    "title": "Choose a new password",
+    "description": "Every device will be logged out, then you can log in with the new password.",
+    "submit": "Save the password",
+    "submitting": "Saving…",
+    "done": "Password changed. Log in with your new password.",
+    "invalidLink": "This link isn't valid or has expired. Ask for a new one.",
+    "requestNew": "Get a new link"
+  },
+  "password": {
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm the new password",
+    "hint": "At least {{min}} characters.",
+    "mismatch": "The passwords don't match."
   },
   "invite": {
     "loading": "Loading your invitation…",
@@ -87,9 +112,7 @@
     "genreSuggestions": "Rock,Pop,Funk,Soul,Blues,Jazz,Reggae,Metal,Folk,French pop",
     "checking": "Checking…",
     "password": "Password",
-    "passwordHint": "At least {{min}} characters.",
     "confirmPassword": "Confirm password",
-    "passwordMismatch": "The passwords don't match.",
     "email": "Email",
     "name": "Name",
     "band": "Band",
@@ -107,7 +130,16 @@
   },
   "account": {
     "menu": "Account",
-    "logout": "Log out"
+    "logout": "Log out",
+    "title": "My account",
+    "changePassword": {
+      "title": "Change password",
+      "description": "Your other devices will be logged out.",
+      "submit": "Change password",
+      "submitting": "Changing…",
+      "done": "Password changed.",
+      "wrongCurrent": "The current password is wrong."
+    }
   },
   "admin": {
     "title": "Administration",

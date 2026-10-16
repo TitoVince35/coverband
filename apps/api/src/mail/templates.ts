@@ -98,3 +98,30 @@ export function musicianInvitationEmail(
   };
   return build(to, language, content[language]);
 }
+
+/** "Forgot password?" on the login page (#24): the link opens the reset form. */
+export function passwordResetEmail(to: string, language: Language, { url }: { url: string }): Mail {
+  const content: Record<Language, EmailContent> = {
+    en: {
+      subject: "Reset your CoverBand password",
+      heading: "Reset your password",
+      paragraphs: [
+        "Someone asked to reset the password of your CoverBand account. Choose a new one with the button below.",
+        "This link is valid for 1 hour and can only be used once.",
+      ],
+      action: { label: "Choose a new password", url },
+      footer: `You received this email because a password reset was requested for ${to}. If it wasn't you, ignore it: your password stays the same.`,
+    },
+    fr: {
+      subject: "Réinitialisez votre mot de passe CoverBand",
+      heading: "Réinitialisation du mot de passe",
+      paragraphs: [
+        "Une demande de réinitialisation du mot de passe de votre compte CoverBand a été faite. Choisissez-en un nouveau avec le bouton ci-dessous.",
+        "Ce lien est valable 1 heure et ne peut servir qu'une fois.",
+      ],
+      action: { label: "Choisir un nouveau mot de passe", url },
+      footer: `Vous recevez cet e-mail car une réinitialisation du mot de passe a été demandée pour ${to}. Si vous n'en êtes pas à l'origine, ignorez-le : votre mot de passe ne change pas.`,
+    },
+  };
+  return build(to, language, content[language]);
+}

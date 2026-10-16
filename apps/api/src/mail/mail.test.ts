@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { escapeHtml, renderEmail } from "./layout";
 import { createSmtpMailer } from "./mailer";
-import { testEmail } from "./templates";
+import { passwordResetEmail, testEmail } from "./templates";
 
 describe("email layout", () => {
   const content = {
@@ -42,6 +42,16 @@ describe("templates", () => {
     expect(en.subject).toBe("CoverBand test email");
     expect(fr.subject).toBe("E-mail de test CoverBand");
     expect(fr.text).toContain("http://localhost:5173");
+  });
+
+  test("the password reset email carries the link and its lifetime in every language", () => {
+    const url = "http://localhost:5173/api/auth/reset-password/abc?callbackURL=%2Freset-password";
+    const en = passwordResetEmail("a@example.com", "en", { url });
+    const fr = passwordResetEmail("a@example.com", "fr", { url });
+    expect(en.text).toContain(url);
+    expect(en.text).toContain("1 hour");
+    expect(fr.subject).toBe("Réinitialisez votre mot de passe CoverBand");
+    expect(fr.text).toContain("1 heure");
   });
 });
 

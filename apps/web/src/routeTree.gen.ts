@@ -10,8 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppAccountRouteImport } from './routes/_app/account'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppBBandSlugRouteImport } from './routes/_app/b.$bandSlug'
@@ -22,14 +25,29 @@ const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountRoute = AppAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminRoute = AppAdminRouteImport.update({
@@ -60,7 +78,10 @@ const AppBBandSlugLineupRoute = AppBBandSlugLineupRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/account': typeof AppAccountRoute
   '/admin': typeof AppAdminRoute
   '/invite/$token': typeof InviteTokenRoute
   '/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
@@ -68,7 +89,10 @@ export interface FileRoutesByFullPath {
   '/b/$bandSlug/': typeof AppBBandSlugIndexRoute
 }
 export interface FileRoutesByTo {
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/account': typeof AppAccountRoute
   '/admin': typeof AppAdminRoute
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AppIndexRoute
@@ -78,7 +102,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_app/account': typeof AppAccountRoute
   '/_app/admin': typeof AppAdminRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_app/': typeof AppIndexRoute
@@ -90,7 +117,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
+    | '/account'
     | '/admin'
     | '/invite/$token'
     | '/b/$bandSlug'
@@ -98,7 +128,10 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
+    | '/account'
     | '/admin'
     | '/invite/$token'
     | '/'
@@ -107,7 +140,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_app'
+    | '/forgot-password'
     | '/login'
+    | '/reset-password'
+    | '/_app/account'
     | '/_app/admin'
     | '/invite/$token'
     | '/_app/'
@@ -118,7 +154,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   InviteTokenRoute: typeof InviteTokenRoute
 }
 
@@ -131,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -138,11 +183,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/': {
       id: '/_app/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/account': {
+      id: '/_app/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AppAccountRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/admin': {
@@ -198,12 +257,14 @@ const AppBBandSlugRouteWithChildren = AppBBandSlugRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAccountRoute: typeof AppAccountRoute
   AppAdminRoute: typeof AppAdminRoute
   AppIndexRoute: typeof AppIndexRoute
   AppBBandSlugRoute: typeof AppBBandSlugRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAccountRoute: AppAccountRoute,
   AppAdminRoute: AppAdminRoute,
   AppIndexRoute: AppIndexRoute,
   AppBBandSlugRoute: AppBBandSlugRouteWithChildren,
@@ -213,7 +274,9 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport

@@ -51,7 +51,32 @@
     "submitting": "Connexion…",
     "invalidCredentials": "E-mail ou mot de passe incorrect.",
     "tooManyAttempts": "Trop de tentatives. Attendez une minute et réessayez.",
-    "invitationOnly": "Pas encore de compte ? CoverBand fonctionne uniquement sur invitation : demandez à votre band leader."
+    "invitationOnly": "Pas encore de compte ? CoverBand fonctionne uniquement sur invitation : demandez à votre band leader.",
+    "forgotPassword": "Mot de passe oublié ?"
+  },
+  "forgotPassword": {
+    "title": "Mot de passe oublié ?",
+    "description": "Saisissez l'e-mail de votre compte : nous vous enverrons un lien pour choisir un nouveau mot de passe.",
+    "submit": "Envoyer le lien",
+    "submitting": "Envoi…",
+    "sent": "Si un compte existe pour {{email}}, un lien vient d'y être envoyé. Il est valable 1 heure.",
+    "backToLogin": "Retour à la connexion"
+  },
+  "resetPassword": {
+    "title": "Choisir un nouveau mot de passe",
+    "description": "Tous vos appareils seront déconnectés, puis vous pourrez vous connecter avec le nouveau mot de passe.",
+    "submit": "Enregistrer le mot de passe",
+    "submitting": "Enregistrement…",
+    "done": "Mot de passe modifié. Connectez-vous avec le nouveau.",
+    "invalidLink": "Ce lien n'est pas valide ou a expiré. Demandez-en un nouveau.",
+    "requestNew": "Recevoir un nouveau lien"
+  },
+  "password": {
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "confirm": "Confirmez le nouveau mot de passe",
+    "hint": "Au moins {{min}} caractères.",
+    "mismatch": "Les mots de passe ne correspondent pas."
   },
   "invite": {
     "loading": "Chargement de votre invitation…",
@@ -87,9 +112,7 @@
     "genreSuggestions": "Rock,Pop,Funk,Soul,Blues,Jazz,Reggae,Metal,Folk,Variété française",
     "checking": "Vérification…",
     "password": "Mot de passe",
-    "passwordHint": "Au moins {{min}} caractères.",
     "confirmPassword": "Confirmez le mot de passe",
-    "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "email": "E-mail",
     "name": "Nom",
     "band": "Groupe",
@@ -107,7 +130,16 @@
   },
   "account": {
     "menu": "Compte",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "title": "Mon compte",
+    "changePassword": {
+      "title": "Changer de mot de passe",
+      "description": "Vos autres appareils seront déconnectés.",
+      "submit": "Changer le mot de passe",
+      "submitting": "Modification…",
+      "done": "Mot de passe modifié.",
+      "wrongCurrent": "Le mot de passe actuel est incorrect."
+    }
   },
   "admin": {
     "title": "Administration",

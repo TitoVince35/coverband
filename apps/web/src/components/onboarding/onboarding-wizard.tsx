@@ -1,13 +1,9 @@
-import {
-  FIELD_MAX_LENGTH,
-  PASSWORD_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
-  slugify,
-} from "@coverband/shared";
+import { FIELD_MAX_LENGTH, slugify } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, type ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { NewPasswordFields, readNewPassword } from "@/components/account/new-password-fields";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -329,7 +325,7 @@ function StepForm({
   submitLabel,
   children,
 }: {
-  onSubmit: () => void;
+  onSubmit: (form: HTMLFormElement) => void;
   onBack: (() => void) | null;
   pending?: boolean;
   submitLabel?: string;
@@ -338,9 +334,9 @@ function StepForm({
   const { t } = useTranslation();
   return (
     <form
-      onSubmit={(event: FormEvent) => {
+      onSubmit={(event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        onSubmit();
+        onSubmit(event.currentTarget);
       }}
     >
       <CardContent className="space-y-4">{children}</CardContent>
@@ -459,62 +455,27 @@ function PasswordStep({
   onBack: () => void;
 }) {
   const { t } = useTranslation();
-  const [first, setFirst] = useState(password);
-  const [second, setSecond] = useState(password);
   const [mismatch, setMismatch] = useState(false);
 
   return (
     <StepForm
-      onSubmit={() => {
-        if (first !== second) {
+      onSubmit={(form) => {
+        const value = readNewPassword(new FormData(form));
+        if (value === null) {
           setMismatch(true);
         } else {
-          onDone(first);
+          onDone(value);
         }
       }}
       onBack={onBack}
     >
-      <Field
-        label={t("invite.password")}
-        hint={t("invite.passwordHint", { min: PASSWORD_MIN_LENGTH })}
-      >
-        {(id) => (
-          <Input
-            id={id}
-            type="password"
-            value={first}
-            onChange={(e) => {
-              setFirst(e.target.value);
-              setMismatch(false);
-            }}
-            autoComplete="new-password"
-            minLength={PASSWORD_MIN_LENGTH}
-            maxLength={PASSWORD_MAX_LENGTH}
-            required
-            autoFocus
-          />
-        )}
-      </Field>
-      <Field
-        label={t("invite.confirmPassword")}
-        error={mismatch ? t("invite.passwordMismatch") : null}
-      >
-        {(id) => (
-          <Input
-            id={id}
-            type="password"
-            value={second}
-            onChange={(e) => {
-              setSecond(e.target.value);
-              setMismatch(false);
-            }}
-            autoComplete="new-password"
-            maxLength={PASSWORD_MAX_LENGTH}
-            required
-            aria-invalid={mismatch ? true : undefined}
-          />
-        )}
-      </Field>
+      <NewPasswordFields
+        mismatch={mismatch}
+        onChange={() => setMismatch(false)}
+        defaultValue={password}
+        labels={{ password: t("invite.password"), confirm: t("invite.confirmPassword") }}
+        autoFocus
+      />
     </StepForm>
   );
 }
