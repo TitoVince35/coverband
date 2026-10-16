@@ -150,6 +150,9 @@
     "dark": "Dark",
     "system": "System"
   },
+  "dev": {
+    "openMailpit": "Open Mailpit (emails sent locally)"
+  },
   "language": {
     "change": "Change language"
   },
