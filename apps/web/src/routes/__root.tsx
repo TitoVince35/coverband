@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
 import { LanguageToggle } from "@/components/language-toggle";
+import { MailpitLink } from "@/components/mailpit-link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,6 +26,8 @@ function RootLayout() {
               CoverBand
             </Link>
             <div className="ml-auto flex items-center gap-1">
+              {/* Statically false in production builds, so the link is left out. */}
+              {import.meta.env.DEV && <MailpitLink />}
               <LanguageToggle />
               <ThemeToggle />
               <UserMenu />
