@@ -1,5 +1,7 @@
 # Managing tasks workflow
 
+> 🕒 Brief posted on Thursday 2026/10/15 17:28
+
 I want to be able to create tasks in simple Trello-like Kanban-style tool that can be shared with you.
 
 ## What I expect from this tool - usage

@@ -1,5 +1,7 @@
 # Initial brief - Coverband
 
+> 🕒 Brief posted on Thursday 2026/10/15 17:28
+
 I want to create an application to help music groups in their activities.
 
 ## Non exhaustive list of what topics we will address

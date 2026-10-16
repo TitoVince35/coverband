@@ -1,5 +1,7 @@
 # Authentication and sign-up
 
+> 🕒 Brief posted on Friday 2026/10/16 00:21
+
 NB: After each brief, I may ask you to "correct and review" it.
 - **Correct** means: make sure the document is clear and written in proper English.
 - **Review** means: you are invited to challenge the brief.
