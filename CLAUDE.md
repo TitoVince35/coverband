@@ -58,3 +58,16 @@ They track the product scaffolding and the design decisions made along the way. 
 - `briefs/vince/NNN_title.md`: Vince's briefs. Vince writes them without the timestamp line; Claude adds it when asked to review the brief, using the time of that request.
 - `briefs/claude/NNN_title.md`: Claude's proposals and answers, numbered in their own sequence (not matched to Vince's numbers).
 - Only save a reply to `briefs/claude/` when Vince explicitly asks.
+- A Vince brief's timestamp block grows with its life cycle, one line per step, same format, separated by `>` lines:
+
+  ```md
+  > 🕒 Brief posted on Friday 2026/10/16 18:04
+  >
+  > 🕒 Brief settled on Friday 2026/10/16 18:30
+  >
+  > 🕒 Issues completed on Friday 2026/10/30 11:12
+  ```
+
+  - **Settled:** added when Vince declares the brief settled (decisions made), with the time of that request.
+  - **Issues:** when planning a brief creates issues, list them in an `## Issues` section at the end of the Vince brief, one link per issue with its title: `- [#42 Structured logging](https://github.com/TitoVince35/coverband/issues/42)`.
+  - **Issues completed:** added once every issue in that list is closed, with the time the last one was closed.
