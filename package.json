@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun --env-file=.env run --filter './apps/*' dev",
+    "dev": "bun --env-file=.env run --parallel --filter './apps/*' dev",
     "dev:api": "bun --env-file=.env run --filter @coverband/api dev",
     "dev:web": "bun run --filter @coverband/web dev",
     "build": "bun run --filter @coverband/web build",
