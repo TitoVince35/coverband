@@ -22,6 +22,7 @@ App-specific conventions: `apps/api/CLAUDE.md` and `apps/web/CLAUDE.md`. Task wo
 bun install          # install all workspaces
 bun run check        # lint + typecheck + tests (run before every commit)
 bun run dev          # API (http://localhost:3000) + web app (http://localhost:5173, proxies /api)
+bun run dev:lan      # same, reachable from a phone on the local network: prints a QR code (LAN IP override: DEV_HOST)
 bun run dev:api      # API only, watch mode
 bun run dev:web      # web app only (Vite)
 bun run build        # build the web app into apps/web/dist

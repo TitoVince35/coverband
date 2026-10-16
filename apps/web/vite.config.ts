@@ -47,6 +47,8 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   server: {
+    // `bun run dev:lan` opens the dev server to the local network (phones); localhost only otherwise.
+    host: process.env.DEV_LAN ? true : "localhost",
     // The API runs separately in development (`bun run dev:api`).
     proxy: { "/api": "http://localhost:3000" },
   },

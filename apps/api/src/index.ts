@@ -7,7 +7,12 @@ import { createSmtpMailer } from "./mail/mailer";
 
 const env = loadEnv();
 const { db } = createDb(env.DATABASE_URL);
-const auth = createAuth({ db, secret: env.BETTER_AUTH_SECRET, baseURL: env.BETTER_AUTH_URL });
+const auth = createAuth({
+  db,
+  secret: env.BETTER_AUTH_SECRET,
+  baseURL: env.BETTER_AUTH_URL,
+  trustedOrigins: env.TRUSTED_ORIGINS,
+});
 
 if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
   const result = await ensureAdmin(auth, { email: env.ADMIN_EMAIL, password: env.ADMIN_PASSWORD });

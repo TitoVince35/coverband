@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "dev": "bun --env-file=.env run --parallel --filter './apps/*' dev",
+    "dev:lan": "bun --env-file=.env apps/api/src/dev/lan.ts",
     "dev:api": "bun --env-file=.env run --filter @coverband/api dev",
     "dev:web": "bun run --filter @coverband/web dev",
     "build": "bun run --filter @coverband/web build",
