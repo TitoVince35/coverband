@@ -26,7 +26,7 @@ import { sessionQuery } from "@/lib/auth";
 import { myBandsQuery } from "@/lib/bands";
 import { ApiRequestError, ensureOk, errorMessage } from "@/lib/errors";
 
-type Step = "profile" | "band" | "password" | "review";
+type Step = "profile" | "band" | "instrument" | "password" | "review";
 
 type Values = {
   firstName: string;
@@ -48,26 +48,38 @@ const EMPTY: Values = {
   password: "",
 };
 
+/** Steps of each path: band leaders create a band (#23), musicians join one (#7). */
+function stepsFor(joining: boolean, newAccount: boolean): Step[] {
+  if (joining) {
+    return newAccount ? ["profile", "password", "review"] : ["instrument", "review"];
+  }
+  return newAccount ? ["profile", "band", "password", "review"] : ["band", "review"];
+}
+
 /**
- * Band leader onboarding (#23). Nothing is created until the last step: then the account (for a
- * new user), the band and the membership are created together, and the user lands on the band.
- * Someone who already has an account (and is logged in) only fills in the band.
+ * Onboarding from an invitation. Nothing is created until the last step: then the account (for a
+ * new user) and the membership (with the band, for a band leader) are created together, and the
+ * user lands on the band. Someone who already has an account (and is logged in) only fills in the
+ * band, or their instrument in the band they join.
  */
-export function LeaderWizard({
+export function OnboardingWizard({
   token,
   email,
   inviterName,
+  joining,
   newAccount,
 }: {
   token: string;
   email: string;
   inviterName: string;
+  /** Name of the band a musician joins; null for a band leader, who creates one. */
+  joining: string | null;
   newAccount: boolean;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const steps: Step[] = newAccount ? ["profile", "band", "password", "review"] : ["band", "review"];
+  const steps = stepsFor(joining !== null, newAccount);
   const [index, setIndex] = useState(0);
   const [values, setValues] = useState<Values>(EMPTY);
   const [bandError, setBandError] = useState<string | null>(null);
@@ -99,8 +111,7 @@ export function LeaderWizard({
         param: { token },
         json: {
           instrument,
-          bandName,
-          genre: genre || undefined,
+          ...(joining === null ? { bandName, genre: genre || undefined } : {}),
           newAccount: newAccount
             ? { firstName, lastName, nickname: nickname || undefined, password }
             : undefined,
@@ -148,7 +159,11 @@ export function LeaderWizard({
         </p>
         <CardTitle className="font-heading text-xl">{t(`invite.steps.${step}`)}</CardTitle>
         {index === 0 && (
-          <CardDescription>{t("invite.intro", { inviter: inviterName })}</CardDescription>
+          <CardDescription>
+            {joining === null
+              ? t("invite.intro", { inviter: inviterName })
+              : t("invite.join.intro", { inviter: inviterName, band: joining })}
+          </CardDescription>
         )}
       </CardHeader>
 
@@ -202,11 +217,12 @@ export function LeaderWizard({
         >
           <Field
             label={t("invite.bandName")}
-            hint={
-              values.bandName.trim()
-                ? t("invite.bandUrl", { slug: slugify(values.bandName) })
-                : undefined
-            }
+            hint={[
+              t("invite.bandNameHint"),
+              values.bandName.trim() ? t("invite.bandUrl", { slug: slugify(values.bandName) }) : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             error={bandError}
           >
             {(id) => (
@@ -240,6 +256,12 @@ export function LeaderWizard({
         </StepForm>
       )}
 
+      {step === "instrument" && (
+        <StepForm onSubmit={next} onBack={null}>
+          <InstrumentField value={values.instrument} onChange={set("instrument")} />
+        </StepForm>
+      )}
+
       {step === "password" && (
         <PasswordStep
           password={values.password}
@@ -256,7 +278,15 @@ export function LeaderWizard({
           onSubmit={() => create.mutate()}
           onBack={back}
           pending={create.isPending}
-          submitLabel={create.isPending ? t("invite.creating") : t("invite.create")}
+          submitLabel={
+            joining === null
+              ? create.isPending
+                ? t("invite.creating")
+                : t("invite.create")
+              : create.isPending
+                ? t("invite.join.submitting")
+                : t("invite.join.submit")
+          }
         >
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
             <ReviewRow label={t("invite.email")} value={email} />
@@ -273,8 +303,10 @@ export function LeaderWizard({
               </>
             )}
             <ReviewRow label={t("invite.instrument")} value={values.instrument} />
-            <ReviewRow label={t("invite.band")} value={values.bandName} />
-            <ReviewRow label={t("invite.genre")} value={values.genre || t("invite.none")} />
+            <ReviewRow label={t("invite.band")} value={joining ?? values.bandName} />
+            {joining === null && (
+              <ReviewRow label={t("invite.genre")} value={values.genre || t("invite.none")} />
+            )}
           </dl>
           {create.isError &&
             !(

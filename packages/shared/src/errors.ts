@@ -17,6 +17,7 @@ export const ERROR_CODES = [
   "invitation_used",
   "invitation_wrong_account",
   "band_name_taken",
+  "already_member",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

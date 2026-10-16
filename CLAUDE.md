@@ -45,9 +45,9 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 - Workspace packages are imported by name (`@coverband/shared`), never by relative path across packages.
 - **API errors** are JSON `{ "error": { "code", "message" } }`: `code` is a stable code from `ERROR_CODES` in `@coverband/shared` that the web app translates (a new code needs a translation in both locale files, tested); `message` is an English fallback for developers.
 - **i18n from day one:** English (default and fallback) and French, in the web app and in emails. Never hardcode user-visible text. Supported languages: `LANGUAGES` in `@coverband/shared`.
-- **Vocabulary (all languages, UI and emails):** "band leader" is never translated (French: "un band leader", never "leader" alone or "chef de groupe"). Musicians' terms like "setlist" also stay as they are. In French, prefer gender-neutral wording ("envoyée par", "membre depuis") over a masculine default.
+- **Vocabulary (all languages, UI and emails):** "band leader" is never translated (French: "un band leader", never "leader" alone or "chef de groupe"). Musicians' terms like "setlist" also stay as they are. In French, a musician (the band role) is « zicos » (invariable, gender-neutral): « un zicos », « Inviter un zicos ». In French, prefer gender-neutral wording ("envoyée par", "membre depuis") over a masculine default.
 - **Accounts:** no public sign-up; accounts only come from invitations. Global role on the user (`admin` / `user`); band roles (`leader` / `musician`) live on the band membership, never on the user.
-- **Multi-tenancy:** every band-scoped table has a `band_id`; every band-scoped request checks that the user is a member of that band (non-members get a 404). The band is in the URL (`/b/:bandSlug/...`).
+- **Multi-tenancy:** every band-scoped table has a `band_id`; every band-scoped request checks that the user is a member of that band (non-members get a 404). The band is in the URL (`/b/:bandSlug/...`). **A band name is forever** (it is also the URL): it can't be renamed, only the genre changes.
 - **Stateless server** (it runs on serverless containers): no in-memory sessions or caches that matter, no local file storage, no in-process cron. Sessions in Postgres, files in object storage.
 
 ## Briefs

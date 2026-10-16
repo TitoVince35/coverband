@@ -18,7 +18,7 @@ export function UsersList() {
       </CardHeader>
       <CardContent>
         {users.isPending ? (
-          <p className="text-muted-foreground text-sm">{t("admin.loading")}</p>
+          <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
         ) : users.isError ? (
           <p role="alert" className="text-destructive text-sm">
             {errorMessage(t, users.error)}

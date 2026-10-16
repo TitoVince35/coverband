@@ -13,3 +13,33 @@ export const bandQuery = (bandSlug: string) =>
     queryFn: async () =>
       (await ensureOk(await api.bands[":bandSlug"].$get({ param: { bandSlug } }))).json(),
   });
+
+export const membersQuery = (bandSlug: string) =>
+  queryOptions({
+    queryKey: ["bands", bandSlug, "members"],
+    queryFn: async () =>
+      (
+        await (
+          await ensureOk(await api.bands[":bandSlug"].members.$get({ param: { bandSlug } }))
+        ).json()
+      ).members,
+  });
+
+/** Musician invitations of a band, for its leader. */
+export const bandInvitations = (bandSlug: string) => ({
+  queryKey: ["bands", bandSlug, "invitations"] as const,
+  list: async () =>
+    (
+      await (
+        await ensureOk(await api.bands[":bandSlug"].invitations.$get({ param: { bandSlug } }))
+      ).json()
+    ).invitations,
+  invite: async (json: { email: string; language: "en" | "fr" }) =>
+    ensureOk(await api.bands[":bandSlug"].invitations.$post({ param: { bandSlug }, json })),
+  resend: async (id: string) =>
+    ensureOk(
+      await api.bands[":bandSlug"].invitations[":id"].resend.$post({ param: { bandSlug, id } }),
+    ),
+  revoke: async (id: string) =>
+    ensureOk(await api.bands[":bandSlug"].invitations[":id"].$delete({ param: { bandSlug, id } })),
+});

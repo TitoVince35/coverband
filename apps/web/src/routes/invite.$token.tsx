@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { type ReactNode, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { LeaderWizard } from "@/components/onboarding/leader-wizard";
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import i18n, { readStoredLanguage } from "@/i18n";
@@ -51,16 +51,15 @@ function InvitePage() {
     );
   }
 
-  const { email, role, inviterName, hasAccount } = invitation.data;
+  const { email, role, inviterName, bandName, hasAccount } = invitation.data;
   const current = session.data?.user.email;
   const loginPath = `/invite/${token}`;
-
-  if (role !== "leader") {
-    return <Shell title={t("invite.unavailable")} description={t("invite.musicianSoon")} />;
-  }
+  // A band leader creates a band; a musician joins the band that invited them.
+  const joining = role === "musician" && bandName !== null;
+  const title = joining ? t("invite.join.title", { band: bandName }) : t("invite.title");
   if (current && current !== email) {
     return (
-      <Shell title={t("invite.title")} description={t("invite.wrongAccount", { email, current })}>
+      <Shell title={title} description={t("invite.wrongAccount", { email, current })}>
         <Button
           variant="outline"
           onClick={async () => {
@@ -76,7 +75,14 @@ function InvitePage() {
   }
   if (hasAccount && !current) {
     return (
-      <Shell title={t("invite.title")} description={t("invite.hasAccount", { email })}>
+      <Shell
+        title={title}
+        description={
+          joining
+            ? t("invite.join.hasAccount", { email, band: bandName })
+            : t("invite.hasAccount", { email })
+        }
+      >
         <Button asChild>
           <Link to="/login" search={{ redirect: loginPath }}>
             {t("invite.login")}
@@ -87,7 +93,13 @@ function InvitePage() {
   }
 
   return (
-    <LeaderWizard token={token} email={email} inviterName={inviterName} newAccount={!hasAccount} />
+    <OnboardingWizard
+      token={token}
+      email={email}
+      inviterName={inviterName}
+      joining={joining ? bandName : null}
+      newAccount={!hasAccount}
+    />
   );
 }
 

@@ -15,34 +15,51 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { adminInvitationsQuery } from "@/lib/admin";
-import { api } from "@/lib/api";
-import { ensureOk, errorMessage } from "@/lib/errors";
+import { errorMessage } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
 
-export function InvitationsList() {
+export type Invitation = {
+  id: string;
+  email: string;
+  status: "pending" | "expired" | "accepted" | "revoked";
+  expiresAt: string;
+  invitedBy: string;
+};
+
+export type InvitationsListProps = {
+  queryKey: readonly unknown[];
+  list: () => Promise<Invitation[]>;
+  resend: (id: string) => Promise<unknown>;
+  revoke: (id: string) => Promise<unknown>;
+};
+
+/** Open invitations with resend and revoke. Used by the admin page and by band leaders. */
+export function InvitationsList({
+  queryKey,
+  list,
+  resend: resendOne,
+  revoke: revokeOne,
+}: InvitationsListProps) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
-  const invitations = useQuery(adminInvitationsQuery);
+  const invitations = useQuery({ queryKey, queryFn: list });
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: adminInvitationsQuery.queryKey });
+  const refresh = () => queryClient.invalidateQueries({ queryKey });
   const onError = (error: Error) => toast.error(errorMessage(t, error));
 
   const resend = useMutation({
-    mutationFn: async ({ id }: { id: string; email: string }) =>
-      ensureOk(await api.admin.invitations[":id"].resend.$post({ param: { id } })),
+    mutationFn: ({ id }: { id: string; email: string }) => resendOne(id),
     onSuccess: (_res, { email }) => {
-      toast.success(t("admin.invitations.resent", { email }));
+      toast.success(t("invitations.resent", { email }));
       void refresh();
     },
     onError,
   });
 
   const revoke = useMutation({
-    mutationFn: async (id: string) =>
-      ensureOk(await api.admin.invitations[":id"].$delete({ param: { id } })),
+    mutationFn: (id: string) => revokeOne(id),
     onSuccess: () => {
-      toast.success(t("admin.invitations.revoked"));
+      toast.success(t("invitations.revoked"));
       void refresh();
     },
     onError,
@@ -51,17 +68,17 @@ export function InvitationsList() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-heading text-lg">{t("admin.invitations.title")}</CardTitle>
+        <CardTitle className="font-heading text-lg">{t("invitations.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         {invitations.isPending ? (
-          <p className="text-muted-foreground text-sm">{t("admin.loading")}</p>
+          <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
         ) : invitations.isError ? (
           <p role="alert" className="text-destructive text-sm">
             {errorMessage(t, invitations.error)}
           </p>
         ) : invitations.data.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t("admin.invitations.empty")}</p>
+          <p className="text-muted-foreground text-sm">{t("invitations.empty")}</p>
         ) : (
           <ul className="divide-y">
             {invitations.data.map((invitation) => {
@@ -76,15 +93,15 @@ export function InvitationsList() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate font-medium">{invitation.email}</span>
                       <Badge variant={expired ? "destructive" : "secondary"}>
-                        {expired ? t("admin.invitations.expired") : t("admin.invitations.pending")}
+                        {expired ? t("invitations.expired") : t("invitations.pending")}
                       </Badge>
                     </div>
                     <p className="text-muted-foreground text-xs">
                       {expired
-                        ? t("admin.invitations.expiredOn", { date })
-                        : t("admin.invitations.expiresOn", { date })}
+                        ? t("invitations.expiredOn", { date })
+                        : t("invitations.expiresOn", { date })}
                       {" · "}
-                      {t("admin.invitations.invitedBy", { name: invitation.invitedBy })}
+                      {t("invitations.invitedBy", { name: invitation.invitedBy })}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -94,28 +111,28 @@ export function InvitationsList() {
                       disabled={resend.isPending}
                       onClick={() => resend.mutate({ id: invitation.id, email: invitation.email })}
                     >
-                      {t("admin.invitations.resend")}
+                      {t("invitations.resend")}
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-destructive">
-                          {t("admin.invitations.revoke")}
+                          {t("invitations.revoke")}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>{t("admin.invitations.revokeTitle")}</AlertDialogTitle>
+                          <AlertDialogTitle>{t("invitations.revokeTitle")}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            {t("admin.invitations.revokeDescription", { email: invitation.email })}
+                            {t("invitations.revokeDescription", { email: invitation.email })}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>{t("admin.cancel")}</AlertDialogCancel>
+                          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                           <AlertDialogAction
                             variant="destructive"
                             onClick={() => revoke.mutate(invitation.id)}
                           >
-                            {t("admin.invitations.revoke")}
+                            {t("invitations.revoke")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

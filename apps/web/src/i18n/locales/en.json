@@ -1,4 +1,10 @@
 {
+  "common": {
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…"
+  },
   "home": {
     "title": "Welcome to CoverBand",
     "greeting": "Hello {{name}}",
@@ -9,10 +15,31 @@
     "welcome": "Welcome to {{band}}!",
     "you": "You: {{role}} · {{instrument}}",
     "notFound": "This band doesn't exist or you're not a member.",
-    "comingSoon": "Lineup, repertoire, setlists and gigs are coming soon.",
+    "comingSoon": "Repertoire, setlists and gigs are coming soon.",
     "roles": {
       "leader": "band leader",
       "musician": "musician"
+    },
+    "home": "Home",
+    "switch": "Switch band",
+    "allBands": "All my bands",
+    "edit": {
+      "button": "Edit band",
+      "title": "Band details",
+      "name": "Band name",
+      "genre": "Genre",
+      "genreHint": "Optional.",
+      "saved": "Band updated",
+      "nameForever": "A band name is forever: it can't be changed."
+    }
+  },
+  "lineup": {
+    "title": "Lineup",
+    "you": "you",
+    "invite": {
+      "new": "Invite a musician",
+      "title": "Invite a musician",
+      "description": "They'll receive an email to join {{band}}. The link is valid for 48 hours."
     }
   },
   "login": {
@@ -30,7 +57,6 @@
     "loading": "Loading your invitation…",
     "unavailable": "Invitation unavailable",
     "goToLogin": "Go to login",
-    "musicianSoon": "Joining a band through an invitation is coming soon.",
     "title": "Create your band",
     "intro": "{{inviter}} invites you to create your band on CoverBand.",
     "hasAccount": "You already have a CoverBand account with {{email}}. Log in to create your band.",
@@ -42,7 +68,8 @@
       "profile": "Your profile",
       "band": "Your band",
       "password": "Your password",
-      "review": "Confirmation"
+      "review": "Confirmation",
+      "instrument": "Your instrument"
     },
     "back": "Back",
     "next": "Next",
@@ -68,7 +95,15 @@
     "band": "Band",
     "none": "—",
     "create": "Create my band",
-    "creating": "Creating…"
+    "creating": "Creating…",
+    "join": {
+      "title": "Join {{band}}",
+      "intro": "{{inviter}} invites you to join {{band}} on CoverBand.",
+      "hasAccount": "You already have a CoverBand account with {{email}}. Log in to join {{band}}.",
+      "submit": "Join the band",
+      "submitting": "Joining…"
+    },
+    "bandNameHint": "Choose carefully: a band name is forever."
   },
   "account": {
     "menu": "Account",
@@ -77,32 +112,10 @@
   "admin": {
     "title": "Administration",
     "description": "Band leader invitations and users.",
-    "loading": "Loading…",
-    "cancel": "Cancel",
     "invite": {
       "new": "New band leader",
       "title": "Invite a band leader",
-      "description": "They'll receive an email to create their band. The link is valid for 48 hours.",
-      "email": "Email",
-      "language": "Email language",
-      "submit": "Send invitation",
-      "sending": "Sending…",
-      "sent": "Invitation sent to {{email}}"
-    },
-    "invitations": {
-      "title": "Pending invitations",
-      "empty": "No pending invitations.",
-      "pending": "Pending",
-      "expired": "Expired",
-      "expiresOn": "Expires {{date}}",
-      "expiredOn": "Expired {{date}}",
-      "invitedBy": "invited by {{name}}",
-      "resend": "Resend",
-      "resent": "New link sent to {{email}}",
-      "revoke": "Revoke",
-      "revokeTitle": "Revoke this invitation?",
-      "revokeDescription": "The link sent to {{email}} will stop working.",
-      "revoked": "Invitation revoked"
+      "description": "They'll receive an email to create their band. The link is valid for 48 hours."
     },
     "users": {
       "title": "Users",
@@ -110,6 +123,26 @@
       "joined": "joined {{date}}",
       "roleInBand": "{{band}} · {{role}}"
     }
+  },
+  "invitations": {
+    "email": "Email",
+    "language": "Email language",
+    "submit": "Send invitation",
+    "sending": "Sending…",
+    "sent": "Invitation sent to {{email}}",
+    "title": "Pending invitations",
+    "empty": "No pending invitations.",
+    "pending": "Pending",
+    "expired": "Expired",
+    "expiresOn": "Expires {{date}}",
+    "expiredOn": "Expired {{date}}",
+    "invitedBy": "invited by {{name}}",
+    "resend": "Resend",
+    "resent": "New link sent to {{email}}",
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke this invitation?",
+    "revokeDescription": "The link sent to {{email}} will stop working.",
+    "revoked": "Invitation revoked"
   },
   "theme": {
     "change": "Change theme",
@@ -133,6 +166,7 @@
     "invitation_revoked": "This invitation has been cancelled.",
     "invitation_used": "This invitation has already been used. Log in to continue.",
     "invitation_wrong_account": "You're logged in with a different account from the one invited.",
-    "band_name_taken": "This band name is already taken."
+    "band_name_taken": "This band name is already taken.",
+    "already_member": "This person is already a member of the band."
   }
 }

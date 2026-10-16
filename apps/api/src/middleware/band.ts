@@ -41,3 +41,11 @@ export function requireMember(db: Db) {
     await next();
   });
 }
+
+/** After requireMember: 403 unless the user is the band's leader. */
+export const requireLeader = createMiddleware<BandEnv>(async (c, next) => {
+  if (c.var.membership.role !== "leader") {
+    return apiError(c, 403, "Band leaders only");
+  }
+  await next();
+});
