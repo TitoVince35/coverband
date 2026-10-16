@@ -14,6 +14,17 @@ const envSchema = z
     BETTER_AUTH_SECRET: z.string().min(32),
     // Public URL of the app (where the browser loads it), used for links and origin checks.
     BETTER_AUTH_URL: z.url({ protocol: /^https?$/ }),
+    // Other origins allowed to log in, comma-separated (`bun run dev:lan` adds localhost).
+    TRUSTED_ORIGINS: z
+      .string()
+      .default("")
+      .transform((value) =>
+        value
+          .split(",")
+          .map((origin) => origin.trim())
+          .filter(Boolean),
+      )
+      .pipe(z.array(z.url({ protocol: /^https?$/ }))),
     // Default admin, created at startup if no user has this email. Both or neither.
     ADMIN_EMAIL: z.email().optional(),
     ADMIN_PASSWORD: z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH).optional(),

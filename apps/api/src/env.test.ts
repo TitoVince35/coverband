@@ -46,6 +46,17 @@ describe("loadEnv", () => {
   });
 });
 
+describe("TRUSTED_ORIGINS", () => {
+  test("a comma-separated list of URLs, empty by default", () => {
+    expect(loadEnv(valid).TRUSTED_ORIGINS).toEqual([]);
+    expect(
+      loadEnv({ ...valid, TRUSTED_ORIGINS: "http://localhost:5173, http://192.168.1.20:5173," })
+        .TRUSTED_ORIGINS,
+    ).toEqual(["http://localhost:5173", "http://192.168.1.20:5173"]);
+    expect(() => loadEnv({ ...valid, TRUSTED_ORIGINS: "localhost" })).toThrow(/TRUSTED_ORIGINS/);
+  });
+});
+
 describe("loadDatabaseEnv", () => {
   test("only needs the database URL", () => {
     expect(loadDatabaseEnv({ DATABASE_URL: valid.DATABASE_URL }).DATABASE_URL).toBe(

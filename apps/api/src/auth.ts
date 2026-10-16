@@ -10,6 +10,8 @@ export type AuthOptions = {
   secret: string;
   /** Public URL of the app, e.g. http://localhost:5173 in development. */
   baseURL: string;
+  /** Other origins allowed to log in, besides baseURL's (e.g. localhost with `dev:lan`). */
+  trustedOrigins?: string[];
   /** Login rate limiting (stored in Postgres). Off in tests that log in repeatedly. */
   rateLimit?: boolean;
 };
@@ -19,11 +21,18 @@ export type AuthOptions = {
  * No public sign-up: accounts only come from invitations (#22, #23, #7) and the
  * default admin (see ensureAdmin). Mounted at /api/auth/*.
  */
-export function createAuth({ db, secret, baseURL, rateLimit = true }: AuthOptions) {
+export function createAuth({
+  db,
+  secret,
+  baseURL,
+  trustedOrigins = [],
+  rateLimit = true,
+}: AuthOptions) {
   return betterAuth({
     appName: "CoverBand",
     secret,
     baseURL,
+    trustedOrigins,
     basePath: "/api/auth",
     database: drizzleAdapter(db, { provider: "pg", schema, usePlural: true }),
     emailAndPassword: {
