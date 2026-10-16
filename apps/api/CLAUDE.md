@@ -24,6 +24,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - Tables in `src/db/auth-schema.ts` were generated with `npx auth generate`, then adapted: when adding a Better Auth plugin, regenerate and compare.
 - The default admin is created at startup from `ADMIN_EMAIL` / `ADMIN_PASSWORD` only if missing (`src/bootstrap.ts`).
 - Users have `firstName`, `lastName`, `nickname`; Better Auth's `name` holds the display name (`displayName()`).
+- Password reset (`/request-password-reset`, `/reset-password`): the email's link (1 h, single use) goes through Better Auth's `/api/auth/reset-password/:token`, which redirects to the web app's `/reset-password?token=` or `?error=INVALID_TOKEN`. The email is in the request's `Accept-Language` (the web app sends its language). The answer is the same whether the email has an account or not (only the response time differs, an accepted leak). A reset revokes every session; `/change-password` is called with `revokeOtherSessions`.
 
 ## Invitations and onboarding
 

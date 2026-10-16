@@ -9,13 +9,14 @@ import { createMemoryMailer } from "./mail/mailer";
  */
 export function createTestDeps(databaseUrl = "postgres://unused@localhost:1/unused") {
   const { db, sql } = createDb(databaseUrl);
+  const mailer = createMemoryMailer();
   const auth = createAuth({
     db,
+    mailer,
     secret: "test-secret-test-secret-test-secret",
     baseURL: "http://localhost:3000",
     rateLimit: false,
   });
-  const mailer = createMemoryMailer();
   const deps: AppDeps = { auth, db, mailer, appUrl: "http://localhost:3000" };
   return { deps, db, sql, auth, mailer };
 }

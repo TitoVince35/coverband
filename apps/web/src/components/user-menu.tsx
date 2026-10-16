@@ -1,7 +1,7 @@
 import { ADMIN_ROLE } from "@coverband/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useRouter } from "@tanstack/react-router";
-import { CircleUser, LogOut, Shield } from "lucide-react";
+import { CircleUser, KeyRound, LogOut, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +53,12 @@ export function UserMenu() {
             </Link>
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem asChild>
+          <Link to="/account">
+            <KeyRound />
+            {t("account.title")}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void logout()}>
           <LogOut />
           {t("account.logout")}

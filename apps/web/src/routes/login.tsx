@@ -1,6 +1,6 @@
 import { PASSWORD_MAX_LENGTH } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authClient, sessionQuery } from "@/lib/auth";
+import { AuthRequestError, authClient, ensureAuthOk, sessionQuery } from "@/lib/auth";
 import { errorMessage } from "@/lib/errors";
 import { safeRedirect } from "@/lib/redirect";
 
@@ -31,13 +31,6 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-/** Login failure carrying the HTTP status, so the form can explain what went wrong. */
-class LoginError extends Error {
-  constructor(readonly status: number) {
-    super(`Login failed (${status})`);
-  }
-}
-
 function LoginPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -46,10 +39,7 @@ function LoginPage() {
 
   const login = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const { error } = await authClient.signIn.email({ email, password });
-      if (error) {
-        throw new LoginError(error.status);
-      }
+      ensureAuthOk(await authClient.signIn.email({ email, password }));
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: sessionQuery.queryKey });
@@ -64,7 +54,7 @@ function LoginPage() {
   }
 
   function loginError(error: Error) {
-    if (error instanceof LoginError) {
+    if (error instanceof AuthRequestError) {
       if (error.status === 401) return t("login.invalidCredentials");
       if (error.status === 429) return t("login.tooManyAttempts");
     }
@@ -84,7 +74,15 @@ function LoginPage() {
             <Input id="email" name="email" type="email" autoComplete="username" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">{t("login.password")}</Label>
+            <div className="flex items-baseline justify-between gap-2">
+              <Label htmlFor="password">{t("login.password")}</Label>
+              <Link
+                to="/forgot-password"
+                className="text-muted-foreground text-xs underline-offset-4 hover:text-foreground hover:underline"
+              >
+                {t("login.forgotPassword")}
+              </Link>
+            </div>
             <Input
               id="password"
               name="password"

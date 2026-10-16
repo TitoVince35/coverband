@@ -7,8 +7,10 @@ import { createSmtpMailer } from "./mail/mailer";
 
 const env = loadEnv();
 const { db } = createDb(env.DATABASE_URL);
+const mailer = createSmtpMailer(smtpConfig(env));
 const auth = createAuth({
   db,
+  mailer,
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
   trustedOrigins: env.TRUSTED_ORIGINS,
@@ -19,7 +21,6 @@ if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
   console.log(`Default admin ${env.ADMIN_EMAIL}: ${result}`);
 }
 
-const mailer = createSmtpMailer(smtpConfig(env));
 const app = createApp({
   deps: { auth, db, mailer, appUrl: env.BETTER_AUTH_URL },
   webDistDir: env.WEB_DIST_DIR,

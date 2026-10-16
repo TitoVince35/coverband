@@ -23,3 +23,23 @@ export const sessionQuery = queryOptions({
   },
   staleTime: 5 * 60 * 1000,
 });
+
+/** Failed Better Auth call, keeping its HTTP status and error code (e.g. `INVALID_TOKEN`). */
+export class AuthRequestError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string | undefined,
+  ) {
+    super(`Auth request failed (${status}${code ? `, ${code}` : ""})`);
+    this.name = "AuthRequestError";
+  }
+}
+
+/** Throws an AuthRequestError when a Better Auth client call returned an error. */
+export function ensureAuthOk(result: {
+  error: { status: number; code?: string | undefined } | null;
+}) {
+  if (result.error) {
+    throw new AuthRequestError(result.error.status, result.error.code);
+  }
+}

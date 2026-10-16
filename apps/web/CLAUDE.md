@@ -8,7 +8,8 @@ React + Vite + TanStack Router/Query. Cross-cutting rules are in the root `CLAUD
 - Pages needing a login go under `routes/_app/` (pathless layout that redirects to `/login`); public pages (login, invitations) outside it.
 - Band pages go under `routes/_app/b.$bandSlug/`, inside the band layout (`b.$bandSlug.tsx`: band switcher, band leader's edit button, tabs).
 - Server data goes through TanStack Query and the typed `api` client from `@/lib/api`. Use `ensureOk(res)` on API responses and display errors with `errorMessage(t, error)` from `@/lib/errors`.
-- Auth: `authClient` and `sessionQuery` from `@/lib/auth`.
+- Auth: `authClient` and `sessionQuery` from `@/lib/auth`. Wrap Better Auth client calls in `ensureAuthOk()`, which throws an `AuthRequestError` (status + Better Auth code such as `INVALID_TOKEN`).
+- A new password is always typed twice with `NewPasswordFields` / `readNewPassword` (`src/components/account/`): onboarding, reset and change forms.
 - Import app code with the `@/` alias.
 
 ## UI
