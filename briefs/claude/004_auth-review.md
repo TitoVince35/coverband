@@ -1,5 +1,7 @@
 # 004 - Review of the authentication brief, and plan
 
+> 🕒 Study posted on Friday 2026/10/16 00:21
+
 Review of [004_auth_sign_up](../vince/004_auth_sign_up.md). Vince agreed with all points.
 
 ## Review

@@ -1,5 +1,7 @@
 # 002 - Challenge answers: serverless, ORM, multi-band musicians
 
+> 🕒 Study posted on Thursday 2026/10/15 17:28
+
 Answers to Vince's challenges on [001_initial-proposal](001_initial-proposal.md).
 
 ## 1) Is serverless a different way of coding?

@@ -1,5 +1,7 @@
 # 001 - Initial proposal: technology, hosting, tooling
 
+> 🕒 Study posted on Thursday 2026/10/15 17:28
+
 Answer to [001_initial-brief](../vince/001_initial-brief.md).
 
 The choices aim for three things: low cost, EU hosting, and a stack Claude can generate reliably while we vibe code it.

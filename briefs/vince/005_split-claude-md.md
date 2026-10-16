@@ -1,5 +1,7 @@
 # Splitting CLAUDE.md
 
+> 🕒 Brief posted on Friday 2026/10/16 10:40
+
 CLAUDE.md is growing too big, and I don't understand what exactly it's supposed to be.
 
 ## What it is (Claude's answer)

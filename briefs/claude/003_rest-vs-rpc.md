@@ -1,5 +1,7 @@
 # 003 - REST vs "RPC" in Hono
 
+> 🕒 Study posted on Thursday 2026/10/15 21:29
+
 Answer to Vince's challenge on issue #3: "why are you choosing RPC over standard REST API?"
 
 **Decision: REST API with Hono's typed client, no OpenAPI for now (keep it lean).**
