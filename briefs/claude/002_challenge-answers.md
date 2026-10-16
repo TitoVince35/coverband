@@ -1,3 +1,5 @@
+Study posted on Thursday 2026/10/15 17:28
+
 # 002 - Challenge answers: serverless, ORM, multi-band musicians
 
 Answers to Vince's challenges on [001_initial-proposal](001_initial-proposal.md).

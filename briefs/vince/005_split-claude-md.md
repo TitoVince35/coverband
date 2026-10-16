@@ -1,3 +1,5 @@
+Brief posted on Friday 2026/10/16 10:40
+
 # Splitting CLAUDE.md
 
 CLAUDE.md is growing too big, and I don't understand what exactly it's supposed to be.

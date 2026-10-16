@@ -1,3 +1,5 @@
+Brief posted on Friday 2026/10/16 00:21
+
 # Authentication and sign-up
 
 NB: After each brief, I may ask you to "correct and review" it.

@@ -1,3 +1,5 @@
+Study posted on Thursday 2026/10/15 17:28
+
 # 001 - Initial proposal: technology, hosting, tooling
 
 Answer to [001_initial-brief](../vince/001_initial-brief.md).

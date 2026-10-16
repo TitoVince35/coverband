@@ -52,6 +52,8 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 
 ## Briefs
 
+They track the product scaffolding and the design decisions made along the way. Every document starts with a human-readable timestamp line, then a blank line: `Brief posted on Thursday 2026/03/26 14:44` (Vince's) or `Study posted on ...` (Claude's), in English, local time.
+
 - `briefs/vince/NNN_title.md`: Vince's briefs.
 - `briefs/claude/NNN_title.md`: Claude's proposals and answers, numbered in their own sequence (not matched to Vince's numbers).
 - Only save a reply to `briefs/claude/` when Vince explicitly asks.
