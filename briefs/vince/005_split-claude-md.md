@@ -1,6 +1,10 @@
 # Splitting CLAUDE.md
 
 > 🕒 Brief posted on Friday 2026/10/16 10:40
+>
+> 🕒 Brief settled on Friday 2026/10/16 10:40
+>
+> 🕒 Issues completed on Friday 2026/10/16 10:45
 
 CLAUDE.md is growing too big, and I don't understand what exactly it's supposed to be.
 
@@ -30,3 +34,8 @@ Caveat: a subfolder file only loads once Claude works in that folder, so anythin
 - details the code already documents are dropped, only the rules are kept.
 
 Done in #31 (PR #33): 95 lines down to 57 at the root.
+
+## Issues
+
+- [#31 Split CLAUDE.md into per-app files and a task-workflow skill](https://github.com/TitoVince35/coverband/issues/31)
+- [#34 Save the CLAUDE.md split discussion as a brief](https://github.com/TitoVince35/coverband/issues/34)

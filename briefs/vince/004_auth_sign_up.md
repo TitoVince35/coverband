@@ -1,6 +1,10 @@
 # Authentication and sign-up
 
 > 🕒 Brief posted on Friday 2026/10/16 00:21
+>
+> 🕒 Brief settled on Friday 2026/10/16 00:21
+>
+> 🕒 Issues completed on Friday 2026/10/16 19:12
 
 NB: After each brief, I may ask you to "correct and review" it.
 - **Correct** means: make sure the document is clear and written in proper English.
@@ -53,3 +57,14 @@ NB: After each brief, I may ask you to "correct and review" it.
 
 Creating a reasonably strong password is a good start.
 Later, I'd like to study adding TOTP (with the option to trust a device for a set period) or logging in with third-party providers.
+
+## Issues
+
+- [#6 Authentication: email/password login, no public sign-up](https://github.com/TitoVince35/coverband/issues/6)
+- [#7 Band lineup and musician invitations](https://github.com/TitoVince35/coverband/issues/7)
+- [#21 Email sending (Mailpit locally, provider in production)](https://github.com/TitoVince35/coverband/issues/21)
+- [#22 Admin console: users and band leader invitations](https://github.com/TitoVince35/coverband/issues/22)
+- [#23 Band leader onboarding wizard](https://github.com/TitoVince35/coverband/issues/23)
+- [#24 Password reset and change](https://github.com/TitoVince35/coverband/issues/24)
+
+Not listed: #8 (deployment, from the initial brief) and #25 (study of TOTP, passkeys and third-party login, deferred).

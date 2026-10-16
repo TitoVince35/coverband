@@ -1,6 +1,10 @@
 # Initial brief - Coverband
 
 > 🕒 Brief posted on Thursday 2026/10/15 17:28
+>
+> 🕒 Brief settled on Thursday 2026/10/15 17:28
+>
+> 🕒 Issues completed on Friday 2026/10/16 11:16
 
 I want to create an application to help music groups in their activities.
 
@@ -25,3 +29,15 @@ Hosting and software forge: free, or very cheap.
 Technology: preferably Typescript based (backend and frontend) with bun.
 May be opensource to benefit free CI/CD and hosting offers.
 Preferred prduction hosting in France, or Europe if possible.
+
+## Issues
+
+- [#1 Scaffold Bun monorepo](https://github.com/TitoVince35/coverband/issues/1)
+- [#2 Local Postgres + Drizzle setup](https://github.com/TitoVince35/coverband/issues/2)
+- [#3 Hono API skeleton](https://github.com/TitoVince35/coverband/issues/3)
+- [#4 React PWA skeleton](https://github.com/TitoVince35/coverband/issues/4)
+- [#5 CI with GitHub Actions](https://github.com/TitoVince35/coverband/issues/5)
+- [#6 Authentication: email/password login, no public sign-up](https://github.com/TitoVince35/coverband/issues/6)
+- [#7 Band lineup and musician invitations](https://github.com/TitoVince35/coverband/issues/7)
+
+Not listed: the product backlog created with this brief (#8 to #12), followed by later briefs.
