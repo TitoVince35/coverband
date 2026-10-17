@@ -14,6 +14,7 @@ import { bandRoutes } from "./routes/bands";
 import { health } from "./routes/health";
 import { invitationRoutes } from "./routes/invitations";
 import { meRoutes } from "./routes/me";
+import { userRoutes } from "./routes/users";
 import type { Storage } from "./storage";
 
 /** Services the API routes use. Tests can pass a database that is never connected to. */
@@ -46,7 +47,8 @@ function createApi(deps: AppDeps) {
     .route("/admin", adminRoutes(deps))
     .route("/invitations", invitationRoutes(deps))
     .route("/bands", bandRoutes(deps))
-    .route("/me", meRoutes(deps));
+    .route("/me", meRoutes(deps))
+    .route("/users", userRoutes(deps));
 }
 
 export type AppType = ReturnType<typeof createApi>;

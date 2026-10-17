@@ -41,7 +41,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - Better Auth in `src/auth.ts`, mounted at `/api/auth/*`. Email + password, sessions in Postgres, password policy from `@coverband/shared` (`PASSWORD_MIN_LENGTH`). Admin plugin for the global role.
 - Tables in `src/db/auth-schema.ts` were generated with `npx auth generate`, then adapted: when adding a Better Auth plugin, regenerate and compare.
 - The default admin is created at startup from `ADMIN_EMAIL` / `ADMIN_PASSWORD` only if missing (`src/bootstrap.ts`).
-- Users have `firstName`, `lastName`, `nickname`; Better Auth's `name` holds the display name (`displayName()`). Better Auth keeps them read-only (`input: false`): users change them with `PATCH /api/me` (`src/routes/me.ts`, `src/profile.ts`), which recomputes `name`.
+- Users have `firstName`, `lastName`, `nickname`; Better Auth's `name` holds the display name (`displayName()`). Better Auth keeps them read-only (`input: false`): users change them with `PATCH /api/me` (`src/routes/me.ts`, `src/profile.ts`), which recomputes `name`. Better Auth's `/update-user` is disabled (`disabledPaths`): it would let users set `name` freely and write `image`, which holds a storage key only the server may write.
 - Password reset (`/request-password-reset`, `/reset-password`): the email's link (1 h, single use) goes through Better Auth's `/api/auth/reset-password/:token`, which redirects to the web app's `/reset-password?token=` or `?error=INVALID_TOKEN`. The email is in the request's `Accept-Language` (the web app sends its language). The answer is the same whether the email has an account or not (only the response time differs, an accepted leak). A reset revokes every session; `/change-password` is called with `revokeOtherSessions`.
 
 ## Invitations and onboarding
@@ -61,6 +61,7 @@ Name and slug logic in `src/bands.ts`. Band names are unique case-insensitively;
 - The bucket is private: files are served by API routes that check who may see them, never by public bucket URLs.
 - Keys are paths with a fresh UUID per version (`users/{id}/avatar/{uuid}.webp`): a new file gets a new key, and the old object is deleted.
 - Tests use `createMemoryStorage()`; the S3 integration test runs when `S3_ENDPOINT` is set (locally and in CI).
+- **Avatars** (`src/avatars.ts`): `PUT` / `DELETE /api/me/avatar` (raw body, the browser has already cropped and resized it; WebP or JPEG, checked by the first bytes, never the declared type) and `GET /api/users/:id/avatar` (the user, admins and band mates, 404 for anyone else). `users.image` holds the storage key; `avatarUrl()` from `@coverband/shared` turns it into the versioned URL, cached for good.
 
 ## Emails
 

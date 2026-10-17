@@ -4,6 +4,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { AvatarCard } from "@/components/account/avatar-card";
 import { NewPasswordFields, readNewPassword } from "@/components/account/new-password-fields";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +21,7 @@ import { api } from "@/lib/api";
 import { AuthRequestError, authClient, ensureAuthOk, sessionQuery } from "@/lib/auth";
 import { ensureOk, errorMessage } from "@/lib/errors";
 
-// The logged-in user's account: profile (#58), then password (#24).
+// The logged-in user's account: profile (#58), avatar (#60), then password (#24).
 export const Route = createFileRoute("/_app/account")({
   component: AccountPage,
 });
@@ -38,6 +39,7 @@ function AccountPage() {
         </p>
       </div>
       <ProfileCard />
+      <AvatarCard user={user} />
       <ChangePasswordCard />
     </section>
   );
