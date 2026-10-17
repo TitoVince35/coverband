@@ -19,7 +19,7 @@ export type SmtpConfig = {
   secure: boolean;
   user?: string | undefined;
   password?: string | undefined;
-  /** Sender, e.g. `CoverBand <noreply@example.com>`. */
+  /** Sender, e.g. `Coverband <noreply@example.com>`. */
   from: string;
 };
 

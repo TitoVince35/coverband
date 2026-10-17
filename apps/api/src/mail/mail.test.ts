@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { APP_NAME } from "@coverband/shared";
 import { escapeHtml, renderEmail } from "./layout";
 import { createSmtpMailer } from "./mailer";
 import { passwordResetEmail, testEmail } from "./templates";
@@ -39,8 +40,8 @@ describe("templates", () => {
     const en = testEmail("a@example.com", "en", "http://localhost:5173");
     const fr = testEmail("a@example.com", "fr", "http://localhost:5173");
     expect(en.to).toBe("a@example.com");
-    expect(en.subject).toBe("CoverBand test email");
-    expect(fr.subject).toBe("E-mail de test CoverBand");
+    expect(en.subject).toBe(`${APP_NAME} test email`);
+    expect(fr.subject).toBe(`E-mail de test ${APP_NAME}`);
     expect(fr.text).toContain("http://localhost:5173");
   });
 
@@ -50,7 +51,7 @@ describe("templates", () => {
     const fr = passwordResetEmail("a@example.com", "fr", { url });
     expect(en.text).toContain(url);
     expect(en.text).toContain("1 hour");
-    expect(fr.subject).toBe("Réinitialisez votre mot de passe CoverBand");
+    expect(fr.subject).toBe(`Réinitialisez votre mot de passe ${APP_NAME}`);
     expect(fr.text).toContain("1 heure");
   });
 });
@@ -66,7 +67,7 @@ describe.skipIf(!mailpitUrl)("SMTP mailer", () => {
       host: process.env.SMTP_HOST ?? "localhost",
       port: Number(process.env.SMTP_PORT ?? 1025),
       secure: false,
-      from: "CoverBand <noreply@coverband.localhost>",
+      from: "Coverband <noreply@coverband.localhost>",
     });
 
     await mailer.send(testEmail(to, "fr", "http://localhost:5173"));
@@ -74,7 +75,7 @@ describe.skipIf(!mailpitUrl)("SMTP mailer", () => {
     const res = await fetch(`${mailpitUrl}/api/v1/search?query=${encodeURIComponent(`to:${to}`)}`);
     const found = (await res.json()) as { messages: { ID: string; Subject: string }[] };
     expect(found.messages).toHaveLength(1);
-    expect(found.messages[0]?.Subject).toBe("E-mail de test CoverBand");
+    expect(found.messages[0]?.Subject).toBe(`E-mail de test ${APP_NAME}`);
     await fetch(`${mailpitUrl}/api/v1/messages`, {
       method: "DELETE",
       headers: { "content-type": "application/json" },

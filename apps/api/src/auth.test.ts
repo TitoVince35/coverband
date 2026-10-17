@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
+import { APP_NAME } from "@coverband/shared";
 import { eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { createApp } from "./app";
@@ -156,7 +157,7 @@ describe.skipIf(!databaseUrl)("authentication", () => {
 
     test("the email is in the language sent by the web app", async () => {
       await post("/request-password-reset", { email: resetEmail }, { "accept-language": "fr" });
-      expect(mailer.sent.at(-1)?.subject).toBe("Réinitialisez votre mot de passe CoverBand");
+      expect(mailer.sent.at(-1)?.subject).toBe(`Réinitialisez votre mot de passe ${APP_NAME}`);
       expect(mailer.sent.at(-1)?.text).toContain("http://localhost:3000/api/auth/reset-password/");
     });
 

@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { APP_NAME } from "@coverband/shared";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
@@ -11,12 +12,14 @@ export default defineConfig({
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     react(),
     tailwindcss(),
+    // `%APP_NAME%` in index.html.
+    { name: "app-name", transformIndexHtml: (html) => html.replaceAll("%APP_NAME%", APP_NAME) },
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "logo.svg", "apple-touch-icon-180x180.png"],
       manifest: {
-        name: "CoverBand",
-        short_name: "CoverBand",
+        name: APP_NAME,
+        short_name: APP_NAME,
         description: "Repertoire, setlists and gigs for your band",
         lang: "en",
         start_url: "/",

@@ -6,7 +6,7 @@
     "saving": "Enregistrement…"
   },
   "home": {
-    "title": "Bienvenue sur CoverBand",
+    "title": "Bienvenue sur {{appName}}",
     "greeting": "Bonjour {{name}}",
     "yourBands": "Vos groupes",
     "noBands": "Vous ne faites encore partie d'aucun groupe. On rejoint un groupe sur invitation."
@@ -44,14 +44,14 @@
   },
   "login": {
     "title": "Connexion",
-    "description": "Bon retour sur CoverBand.",
+    "description": "Bon retour sur {{appName}}.",
     "email": "E-mail",
     "password": "Mot de passe",
     "submit": "Se connecter",
     "submitting": "Connexion…",
     "invalidCredentials": "E-mail ou mot de passe incorrect.",
     "tooManyAttempts": "Trop de tentatives. Attendez une minute et réessayez.",
-    "invitationOnly": "Pas encore de compte ? CoverBand fonctionne uniquement sur invitation : demandez à votre band leader.",
+    "invitationOnly": "Pas encore de compte ? {{appName}} fonctionne uniquement sur invitation : demandez à votre band leader.",
     "forgotPassword": "Mot de passe oublié ?"
   },
   "forgotPassword": {
@@ -83,8 +83,8 @@
     "unavailable": "Invitation indisponible",
     "goToLogin": "Aller à la connexion",
     "title": "Créez votre groupe",
-    "intro": "{{inviter}} vous invite à créer votre groupe sur CoverBand.",
-    "hasAccount": "Vous avez déjà un compte CoverBand avec {{email}}. Connectez-vous pour créer votre groupe.",
+    "intro": "{{inviter}} vous invite à créer votre groupe sur {{appName}}.",
+    "hasAccount": "Vous avez déjà un compte {{appName}} avec {{email}}. Connectez-vous pour créer votre groupe.",
     "login": "Se connecter",
     "wrongAccount": "Cette invitation est destinée à {{email}}, mais vous utilisez le compte {{current}}.",
     "logout": "Se déconnecter",
@@ -121,8 +121,8 @@
     "creating": "Création…",
     "join": {
       "title": "Rejoindre {{band}}",
-      "intro": "{{inviter}} vous invite à rejoindre {{band}} sur CoverBand.",
-      "hasAccount": "Vous avez déjà un compte CoverBand avec {{email}}. Connectez-vous pour rejoindre {{band}}.",
+      "intro": "{{inviter}} vous invite à rejoindre {{band}} sur {{appName}}.",
+      "hasAccount": "Vous avez déjà un compte {{appName}} avec {{email}}. Connectez-vous pour rejoindre {{band}}.",
       "submit": "Rejoindre le groupe",
       "submitting": "Envoi…"
     },

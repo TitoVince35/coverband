@@ -1,4 +1,4 @@
-import type { Language } from "@coverband/shared";
+import { APP_NAME, type Language } from "@coverband/shared";
 import { and, desc, eq, isNull, type SQL, sql } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db, Tx } from "./db/client";
@@ -127,7 +127,7 @@ async function sendInvitation(
     .select({ name: users.name })
     .from(users)
     .where(eq(users.id, invitation.invitedById));
-  const inviterName = inviter?.name ?? "CoverBand";
+  const inviterName = inviter?.name ?? APP_NAME;
   const url = invitationUrl(deps.appUrl, token);
   await deps.mailer.send(
     scope.role === "leader"

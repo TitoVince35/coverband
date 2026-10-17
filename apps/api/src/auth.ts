@@ -1,5 +1,6 @@
 import {
   ADMIN_ROLE,
+  APP_NAME,
   type Language,
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
@@ -42,7 +43,7 @@ export function createAuth({
   rateLimit = true,
 }: AuthOptions) {
   return betterAuth({
-    appName: "CoverBand",
+    appName: APP_NAME,
     secret,
     baseURL,
     trustedOrigins,
