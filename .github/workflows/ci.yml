@@ -86,3 +86,78 @@ jobs:
 
       - name: Build web app
         run: bun run build
+
+  e2e:
+    name: End-to-end tests
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: coverband
+          POSTGRES_PASSWORD: coverband
+          POSTGRES_DB: coverband
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U coverband -d coverband"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+
+      mailpit:
+        image: axllent/mailpit:v1.31
+        ports:
+          - 1025:1025
+          - 8025:8025
+
+    env:
+      DATABASE_URL: postgres://coverband:coverband@localhost:5432/coverband
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      MAILPIT_URL: http://localhost:8025
+      MAIL_FROM: "Coverband <noreply@coverband.localhost>"
+      # Test-only secret: this server never leaves the runner.
+      BETTER_AUTH_SECRET: e2e-secret-e2e-secret-e2e-secret-e2e
+      S3_ENDPOINT: http://localhost:3900
+      S3_REGION: garage
+      S3_BUCKET: coverband
+      S3_ACCESS_KEY_ID: GKc0ffeeb0a7d0000000000001
+      S3_SECRET_ACCESS_KEY: c0ffeeb0a7d0c0ffeeb0a7d0c0ffeeb0a7d0c0ffeeb0a7d0c0ffeeb0a7d00001
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Start object storage
+        run: docker compose up -d --wait garage && sh docker/garage/init.sh
+
+      - name: Migrate database
+        run: bun run db:migrate
+
+      - name: Install Chromium for Playwright
+        working-directory: e2e
+        run: bunx playwright install --with-deps chromium
+
+      # Builds the web app and serves it from the API on port 3100 (see e2e/playwright.config.ts).
+      - name: End-to-end tests
+        run: bun run e2e
+
+      - name: Upload report and traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7

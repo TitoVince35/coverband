@@ -14,7 +14,7 @@ App-specific conventions: `apps/api/CLAUDE.md` and `apps/web/CLAUDE.md`. Task wo
 - `packages/shared`: code shared by both apps (Zod schemas, types, helpers)
 - PostgreSQL + **Drizzle** ORM, **Better Auth** (organization plugin: band = organization)
 - Hosting: Scaleway (Paris), Serverless Containers + Serverless SQL Database + Object Storage
-- Tooling: Biome (lint + format), `tsc` for typechecking, `bun test`, Playwright for end-to-end tests
+- Tooling: Biome (lint + format), `tsc` for typechecking, `bun test`, Playwright for end-to-end tests (`e2e/`)
 
 ## Commands
 
@@ -29,6 +29,7 @@ bun run build        # build the web app into apps/web/dist
 bun run serve        # production-like: the API serves apps/web/dist on :3000 (open http://localhost:3000)
 bun run format       # apply Biome formatting and safe fixes
 bun test             # tests only (DB integration tests are skipped when DATABASE_URL is unset)
+bun run e2e          # end-to-end tests (Playwright): builds and serves the app on :3100, needs db:up
 
 cp .env.example .env # first time only
 bun run db:up        # start local Postgres (port 5432), Mailpit (SMTP 1025, emails at http://localhost:8025)
@@ -52,6 +53,13 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 - **Accounts:** no public sign-up; accounts only come from invitations. Global role on the user (`admin` / `user`); band roles (`leader` / `musician`) live on the band membership, never on the user.
 - **Multi-tenancy:** every band-scoped table has a `band_id`; every band-scoped request checks that the user is a member of that band (non-members get a 404). The band is in the URL (`/b/:bandSlug/...`). **A band name is forever** (it is also the URL): it can't be renamed, only the genre changes.
 - **Stateless server** (it runs on serverless containers): no in-memory sessions or caches that matter, no local file storage, no in-process cron. Sessions in Postgres, files in object storage (Garage locally, Scaleway Object Storage in production).
+
+## End-to-end tests
+
+- In `e2e/` (Playwright), files `*.e2e.ts` (so `bun test` skips them). They run against the production build served by the API on port 3100, never the dev servers, with the local Postgres, Mailpit and Garage; CI runs them after the other checks.
+- A phone in Chromium (the system Chrome locally: Playwright's own doesn't install on Ubuntu 26.04 yet), English, one worker, no retries. A story whose steps build on each other is a `serial` describe. Log in with `login()`: each login comes from its own client IP, so the suite stays under the login rate limit.
+- Test data comes from the real flows: the global setup creates this run's admin, who invites; links are read from Mailpit (`invitationLink()`). Everything created is marked (`@e2e.localhost` emails, "E2E " band names) and the teardown deletes it from the database and Mailpit, leftovers of interrupted runs included. Only an avatar file can stay in the local bucket, if the avatar test fails between upload and removal.
+- Select by role and visible text, in English, like a user would.
 
 ## Briefs
 
