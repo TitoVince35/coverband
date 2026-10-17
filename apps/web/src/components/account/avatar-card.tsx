@@ -65,6 +65,7 @@ export function AvatarCard({ user }: { user: { id: string; image?: string | null
 
   const remove = useMutation({
     mutationFn: async () => ensureOk(await fetch("/api/me/avatar", { method: "DELETE" })),
+    onMutate: () => setUnreadable(false),
     onSuccess: async () => {
       toast.success(t("account.avatar.removed"));
       await refresh();
@@ -124,7 +125,14 @@ export function AvatarCard({ user }: { user: { id: string; image?: string | null
             <Button onClick={() => save.mutate(picked.blob)} disabled={busy}>
               {save.isPending ? t("account.avatar.saving") : t("account.avatar.save")}
             </Button>
-            <Button variant="outline" onClick={() => setPicked(null)} disabled={busy}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPicked(null);
+                save.reset();
+              }}
+              disabled={busy}
+            >
               {t("account.avatar.cancel")}
             </Button>
           </>
@@ -133,7 +141,13 @@ export function AvatarCard({ user }: { user: { id: string; image?: string | null
             <Button asChild disabled={busy}>
               <label className="cursor-pointer">
                 {current ? t("account.avatar.change") : t("account.avatar.choose")}
-                <input type="file" accept="image/*" className="sr-only" onChange={onPick} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={onPick}
+                  disabled={busy}
+                />
               </label>
             </Button>
             {current && (

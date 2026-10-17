@@ -74,6 +74,9 @@ export function createAuth({
         nickname: { type: "string", required: false, input: false },
       },
     },
+    // Users change their profile and avatar through our own routes (/api/me), never Better Auth's:
+    // `name` must follow the profile, and `image` holds a storage key only the server may write.
+    disabledPaths: ["/update-user"],
     // Global roles only ("admin" or "user"); band roles are per membership.
     plugins: [admin({ adminRoles: [ADMIN_ROLE] })],
     rateLimit: { enabled: rateLimit, storage: "database" },

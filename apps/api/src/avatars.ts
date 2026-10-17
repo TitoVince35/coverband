@@ -20,6 +20,15 @@ export function imageType(bytes: Uint8Array): { type: string; extension: string 
   return null;
 }
 
+/**
+ * `users.image` as a key this server wrote for this user, or null. A second guard, behind Better
+ * Auth's disabled /update-user: another value is never read or deleted.
+ */
+export function ownAvatarKey(userId: string, image: string | null | undefined): string | null {
+  const pattern = new RegExp(`^users/${userId}/avatar/[0-9a-f-]{36}\\.(webp|jpg)$`);
+  return image && pattern.test(image) ? image : null;
+}
+
 export class InvalidImageError extends Error {
   constructor() {
     super("Not a WebP or JPEG image");
@@ -52,7 +61,7 @@ export async function setAvatar({ db, storage }: Deps, userId: string, bytes: Ui
         target: { type: "user", id: userId },
         data: { removed: false },
       });
-      return user?.image ?? null;
+      return ownAvatarKey(userId, user?.image);
     });
   } catch (error) {
     await storage.delete(key);
@@ -79,7 +88,7 @@ export async function removeAvatar({ db, storage }: Deps, userId: string) {
       target: { type: "user", id: userId },
       data: { removed: true },
     });
-    return user.image;
+    return ownAvatarKey(userId, user.image);
   });
   await deleteQuietly({ db, storage }, previous);
 }
@@ -122,7 +131,8 @@ export async function readAvatar(
     .select({ image: users.image })
     .from(users)
     .where(eq(users.id, userId));
-  if (!user?.image) return null;
-  const object = await deps.storage.get(user.image);
-  return object ? { ...object, url: avatarUrl(userId, user.image) } : null;
+  const key = ownAvatarKey(userId, user?.image);
+  if (!key) return null;
+  const object = await deps.storage.get(key);
+  return object ? { ...object, url: avatarUrl(userId, key) } : null;
 }

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { eq, like } from "drizzle-orm";
 import { createApp } from "../app";
-import { imageType } from "../avatars";
+import { imageType, ownAvatarKey } from "../avatars";
 import { activity, bandMembers, bands, users } from "../db/schema";
 import { activityOf, createTestDeps } from "../test-deps";
 
@@ -23,6 +23,15 @@ test("imageType recognises WebP and JPEG by their first bytes only", () => {
   expect(imageType(PNG)).toBeNull();
   expect(imageType(new TextEncoder().encode("<svg onload=alert(1)>"))).toBeNull();
   expect(imageType(new Uint8Array())).toBeNull();
+});
+
+test("ownAvatarKey only accepts keys the server writes for that user", () => {
+  const uuid = crypto.randomUUID();
+  expect(ownAvatarKey("u1", `users/u1/avatar/${uuid}.webp`)).toBe(`users/u1/avatar/${uuid}.webp`);
+  expect(ownAvatarKey("u1", `users/u2/avatar/${uuid}.webp`)).toBeNull();
+  expect(ownAvatarKey("u1", "bands/b1/sheets/secret.pdf")).toBeNull();
+  expect(ownAvatarKey("u1", "https://example.com/me.png")).toBeNull();
+  expect(ownAvatarKey("u1", null)).toBeNull();
 });
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
@@ -141,6 +150,43 @@ describe.skipIf(!databaseUrl)("avatars", () => {
     expect(current.headers.get("cache-control")).toBe("private, max-age=31536000, immutable");
     const stale = await call(`/users/${ids.me}/avatar?v=old`, "mate");
     expect(stale.headers.get("cache-control")).toBe("private, no-cache");
+  });
+
+  test("users can't set their image (nor their name) through Better Auth", async () => {
+    const res = await app.request("/api/auth/update-user", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: cookies.outsider ?? "",
+        origin: "http://localhost:3000",
+      },
+      body: JSON.stringify({ image: await imageOf("me"), name: "Someone Else" }),
+    });
+    expect(res.status).toBe(404);
+    const [outsider] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, ids.outsider ?? ""));
+    expect(outsider).toMatchObject({ image: null, name: "outsider" });
+  });
+
+  test("a key the server didn't write for the user is never served nor deleted", async () => {
+    const victim = (await imageOf("me")) ?? "";
+    await db
+      .update(users)
+      .set({ image: victim })
+      .where(eq(users.id, ids.outsider ?? ""));
+    expect((await call(`/users/${ids.outsider}/avatar`, "outsider")).status).toBe(404);
+    expect((await call("/me/avatar", "outsider", { method: "DELETE" })).status).toBe(204);
+    await db
+      .update(users)
+      .set({ image: victim })
+      .where(eq(users.id, ids.outsider ?? ""));
+    expect((await call("/me/avatar", "outsider", { method: "PUT", body: WEBP })).status).toBe(200);
+    expect(storage.objects.has(victim)).toBe(true);
+    // Back to a clean state for the next test.
+    await call("/me/avatar", "outsider", { method: "DELETE" });
+    await db.delete(activity).where(eq(activity.actorId, ids.outsider ?? ""));
   });
 
   test("removing brings back the default and deletes the file", async () => {
