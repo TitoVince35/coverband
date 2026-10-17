@@ -19,8 +19,9 @@ import i18n, { changeLanguage, readStoredLanguage } from "@/i18n";
 import { isLanguage } from "@/i18n/languages";
 import { api } from "@/lib/api";
 import { sessionQuery } from "@/lib/auth";
-import { myBandsQuery } from "@/lib/bands";
+
 import { ApiRequestError, ensureOk, errorMessage } from "@/lib/errors";
+import { removeUserQueries } from "@/lib/query-client";
 
 type Step = "profile" | "band" | "instrument" | "password" | "review";
 
@@ -121,8 +122,9 @@ export function OnboardingWizard({
       if (!readStoredLanguage() && isLanguage(current)) {
         await changeLanguage(current);
       }
+      // Logged in (a new account) or with a new band: forget anything cached for a previous user.
+      removeUserQueries(queryClient);
       await queryClient.invalidateQueries({ queryKey: sessionQuery.queryKey });
-      await queryClient.invalidateQueries({ queryKey: myBandsQuery.queryKey });
       await navigate({ to: "/b/$bandSlug", params: { bandSlug } });
     },
     onError: (error) => {

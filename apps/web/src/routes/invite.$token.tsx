@@ -67,8 +67,8 @@ function InvitePage() {
           variant="outline"
           onClick={async () => {
             await authClient.signOut();
+            // Also drops this invitation's query: the page fetches it again by itself.
             clearUserData(queryClient);
-            await invitation.refetch();
           }}
         >
           {t("invite.logout")}
