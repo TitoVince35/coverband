@@ -24,6 +24,7 @@ cp .env.example .env # then fill BETTER_AUTH_SECRET and ADMIN_PASSWORD
 bun run db:up       # local Postgres, Mailpit (emails at http://localhost:8025) and Garage (S3 storage, web UI at http://localhost:3909)
 bun run db:migrate
 bun run check       # lint + typecheck + tests
+bun run e2e         # end-to-end tests in Chrome (Playwright)
 bun run dev         # API on :3000, web app on :5173, Drizzle Studio (database button in the header)
 ```
 

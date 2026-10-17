@@ -5,7 +5,8 @@
   "packageManager": "bun@1.4.3",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "e2e"
   ],
   "scripts": {
     "dev": "bun --env-file=.env run --parallel --filter './apps/*' dev",
@@ -19,6 +20,7 @@
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun test",
     "check": "bun run lint && bun run typecheck && bun run test",
+    "e2e": "bun --env-file=.env run --filter @coverband/e2e e2e",
     "db:up": "docker compose up -d --wait db mailpit garage garage-webui && sh docker/garage/init.sh",
     "db:down": "docker compose down",
     "db:generate": "bun --env-file=.env run --filter @coverband/api db:generate",
