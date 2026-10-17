@@ -10,7 +10,7 @@ Board: https://github.com/users/TitoVince35/projects/1. Columns: Backlog → Tod
 For each task (issue `#NN`):
 1. Move it to **In progress** and create a branch `NN-short-title` from `main`.
 2. Commit with `bun run check` passing.
-   CI (`.github/workflows/ci.yml`) runs lint, typecheck, migrations, tests (with a Postgres service, so DB tests run) and the web build on every PR and on `main`. Keep it green: a PR is ready for review only when CI passes.
+   CI (`.github/workflows/ci.yml`) runs a dependency audit (`bun audit`, fails on high and critical), lint, typecheck, migrations, tests (with a Postgres service, so DB tests run) and the web build on every PR and on `main`. Keep it green: a PR is ready for review only when CI passes.
 3. Push and open a PR whose body contains `Closes #NN`. The board automation moves it to **In review**.
 4. Vince reviews and merges. Automation moves the task to **Done** and closes the issue.
 5. If the issue is listed in the `## Issues` section of a brief (`briefs/vince/`) and all issues there are now closed, add the `Issues completed on ...` timestamp line to that brief (see the Briefs rules in the root `CLAUDE.md`). Check this after a merge you learn about, and when starting the next task.
