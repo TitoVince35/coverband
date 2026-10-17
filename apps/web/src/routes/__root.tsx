@@ -1,8 +1,8 @@
 import { APP_NAME } from "@coverband/shared";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
+import { DevLinks } from "@/components/dev-links";
 import { LanguageToggle } from "@/components/language-toggle";
-import { MailpitLink } from "@/components/mailpit-link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,8 +27,8 @@ function RootLayout() {
               {APP_NAME}
             </Link>
             <div className="ml-auto flex items-center gap-1">
-              {/* Statically false in production builds, so the link is left out. */}
-              {import.meta.env.DEV && <MailpitLink />}
+              {/* Statically false in production builds, so the links are left out. */}
+              {import.meta.env.DEV && <DevLinks />}
               <LanguageToggle />
               <ThemeToggle />
               <UserMenu />

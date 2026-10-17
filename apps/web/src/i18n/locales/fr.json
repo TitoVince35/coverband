@@ -205,7 +205,10 @@
     "system": "Système"
   },
   "dev": {
-    "openMailpit": "Ouvrir Mailpit (e-mails envoyés en local)"
+    "tools": "Outils de développement",
+    "openMailpit": "Ouvrir Mailpit (e-mails envoyés en local)",
+    "openDatabase": "Ouvrir Drizzle Studio (base de données)",
+    "openStorage": "Ouvrir Garage (stockage d'objets)"
   },
   "language": {
     "change": "Changer de langue"

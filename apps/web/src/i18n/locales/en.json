@@ -205,7 +205,10 @@
     "system": "System"
   },
   "dev": {
-    "openMailpit": "Open Mailpit (emails sent locally)"
+    "tools": "Development tools",
+    "openMailpit": "Open Mailpit (emails sent locally)",
+    "openDatabase": "Open Drizzle Studio (database)",
+    "openStorage": "Open Garage (object storage)"
   },
   "language": {
     "change": "Change language"

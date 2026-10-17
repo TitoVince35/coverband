@@ -38,6 +38,20 @@ services:
       timeout: 5s
       retries: 15
 
+  # Web UI for Garage on http://localhost:3909 (buckets, objects, keys). Reads garage.toml for the
+  # admin token. Development only: the header's bucket button opens it.
+  garage-webui:
+    image: khairul169/garage-webui:1.1.0
+    ports:
+      - "3909:3909"
+    volumes:
+      - ./docker/garage/garage.toml:/etc/garage.toml:ro
+    environment:
+      API_BASE_URL: http://garage:3903
+      S3_ENDPOINT_URL: http://garage:3900
+    depends_on:
+      - garage
+
 volumes:
   db-data:
   garage-data:
