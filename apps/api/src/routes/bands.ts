@@ -74,7 +74,9 @@ export function bandRoutes(deps: AppDeps) {
       zValidator("json", bandBody, validationHook),
       async (c) => {
         const { genre } = c.req.valid("json");
-        return c.json({ band: await updateBandGenre(db, c.var.band.id, genre) });
+        return c.json({
+          band: await updateBandGenre(db, c.var.band.id, genre, c.var.user?.id ?? ""),
+        });
       },
     )
     .get("/:bandSlug/members", member, async (c) => {
@@ -133,6 +135,7 @@ export function bandRoutes(deps: AppDeps) {
           deps,
           musiciansOf(c.var.band),
           c.req.valid("param").id,
+          c.var.user?.id ?? "",
         );
         return invitation
           ? c.json({ id: invitation.id })
@@ -149,6 +152,7 @@ export function bandRoutes(deps: AppDeps) {
           deps,
           musiciansOf(c.var.band),
           c.req.valid("param").id,
+          c.var.user?.id ?? "",
         );
         return revoked ? c.body(null, 204) : apiError(c, 404, "Invitation not found");
       },

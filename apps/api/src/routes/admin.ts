@@ -80,14 +80,22 @@ export function adminRoutes(deps: AppDeps) {
       limit,
       zValidator("param", idParam, validationHook),
       async (c) => {
-        const invitation = await resendLeaderInvitation(deps, c.req.valid("param").id);
+        const invitation = await resendLeaderInvitation(
+          deps,
+          c.req.valid("param").id,
+          c.var.user?.id ?? "",
+        );
         return invitation
           ? c.json({ id: invitation.id })
           : apiError(c, 404, "Invitation not found");
       },
     )
     .delete("/invitations/:id", zValidator("param", idParam, validationHook), async (c) => {
-      const revoked = await revokeLeaderInvitation(deps, c.req.valid("param").id);
+      const revoked = await revokeLeaderInvitation(
+        deps,
+        c.req.valid("param").id,
+        c.var.user?.id ?? "",
+      );
       return revoked ? c.body(null, 204) : apiError(c, 404, "Invitation not found");
     });
 }

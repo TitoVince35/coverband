@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { eq, inArray } from "drizzle-orm";
 import { createApp } from "../app";
-import { invitations, rateLimits, users } from "../db/schema";
+import { activity, invitations, rateLimits, users } from "../db/schema";
 import { hashToken, INVITATION_TTL_MS, inviteLeader, listLeaderInvitations } from "../invitations";
 import { hit, INVITATION_EMAILS } from "../middleware/rate-limit";
-import { createTestDeps } from "../test-deps";
+import { activityOf, createTestDeps } from "../test-deps";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;
@@ -57,7 +57,8 @@ describe.skipIf(!databaseUrl)("admin API", () => {
   });
 
   afterAll(async () => {
-    // Invitations go with their inviter (on delete cascade).
+    // Invitations go with their inviter (on delete cascade); activity outside a band doesn't.
+    await db.delete(activity).where(eq(activity.actorId, adminId));
     await db.delete(users).where(inArray(users.email, [adminEmail, userEmail]));
     await db.delete(rateLimits).where(eq(rateLimits.key, `coverband:invitation-emails:${adminId}`));
     await sql.end();
@@ -105,6 +106,17 @@ describe.skipIf(!databaseUrl)("admin API", () => {
       status: "pending",
       invitedBy: "Ada Admin",
     });
+
+    // IDs only: no email in the activity.
+    expect(await activityOf(db, id)).toEqual([
+      {
+        action: "invitation.sent",
+        bandId: null,
+        actorId: adminId,
+        targetType: "invitation",
+        data: { role: "leader" },
+      },
+    ]);
   });
 
   test("a second invitation for the same email is refused while the first is open", async () => {
@@ -137,6 +149,10 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     const [after] = await db.select().from(invitations).where(eq(invitations.email, leaderEmail));
     expect(after?.tokenHash).toBe(hashToken(newToken));
     expect(after?.expiresAt.getTime()).toBeGreaterThanOrEqual(before?.expiresAt.getTime() ?? 0);
+    expect((await activityOf(db, before?.id ?? "")).at(-1)).toMatchObject({
+      action: "invitation.resent",
+      actorId: adminId,
+    });
   });
 
   test("revoke hides the invitation; revoking or resending again is a 404", async () => {
@@ -147,6 +163,12 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     expect(list.invitations.some((i) => i.id === row?.id)).toBe(false);
     expect((await call(`/invitations/${row?.id}`, { method: "DELETE" })).status).toBe(404);
     expect((await call(`/invitations/${row?.id}/resend`, { method: "POST" })).status).toBe(404);
+    // Refused attempts record nothing.
+    expect((await activityOf(db, row?.id ?? "")).map((a) => a.action)).toEqual([
+      "invitation.sent",
+      "invitation.resent",
+      "invitation.revoked",
+    ]);
   });
 
   test("an expired invitation shows as expired and the email can be invited again", async () => {
@@ -160,8 +182,11 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     expect(again.status).toBe(201);
   });
 
-  test("if the email can't be sent, no invitation is left behind", async () => {
+  test("if the email can't be sent, no invitation (nor activity) is left behind", async () => {
     const email = `unsent-${run}@test.localhost`;
+    const recorded = async () =>
+      (await db.select().from(activity).where(eq(activity.actorId, adminId))).length;
+    const before = await recorded();
     const failing = {
       ...deps,
       mailer: {
@@ -175,6 +200,7 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     );
     await Bun.sleep(50);
     expect(await db.select().from(invitations).where(eq(invitations.email, email))).toHaveLength(0);
+    expect(await recorded()).toBe(before);
   });
 
   test("invitation emails are rate limited per admin (last: fills the bucket)", async () => {

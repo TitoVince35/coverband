@@ -1,6 +1,8 @@
+import { asc, eq } from "drizzle-orm";
 import type { AppDeps } from "./app";
 import { createAuth } from "./auth";
-import { createDb } from "./db/client";
+import { createDb, type Db } from "./db/client";
+import { activity } from "./db/schema";
 import { createMemoryMailer } from "./mail/mailer";
 
 /**
@@ -19,4 +21,19 @@ export function createTestDeps(databaseUrl = "postgres://unused@localhost:1/unus
   });
   const deps: AppDeps = { auth, db, mailer, appUrl: "http://localhost:3000" };
   return { deps, db, sql, auth, mailer };
+}
+
+/** Activity recorded about a target, oldest first (events of one transaction by action). */
+export function activityOf(db: Db, targetId: string) {
+  return db
+    .select({
+      action: activity.action,
+      bandId: activity.bandId,
+      actorId: activity.actorId,
+      targetType: activity.targetType,
+      data: activity.data,
+    })
+    .from(activity)
+    .where(eq(activity.targetId, targetId))
+    .orderBy(asc(activity.createdAt), asc(activity.action));
 }

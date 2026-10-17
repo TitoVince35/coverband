@@ -22,6 +22,13 @@
       "when": 1792106380608,
       "tag": "0002_bands",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792240146787,
+      "tag": "0003_activity",
+      "breakpoints": true
     }
   ]
 }
