@@ -9,7 +9,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - Validate input with `zValidator(..., validationHook)` (`src/validation.ts`: invalid input becomes a 400 `bad_request`).
 - Send errors with `apiError()` (`src/errors.ts`). It keeps the status as a literal type, so `ensureOk(res)` in the web app narrows typed-client responses to their success body.
 - Guards: `requireUser` / `requireAdmin` (`src/middleware/session.ts`, read `c.var.user`). Band routes live under `/api/bands/:bandSlug` with `requireMember(db)` (`src/middleware/band.ts`: sets `c.var.band` and `c.var.membership`, 404 for non-members); band leader actions add `requireLeader` (403).
-- Tests build dependencies with `createTestDeps()` (`src/test-deps.ts`, memory mailer).
+- Tests build dependencies with `createTestDeps()` (`src/test-deps.ts`, memory mailer and storage).
 
 ## Security
 
@@ -54,6 +54,13 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 ## Bands
 
 Name and slug logic in `src/bands.ts`. Band names are unique case-insensitively; the slug comes from `slugify` in `@coverband/shared`.
+
+## Files
+
+- Object storage through a `Storage` (`src/storage.ts`, `AppDeps.storage`): `put`, `get` (a stream, or null), `delete`. Bun's built-in S3 client, no SDK. Garage locally (`docker/garage/`, started and prepared by `bun run db:up`, also in CI), Scaleway Object Storage in production: only `S3_*` configuration. Setting up the Scaleway bucket and its key is a production setup step (#8).
+- The bucket is private: files are served by API routes that check who may see them, never by public bucket URLs.
+- Keys are paths with a fresh UUID per version (`users/{id}/avatar/{uuid}.webp`): a new file gets a new key, and the old object is deleted.
+- Tests use `createMemoryStorage()`; the S3 integration test runs when `S3_ENDPOINT` is set (locally and in CI).
 
 ## Emails
 

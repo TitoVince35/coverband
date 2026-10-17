@@ -1,4 +1,5 @@
-# Local development services. Production uses Scaleway Serverless SQL Database and Scaleway TEM.
+# Local development services. Production uses Scaleway Serverless SQL Database, Scaleway TEM and
+# Scaleway Object Storage.
 services:
   db:
     image: postgres:16-alpine
@@ -23,5 +24,20 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  # S3-compatible object storage on http://localhost:3900. Bucket and key: docker/garage/init.sh.
+  garage:
+    image: dxflrs/garage:v2.4.1
+    ports:
+      - "3900:3900"
+    volumes:
+      - ./docker/garage/garage.toml:/etc/garage.toml:ro
+      - garage-data:/var/lib/garage
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
 volumes:
   db-data:
+  garage-data:

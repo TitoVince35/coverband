@@ -1,8 +1,18 @@
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@coverband/shared";
 import { z } from "zod";
 import type { SmtpConfig } from "./mail/mailer";
+import type { S3Config } from "./storage";
 
 const databaseUrl = z.url({ protocol: /^postgres(ql)?$/ });
+
+// Object storage (S3 API): local Garage from docker-compose, Scaleway Object Storage in production.
+const s3Schema = z.object({
+  S3_ENDPOINT: z.url({ protocol: /^https?$/ }),
+  S3_REGION: z.string().min(1),
+  S3_BUCKET: z.string().min(1),
+  S3_ACCESS_KEY_ID: z.string().min(1),
+  S3_SECRET_ACCESS_KEY: z.string().min(1),
+});
 
 const envSchema = z
   .object({
@@ -48,6 +58,7 @@ const envSchema = z
     SMTP_USER: z.string().min(1).optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(3),
+    ...s3Schema.shape,
   })
   .refine((env) => (env.ADMIN_EMAIL === undefined) === (env.ADMIN_PASSWORD === undefined), {
     message: "Set both ADMIN_EMAIL and ADMIN_PASSWORD, or neither",
@@ -64,6 +75,16 @@ export function smtpConfig(env: Env): SmtpConfig {
     user: env.SMTP_USER,
     password: env.SMTP_PASSWORD,
     from: env.MAIL_FROM,
+  };
+}
+
+export function s3Config(env: z.infer<typeof s3Schema>): S3Config {
+  return {
+    endpoint: env.S3_ENDPOINT,
+    region: env.S3_REGION,
+    bucket: env.S3_BUCKET,
+    accessKeyId: env.S3_ACCESS_KEY_ID,
+    secretAccessKey: env.S3_SECRET_ACCESS_KEY,
   };
 }
 
@@ -85,4 +106,9 @@ export function loadEnv(source: Source = process.env): Env {
 /** Only the database URL, for tools that don't run the app (migrations, drizzle-kit). */
 export function loadDatabaseEnv(source: Source = process.env) {
   return parse(z.object({ DATABASE_URL: databaseUrl }), source);
+}
+
+/** Only the object storage variables, for its integration test. */
+export function loadS3Env(source: Source = process.env) {
+  return parse(s3Schema, source);
 }

@@ -4,6 +4,7 @@ import { createAuth } from "./auth";
 import { createDb, type Db } from "./db/client";
 import { activity } from "./db/schema";
 import { createMemoryMailer } from "./mail/mailer";
+import { createMemoryStorage } from "./storage";
 
 /**
  * App dependencies for tests. Without a database URL, the database is never connected to
@@ -12,6 +13,7 @@ import { createMemoryMailer } from "./mail/mailer";
 export function createTestDeps(databaseUrl = "postgres://unused@localhost:1/unused") {
   const { db, sql } = createDb(databaseUrl);
   const mailer = createMemoryMailer();
+  const storage = createMemoryStorage();
   const auth = createAuth({
     db,
     mailer,
@@ -19,8 +21,8 @@ export function createTestDeps(databaseUrl = "postgres://unused@localhost:1/unus
     baseURL: "http://localhost:3000",
     rateLimit: false,
   });
-  const deps: AppDeps = { auth, db, mailer, appUrl: "http://localhost:3000" };
-  return { deps, db, sql, auth, mailer };
+  const deps: AppDeps = { auth, db, mailer, storage, appUrl: "http://localhost:3000" };
+  return { deps, db, sql, auth, mailer, storage };
 }
 
 /** Activity recorded about a target, oldest first (events of one transaction by action). */
