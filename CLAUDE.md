@@ -31,7 +31,8 @@ bun run format       # apply Biome formatting and safe fixes
 bun test             # tests only (DB integration tests are skipped when DATABASE_URL is unset)
 
 cp .env.example .env # first time only
-bun run db:up        # start local Postgres (port 5432) and Mailpit (SMTP 1025, emails at http://localhost:8025)
+bun run db:up        # start local Postgres (port 5432), Mailpit (SMTP 1025, emails at http://localhost:8025)
+                     # and Garage (S3 storage on http://localhost:3900, bucket and dev key created)
 bun run db:generate  # generate a SQL migration from apps/api/src/db/schema.ts
 bun run db:migrate   # apply pending migrations
 bun run db:studio    # browse the database
@@ -49,7 +50,7 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 - **Vocabulary (all languages, UI and emails):** "band leader" is never translated (French: "un band leader", never "leader" alone or "chef de groupe"). Musicians' terms like "setlist" also stay as they are. In French, a musician (the band role) is « zicos » (invariable, gender-neutral): « un zicos », « Inviter un zicos ». In French, prefer gender-neutral wording ("envoyée par", "membre depuis") over a masculine default.
 - **Accounts:** no public sign-up; accounts only come from invitations. Global role on the user (`admin` / `user`); band roles (`leader` / `musician`) live on the band membership, never on the user.
 - **Multi-tenancy:** every band-scoped table has a `band_id`; every band-scoped request checks that the user is a member of that band (non-members get a 404). The band is in the URL (`/b/:bandSlug/...`). **A band name is forever** (it is also the URL): it can't be renamed, only the genre changes.
-- **Stateless server** (it runs on serverless containers): no in-memory sessions or caches that matter, no local file storage, no in-process cron. Sessions in Postgres, files in object storage.
+- **Stateless server** (it runs on serverless containers): no in-memory sessions or caches that matter, no local file storage, no in-process cron. Sessions in Postgres, files in object storage (Garage locally, Scaleway Object Storage in production).
 
 ## Briefs
 

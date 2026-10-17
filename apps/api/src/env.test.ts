@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { loadDatabaseEnv, loadEnv } from "./env";
+import { loadDatabaseEnv, loadEnv, s3Config } from "./env";
 
 const valid = {
   DATABASE_URL: "postgres://u:p@localhost:5432/db",
@@ -8,9 +8,26 @@ const valid = {
   SMTP_HOST: "localhost",
   SMTP_PORT: "1025",
   MAIL_FROM: "CoverBand <noreply@coverband.localhost>",
+  S3_ENDPOINT: "http://localhost:3900",
+  S3_REGION: "garage",
+  S3_BUCKET: "coverband",
+  S3_ACCESS_KEY_ID: "key",
+  S3_SECRET_ACCESS_KEY: "secret",
 };
 
 describe("loadEnv", () => {
+  test("object storage: every S3 variable is required", () => {
+    expect(s3Config(loadEnv(valid))).toEqual({
+      endpoint: "http://localhost:3900",
+      region: "garage",
+      bucket: "coverband",
+      accessKeyId: "key",
+      secretAccessKey: "secret",
+    });
+    expect(() => loadEnv({ ...valid, S3_BUCKET: undefined })).toThrow(/S3_BUCKET/);
+    expect(() => loadEnv({ ...valid, S3_ENDPOINT: "localhost:3900" })).toThrow(/S3_ENDPOINT/);
+  });
+
   test("accepts a complete environment", () => {
     const env = loadEnv(valid);
     expect(env.DATABASE_URL).toBe("postgres://u:p@localhost:5432/db");

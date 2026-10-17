@@ -45,6 +45,12 @@ jobs:
       SMTP_HOST: localhost
       SMTP_PORT: 1025
       MAILPIT_URL: http://localhost:8025
+      # Local Garage, started below (same values as .env.example).
+      S3_ENDPOINT: http://localhost:3900
+      S3_REGION: garage
+      S3_BUCKET: coverband
+      S3_ACCESS_KEY_ID: GKc0ffeeb0a7d0000000000001
+      S3_SECRET_ACCESS_KEY: c0ffeeb0a7d0c0ffeeb0a7d0c0ffeeb0a7d0c0ffeeb0a7d0c0ffeeb0a7d00001
 
     steps:
       - uses: actions/checkout@v7
@@ -67,6 +73,10 @@ jobs:
 
       - name: Typecheck
         run: bun run typecheck
+
+      # Not a service container: Garage needs its config file from the repository.
+      - name: Start object storage
+        run: docker compose up -d --wait garage && sh docker/garage/init.sh
 
       - name: Migrate database
         run: bun run db:migrate

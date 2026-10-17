@@ -2,12 +2,14 @@ import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { ensureAdmin } from "./bootstrap";
 import { createDb } from "./db/client";
-import { loadEnv, smtpConfig } from "./env";
+import { loadEnv, s3Config, smtpConfig } from "./env";
 import { createSmtpMailer } from "./mail/mailer";
+import { createS3Storage } from "./storage";
 
 const env = loadEnv();
 const { db } = createDb(env.DATABASE_URL);
 const mailer = createSmtpMailer(smtpConfig(env));
+const storage = createS3Storage(s3Config(env));
 const auth = createAuth({
   db,
   mailer,
@@ -23,7 +25,14 @@ if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
 }
 
 const app = createApp({
-  deps: { auth, db, mailer, appUrl: env.BETTER_AUTH_URL, trustedOrigins: env.TRUSTED_ORIGINS },
+  deps: {
+    auth,
+    db,
+    mailer,
+    storage,
+    appUrl: env.BETTER_AUTH_URL,
+    trustedOrigins: env.TRUSTED_ORIGINS,
+  },
   webDistDir: env.WEB_DIST_DIR,
 });
 

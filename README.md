@@ -21,7 +21,7 @@ Requires [Bun](https://bun.sh) 1.4+ and Docker.
 ```sh
 bun install
 cp .env.example .env # then fill BETTER_AUTH_SECRET and ADMIN_PASSWORD
-bun run db:up       # local Postgres + Mailpit (emails at http://localhost:8025)
+bun run db:up       # local Postgres, Mailpit (emails at http://localhost:8025) and Garage (S3 storage)
 bun run db:migrate
 bun run check       # lint + typecheck + tests
 bun run dev         # API on :3000, web app on :5173
