@@ -139,6 +139,21 @@
       "submitting": "Mise à jour…",
       "done": "Profil mis à jour."
     },
+    "avatar": {
+      "title": "Avatar",
+      "description": "Visible par les membres de vos groupes. Votre photo est recadrée en carré.",
+      "current": "Votre avatar",
+      "preview": "Aperçu de votre nouvel avatar",
+      "choose": "Choisir une photo",
+      "change": "Changer de photo",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "cancel": "Annuler",
+      "remove": "Supprimer",
+      "removing": "Suppression…",
+      "saved": "Avatar mis à jour.",
+      "removed": "Avatar supprimé."
+    },
     "changePassword": {
       "title": "Changer de mot de passe",
       "description": "Vos autres appareils seront déconnectés.",
@@ -210,6 +225,7 @@
     "invitation_wrong_account": "Vous utilisez un autre compte que celui qui a été invité.",
     "band_name_taken": "Ce nom de groupe est déjà pris.",
     "already_member": "Cette personne fait déjà partie du groupe.",
-    "too_many_requests": "Trop de demandes. Réessayez plus tard."
+    "too_many_requests": "Trop de demandes. Réessayez plus tard.",
+    "invalid_image": "Ce fichier n'est pas une image utilisable. Choisissez une photo (JPEG, PNG, WebP…)."
   }
 }

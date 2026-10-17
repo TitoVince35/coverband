@@ -139,6 +139,21 @@
       "submitting": "Updating…",
       "done": "Profile updated."
     },
+    "avatar": {
+      "title": "Avatar",
+      "description": "Shown to your band mates. Your photo is cropped to a square.",
+      "current": "Your avatar",
+      "preview": "Preview of your new avatar",
+      "choose": "Choose a photo",
+      "change": "Change photo",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "remove": "Remove",
+      "removing": "Removing…",
+      "saved": "Avatar updated.",
+      "removed": "Avatar removed."
+    },
     "changePassword": {
       "title": "Change password",
       "description": "Your other devices will be logged out.",
@@ -210,6 +225,7 @@
     "invitation_wrong_account": "You're logged in with a different account from the one invited.",
     "band_name_taken": "This band name is already taken.",
     "already_member": "This person is already a member of the band.",
-    "too_many_requests": "Too many requests. Try again later."
+    "too_many_requests": "Too many requests. Try again later.",
+    "invalid_image": "This file isn't a usable image. Choose a photo (JPEG, PNG, WebP…)."
   }
 }

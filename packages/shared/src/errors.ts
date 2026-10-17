@@ -19,6 +19,7 @@ export const ERROR_CODES = [
   "band_name_taken",
   "already_member",
   "too_many_requests",
+  "invalid_image",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
