@@ -28,7 +28,14 @@ export function UserAvatar({ user, src, className }: Props) {
   }
   return (
     <span className={size} aria-hidden>
-      <BoringAvatar name={user.id} variant="beam" colors={DEFAULT_COLORS} square size="100%" />
+      {/* A size class, or shadcn's Button shrinks any svg without one to 16 px. */}
+      <BoringAvatar
+        name={user.id}
+        variant="beam"
+        colors={DEFAULT_COLORS}
+        square
+        className="size-full"
+      />
     </span>
   );
 }
