@@ -1,3 +1,4 @@
+import { APP_NAME } from "@coverband/shared";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { ensureAdmin } from "./bootstrap";
@@ -36,7 +37,7 @@ const app = createApp({
   webDistDir: env.WEB_DIST_DIR,
 });
 
-console.log(`CoverBand API listening on http://localhost:${env.PORT}`);
+console.log(`${APP_NAME} API listening on http://localhost:${env.PORT}`);
 
 export default {
   port: env.PORT,

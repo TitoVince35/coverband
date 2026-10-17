@@ -1,3 +1,4 @@
+import { APP_NAME } from "@coverband/shared";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -23,7 +24,7 @@ function RootLayout() {
           <div className="mx-auto flex h-14 max-w-3xl items-center gap-2 px-4">
             <Link to="/" className="flex items-center gap-2 font-heading font-semibold text-lg">
               <img src="/logo.svg" alt="" className="size-7" />
-              CoverBand
+              {APP_NAME}
             </Link>
             <div className="ml-auto flex items-center gap-1">
               {/* Statically false in production builds, so the link is left out. */}

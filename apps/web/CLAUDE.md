@@ -28,4 +28,6 @@ React + Vite + TanStack Router/Query. Cross-cutting rules are in the root `CLAUD
 
 ## PWA
 
+`vite.config.ts` imports `APP_NAME` from `@coverband/shared` (manifest, `%APP_NAME%` in `index.html`): the `dev`, `build` and `preview` scripts use `--configLoader runner` so Vite can load the shared package's TypeScript.
+
 Configured in `vite.config.ts` (vite-plugin-pwa, auto-update). Icons in `public/` are generated from `public/logo.svg` with `bunx pwa-assets-generator --preset minimal-2023 public/logo.svg`.

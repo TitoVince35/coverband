@@ -7,7 +7,7 @@ const valid = {
   BETTER_AUTH_URL: "http://localhost:5173",
   SMTP_HOST: "localhost",
   SMTP_PORT: "1025",
-  MAIL_FROM: "CoverBand <noreply@coverband.localhost>",
+  MAIL_FROM: "Coverband <noreply@coverband.localhost>",
   S3_ENDPOINT: "http://localhost:3900",
   S3_REGION: "garage",
   S3_BUCKET: "coverband",

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { APP_NAME } from "@coverband/shared";
 import { eq, inArray } from "drizzle-orm";
 import { createApp } from "../app";
 import { activity, invitations, rateLimits, users } from "../db/schema";
@@ -87,7 +88,7 @@ describe.skipIf(!databaseUrl)("admin API", () => {
 
     const mail = mailer.sent.at(-1);
     expect(mail?.to).toBe(leaderEmail);
-    expect(mail?.subject).toBe("Créez votre groupe sur CoverBand");
+    expect(mail?.subject).toBe(`Créez votre groupe sur ${APP_NAME}`);
     expect(mail?.text).toContain("Ada Admin");
     const token = lastToken();
     expect(token.length).toBeGreaterThan(40);

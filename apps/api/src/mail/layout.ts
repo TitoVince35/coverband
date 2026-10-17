@@ -1,4 +1,4 @@
-import type { Language } from "@coverband/shared";
+import { APP_NAME, type Language } from "@coverband/shared";
 
 /** Content of an email, independent of HTML: templates build this, the layout renders it. */
 export type EmailContent = {
@@ -28,7 +28,7 @@ export function escapeHtml(value: string): string {
 }
 
 /**
- * Renders the shared CoverBand layout as HTML (inline styles, table layout: what email clients
+ * Renders the shared email layout as HTML (inline styles, table layout: what email clients
  * support) and plain text. Every value is escaped: names typed by users end up in emails.
  */
 export function renderEmail(
@@ -53,7 +53,7 @@ export function renderEmail(
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;padding:32px">
 <tr><td>
-<p style="margin:0 0 24px;font-size:20px;font-weight:700;color:${BRAND}">CoverBand</p>
+<p style="margin:0 0 24px;font-size:20px;font-weight:700;color:${BRAND}">${escapeHtml(APP_NAME)}</p>
 <h1 style="margin:0 0 16px;font-size:22px;line-height:30px;color:#18181b">${escapeHtml(heading)}</h1>
 ${paragraphs.map(p).join("\n")}
 ${button}

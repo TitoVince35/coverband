@@ -1,3 +1,4 @@
+import { APP_NAME } from "@coverband/shared";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import {
@@ -40,7 +41,8 @@ await i18n.use(initReactI18next).init({
   lng: detectLanguage(),
   fallbackLng: DEFAULT_LANGUAGE,
   supportedLngs: Object.keys(LANGUAGES),
-  interpolation: { escapeValue: false }, // React already escapes
+  // React already escapes. `{{appName}}` works in every translation.
+  interpolation: { escapeValue: false, defaultVariables: { appName: APP_NAME } },
   returnNull: false,
 });
 

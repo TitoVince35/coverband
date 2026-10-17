@@ -6,7 +6,7 @@
     "saving": "Saving…"
   },
   "home": {
-    "title": "Welcome to CoverBand",
+    "title": "Welcome to {{appName}}",
     "greeting": "Hello {{name}}",
     "yourBands": "Your bands",
     "noBands": "You're not in a band yet. Bands are joined through an invitation."
@@ -44,14 +44,14 @@
   },
   "login": {
     "title": "Log in",
-    "description": "Welcome back to CoverBand.",
+    "description": "Welcome back to {{appName}}.",
     "email": "Email",
     "password": "Password",
     "submit": "Log in",
     "submitting": "Logging in…",
     "invalidCredentials": "Wrong email or password.",
     "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
-    "invitationOnly": "No account yet? CoverBand is by invitation only: ask your band leader.",
+    "invitationOnly": "No account yet? {{appName}} is by invitation only: ask your band leader.",
     "forgotPassword": "Forgot password?"
   },
   "forgotPassword": {
@@ -83,8 +83,8 @@
     "unavailable": "Invitation unavailable",
     "goToLogin": "Go to login",
     "title": "Create your band",
-    "intro": "{{inviter}} invites you to create your band on CoverBand.",
-    "hasAccount": "You already have a CoverBand account with {{email}}. Log in to create your band.",
+    "intro": "{{inviter}} invites you to create your band on {{appName}}.",
+    "hasAccount": "You already have a {{appName}} account with {{email}}. Log in to create your band.",
     "login": "Log in",
     "wrongAccount": "This invitation is for {{email}}, but you're logged in as {{current}}.",
     "logout": "Log out",
@@ -121,8 +121,8 @@
     "creating": "Creating…",
     "join": {
       "title": "Join {{band}}",
-      "intro": "{{inviter}} invites you to join {{band}} on CoverBand.",
-      "hasAccount": "You already have a CoverBand account with {{email}}. Log in to join {{band}}.",
+      "intro": "{{inviter}} invites you to join {{band}} on {{appName}}.",
+      "hasAccount": "You already have a {{appName}} account with {{email}}. Log in to join {{band}}.",
       "submit": "Join the band",
       "submitting": "Joining…"
     },

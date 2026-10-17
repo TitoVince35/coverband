@@ -3,8 +3,10 @@
  * Prints a QR code to the web app, then starts both apps with the LAN URL as the
  * public URL (email links, origin checks). Development only.
  */
+
 import { type NetworkInterfaceInfo, networkInterfaces } from "node:os";
 import { fileURLToPath } from "node:url";
+import { APP_NAME } from "@coverband/shared";
 import { renderUnicodeCompact } from "uqr";
 
 const WEB_PORT = 5173;
@@ -49,7 +51,7 @@ if (import.meta.main) {
   const localUrl = process.env.BETTER_AUTH_URL;
 
   console.log(`\n${renderUnicodeCompact(webUrl, { border: 1 })}\n`);
-  console.log(`CoverBand on the local network: ${webUrl}`);
+  console.log(`${APP_NAME} on the local network: ${webUrl}`);
   console.log(`Mailpit:                        http://${host}:${MAILPIT_PORT}`);
   console.log(`Not reachable? Allow ports ${WEB_PORT} and ${MAILPIT_PORT} in your firewall.\n`);
 

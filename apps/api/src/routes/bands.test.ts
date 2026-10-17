@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { APP_NAME } from "@coverband/shared";
 import { and, eq, inArray, like } from "drizzle-orm";
 import { createApp } from "../app";
 import { activity, bandMembers, bands, invitations, rateLimits, users } from "../db/schema";
@@ -150,7 +151,7 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
     });
     expect(res.status).toBe(201);
     const mail = mailer.sent.at(-1);
-    expect(mail?.subject).toBe(`Join ${bandSlug} name on CoverBand`);
+    expect(mail?.subject).toBe(`Join ${bandSlug} name on ${APP_NAME}`);
     expect(mail?.text).toContain("leader invites you to join");
 
     const list = (await (await call(`/bands/${bandSlug}/invitations`, "leader")).json()) as {
