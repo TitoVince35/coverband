@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { adminClient, inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { SESSION_KEY } from "@/lib/query-client";
 
 // Better Auth endpoints live under /api/auth on the same origin (Vite proxies /api in development).
 export const authClient = createAuthClient({
@@ -23,7 +24,7 @@ export type Session = typeof authClient.$Infer.Session;
 
 /** Current session, or null when logged out. Route guards read it with ensureQueryData. */
 export const sessionQuery = queryOptions({
-  queryKey: ["session"],
+  queryKey: SESSION_KEY,
   queryFn: async (): Promise<Session | null> => {
     const { data, error } = await authClient.getSession();
     if (error) {
@@ -31,7 +32,6 @@ export const sessionQuery = queryOptions({
     }
     return data;
   },
-  staleTime: 5 * 60 * 1000,
 });
 
 /** Failed Better Auth call, keeping its HTTP status and error code (e.g. `INVALID_TOKEN`). */

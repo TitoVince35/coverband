@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthRequestError, authClient, ensureAuthOk, sessionQuery } from "@/lib/auth";
 import { errorMessage } from "@/lib/errors";
+import { removeUserQueries } from "@/lib/query-client";
 import { safeRedirect } from "@/lib/redirect";
 
 export const Route = createFileRoute("/login")({
@@ -42,6 +43,8 @@ function LoginPage() {
       ensureAuthOk(await authClient.signIn.email({ email, password }));
     },
     onSuccess: async () => {
+      // A previous user's data may still be cached (an expired session doesn't clear it).
+      removeUserQueries(queryClient);
       await queryClient.invalidateQueries({ queryKey: sessionQuery.queryKey });
       router.history.push(target ?? "/");
     },

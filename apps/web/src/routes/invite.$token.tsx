@@ -10,6 +10,7 @@ import { isLanguage } from "@/i18n/languages";
 import { api } from "@/lib/api";
 import { authClient, sessionQuery } from "@/lib/auth";
 import { ensureOk, errorMessage } from "@/lib/errors";
+import { clearUserData } from "@/lib/query-client";
 
 // Public page opened from an invitation email. The token in the URL is the proof.
 export const Route = createFileRoute("/invite/$token")({
@@ -21,6 +22,8 @@ const invitationQuery = (token: string) => ({
   queryFn: async () =>
     (await ensureOk(await api.invitations[":token"].$get({ param: { token } }))).json(),
   retry: false,
+  // Its status changes elsewhere (accepted, revoked, expired): always check it.
+  staleTime: 0,
 });
 
 function InvitePage() {
@@ -64,7 +67,7 @@ function InvitePage() {
           variant="outline"
           onClick={async () => {
             await authClient.signOut();
-            queryClient.setQueryData(sessionQuery.queryKey, null);
+            clearUserData(queryClient);
             await invitation.refetch();
           }}
         >

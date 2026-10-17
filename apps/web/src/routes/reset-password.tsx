@@ -13,8 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AuthRequestError, authClient, ensureAuthOk, sessionQuery } from "@/lib/auth";
+import { AuthRequestError, authClient, ensureAuthOk } from "@/lib/auth";
 import { errorMessage } from "@/lib/errors";
+import { clearUserData } from "@/lib/query-client";
 
 // Opened from the password reset email (#24). The email's link goes through the API, which checks
 // the token and redirects here with `?token=...`, or `?error=INVALID_TOKEN` when it is used or expired.
@@ -39,8 +40,7 @@ function ResetPasswordPage() {
     },
     onSuccess: async () => {
       // Every session of the account was revoked, including this device's if it was logged in.
-      queryClient.setQueryData(sessionQuery.queryKey, null);
-      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== "session" });
+      clearUserData(queryClient);
       toast.success(t("resetPassword.done"));
       await router.navigate({ to: "/login" });
     },

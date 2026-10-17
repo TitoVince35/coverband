@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { sessionAvatarUrl, UserAvatar } from "@/components/user-avatar";
 import { authClient, sessionQuery } from "@/lib/auth";
+import { clearUserData } from "@/lib/query-client";
 
 /** Account menu in the header; hidden when logged out. */
 export function UserMenu() {
@@ -28,8 +29,7 @@ export function UserMenu() {
 
   async function logout() {
     await authClient.signOut();
-    queryClient.setQueryData(sessionQuery.queryKey, null);
-    queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== "session" });
+    clearUserData(queryClient);
     await router.navigate({ to: "/login" });
   }
 
