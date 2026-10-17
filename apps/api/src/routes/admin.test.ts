@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { eq, inArray } from "drizzle-orm";
 import { createApp } from "../app";
-import { invitations, users } from "../db/schema";
+import { invitations, rateLimits, users } from "../db/schema";
 import { hashToken, INVITATION_TTL_MS, inviteLeader, listLeaderInvitations } from "../invitations";
+import { hit, INVITATION_EMAILS } from "../middleware/rate-limit";
 import { createTestDeps } from "../test-deps";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
@@ -58,6 +59,7 @@ describe.skipIf(!databaseUrl)("admin API", () => {
   afterAll(async () => {
     // Invitations go with their inviter (on delete cascade).
     await db.delete(users).where(inArray(users.email, [adminEmail, userEmail]));
+    await db.delete(rateLimits).where(eq(rateLimits.key, `coverband:invitation-emails:${adminId}`));
     await sql.end();
   });
 
@@ -173,5 +175,21 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     );
     await Bun.sleep(50);
     expect(await db.select().from(invitations).where(eq(invitations.email, email))).toHaveLength(0);
+  });
+
+  test("invitation emails are rate limited per admin (last: fills the bucket)", async () => {
+    const [pending] = await listLeaderInvitations(deps);
+    for (let i = 0; i < INVITATION_EMAILS.max; i++) {
+      await hit(db, INVITATION_EMAILS, adminId);
+    }
+    const body = { email: `limited-${run}@test.localhost`, language: "en" };
+    const sent = await call("/invitations", { method: "POST", body });
+    expect(sent.status).toBe(429);
+    expect(sent.headers.get("retry-after")).toBeTruthy();
+    expect(((await sent.json()) as { error: { code: string } }).error.code).toBe(
+      "too_many_requests",
+    );
+    const resent = await call(`/invitations/${pending?.id}/resend`, { method: "POST" });
+    expect(resent.status).toBe(429);
   });
 });

@@ -202,6 +202,7 @@
     "invitation_used": "Cette invitation a déjà été utilisée. Connectez-vous pour continuer.",
     "invitation_wrong_account": "Vous utilisez un autre compte que celui qui a été invité.",
     "band_name_taken": "Ce nom de groupe est déjà pris.",
-    "already_member": "Cette personne fait déjà partie du groupe."
+    "already_member": "Cette personne fait déjà partie du groupe.",
+    "too_many_requests": "Trop de demandes. Réessayez plus tard."
   }
 }

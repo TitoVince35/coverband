@@ -17,6 +17,7 @@ import {
   revokeInvitation,
 } from "../invitations";
 import { type BandEnv, requireLeader, requireMember } from "../middleware/band";
+import { INVITATION_EMAILS, rateLimitUser } from "../middleware/rate-limit";
 import { requireUser } from "../middleware/session";
 import { validationHook } from "../validation";
 
@@ -39,6 +40,7 @@ const bandBody = z.object({
 export function bandRoutes(deps: AppDeps) {
   const { db } = deps;
   const member = requireMember(db);
+  const limit = rateLimitUser(db, INVITATION_EMAILS);
   const musiciansOf = (band: { id: string; name: string }): InvitationScope => ({
     role: "musician",
     band,
@@ -100,6 +102,7 @@ export function bandRoutes(deps: AppDeps) {
       "/:bandSlug/invitations",
       member,
       requireLeader,
+      limit,
       zValidator("json", inviteBody, validationHook),
       async (c) => {
         try {
@@ -123,6 +126,7 @@ export function bandRoutes(deps: AppDeps) {
       "/:bandSlug/invitations/:id/resend",
       member,
       requireLeader,
+      limit,
       zValidator("param", idParam, validationHook),
       async (c) => {
         const invitation = await resendInvitation(

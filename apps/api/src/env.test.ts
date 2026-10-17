@@ -57,6 +57,16 @@ describe("TRUSTED_ORIGINS", () => {
   });
 });
 
+describe("TRUSTED_PROXIES", () => {
+  test("a comma-separated list of IPs or CIDR ranges, empty by default", () => {
+    expect(loadEnv(valid).TRUSTED_PROXIES).toEqual([]);
+    expect(
+      loadEnv({ ...valid, TRUSTED_PROXIES: "100.64.0.0/10, 2001:db8::1" }).TRUSTED_PROXIES,
+    ).toEqual(["100.64.0.0/10", "2001:db8::1"]);
+    expect(() => loadEnv({ ...valid, TRUSTED_PROXIES: "proxy.local" })).toThrow(/TRUSTED_PROXIES/);
+  });
+});
+
 describe("loadDatabaseEnv", () => {
   test("only needs the database URL", () => {
     expect(loadDatabaseEnv({ DATABASE_URL: valid.DATABASE_URL }).DATABASE_URL).toBe(

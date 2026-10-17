@@ -202,6 +202,7 @@
     "invitation_used": "This invitation has already been used. Log in to continue.",
     "invitation_wrong_account": "You're logged in with a different account from the one invited.",
     "band_name_taken": "This band name is already taken.",
-    "already_member": "This person is already a member of the band."
+    "already_member": "This person is already a member of the band.",
+    "too_many_requests": "Too many requests. Try again later."
   }
 }

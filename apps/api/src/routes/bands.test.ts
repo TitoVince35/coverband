@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { and, eq, like } from "drizzle-orm";
 import { createApp } from "../app";
-import { bandMembers, bands, invitations, users } from "../db/schema";
+import { bandMembers, bands, invitations, rateLimits, users } from "../db/schema";
+import { hit, INVITATION_EMAILS } from "../middleware/rate-limit";
 import { createTestDeps } from "../test-deps";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
@@ -279,5 +280,21 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
     });
     const empty = await call(`/bands/${bandSlug}`, "leader", { method: "PATCH", body: {} });
     expect(empty.status).toBe(400);
+  });
+
+  test("invitation emails are rate limited per band leader", async () => {
+    const leaderId = (await userId("leader")) ?? "";
+    for (let i = 0; i < INVITATION_EMAILS.max; i++) {
+      await hit(db, INVITATION_EMAILS, leaderId);
+    }
+    const res = await call(`/bands/${bandSlug}/invitations`, "leader", {
+      method: "POST",
+      body: { email: email("limited"), language: "en" },
+    });
+    expect(res.status).toBe(429);
+    expect(await errorCode(res)).toBe("too_many_requests");
+    await db
+      .delete(rateLimits)
+      .where(eq(rateLimits.key, `coverband:invitation-emails:${leaderId}`));
   });
 });
