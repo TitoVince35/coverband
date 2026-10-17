@@ -7,6 +7,7 @@ import type { Auth } from "./auth";
 import type { Db } from "./db/client";
 import { apiError } from "./errors";
 import type { Mailer } from "./mail/mailer";
+import { securityHeaders } from "./middleware/security";
 import { loadSession, type SessionEnv } from "./middleware/session";
 import { adminRoutes } from "./routes/admin";
 import { bandRoutes } from "./routes/bands";
@@ -49,6 +50,7 @@ export function createApp({ deps, webDistDir, log = true }: AppOptions) {
   if (log) {
     app.use(logger());
   }
+  app.use(securityHeaders({ https: deps.appUrl.startsWith("https:") }));
 
   app.onError((err, c) => {
     if (err instanceof HTTPException) {
