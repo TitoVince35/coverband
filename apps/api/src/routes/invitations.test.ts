@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { eq, inArray, like } from "drizzle-orm";
+import { eq, inArray, like, sql as sqlExpr } from "drizzle-orm";
 import { createApp } from "../app";
-import { bands, invitations, users } from "../db/schema";
+import { activity, bands, invitations, users } from "../db/schema";
 import { INVITATION_TTL_MS, inviteLeader, revokeLeaderInvitation } from "../invitations";
-import { createTestDeps } from "../test-deps";
+import { activityOf, createTestDeps } from "../test-deps";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;
@@ -67,6 +67,12 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
   });
 
   afterAll(async () => {
+    // Activity outside a band (leader invitations, new accounts) stays when users are deleted.
+    const testUsers = db
+      .select({ id: users.id })
+      .from(users)
+      .where(like(users.email, `%-${run}@test.localhost`));
+    await db.delete(activity).where(inArray(activity.actorId, testUsers));
     await db.delete(bands).where(like(bands.name, `% ${run}%`));
     await db.delete(users).where(like(users.email, `%-${run}@test.localhost`));
     await sql.end();
@@ -145,6 +151,25 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
     });
     expect(await login(email("new"))).toContain("session_token");
 
+    const [band] = await db.select().from(bands).where(eq(bands.slug, bandSlug));
+    const [invitation] = await db
+      .select({ id: invitations.id })
+      .from(invitations)
+      .where(eq(invitations.email, email("new")));
+    const by = { actorId: user?.id };
+    expect(await activityOf(db, user?.id ?? "")).toMatchObject([
+      {
+        ...by,
+        action: "member.joined",
+        bandId: band?.id,
+        data: { role: "leader", invitationId: invitation?.id },
+      },
+      { ...by, action: "user.registered", bandId: null, data: { invitationId: invitation?.id } },
+    ]);
+    expect(await activityOf(db, band?.id ?? "")).toMatchObject([
+      { ...by, action: "band.created", bandId: band?.id, targetType: "band", data: null },
+    ]);
+
     // The link works only once.
     const again = await accept(token, { ...body, newAccount: profile });
     expect(again.status).toBe(410);
@@ -167,6 +192,17 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
         .from(users)
         .where(eq(users.email, email("clash"))),
     ).toHaveLength(0);
+    // The events of the failed transaction are gone with it.
+    const [invitation] = await db
+      .select({ id: invitations.id })
+      .from(invitations)
+      .where(eq(invitations.email, email("clash")));
+    expect(
+      await db
+        .select()
+        .from(activity)
+        .where(sqlExpr`${activity.data}->>'invitationId' = ${invitation?.id}`),
+    ).toHaveLength(0);
   });
 
   test("expired and revoked invitations can't be used", async () => {
@@ -181,7 +217,7 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
       .select({ id: invitations.id })
       .from(invitations)
       .where(eq(invitations.email, email("revoked")));
-    await revokeLeaderInvitation(deps, row?.id ?? "");
+    await revokeLeaderInvitation(deps, row?.id ?? "", adminId);
     const revoked = await accept(token, {
       instrument: "Bass",
       bandName: bandName("Revoked"),
@@ -213,6 +249,13 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
     const res = await accept(token, body, cookie);
     expect(res.status).toBe(201);
     expect(((await res.json()) as { bandSlug: string }).bandSlug).toBe(`slug-twin-${run}-2`);
+
+    // An existing account: the band and the membership, no registration.
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email("existing")));
+    expect((await activityOf(db, user?.id ?? "")).map((a) => a.action)).toEqual(["member.joined"]);
   });
 
   test("a band page is only visible to its members", async () => {

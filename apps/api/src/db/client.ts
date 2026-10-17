@@ -13,3 +13,6 @@ export function createDb(databaseUrl: string) {
 }
 
 export type Db = ReturnType<typeof createDb>["db"];
+
+/** A transaction, as passed to the `db.transaction` callback. */
+export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];

@@ -27,6 +27,15 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - Commit generated migrations in `drizzle/`; never edit an applied one.
 - Environment variables are validated with Zod in `src/env.ts`; add new ones there and in `.env.example`.
 
+## Activity
+
+- **Every write records its event** in the `activity` table (`src/db/activity-schema.ts`): base for stats and the future activity feed. A new feature adds its codes to `ACTIVITY_ACTIONS` (and targets to `ACTIVITY_TARGETS`) in `@coverband/shared`; codes never change once used.
+- Call `recordActivity(tx, ...)` (`src/activity.ts`) with the transaction of the change itself: no event without its change, no change without its event. Refused or failed attempts record nothing.
+- `band_id` is null for events outside a band (band leader invitations, new accounts); band activity is deleted with its band. `actor_id` becomes null when the account is deleted.
+- `data` holds small, non-personal details: IDs, roles, codes, a genre. **Never emails or names.**
+- Invitations record `invitation.sent` only once the email has gone out, since a failed send deletes the invitation.
+- Tests check the events with `activityOf(db, targetId)` (`src/test-deps.ts`) and delete the activity outside a band of their test users.
+
 ## Authentication
 
 - Better Auth in `src/auth.ts`, mounted at `/api/auth/*`. Email + password, sessions in Postgres, password policy from `@coverband/shared` (`PASSWORD_MIN_LENGTH`). Admin plugin for the global role.

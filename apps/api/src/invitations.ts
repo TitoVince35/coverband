@@ -1,6 +1,7 @@
 import type { Language } from "@coverband/shared";
 import { and, desc, eq, isNull, type SQL, sql } from "drizzle-orm";
-import type { Db } from "./db/client";
+import { recordActivity } from "./activity";
+import type { Db, Tx } from "./db/client";
 import { bandMembers, invitations, users } from "./db/schema";
 import type { Mailer } from "./mail/mailer";
 import { leaderInvitationEmail, musicianInvitationEmail } from "./mail/templates";
@@ -61,6 +62,23 @@ export function invitationStatus(
   if (invitation.acceptedAt) return "accepted";
   if (invitation.revokedAt) return "revoked";
   return invitation.expiresAt <= now ? "expired" : "pending";
+}
+
+/** Records an invitation event, in the scope's band (none for band leader invitations). */
+function recordInvitation(
+  db: Db | Tx,
+  scope: InvitationScope,
+  action: "invitation.sent" | "invitation.resent" | "invitation.revoked",
+  invitationId: string,
+  actorId: string,
+) {
+  return recordActivity(db, {
+    action,
+    bandId: scope.role === "musician" ? scope.band.id : null,
+    actorId,
+    target: { type: "invitation", id: invitationId },
+    data: { role: scope.role },
+  });
 }
 
 function inScope(scope: InvitationScope): SQL | undefined {
@@ -176,11 +194,18 @@ export async function invite(
     await deps.db.delete(invitations).where(eq(invitations.id, invitation.id));
     throw error;
   }
+  // Only now: an invitation whose email failed is deleted, so it never existed.
+  await recordInvitation(deps.db, scope, "invitation.sent", invitation.id, input.invitedById);
   return invitation;
 }
 
 /** Sends a new link valid for another 48 hours; the previous link stops working. */
-export async function resendInvitation(deps: InvitationDeps, scope: InvitationScope, id: string) {
+export async function resendInvitation(
+  deps: InvitationDeps,
+  scope: InvitationScope,
+  id: string,
+  actorId: string,
+) {
   const now = deps.now?.() ?? new Date();
   const { token, tokenHash } = newToken();
   const [invitation] = await deps.db
@@ -190,18 +215,28 @@ export async function resendInvitation(deps: InvitationDeps, scope: InvitationSc
     .returning();
   if (!invitation) return null;
   await sendInvitation(deps, scope, invitation, token);
+  await recordInvitation(deps.db, scope, "invitation.resent", invitation.id, actorId);
   return invitation;
 }
 
 /** Revokes an open invitation: its link stops working. Returns false if there was none. */
-export async function revokeInvitation(deps: InvitationDeps, scope: InvitationScope, id: string) {
+export async function revokeInvitation(
+  deps: InvitationDeps,
+  scope: InvitationScope,
+  id: string,
+  actorId: string,
+) {
   const now = deps.now?.() ?? new Date();
-  const revoked = await deps.db
-    .update(invitations)
-    .set({ revokedAt: now })
-    .where(and(eq(invitations.id, id), inScope(scope), open()))
-    .returning({ id: invitations.id });
-  return revoked.length > 0;
+  return deps.db.transaction(async (tx) => {
+    const [revoked] = await tx
+      .update(invitations)
+      .set({ revokedAt: now })
+      .where(and(eq(invitations.id, id), inScope(scope), open()))
+      .returning({ id: invitations.id });
+    if (!revoked) return false;
+    await recordInvitation(tx, scope, "invitation.revoked", revoked.id, actorId);
+    return true;
+  });
 }
 
 // Band leader invitations, sent by admins (#22).
@@ -211,7 +246,7 @@ export const inviteLeader = (
   deps: InvitationDeps,
   input: { email: string; language: Language; invitedById: string },
 ) => invite(deps, LEADER_INVITATIONS, input);
-export const resendLeaderInvitation = (deps: InvitationDeps, id: string) =>
-  resendInvitation(deps, LEADER_INVITATIONS, id);
-export const revokeLeaderInvitation = (deps: InvitationDeps, id: string) =>
-  revokeInvitation(deps, LEADER_INVITATIONS, id);
+export const resendLeaderInvitation = (deps: InvitationDeps, id: string, actorId: string) =>
+  resendInvitation(deps, LEADER_INVITATIONS, id, actorId);
+export const revokeLeaderInvitation = (deps: InvitationDeps, id: string, actorId: string) =>
+  revokeInvitation(deps, LEADER_INVITATIONS, id, actorId);

@@ -1,0 +1,20 @@
+/**
+ * Stable codes for functional events, stored in the API's `activity` table. Like `ERROR_CODES`,
+ * they never change once used: the future activity feed translates them.
+ */
+export const ACTIVITY_ACTIONS = [
+  "invitation.sent",
+  "invitation.resent",
+  "invitation.revoked",
+  "user.registered",
+  "band.created",
+  "member.joined",
+  "band.genre_changed",
+] as const;
+
+export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
+
+/** What an activity is about (`target_type`). */
+export const ACTIVITY_TARGETS = ["invitation", "user", "band"] as const;
+
+export type ActivityTarget = (typeof ACTIVITY_TARGETS)[number];

@@ -1,5 +1,6 @@
 import { displayName, type ErrorCode } from "@coverband/shared";
 import { and, eq } from "drizzle-orm";
+import { recordActivity } from "./activity";
 import type { AppDeps } from "./app";
 import type { SessionUser } from "./auth";
 import { BandNameTakenError, createBand } from "./bands";
@@ -156,6 +157,13 @@ function createMembership(
       await tx
         .insert(accounts)
         .values({ userId, accountId: userId, providerId: "credential", password: passwordHash });
+      await recordActivity(tx, {
+        action: "user.registered",
+        bandId: null,
+        actorId: userId,
+        target: { type: "user", id: userId },
+        data: { invitationId: invitation.id },
+      });
     }
 
     let band: { id: string; slug: string };
@@ -164,6 +172,12 @@ function createMembership(
         throw new OnboardingError(400, "bad_request", "Band name is required");
       }
       band = await createBand(tx, { name: input.bandName, genre: input.genre });
+      await recordActivity(tx, {
+        action: "band.created",
+        bandId: band.id,
+        actorId: userId,
+        target: { type: "band", id: band.id },
+      });
     } else {
       const [joined] = await tx
         .select({ id: bands.id, slug: bands.slug })
@@ -185,6 +199,13 @@ function createMembership(
       userId,
       role: invitation.role,
       instrument: input.instrument.trim(),
+    });
+    await recordActivity(tx, {
+      action: "member.joined",
+      bandId: band.id,
+      actorId: userId,
+      target: { type: "user", id: userId },
+      data: { role: invitation.role, invitationId: invitation.id },
     });
     await tx
       .update(invitations)

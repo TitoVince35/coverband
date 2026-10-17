@@ -1,9 +1,8 @@
 import { slugify } from "@coverband/shared";
 import { eq, sql } from "drizzle-orm";
-import type { Db } from "./db/client";
+import { recordActivity } from "./activity";
+import type { Db, Tx } from "./db/client";
 import { bands } from "./db/schema";
-
-type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 export class BandNameTakenError extends Error {
   constructor() {
@@ -59,16 +58,26 @@ export async function createBand(
 }
 
 /** Changes a band's genre. The name (and so the URL) never changes: choose it carefully. */
-export async function updateBandGenre(
+export function updateBandGenre(
   db: Db,
   id: string,
   genre: string | null,
+  actorId: string,
 ): Promise<{ name: string; slug: string; genre: string | null }> {
-  const [band] = await db
-    .update(bands)
-    .set({ genre: genre?.trim() || null })
-    .where(eq(bands.id, id))
-    .returning({ name: bands.name, slug: bands.slug, genre: bands.genre });
-  if (!band) throw new Error("Band update returned nothing");
-  return band;
+  return db.transaction(async (tx) => {
+    const [band] = await tx
+      .update(bands)
+      .set({ genre: genre?.trim() || null })
+      .where(eq(bands.id, id))
+      .returning({ name: bands.name, slug: bands.slug, genre: bands.genre });
+    if (!band) throw new Error("Band update returned nothing");
+    await recordActivity(tx, {
+      action: "band.genre_changed",
+      bandId: id,
+      actorId,
+      target: { type: "band", id },
+      data: { genre: band.genre },
+    });
+    return band;
+  });
 }

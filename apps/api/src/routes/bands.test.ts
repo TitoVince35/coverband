@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { and, eq, like } from "drizzle-orm";
+import { and, eq, inArray, like } from "drizzle-orm";
 import { createApp } from "../app";
-import { bandMembers, bands, invitations, rateLimits, users } from "../db/schema";
+import { activity, bandMembers, bands, invitations, rateLimits, users } from "../db/schema";
 import { hit, INVITATION_EMAILS } from "../middleware/rate-limit";
-import { createTestDeps } from "../test-deps";
+import { activityOf, createTestDeps } from "../test-deps";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;
@@ -79,6 +79,12 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
   });
 
   afterAll(async () => {
+    // Band activity goes with the band; activity outside a band (new accounts) doesn't.
+    const testUsers = db
+      .select({ id: users.id })
+      .from(users)
+      .where(like(users.email, `%-${run}@test.localhost`));
+    await db.delete(activity).where(inArray(activity.actorId, testUsers));
     await db.delete(bands).where(like(bands.slug, `%${run}%`));
     await db.delete(users).where(like(users.email, `%-${run}@test.localhost`));
     await sql.end();
@@ -125,6 +131,16 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
       invitations: { email: string; status: string }[];
     };
     expect(list.invitations).toMatchObject([{ email: email("singer"), status: "pending" }]);
+    const { id } = (await res.json()) as { id: string };
+    expect(await activityOf(db, id)).toEqual([
+      {
+        action: "invitation.sent",
+        bandId: (await bandId()) ?? null,
+        actorId: (await userId("leader")) ?? null,
+        targetType: "invitation",
+        data: { role: "musician" },
+      },
+    ]);
 
     const again = await call(`/bands/${bandSlug}/invitations`, "leader", {
       method: "POST",
@@ -166,6 +182,17 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
       bands: { role: string; instrument: string }[];
     };
     expect(mine.bands).toMatchObject([{ role: "musician", instrument: "Vocals" }]);
+
+    const singer = await userId("singer");
+    expect(await activityOf(db, singer ?? "")).toMatchObject([
+      {
+        action: "member.joined",
+        bandId: await bandId(),
+        actorId: singer,
+        data: { role: "musician" },
+      },
+      { action: "user.registered", bandId: null, actorId: singer },
+    ]);
   });
 
   test("someone with an account joins after logging in; members can't join twice", async () => {
@@ -191,6 +218,9 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
 
     const mine = (await (await call("/bands", "outsider")).json()) as { bands: { role: string }[] };
     expect(mine.bands.map((b) => b.role).sort()).toEqual(["leader", "musician"]);
+    expect(await activityOf(db, (await userId("outsider")) ?? "")).toMatchObject([
+      { action: "member.joined", bandId: await bandId() },
+    ]);
 
     // A fresh invitation for someone who is already in: refused at acceptance too.
     const [band] = await db.select().from(bands).where(eq(bands.slug, bandSlug));
@@ -226,6 +256,11 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
     expect(await errorCode(res)).toBe("already_member");
   });
 
+  async function bandId() {
+    const [band] = await db.select({ id: bands.id }).from(bands).where(eq(bands.slug, bandSlug));
+    return band?.id;
+  }
+
   async function userId(who: string) {
     const [user] = await db
       .select({ id: users.id })
@@ -254,6 +289,12 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
     expect((await call(`/bands/${bandSlug}${path}`, "leader", { method: "DELETE" })).status).toBe(
       204,
     );
+    expect(await activityOf(db, row?.id ?? "")).toMatchObject(
+      ["invitation.sent", "invitation.resent", "invitation.revoked"].map((action) => ({
+        action,
+        bandId: row?.bandId,
+      })),
+    );
   });
 
   test("the band leader changes the genre; the name can't change", async () => {
@@ -280,6 +321,17 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
     });
     const empty = await call(`/bands/${bandSlug}`, "leader", { method: "PATCH", body: {} });
     expect(empty.status).toBe(400);
+
+    const id = (await bandId()) ?? "";
+    expect(await activityOf(db, id)).toMatchObject([
+      {
+        action: "band.genre_changed",
+        bandId: id,
+        actorId: await userId("leader"),
+        data: { genre: "Funk" },
+      },
+      { action: "band.genre_changed", data: { genre: null } },
+    ]);
   });
 
   test("invitation emails are rate limited per band leader", async () => {
