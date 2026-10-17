@@ -13,6 +13,7 @@ Propose a library like the old Helmet (Express), or Hono's built-in middleware, 
 
 ## Issues
 
+- [#52 Security Epic](https://github.com/TitoVince35/coverband/issues/52)
 - [#48 Security headers and Content Security Policy](https://github.com/TitoVince35/coverband/issues/48)
 - [#49 Request guards: CSRF and body limit on /api, no CORS](https://github.com/TitoVince35/coverband/issues/49)
 - [#50 Rate limiting: email-sending routes and client IP behind Scaleway](https://github.com/TitoVince35/coverband/issues/50)
