@@ -7,7 +7,7 @@ import type { Auth } from "./auth";
 import type { Db } from "./db/client";
 import { apiError } from "./errors";
 import type { Mailer } from "./mail/mailer";
-import { securityHeaders } from "./middleware/security";
+import { requestGuards, securityHeaders } from "./middleware/security";
 import { loadSession, type SessionEnv } from "./middleware/session";
 import { adminRoutes } from "./routes/admin";
 import { bandRoutes } from "./routes/bands";
@@ -21,6 +21,8 @@ export type AppDeps = {
   mailer: Mailer;
   /** Public URL of the web app, for links in emails. */
   appUrl: string;
+  /** Other origins the web app may be loaded from (`bun run dev:lan`). */
+  trustedOrigins?: string[];
 };
 
 export type AppOptions = {
@@ -54,11 +56,13 @@ export function createApp({ deps, webDistDir, log = true }: AppOptions) {
 
   app.onError((err, c) => {
     if (err instanceof HTTPException) {
-      return apiError(c, err.status, err.message);
+      return apiError(c, err.status, err.message || "Request refused");
     }
     console.error(err);
     return apiError(c, 500, "Internal server error");
   });
+
+  app.use("/api/*", ...requestGuards([deps.appUrl, ...(deps.trustedOrigins ?? [])]));
 
   // Better Auth endpoints (login, logout, session...), called by the web app's auth client.
   app.on(["GET", "POST"], "/api/auth/*", (c) => deps.auth.handler(c.req.raw));
