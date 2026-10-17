@@ -132,6 +132,13 @@
     "menu": "Account",
     "logout": "Log out",
     "title": "My account",
+    "profile": {
+      "title": "Profile",
+      "description": "Your band mates see your nickname, or else your first and last name.",
+      "submit": "Update",
+      "submitting": "Updating…",
+      "done": "Profile updated."
+    },
     "changePassword": {
       "title": "Change password",
       "description": "Your other devices will be logged out.",

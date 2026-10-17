@@ -10,6 +10,7 @@ export const ACTIVITY_ACTIONS = [
   "band.created",
   "member.joined",
   "band.genre_changed",
+  "user.profile_updated",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];

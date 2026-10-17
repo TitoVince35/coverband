@@ -132,6 +132,13 @@
     "menu": "Compte",
     "logout": "Se déconnecter",
     "title": "Mon compte",
+    "profile": {
+      "title": "Profil",
+      "description": "Les membres de vos groupes voient votre surnom, sinon vos prénom et nom.",
+      "submit": "Mettre à jour",
+      "submitting": "Mise à jour…",
+      "done": "Profil mis à jour."
+    },
     "changePassword": {
       "title": "Changer de mot de passe",
       "description": "Vos autres appareils seront déconnectés.",
