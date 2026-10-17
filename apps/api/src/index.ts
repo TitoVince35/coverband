@@ -14,6 +14,7 @@ const auth = createAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
   trustedOrigins: env.TRUSTED_ORIGINS,
+  trustedProxies: env.TRUSTED_PROXIES,
 });
 
 if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {

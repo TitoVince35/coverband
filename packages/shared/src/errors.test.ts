@@ -7,6 +7,7 @@ describe("errorCodeForStatus", () => {
     expect(errorCodeForStatus(401)).toBe("unauthorized");
     expect(errorCodeForStatus(403)).toBe("forbidden");
     expect(errorCodeForStatus(404)).toBe("not_found");
+    expect(errorCodeForStatus(429)).toBe("too_many_requests");
     expect(errorCodeForStatus(500)).toBe("internal_error");
   });
 

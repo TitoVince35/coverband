@@ -13,6 +13,7 @@ import {
   resendLeaderInvitation,
   revokeLeaderInvitation,
 } from "../invitations";
+import { INVITATION_EMAILS, rateLimitUser } from "../middleware/rate-limit";
 import { requireAdmin, type SessionEnv } from "../middleware/session";
 import { validationHook } from "../validation";
 
@@ -25,6 +26,7 @@ const idParam = z.object({ id: z.uuid() });
 
 /** Administration console API (/api/admin), application admins only. */
 export function adminRoutes(deps: AppDeps) {
+  const limit = rateLimitUser(deps.db, INVITATION_EMAILS);
   return new Hono<SessionEnv>()
     .use(requireAdmin)
     .get("/users", async (c) => {
@@ -60,7 +62,7 @@ export function adminRoutes(deps: AppDeps) {
     .get("/invitations", async (c) => {
       return c.json({ invitations: await listLeaderInvitations(deps) });
     })
-    .post("/invitations", zValidator("json", inviteBody, validationHook), async (c) => {
+    .post("/invitations", limit, zValidator("json", inviteBody, validationHook), async (c) => {
       const { email, language } = c.req.valid("json");
       const invitedById = c.var.user?.id ?? "";
       try {
@@ -73,10 +75,17 @@ export function adminRoutes(deps: AppDeps) {
         throw error;
       }
     })
-    .post("/invitations/:id/resend", zValidator("param", idParam, validationHook), async (c) => {
-      const invitation = await resendLeaderInvitation(deps, c.req.valid("param").id);
-      return invitation ? c.json({ id: invitation.id }) : apiError(c, 404, "Invitation not found");
-    })
+    .post(
+      "/invitations/:id/resend",
+      limit,
+      zValidator("param", idParam, validationHook),
+      async (c) => {
+        const invitation = await resendLeaderInvitation(deps, c.req.valid("param").id);
+        return invitation
+          ? c.json({ id: invitation.id })
+          : apiError(c, 404, "Invitation not found");
+      },
+    )
     .delete("/invitations/:id", zValidator("param", idParam, validationHook), async (c) => {
       const revoked = await revokeLeaderInvitation(deps, c.req.valid("param").id);
       return revoked ? c.body(null, 204) : apiError(c, 404, "Invitation not found");

@@ -18,6 +18,7 @@ export const ERROR_CODES = [
   "invitation_wrong_account",
   "band_name_taken",
   "already_member",
+  "too_many_requests",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
@@ -31,6 +32,7 @@ const CODE_BY_STATUS: Record<number, ErrorCode> = {
   401: "unauthorized",
   403: "forbidden",
   404: "not_found",
+  429: "too_many_requests",
 };
 
 /** Default error code for an HTTP status, for errors raised without an explicit code. */

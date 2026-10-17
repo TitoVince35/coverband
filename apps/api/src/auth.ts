@@ -21,6 +21,8 @@ export type AuthOptions = {
   baseURL: string;
   /** Other origins allowed to log in, besides baseURL's (e.g. localhost with `dev:lan`). */
   trustedOrigins?: string[];
+  /** Reverse proxies skipped when reading the client IP from X-Forwarded-For (see env.ts). */
+  trustedProxies?: string[];
   /** Login rate limiting (stored in Postgres). Off in tests that log in repeatedly. */
   rateLimit?: boolean;
 };
@@ -36,6 +38,7 @@ export function createAuth({
   secret,
   baseURL,
   trustedOrigins = [],
+  trustedProxies = [],
   rateLimit = true,
 }: AuthOptions) {
   return betterAuth({
@@ -74,7 +77,13 @@ export function createAuth({
     // Global roles only ("admin" or "user"); band roles are per membership.
     plugins: [admin({ adminRoles: [ADMIN_ROLE] })],
     rateLimit: { enabled: rateLimit, storage: "database" },
-    advanced: { database: { generateId: "uuid" } },
+    advanced: {
+      database: { generateId: "uuid" },
+      // Rate limits are per client IP, read from X-Forwarded-For (set by Scaleway's proxy). A header
+      // with several addresses is only trusted with trustedProxies: otherwise every user would
+      // share one bucket. Checked at the first deployment (#8).
+      ipAddress: { ipAddressHeaders: ["x-forwarded-for"], trustedProxies },
+    },
     telemetry: { enabled: false },
   });
 }
