@@ -4,6 +4,7 @@ This is a reminder of the briefs to be created.
 
 - [ ] Tech : Security - brute force, standard protections (helmet?)
 - [X] Tech : Logging - logs hosting, what to log
+- [ ] Functional : user profile
 - [ ] Functional : The instruments - i18n, icons, auto-complete
 - [ ] Functional : The venues
 - [ ] Functional : The tunes - data, creation (from links, from form)
