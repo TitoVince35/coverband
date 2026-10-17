@@ -61,6 +61,7 @@ Name and slug logic in `src/bands.ts`. Band names are unique case-insensitively;
 - The bucket is private: files are served by API routes that check who may see them, never by public bucket URLs.
 - Keys are paths with a fresh UUID per version (`users/{id}/avatar/{uuid}.webp`): a new file gets a new key, and the old object is deleted.
 - Tests use `createMemoryStorage()`; the S3 integration test runs when `S3_ENDPOINT` is set (locally and in CI).
+- **Avatars** (`src/avatars.ts`): `PUT` / `DELETE /api/me/avatar` (raw body, the browser has already cropped and resized it; WebP or JPEG, checked by the first bytes, never the declared type) and `GET /api/users/:id/avatar` (the user, admins and band mates, 404 for anyone else). `users.image` holds the storage key; `avatarUrl()` from `@coverband/shared` turns it into the versioned URL, cached for good.
 
 ## Emails
 
