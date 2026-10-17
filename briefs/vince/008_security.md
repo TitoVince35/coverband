@@ -3,6 +3,8 @@
 > 🕒 Brief posted on Friday 2026/10/16 19:17
 >
 > 🕒 Brief settled on Friday 2026/10/16 19:23
+>
+> 🕒 Issues completed on Saturday 2026/10/17 14:14
 
 Implement standard protections on the API:
 - brute-force detection
