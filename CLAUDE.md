@@ -21,7 +21,7 @@ App-specific conventions: `apps/api/CLAUDE.md` and `apps/web/CLAUDE.md`. Task wo
 ```sh
 bun install          # install all workspaces
 bun run check        # lint + typecheck + tests (run before every commit)
-bun run dev          # API (http://localhost:3000) + web app (http://localhost:5173, proxies /api)
+bun run dev          # API (http://localhost:3000) + web app (http://localhost:5173, proxies /api) + Drizzle Studio
 bun run dev:lan      # same, reachable from a phone on the local network: prints a QR code (LAN IP override: DEV_HOST)
 bun run dev:api      # API only, watch mode
 bun run dev:web      # web app only (Vite)
@@ -32,7 +32,7 @@ bun test             # tests only (DB integration tests are skipped when DATABAS
 
 cp .env.example .env # first time only
 bun run db:up        # start local Postgres (port 5432), Mailpit (SMTP 1025, emails at http://localhost:8025)
-                     # and Garage (S3 storage on http://localhost:3900, bucket and dev key created)
+                     # and Garage (S3 storage on http://localhost:3900, bucket and dev key created; web UI on :3909)
 bun run db:generate  # generate a SQL migration from apps/api/src/db/schema.ts
 bun run db:migrate   # apply pending migrations
 bun run db:studio    # browse the database

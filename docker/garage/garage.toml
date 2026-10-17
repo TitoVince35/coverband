@@ -12,3 +12,8 @@ rpc_secret = "c0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ff"
 [s3_api]
 s3_region = "garage"
 api_bind_addr = "[::]:3900"
+
+# Admin API, used by the web UI (garage-webui service, http://localhost:3909).
+[admin]
+api_bind_addr = "[::]:3903"
+admin_token = "coverband-dev-admin-token"
