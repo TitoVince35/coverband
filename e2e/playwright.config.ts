@@ -10,7 +10,8 @@ export default defineConfig({
   testMatch: "**/*.e2e.ts",
   // One server and one database: tests run in order, one at a time.
   workers: 1,
-  retries: ci ? 1 : 0,
+  // No retries: a serial story would start over with the same people and fail for another reason.
+  retries: 0,
   forbidOnly: ci,
   reporter: ci ? [["list"], ["html", { open: "never" }]] : [["list"]],
   globalSetup: "./setup.ts",

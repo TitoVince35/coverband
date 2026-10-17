@@ -106,7 +106,7 @@ test("the band leader uploads an avatar, then removes it", async () => {
   // The photo is served (from object storage) and shows in the header.
   const photo = leader.locator('header img[src*="/avatar?v="]');
   await expect(photo).toBeVisible();
-  expect(await photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(512);
+  await expect.poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(512);
 
   await leader.getByRole("button", { name: "Remove" }).click();
   await expect(leader.getByText("Avatar removed.")).toBeVisible();

@@ -16,6 +16,9 @@ export const PASSWORD = "e2e correct horse battery";
 export const ADMIN = email("admin");
 
 export async function login(page: Page, address: string, password: string) {
+  // Logins are rate limited per client IP (3 per 10 s): each one comes from its own address.
+  const ip = `10.${randomByte()}.${randomByte()}.${randomByte()}`;
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": ip });
   await page.goto("/login");
   await page.getByLabel("Email").fill(address);
   await page.getByLabel("Password").fill(password);
@@ -49,3 +52,5 @@ export async function invitationLink(to: string): Promise<string> {
   // The email's link points to the server's public URL: keep only the path for this run.
   return new URL(link ?? "").pathname;
 }
+
+const randomByte = () => crypto.getRandomValues(new Uint8Array(1))[0] ?? 0;
