@@ -1,12 +1,22 @@
 import { queryOptions } from "@tanstack/react-query";
-import { adminClient } from "better-auth/client/plugins";
+import { adminClient, inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 // Better Auth endpoints live under /api/auth on the same origin (Vite proxies /api in development).
 export const authClient = createAuthClient({
   baseURL: window.location.origin,
   basePath: "/api/auth",
-  plugins: [adminClient()],
+  plugins: [
+    adminClient(),
+    // Profile fields of the API's Better Auth config (read-only there, changed via PATCH /api/me).
+    inferAdditionalFields({
+      user: {
+        firstName: { type: "string", required: false, input: false },
+        lastName: { type: "string", required: false, input: false },
+        nickname: { type: "string", required: false, input: false },
+      },
+    }),
+  ],
 });
 
 export type Session = typeof authClient.$Infer.Session;
