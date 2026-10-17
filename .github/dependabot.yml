@@ -1,0 +1,9 @@
+# Dependabot security updates: a PR when a dependency has a known vulnerability with a fix.
+# Version updates are off (open-pull-requests-limit: 0); security updates don't count against it.
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
