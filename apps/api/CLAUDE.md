@@ -11,6 +11,11 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - Guards: `requireUser` / `requireAdmin` (`src/middleware/session.ts`, read `c.var.user`). Band routes live under `/api/bands/:bandSlug` with `requireMember(db)` (`src/middleware/band.ts`: sets `c.var.band` and `c.var.membership`, 404 for non-members); band leader actions add `requireLeader` (403).
 - Tests build dependencies with `createTestDeps()` (`src/test-deps.ts`, memory mailer).
 
+## Security
+
+- Security headers on every response, API and web app (`src/middleware/security.ts`, Hono's `secureHeaders`): CSP, `Referrer-Policy: no-referrer` (tokens are in invitation and reset URLs), `X-Frame-Options: DENY`, a `Permissions-Policy` turning off camera, microphone and geolocation; HSTS only when `BETTER_AUTH_URL` is HTTPS.
+- The CSP only allows our own origin. The inline theme script of `apps/web/index.html` is allowed by its hash (`THEME_SCRIPT_HASH`): when the script changes, the test fails and shows the new hash. Inline styles stay allowed (React style props, toasts). Anything loaded from another origin (fonts, images, scripts) needs a CSP change.
+
 ## Database
 
 - Postgres goes through Scaleway's connection pooler: use the `postgres` driver with `prepare: false` (`src/db/client.ts`).
