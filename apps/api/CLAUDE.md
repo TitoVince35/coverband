@@ -15,6 +15,8 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 
 - Security headers on every response, API and web app (`src/middleware/security.ts`, Hono's `secureHeaders`): CSP, `Referrer-Policy: no-referrer` (tokens are in invitation and reset URLs), `X-Frame-Options: DENY`, a `Permissions-Policy` turning off camera, microphone and geolocation; HSTS only when `BETTER_AUTH_URL` is HTTPS.
 - The CSP only allows our own origin. The inline theme script of `apps/web/index.html` is allowed by its hash (`THEME_SCRIPT_HASH`): when the script changes, the test fails and shows the new hash. Inline styles stay allowed (React style props, toasts). Anything loaded from another origin (fonts, images, scripts) needs a CSP change.
+- Guards on `/api/*`, Better Auth included (`requestGuards`): request bodies up to 100 KB (413 otherwise; files will go straight to Object Storage), and `hono/csrf`, which refuses form-style requests (form, multipart, `text/plain`) from other origins than the app URL and `TRUSTED_ORIGINS`.
+- **No CORS, on purpose.** The API serves the web app on the same origin in production, and Vite proxies `/api` in development. CORS would only loosen the browser's cross-origin rules: never add it.
 
 ## Database
 

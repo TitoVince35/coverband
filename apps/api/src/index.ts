@@ -22,7 +22,7 @@ if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
 }
 
 const app = createApp({
-  deps: { auth, db, mailer, appUrl: env.BETTER_AUTH_URL },
+  deps: { auth, db, mailer, appUrl: env.BETTER_AUTH_URL, trustedOrigins: env.TRUSTED_ORIGINS },
   webDistDir: env.WEB_DIST_DIR,
 });
 

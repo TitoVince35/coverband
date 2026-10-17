@@ -1,4 +1,7 @@
+import { bodyLimit } from "hono/body-limit";
+import { csrf } from "hono/csrf";
 import { secureHeaders } from "hono/secure-headers";
+import { apiError } from "../errors";
 
 /**
  * CSP hash of the inline theme script in `apps/web/index.html`.
@@ -34,4 +37,24 @@ export function securityHeaders({ https }: { https: boolean }) {
       objectSrc: ["'none'"],
     },
   });
+}
+
+/** Largest request body accepted on /api. Files will go straight to Object Storage. */
+export const MAX_BODY_SIZE = 100 * 1024;
+
+/**
+ * Guards for /api: a body size limit, and CSRF protection refusing form-style requests
+ * (form, multipart, text/plain) sent from other sites. JSON requests from other sites are already
+ * blocked by the browser, since the API has no CORS.
+ * `allowedOrigins`: the app URL and TRUSTED_ORIGINS (`bun run dev:lan`).
+ */
+export function requestGuards(allowedOrigins: string[]) {
+  const origins = allowedOrigins.map((url) => new URL(url).origin);
+  return [
+    bodyLimit({
+      maxSize: MAX_BODY_SIZE,
+      onError: (c) => apiError(c, 413, "Request body too large"),
+    }),
+    csrf({ origin: origins }),
+  ] as const;
 }
