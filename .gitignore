@@ -9,3 +9,6 @@ build/
 coverage/
 playwright-report/
 test-results/
+
+# TanStack Router plugin temp files
+.tanstack/
