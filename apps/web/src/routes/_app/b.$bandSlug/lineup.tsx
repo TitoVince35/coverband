@@ -5,6 +5,7 @@ import { InvitationsList } from "@/components/invitations/invitations-list";
 import { InviteDialog } from "@/components/invitations/invite-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { UserAvatar } from "@/components/user-avatar";
 import { bandInvitations, bandQuery, membersQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
 
@@ -49,18 +50,24 @@ function LineupPage() {
               {members.data.map((member) => {
                 const fullName = [member.firstName, member.lastName].filter(Boolean).join(" ");
                 return (
-                  <li key={member.userId} className="space-y-1 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{member.name}</span>
-                      {member.userId === user.id && (
-                        <span className="text-muted-foreground text-xs">({t("lineup.you")})</span>
-                      )}
-                      {member.role === "leader" && <Badge>{t("band.roles.leader")}</Badge>}
+                  <li key={member.userId} className="flex items-center gap-3 py-3">
+                    <UserAvatar
+                      user={{ id: member.userId, name: member.name }}
+                      src={member.avatarUrl}
+                    />
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{member.name}</span>
+                        {member.userId === user.id && (
+                          <span className="text-muted-foreground text-xs">({t("lineup.you")})</span>
+                        )}
+                        {member.role === "leader" && <Badge>{t("band.roles.leader")}</Badge>}
+                      </div>
+                      <p className="text-muted-foreground text-sm">
+                        {member.instrument}
+                        {fullName && fullName !== member.name && ` · ${fullName}`}
+                      </p>
                     </div>
-                    <p className="text-muted-foreground text-sm">
-                      {member.instrument}
-                      {fullName && fullName !== member.name && ` · ${fullName}`}
-                    </p>
                   </li>
                 );
               })}

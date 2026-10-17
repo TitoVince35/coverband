@@ -103,6 +103,32 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
     expect((await call(`/bands/${bandSlug}/members`, "outsider")).status).toBe(404);
   });
 
+  test("the lineup gives each member's avatar URL, never the storage key", async () => {
+    const bassist = (await userId("bassist")) ?? "";
+    const uuid = crypto.randomUUID();
+    await db
+      .update(users)
+      .set({ image: `users/${bassist}/avatar/${uuid}.webp` })
+      .where(eq(users.id, bassist));
+    // Not a key the server writes for this user: shown as the default avatar.
+    await db
+      .update(users)
+      .set({ image: "bands/elsewhere/secret.pdf" })
+      .where(eq(users.id, (await userId("leader")) ?? ""));
+
+    const res = await call(`/bands/${bandSlug}/members`, "bassist");
+    const { members } = (await res.json()) as { members: Record<string, unknown>[] };
+    expect(members.map((m) => m.avatarUrl)).toEqual([
+      null,
+      `/api/users/${bassist}/avatar?v=${uuid}`,
+    ]);
+    expect(members.every((m) => !("image" in m))).toBe(true);
+    await db
+      .update(users)
+      .set({ image: null })
+      .where(like(users.email, `%-${run}@test.localhost`));
+  });
+
   test("musicians can't invite, see invitations or edit the band", async () => {
     const invite = await call(`/bands/${bandSlug}/invitations`, "bassist", {
       method: "POST",
