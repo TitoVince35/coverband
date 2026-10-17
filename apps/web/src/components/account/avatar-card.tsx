@@ -1,7 +1,5 @@
-import { avatarUrl } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
-import { UserRound } from "lucide-react";
 import { type ChangeEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -14,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { sessionAvatarUrl, UserAvatar } from "@/components/user-avatar";
 import { sessionQuery } from "@/lib/auth";
 import { prepareAvatar } from "@/lib/avatar";
 import { ensureOk, errorMessage } from "@/lib/errors";
@@ -22,13 +21,17 @@ import { ensureOk, errorMessage } from "@/lib/errors";
  * The logged-in user's avatar (#60): pick a photo (the camera on phones), see the cropped result,
  * save it; or remove it to get the default back.
  */
-export function AvatarCard({ user }: { user: { id: string; image?: string | null | undefined } }) {
+export function AvatarCard({
+  user,
+}: {
+  user: { id: string; name: string; image?: string | null | undefined };
+}) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const router = useRouter();
   const [picked, setPicked] = useState<{ blob: Blob; url: string } | null>(null);
   const [unreadable, setUnreadable] = useState(false);
-  const current = avatarUrl(user.id, user.image);
+  const current = sessionAvatarUrl(user);
 
   // Frees the preview's object URL when it is replaced or the card goes away.
   useEffect(
@@ -102,15 +105,16 @@ export function AvatarCard({ user }: { user: { id: string; image?: string | null
         <CardDescription>{t("account.avatar.description")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
-        {picked || current ? (
+        {picked ? (
           <img
-            src={picked?.url ?? current ?? ""}
-            alt={picked ? t("account.avatar.preview") : t("account.avatar.current")}
+            src={picked.url}
+            alt={t("account.avatar.preview")}
             className="size-32 rounded-full object-cover ring-2 ring-border"
           />
         ) : (
-          <div className="flex size-32 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <UserRound className="size-16" aria-hidden />
+          // What band mates see: the photo, or the default avatar.
+          <div role="img" aria-label={t("account.avatar.current")}>
+            <UserAvatar user={user} src={current} className="size-32 ring-2 ring-border" />
           </div>
         )}
         {error && (

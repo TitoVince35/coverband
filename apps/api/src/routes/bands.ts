@@ -1,9 +1,10 @@
-import { FIELD_MAX_LENGTH, LANGUAGES, type Language } from "@coverband/shared";
+import { avatarUrl, FIELD_MAX_LENGTH, LANGUAGES, type Language } from "@coverband/shared";
 import { zValidator } from "@hono/zod-validator";
 import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppDeps } from "../app";
+import { ownAvatarKey } from "../avatars";
 import { updateBandGenre } from "../bands";
 import { bandMembers, bands, users } from "../db/schema";
 import { apiError } from "../errors";
@@ -90,12 +91,18 @@ export function bandRoutes(deps: AppDeps) {
           role: bandMembers.role,
           instrument: bandMembers.instrument,
           joinedAt: bandMembers.joinedAt,
+          image: users.image,
         })
         .from(bandMembers)
         .innerJoin(users, eq(users.id, bandMembers.userId))
         .where(eq(bandMembers.bandId, c.var.band.id))
         .orderBy(asc(bandMembers.joinedAt));
-      return c.json({ members: rows });
+      // The storage key stays on the server: members get the avatar's URL (null: default avatar).
+      const members = rows.map(({ image, ...member }) => ({
+        ...member,
+        avatarUrl: avatarUrl(member.userId, ownAvatarKey(member.userId, image)),
+      }));
+      return c.json({ members });
     })
     .get("/:bandSlug/invitations", member, requireLeader, async (c) => {
       return c.json({ invitations: await listInvitations(deps, musiciansOf(c.var.band)) });

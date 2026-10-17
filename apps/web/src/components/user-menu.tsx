@@ -1,7 +1,7 @@
 import { ADMIN_ROLE } from "@coverband/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useRouter } from "@tanstack/react-router";
-import { CircleUser, KeyRound, LogOut, Shield } from "lucide-react";
+import { KeyRound, LogOut, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { sessionAvatarUrl, UserAvatar } from "@/components/user-avatar";
 import { authClient, sessionQuery } from "@/lib/auth";
 
 /** Account menu in the header; hidden when logged out. */
@@ -36,7 +37,7 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" aria-label={t("account.menu")}>
-          <CircleUser />
+          <UserAvatar user={session.user} src={sessionAvatarUrl(session.user)} className="size-7" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-56">
