@@ -126,13 +126,22 @@ test("a member edits their own instruments from the lineup", async () => {
   // Something not in the catalogue: kept as typed.
   await dialog.getByLabel("Add an instrument").fill("Kazoo");
   await leader.getByRole("option", { name: "Add “Kazoo”" }).click();
+  // Already listed: Enter doesn't add it twice. The field keeps the focus after each addition.
+  await expect(dialog.getByLabel("Add an instrument")).toBeFocused();
+  await dialog.getByLabel("Add an instrument").fill("kazoo");
+  await dialog.getByLabel("Add an instrument").press("Enter");
+  await expect(dialog.getByRole("listitem").filter({ hasText: "Kazoo" })).toHaveCount(1);
   await dialog.getByRole("button", { name: "Remove Guitar" }).click();
+  // Typed but not added: Save keeps it too.
+  await dialog.getByLabel("Add an instrument").fill("Ukulele");
+  await dialog.getByLabel("Add an instrument").press("Escape"); // closes the list, not the dialog
   await dialog.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Instruments updated")).toBeVisible();
 
   const row = leader.getByRole("list", { name: "Lineup" }).locator(":scope > li").nth(0);
   await expect(row).toContainText("Vocals");
   await expect(row).toContainText("Kazoo");
+  await expect(row).toContainText("Ukulele");
   await expect(row).not.toContainText("Guitar");
 });
 

@@ -11,8 +11,10 @@ import {
 /** One line of the picker's list. `custom`: keep what was typed as a new free-text instrument. */
 export type PickerOption = { instrument: Instrument; label: string; custom?: boolean };
 
-const keyOf = (instrument: Instrument) =>
+/** Identity of an instrument in a list: its code, or its free text ignoring case and accents. */
+export const instrumentKey = (instrument: Instrument) =>
   "code" in instrument ? instrument.code : `label:${normalizeName(instrument.label)}`;
+const keyOf = instrumentKey;
 
 /**
  * The picker's list for what's typed: known instruments matching it (all of them when nothing is

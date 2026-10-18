@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/i18n/use-language";
 import { api } from "@/lib/api";
 import { ensureOk, errorMessage } from "@/lib/errors";
+import { instrumentKey } from "@/lib/instrument-picker";
 
 /** Same limit as the API. */
 const MAX_INSTRUMENTS = 10;
@@ -40,6 +41,8 @@ export function EditInstrumentsDialog({
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [list, setList] = useState<Instrument[]>([...instruments]);
+  // What's typed in the picker, not added yet: Save keeps it too.
+  const [typed, setTyped] = useState<Instrument | null>(null);
   // A new picker after each addition: empty again, ready for the next one.
   const [pickerKey, setPickerKey] = useState(0);
 
@@ -62,12 +65,21 @@ export function EditInstrumentsDialog({
 
   function onOpenChange(next: boolean) {
     setOpen(next);
-    if (next) setList([...instruments]);
-    else save.reset();
+    if (next) {
+      setList([...instruments]);
+      setTyped(null);
+    } else save.reset();
   }
 
+  /** The list with an instrument added at the end, unless it's already there. */
+  const withAdded = (current: Instrument[], instrument: Instrument | null) =>
+    !instrument || current.some((i) => instrumentKey(i) === instrumentKey(instrument))
+      ? current
+      : [...current, instrument];
+
   function add(instrument: Instrument) {
-    setList((previous) => [...previous, instrument]);
+    setList((previous) => withAdded(previous, instrument));
+    setTyped(null);
     setPickerKey((key) => key + 1);
   }
 
@@ -92,7 +104,10 @@ export function EditInstrumentsDialog({
             {list.map((instrument, index) => {
               const label = instrumentLabel(instrument, language);
               return (
-                <li key={label} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5">
+                <li
+                  key={instrumentKey(instrument)}
+                  className="flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5"
+                >
                   <InstrumentIcon instrument={instrument} />
                   <span className="flex-1 text-sm">{label}</span>
                   {index === 0 && (
@@ -116,7 +131,15 @@ export function EditInstrumentsDialog({
         {list.length < MAX_INSTRUMENTS && (
           <div className="space-y-2">
             <Label htmlFor="add-instrument">{t("lineup.instruments.add")}</Label>
-            <AddInstrument key={pickerKey} exclude={list} onAdd={add} />
+            <AddInstrument
+              key={pickerKey}
+              typed={typed}
+              onType={setTyped}
+              exclude={list}
+              onAdd={add}
+              // After an addition, the new empty field keeps the focus (and a phone its keyboard).
+              autoFocus={pickerKey > 0}
+            />
           </div>
         )}
         {save.isError && (
@@ -125,7 +148,10 @@ export function EditInstrumentsDialog({
           </p>
         )}
         <DialogFooter>
-          <Button onClick={() => save.mutate({ instruments: list })} disabled={save.isPending}>
+          <Button
+            onClick={() => save.mutate({ instruments: withAdded(list, typed) })}
+            disabled={save.isPending}
+          >
             {save.isPending ? t("common.saving") : t("common.save")}
           </Button>
         </DialogFooter>
@@ -139,13 +165,18 @@ export function EditInstrumentsDialog({
  * typed text, does.
  */
 function AddInstrument({
+  typed,
+  onType,
   exclude,
   onAdd,
+  autoFocus,
 }: {
+  typed: Instrument | null;
+  onType: (instrument: Instrument | null) => void;
   exclude: readonly Instrument[];
   onAdd: (instrument: Instrument) => void;
+  autoFocus: boolean;
 }) {
-  const [typed, setTyped] = useState<Instrument | null>(null);
   return (
     <form
       onSubmit={(event) => {
@@ -157,8 +188,9 @@ function AddInstrument({
         id="add-instrument"
         value={typed}
         exclude={exclude}
-        onChange={setTyped}
+        onChange={onType}
         onPick={onAdd}
+        autoFocus={autoFocus}
       />
     </form>
   );
