@@ -133,7 +133,8 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
           slug: bandSlug,
           genre: "Rock",
           role: "leader",
-          instrument: "Guitar",
+          // Typed "Guitar": stored as the known instrument.
+          instruments: [{ code: "guitar" }],
         },
       ],
     });
@@ -238,7 +239,8 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
 
     // Same name as an existing slug: gets a suffix.
     await db.insert(bands).values({ name: bandName("Slug Twin X"), slug: `slug-twin-${run}` });
-    const body = { instrument: "Vocals", bandName: bandName("Slug Twin") };
+    // No instrument: it is optional.
+    const body = { bandName: bandName("Slug Twin") };
 
     expect((await accept(token, body)).status).toBe(401);
     const wrong = await accept(token, body, await login(email("other")));
@@ -249,6 +251,10 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
     const res = await accept(token, body, cookie);
     expect(res.status).toBe(201);
     expect(((await res.json()) as { bandSlug: string }).bandSlug).toBe(`slug-twin-${run}-2`);
+    const mine = (await (await app.request("/api/bands", { headers: { cookie } })).json()) as {
+      bands: { instruments: unknown[] }[];
+    };
+    expect(mine.bands).toMatchObject([{ instruments: [] }]);
 
     // An existing account: the band and the membership, no registration.
     const [user] = await db

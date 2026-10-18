@@ -182,3 +182,8 @@ export function searchInstruments(query: string, language: Language): Instrument
     (a, b) => rank(a) - rank(b) || alphabetical(a, b),
   );
 }
+
+/** A list for display, in the given language: "Guitar, Vocals" (empty for none). */
+export function instrumentsLabel(instruments: readonly Instrument[], language: Language): string {
+  return instruments.map((instrument) => instrumentLabel(instrument, language)).join(", ");
+}

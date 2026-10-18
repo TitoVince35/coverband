@@ -23,6 +23,7 @@ export {
   type Instrument,
   type InstrumentCode,
   instrumentLabel,
+  instrumentsLabel,
   isInstrumentCode,
   matchInstrument,
   normalizeName,

@@ -1,6 +1,8 @@
+import { instrumentsLabel } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/i18n/use-language";
 import { bandQuery } from "@/lib/bands";
 
 // Band home page. Repertoire, setlists and gigs come later.
@@ -10,6 +12,7 @@ export const Route = createFileRoute("/_app/b/$bandSlug/")({
 
 function BandHome() {
   const { t } = useTranslation();
+  const language = useLanguage();
   const { bandSlug } = Route.useParams();
   const { data } = useQuery(bandQuery(bandSlug));
   if (!data) {
@@ -23,8 +26,12 @@ function BandHome() {
       </h2>
       <p>
         {t("band.you", {
-          role: t(`band.roles.${data.membership.role}`),
-          instrument: data.membership.instrument,
+          details: [
+            t(`band.roles.${data.membership.role}`),
+            instrumentsLabel(data.membership.instruments, language),
+          ]
+            .filter(Boolean)
+            .join(" · "),
         })}
       </p>
       <p className="text-muted-foreground text-sm">{t("band.comingSoon")}</p>

@@ -1,8 +1,10 @@
+import { instrumentsLabel } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/i18n/use-language";
 import { myBandsQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
 
@@ -12,6 +14,7 @@ export const Route = createFileRoute("/_app/")({
 
 function HomePage() {
   const { t } = useTranslation();
+  const language = useLanguage();
   const { user } = Route.useRouteContext();
   const bands = useQuery(myBandsQuery);
 
@@ -44,7 +47,12 @@ function HomePage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{band.name}</div>
                       <div className="truncate text-muted-foreground text-xs">
-                        {t(`band.roles.${band.role}`)} · {band.instrument}
+                        {[
+                          t(`band.roles.${band.role}`),
+                          instrumentsLabel(band.instruments, language),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </div>
                     </div>
                     <ChevronRight className="size-4 text-muted-foreground" />

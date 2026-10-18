@@ -55,6 +55,8 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 
 Name and slug logic in `src/bands.ts`. Band names are unique case-insensitively; the slug comes from `slugify` in `@coverband/shared`.
 
+Instruments are per band membership (`member_instruments`, `src/instruments.ts`): an ordered list (the first is the main one) of known codes or free text, never both (a database check). Values are always cleaned with `cleanInstruments` (`parseInstrument` from `@coverband/shared`: free text matching a known instrument becomes its code, unknown codes become free text, duplicates dropped, at most `MAX_INSTRUMENTS`). Members change only their own (`PUT /api/bands/:bandSlug/members/me/instruments`). Free text used in at least two bands is suggested to everyone (`GET /api/instruments/suggestions`); one band's own labels never are.
+
 ## Files
 
 - Object storage through a `Storage` (`src/storage.ts`, `AppDeps.storage`): `put`, `get` (a stream, or null), `delete`. Bun's built-in S3 client, no SDK. Garage locally (`docker/garage/`, started and prepared by `bun run db:up`, also in CI), Scaleway Object Storage in production: only `S3_*` configuration. Setting up the Scaleway bucket and its key is a production setup step (#8).

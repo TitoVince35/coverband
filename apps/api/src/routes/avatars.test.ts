@@ -82,7 +82,6 @@ describe.skipIf(!databaseUrl)("avatars", () => {
           bandId: band?.id ?? "",
           userId: user.id,
           role: who === "me" ? "leader" : "musician",
-          instrument: "Bass",
         });
       }
       const res = await app.request("/api/auth/sign-in/email", {

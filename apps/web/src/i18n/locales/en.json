@@ -13,7 +13,7 @@
   },
   "band": {
     "welcome": "Welcome to {{band}}!",
-    "you": "You: {{role}} · {{instrument}}",
+    "you": "You: {{details}}",
     "notFound": "This band doesn't exist or you're not a member.",
     "comingSoon": "Repertoire, setlists and gigs are coming soon.",
     "roles": {

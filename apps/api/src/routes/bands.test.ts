@@ -2,7 +2,15 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { APP_NAME } from "@coverband/shared";
 import { and, eq, inArray, like } from "drizzle-orm";
 import { createApp } from "../app";
-import { activity, bandMembers, bands, invitations, rateLimits, users } from "../db/schema";
+import {
+  activity,
+  bandMembers,
+  bands,
+  invitations,
+  memberInstruments,
+  rateLimits,
+  users,
+} from "../db/schema";
 import { hit, INVITATION_EMAILS } from "../middleware/rate-limit";
 import { activityOf, createTestDeps } from "../test-deps";
 
@@ -67,9 +75,13 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
         .values({ name: `${slug} name`, slug })
         .returning();
     }
-    await db
-      .insert(bandMembers)
-      .values({ bandId: band?.id ?? "", userId: user.id, role, instrument });
+    await db.insert(bandMembers).values({ bandId: band?.id ?? "", userId: user.id, role });
+    await db.insert(memberInstruments).values({
+      bandId: band?.id ?? "",
+      userId: user.id,
+      position: 0,
+      label: instrument,
+    });
     cookies[who] = await login(email(who));
   }
 
@@ -95,11 +107,12 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
     const res = await call(`/bands/${bandSlug}/members`, "bassist");
     expect(res.status).toBe(200);
     const { members } = (await res.json()) as {
-      members: { name: string; role: string; instrument: string }[];
+      members: { name: string; role: string; instruments: unknown[] }[];
     };
-    expect(members.map((m) => [m.name, m.role, m.instrument])).toEqual([
-      ["leader", "leader", "Guitar"],
-      ["bassist", "musician", "Bass"],
+    // Stored as typed: reading checks it (free text matching an instrument becomes its code).
+    expect(members.map((m) => [m.name, m.role, m.instruments])).toEqual([
+      ["leader", "leader", [{ code: "guitar" }]],
+      ["bassist", "musician", [{ code: "bass_guitar" }]],
     ]);
     expect((await call(`/bands/${bandSlug}/members`, "outsider")).status).toBe(404);
   });
@@ -206,9 +219,9 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
       .join("; ");
 
     const mine = (await (await call("/bands", "singer")).json()) as {
-      bands: { role: string; instrument: string }[];
+      bands: { role: string; instruments: unknown[] }[];
     };
-    expect(mine.bands).toMatchObject([{ role: "musician", instrument: "Vocals" }]);
+    expect(mine.bands).toMatchObject([{ role: "musician", instruments: [{ code: "vocals" }] }]);
 
     const singer = await userId("singer");
     expect(await activityOf(db, singer ?? "")).toMatchObject([
@@ -268,7 +281,6 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
       bandId: band?.id ?? "",
       userId: (await userId("outsider")) ?? "",
       role: "musician",
-      instrument: "Keys",
     });
     const res = await app.request(`/api/invitations/${second}/accept`, {
       method: "POST",
