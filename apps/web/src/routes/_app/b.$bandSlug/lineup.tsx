@@ -1,24 +1,24 @@
-import { instrumentsLabel } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { EditInstrumentsDialog } from "@/components/instruments/edit-instruments-dialog";
+import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { InvitationsList } from "@/components/invitations/invitations-list";
 import { InviteDialog } from "@/components/invitations/invite-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
-import { useLanguage } from "@/i18n/use-language";
 import { bandInvitations, bandQuery, membersQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
 
-// Lineup: every member with their instrument and role. The band leader also invites musicians.
+// Lineup: every member with their instruments and role; each member edits their own instruments
+// (#77). The band leader also invites musicians.
 export const Route = createFileRoute("/_app/b/$bandSlug/lineup")({
   component: LineupPage,
 });
 
 function LineupPage() {
   const { t } = useTranslation();
-  const language = useLanguage();
   const { bandSlug } = Route.useParams();
   const { user } = Route.useRouteContext();
   const band = useQuery(bandQuery(bandSlug));
@@ -49,7 +49,7 @@ function LineupPage() {
               {errorMessage(t, members.error)}
             </p>
           ) : (
-            <ul className="divide-y">
+            <ul className="divide-y" aria-label={t("lineup.title")}>
               {members.data.map((member) => {
                 const fullName = [member.firstName, member.lastName].filter(Boolean).join(" ");
                 return (
@@ -58,7 +58,7 @@ function LineupPage() {
                       user={{ id: member.userId, name: member.name }}
                       src={member.avatarUrl}
                     />
-                    <div className="min-w-0 space-y-1">
+                    <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{member.name}</span>
                         {member.userId === user.id && (
@@ -66,15 +66,17 @@ function LineupPage() {
                         )}
                         {member.role === "leader" && <Badge>{t("band.roles.leader")}</Badge>}
                       </div>
-                      <p className="text-muted-foreground text-sm">
-                        {[
-                          instrumentsLabel(member.instruments, language),
-                          fullName !== member.name && fullName,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
+                      {fullName && fullName !== member.name && (
+                        <p className="text-muted-foreground text-sm">{fullName}</p>
+                      )}
+                      <InstrumentTags instruments={member.instruments} />
                     </div>
+                    {member.userId === user.id && band.data && (
+                      <EditInstrumentsDialog
+                        band={band.data.band}
+                        instruments={member.instruments}
+                      />
+                    )}
                   </li>
                 );
               })}
