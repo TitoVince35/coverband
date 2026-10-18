@@ -3,6 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
+import { bandJournal } from "../activity";
 import type { AppDeps } from "../app";
 import { ownAvatarKey } from "../avatars";
 import { updateBandGenre } from "../bands";
@@ -133,6 +134,10 @@ export function bandRoutes(deps: AppDeps) {
           avatarUrl: avatarUrl(member.userId, ownAvatarKey(member.userId, image)),
         }));
         return c.json({ members });
+      })
+      // The band's journal: its latest activity, for every member.
+      .get("/:bandSlug/activity", member, async (c) => {
+        return c.json({ entries: await bandJournal(db, c.var.band.id) });
       })
       // Members change their own instruments only.
       .put(

@@ -43,3 +43,15 @@ export const bandInvitations = (bandSlug: string) => ({
   revoke: async (id: string) =>
     ensureOk(await api.bands[":bandSlug"].invitations[":id"].$delete({ param: { bandSlug, id } })),
 });
+
+/** The band's journal: its latest activity, newest first. */
+export const bandJournalQuery = (bandSlug: string) =>
+  queryOptions({
+    queryKey: ["bands", bandSlug, "activity"],
+    queryFn: async () =>
+      (
+        await (
+          await ensureOk(await api.bands[":bandSlug"].activity.$get({ param: { bandSlug } }))
+        ).json()
+      ).entries,
+  });
