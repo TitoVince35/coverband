@@ -128,7 +128,7 @@ describe.skipIf(!databaseUrl)("instruments per band membership", () => {
     );
     expect(responses.map((r) => r.status)).toEqual(Array(8).fill(200));
     const two = (await (await call(`/bands/${slugs.two}`, "amy")).json()) as {
-      membership: { instruments: unknown[] };
+      membership: { instruments: { code: string }[] };
     };
     // Never a mix of two lists.
     expect(lists).toContainEqual(two.membership.instruments);
