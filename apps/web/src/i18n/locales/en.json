@@ -102,9 +102,6 @@
     "lastName": "Last name",
     "nickname": "Nickname",
     "nicknameHint": "Optional. Shown to your band instead of your name.",
-    "instrument": "Instrument",
-    "instrumentHint": "What you play in this band.",
-    "instrumentSuggestions": "Vocals,Guitar,Bass,Drums,Keyboards,Saxophone,Trumpet,Violin,Percussion",
     "bandName": "Band name",
     "bandUrl": "Your band's page: /b/{{slug}}",
     "genre": "Genre",
@@ -126,7 +123,9 @@
       "submit": "Join the band",
       "submitting": "Joining…"
     },
-    "bandNameHint": "Choose carefully: a band name is forever."
+    "bandNameHint": "Choose carefully: a band name is forever.",
+    "mainInstrument": "Main instrument",
+    "mainInstrumentHint": "Optional. You can add others later from the lineup."
   },
   "account": {
     "menu": "Account",
@@ -230,5 +229,11 @@
     "already_member": "This person is already a member of the band.",
     "too_many_requests": "Too many requests. Try again later.",
     "invalid_image": "This file isn't a usable image. Choose a photo (JPEG, PNG, WebP…)."
+  },
+  "instruments": {
+    "picker": {
+      "placeholder": "Choose or type an instrument",
+      "add": "Add “{{label}}”"
+    }
   }
 }

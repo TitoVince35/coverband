@@ -1,9 +1,10 @@
-import { FIELD_MAX_LENGTH, slugify } from "@coverband/shared";
+import { FIELD_MAX_LENGTH, type Instrument, instrumentLabel, slugify } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, type ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NewPasswordFields, readNewPassword } from "@/components/account/new-password-fields";
+import { InstrumentPicker } from "@/components/instrument-picker";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import i18n, { changeLanguage, readStoredLanguage } from "@/i18n";
 import { isLanguage } from "@/i18n/languages";
+import { useLanguage } from "@/i18n/use-language";
 import { api } from "@/lib/api";
 import { sessionQuery } from "@/lib/auth";
 
@@ -29,7 +31,8 @@ type Values = {
   firstName: string;
   lastName: string;
   nickname: string;
-  instrument: string;
+  /** Optional: the main instrument in this band. */
+  instrument: Instrument | null;
   bandName: string;
   genre: string;
   password: string;
@@ -39,7 +42,7 @@ const EMPTY: Values = {
   firstName: "",
   lastName: "",
   nickname: "",
-  instrument: "",
+  instrument: null,
   bandName: "",
   genre: "",
   password: "",
@@ -74,6 +77,7 @@ export function OnboardingWizard({
   newAccount: boolean;
 }) {
   const { t } = useTranslation();
+  const language = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const steps = stepsFor(joining !== null, newAccount);
@@ -82,8 +86,10 @@ export function OnboardingWizard({
   const [bandError, setBandError] = useState<string | null>(null);
   const step = steps[index] ?? "review";
 
-  const set = (field: keyof Values) => (value: string) =>
-    setValues((previous) => ({ ...previous, [field]: value }));
+  const set =
+    <K extends keyof Values>(field: K) =>
+    (value: Values[K]) =>
+      setValues((previous) => ({ ...previous, [field]: value }));
   const next = () => setIndex((i) => Math.min(i + 1, steps.length - 1));
   const back = () => setIndex((i) => Math.max(i - 1, 0));
 
@@ -107,7 +113,7 @@ export function OnboardingWizard({
       const res = await api.invitations[":token"].accept.$post({
         param: { token },
         json: {
-          instrument,
+          ...(instrument ? { instrument } : {}),
           ...(joining === null ? { bandName, genre: genre || undefined } : {}),
           newAccount: newAccount
             ? { firstName, lastName, nickname: nickname || undefined, password }
@@ -300,7 +306,12 @@ export function OnboardingWizard({
                 />
               </>
             )}
-            <ReviewRow label={t("invite.instrument")} value={values.instrument} />
+            <ReviewRow
+              label={t("invite.mainInstrument")}
+              value={
+                values.instrument ? instrumentLabel(values.instrument, language) : t("invite.none")
+              }
+            />
             <ReviewRow label={t("invite.band")} value={joining ?? values.bandName} />
             {joining === null && (
               <ReviewRow label={t("invite.genre")} value={values.genre || t("invite.none")} />
@@ -430,20 +441,24 @@ function InstrumentField({
   value,
   onChange,
 }: {
-  value: string;
-  onChange: (value: string) => void;
+  value: Instrument | null;
+  onChange: (value: Instrument | null) => void;
 }) {
   const { t } = useTranslation();
+  const hintId = useId();
   return (
-    <SuggestField
-      label={t("invite.instrument")}
-      hint={t("invite.instrumentHint")}
-      suggestions={t("invite.instrumentSuggestions")}
-      value={value}
-      onChange={onChange}
-      maxLength={FIELD_MAX_LENGTH.instrument}
-      required
-    />
+    <div className="space-y-2">
+      <Label htmlFor="main-instrument">{t("invite.mainInstrument")}</Label>
+      <InstrumentPicker
+        id="main-instrument"
+        value={value}
+        onChange={onChange}
+        aria-describedby={hintId}
+      />
+      <p id={hintId} className="text-muted-foreground text-xs">
+        {t("invite.mainInstrumentHint")}
+      </p>
+    </div>
   );
 }
 

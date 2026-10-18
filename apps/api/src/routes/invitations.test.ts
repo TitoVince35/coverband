@@ -111,7 +111,11 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
 
   test("a new leader gets an account, a band and a session in one go", async () => {
     const token = await invite(email("new"));
-    const body = { instrument: "Guitar", bandName: bandName("Les Rockeurs d'Été"), genre: "Rock" };
+    const body = {
+      instrument: { label: "Guitar" },
+      bandName: bandName("Les Rockeurs d'Été"),
+      genre: "Rock",
+    };
 
     expect((await accept(token, body)).status).toBe(400); // no profile
     expect(
@@ -181,7 +185,7 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
     const token = await invite(email("clash"));
     await db.insert(bands).values({ name: bandName("Clash"), slug: `clash-${run}` });
     const res = await accept(token, {
-      instrument: "Drums",
+      instrument: { code: "drums" },
       bandName: bandName("CLASH"),
       newAccount: profile,
     });
@@ -220,7 +224,7 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
       .where(eq(invitations.email, email("revoked")));
     await revokeLeaderInvitation(deps, row?.id ?? "", adminId);
     const revoked = await accept(token, {
-      instrument: "Bass",
+      instrument: { code: "bass_guitar" },
       bandName: bandName("Revoked"),
       newAccount: profile,
     });
