@@ -207,7 +207,7 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
       method: "POST",
       headers: { "content-type": "application/json", origin: "http://localhost:3000" },
       body: JSON.stringify({
-        instrument: "Vocals",
+        instrument: { label: "Vocals" },
         newAccount: { firstName: "Sam", lastName: "Singer", password },
       }),
     });
@@ -250,7 +250,7 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
           cookie: cookies[who] ?? "",
           origin: "http://localhost:3000",
         },
-        body: JSON.stringify({ instrument: "Keys" }),
+        body: JSON.stringify({ instrument: { code: "keyboards" } }),
       });
     expect((await accept("nobody")).status).toBe(401);
     expect(await errorCode(await accept("bassist"))).toBe("invitation_wrong_account");
@@ -289,7 +289,7 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
         cookie: cookies.outsider ?? "",
         origin: "http://localhost:3000",
       },
-      body: JSON.stringify({ instrument: "Keys" }),
+      body: JSON.stringify({ instrument: { code: "keyboards" } }),
     });
     expect(res.status).toBe(409);
     expect(await errorCode(res)).toBe("already_member");

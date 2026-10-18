@@ -37,7 +37,10 @@ test("the band leader creates an account and the band from the email's link", as
   await expect(leader.getByText("Step 1 of 4")).toBeVisible();
   await leader.getByLabel("First name").fill("Lea");
   await leader.getByLabel("Last name").fill("Leader");
-  await leader.getByLabel("Instrument").fill("Guitar");
+  // The picker: typing filters the list, with icons; pick from it.
+  await leader.getByLabel("Main instrument").fill("Gui");
+  await leader.getByRole("option", { name: "Guitar", exact: true }).click();
+  await expect(leader.getByLabel("Main instrument")).toHaveValue("Guitar");
   await leader.getByRole("button", { name: "Next" }).click();
 
   await leader.getByLabel("Band name").fill(band);
@@ -65,11 +68,15 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   await musician.getByLabel("First name").fill("Max");
   await musician.getByLabel("Last name").fill("Musician");
   await musician.getByLabel("Nickname").fill("Maxou");
-  await musician.getByLabel("Instrument").fill("Bass");
-  await musician.getByRole("button", { name: "Next" }).click();
+  // Typed without picking: kept, as the known instrument it names.
+  // Typed, list closed, step submitted with Enter: the field never loses focus, the text counts.
+  await musician.getByLabel("Main instrument").fill("Bass");
+  await musician.getByLabel("Main instrument").press("Escape");
+  await musician.getByLabel("Main instrument").press("Enter");
   await musician.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await musician.getByLabel("Confirm password").fill(PASSWORD);
   await musician.getByRole("button", { name: "Next" }).click();
+  await expect(musician.getByText("Bass guitar")).toBeVisible(); // the review step
   await musician.getByRole("button", { name: "Join the band" }).click();
   await expect(musician.getByText(`Welcome to ${band}!`)).toBeVisible();
 

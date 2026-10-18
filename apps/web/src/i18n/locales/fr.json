@@ -102,9 +102,6 @@
     "lastName": "Nom",
     "nickname": "Surnom",
     "nicknameHint": "Facultatif. Affiché à votre groupe à la place de votre nom.",
-    "instrument": "Instrument",
-    "instrumentHint": "Ce que vous jouez dans ce groupe.",
-    "instrumentSuggestions": "Chant,Guitare,Basse,Batterie,Claviers,Saxophone,Trompette,Violon,Percussions",
     "bandName": "Nom du groupe",
     "bandUrl": "Page de votre groupe : /b/{{slug}}",
     "genre": "Style",
@@ -126,7 +123,9 @@
       "submit": "Rejoindre le groupe",
       "submitting": "Envoi…"
     },
-    "bandNameHint": "Choisissez bien : le nom d'un groupe, c'est pour toujours."
+    "bandNameHint": "Choisissez bien : le nom d'un groupe, c'est pour toujours.",
+    "mainInstrument": "Instrument principal",
+    "mainInstrumentHint": "Facultatif. Vous pourrez en ajouter d'autres depuis le line-up."
   },
   "account": {
     "menu": "Compte",
@@ -230,5 +229,11 @@
     "already_member": "Cette personne fait déjà partie du groupe.",
     "too_many_requests": "Trop de demandes. Réessayez plus tard.",
     "invalid_image": "Ce fichier n'est pas une image utilisable. Choisissez une photo (JPEG, PNG, WebP…)."
+  },
+  "instruments": {
+    "picker": {
+      "placeholder": "Choisissez ou tapez un instrument",
+      "add": "Ajouter « {{label}} »"
+    }
   }
 }
