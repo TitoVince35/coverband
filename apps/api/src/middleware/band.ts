@@ -9,7 +9,7 @@ import type { SessionEnv } from "./session";
 export type BandEnv = SessionEnv & {
   Variables: {
     band: typeof bands.$inferSelect;
-    membership: { role: BandRole; instrument: string };
+    membership: { role: BandRole };
   };
 };
 
@@ -26,7 +26,7 @@ export function requireMember(db: Db) {
     }
     const slug = c.req.param("bandSlug") ?? "";
     const [row] = await db
-      .select({ band: bands, role: bandMembers.role, instrument: bandMembers.instrument })
+      .select({ band: bands, role: bandMembers.role })
       .from(bands)
       .innerJoin(
         bandMembers,
@@ -37,7 +37,7 @@ export function requireMember(db: Db) {
       return apiError(c, 404, "Band not found");
     }
     c.set("band", row.band);
-    c.set("membership", { role: row.role, instrument: row.instrument });
+    c.set("membership", { role: row.role });
     await next();
   });
 }

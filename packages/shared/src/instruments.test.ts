@@ -3,6 +3,7 @@ import {
   INSTRUMENT_NAMES,
   INSTRUMENTS,
   instrumentLabel,
+  instrumentsLabel,
   matchInstrument,
   normalizeName,
   parseInstrument,
@@ -72,6 +73,8 @@ describe("matching typed text", () => {
     expect(instrumentLabel({ code: "bass_guitar" }, "en")).toBe("Bass guitar");
     expect(instrumentLabel({ code: "bass_guitar" }, "fr")).toBe("Basse");
     expect(instrumentLabel({ label: "Theremin" }, "fr")).toBe("Theremin");
+    expect(instrumentsLabel([{ code: "guitar" }, { code: "vocals" }], "fr")).toBe("Guitare, Chant");
+    expect(instrumentsLabel([], "en")).toBe("");
   });
 });
 

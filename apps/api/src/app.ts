@@ -12,6 +12,7 @@ import { loadSession, type SessionEnv } from "./middleware/session";
 import { adminRoutes } from "./routes/admin";
 import { bandRoutes } from "./routes/bands";
 import { health } from "./routes/health";
+import { instrumentRoutes } from "./routes/instruments";
 import { invitationRoutes } from "./routes/invitations";
 import { meRoutes } from "./routes/me";
 import { userRoutes } from "./routes/users";
@@ -48,7 +49,8 @@ function createApi(deps: AppDeps) {
     .route("/invitations", invitationRoutes(deps))
     .route("/bands", bandRoutes(deps))
     .route("/me", meRoutes(deps))
-    .route("/users", userRoutes(deps));
+    .route("/users", userRoutes(deps))
+    .route("/instruments", instrumentRoutes(deps));
 }
 
 export type AppType = ReturnType<typeof createApi>;

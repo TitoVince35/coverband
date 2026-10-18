@@ -77,7 +77,10 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   const lineup = musician.getByRole("listitem");
   await expect(lineup).toHaveCount(2);
   await expect(lineup.nth(0)).toContainText("Lea Leader");
+  await expect(lineup.nth(0)).toContainText("Guitar");
   await expect(lineup.nth(1)).toContainText("Maxou");
+  // Typed "Bass" in the wizard: stored and shown as the known instrument.
+  await expect(lineup.nth(1)).toContainText("Bass guitar");
   await musician.context().close();
 });
 

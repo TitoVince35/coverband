@@ -14,7 +14,7 @@ const text = (max: number) => z.string().trim().min(1).max(max);
 const tokenParam = z.object({ token: z.string().min(20).max(100) });
 
 const acceptBody = z.object({
-  instrument: text(FIELD_MAX_LENGTH.instrument),
+  instrument: z.string().trim().max(FIELD_MAX_LENGTH.instrument).optional(),
   bandName: text(FIELD_MAX_LENGTH.bandName).optional(),
   genre: z.string().trim().max(FIELD_MAX_LENGTH.genre).optional(),
   newAccount: z

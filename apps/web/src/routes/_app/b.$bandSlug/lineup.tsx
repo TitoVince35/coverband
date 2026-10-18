@@ -1,3 +1,4 @@
+import { instrumentsLabel } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -6,6 +7,7 @@ import { InviteDialog } from "@/components/invitations/invite-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
+import { useLanguage } from "@/i18n/use-language";
 import { bandInvitations, bandQuery, membersQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
 
@@ -16,6 +18,7 @@ export const Route = createFileRoute("/_app/b/$bandSlug/lineup")({
 
 function LineupPage() {
   const { t } = useTranslation();
+  const language = useLanguage();
   const { bandSlug } = Route.useParams();
   const { user } = Route.useRouteContext();
   const band = useQuery(bandQuery(bandSlug));
@@ -64,8 +67,12 @@ function LineupPage() {
                         {member.role === "leader" && <Badge>{t("band.roles.leader")}</Badge>}
                       </div>
                       <p className="text-muted-foreground text-sm">
-                        {member.instrument}
-                        {fullName && fullName !== member.name && ` · ${fullName}`}
+                        {[
+                          instrumentsLabel(member.instruments, language),
+                          fullName !== member.name && fullName,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </p>
                     </div>
                   </li>

@@ -1,10 +1,11 @@
-import { displayName, type ErrorCode } from "@coverband/shared";
+import { displayName, type ErrorCode, toInstrument } from "@coverband/shared";
 import { and, eq } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { AppDeps } from "./app";
 import type { SessionUser } from "./auth";
 import { BandNameTakenError, createBand } from "./bands";
 import { accounts, bandMembers, bands, invitations, users } from "./db/schema";
+import { writeInstruments } from "./instruments";
 import { hashToken, invitationStatus } from "./invitations";
 
 /** An expected refusal, turned into an API error with a stable code. */
@@ -61,7 +62,8 @@ export async function getInvitation({ db, now = () => new Date() }: Deps, token:
 }
 
 export type OnboardingInput = {
-  instrument: string;
+  /** Optional: the main instrument, the first of the member's list in this band. */
+  instrument?: string | undefined;
   /** Leaders only: the band they create. */
   bandName?: string | undefined;
   genre?: string | undefined;
@@ -194,12 +196,9 @@ function createMembership(
       band = joined;
     }
 
-    await tx.insert(bandMembers).values({
-      bandId: band.id,
-      userId,
-      role: invitation.role,
-      instrument: input.instrument.trim(),
-    });
+    await tx.insert(bandMembers).values({ bandId: band.id, userId, role: invitation.role });
+    const main = input.instrument ? toInstrument(input.instrument) : null;
+    await writeInstruments(tx, { bandId: band.id, userId }, main ? [main] : []);
     await recordActivity(tx, {
       action: "member.joined",
       bandId: band.id,
