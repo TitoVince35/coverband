@@ -99,7 +99,7 @@ export function AvatarCard({
         : null;
 
   return (
-    <Card className="max-w-sm">
+    <Card>
       <CardHeader>
         <CardTitle className="font-heading text-lg">{t("account.avatar.title")}</CardTitle>
         <CardDescription>{t("account.avatar.description")}</CardDescription>
