@@ -40,6 +40,16 @@
       "new": "Invite a musician",
       "title": "Invite a musician",
       "description": "They'll receive an email to join {{band}}. The link is valid for 48 hours."
+    },
+    "instruments": {
+      "edit": "Edit my instruments",
+      "title": "My instruments",
+      "description": "What you play in {{band}}. The first one is your main instrument.",
+      "add": "Add an instrument",
+      "remove": "Remove {{label}}",
+      "main": "main",
+      "none": "No instrument yet.",
+      "saved": "Instruments updated"
     }
   },
   "login": {

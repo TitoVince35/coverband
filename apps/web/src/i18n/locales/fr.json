@@ -40,6 +40,16 @@
       "new": "Inviter un zicos",
       "title": "Inviter dans le groupe",
       "description": "Cette personne recevra un e-mail pour rejoindre {{band}}. Le lien est valable 48 heures."
+    },
+    "instruments": {
+      "edit": "Modifier mes instruments",
+      "title": "Mes instruments",
+      "description": "Ce que vous jouez dans {{band}}. Le premier est votre instrument principal.",
+      "add": "Ajouter un instrument",
+      "remove": "Retirer {{label}}",
+      "main": "principal",
+      "none": "Aucun instrument pour l'instant.",
+      "saved": "Instruments mis à jour"
     }
   },
   "login": {

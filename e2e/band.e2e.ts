@@ -81,7 +81,8 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   await expect(musician.getByText(`Welcome to ${band}!`)).toBeVisible();
 
   await musician.getByRole("link", { name: "Lineup" }).click();
-  const lineup = musician.getByRole("listitem");
+  // The lineup's rows (each row also lists its instruments).
+  const lineup = musician.getByRole("list", { name: "Lineup" }).locator(":scope > li");
   await expect(lineup).toHaveCount(2);
   await expect(lineup.nth(0)).toContainText("Lea Leader");
   await expect(lineup.nth(0)).toContainText("Guitar");
@@ -101,7 +102,47 @@ test("the band leader updates their profile: the new name shows everywhere", asy
   await leader.goto("/");
   await leader.getByRole("link", { name: band }).first().click();
   await leader.getByRole("link", { name: "Lineup" }).click();
-  await expect(leader.getByRole("listitem").nth(0)).toContainText("Captain Lea");
+  await expect(
+    leader.getByRole("list", { name: "Lineup" }).locator(":scope > li").nth(0),
+  ).toContainText("Captain Lea");
+});
+
+test("a member edits their own instruments from the lineup", async () => {
+  await leader.goto("/");
+  await leader.getByRole("link", { name: band }).first().click();
+  await leader.getByRole("link", { name: "Lineup" }).click();
+  // Only on your own row.
+  await expect(leader.getByRole("button", { name: "Edit my instruments" })).toHaveCount(1);
+  await leader.getByRole("button", { name: "Edit my instruments" }).click();
+  const dialog = leader.getByRole("dialog");
+  await expect(dialog.getByText("Guitar")).toBeVisible();
+  await expect(dialog.getByText("main", { exact: true })).toBeVisible();
+
+  // Typed in French, picked with Enter: the known instrument.
+  const add = dialog.getByLabel("Add an instrument");
+  await add.fill("chant");
+  await add.press("Enter");
+  await expect(dialog.getByText("Vocals")).toBeVisible();
+  // Something not in the catalogue: kept as typed.
+  await dialog.getByLabel("Add an instrument").fill("Kazoo");
+  await leader.getByRole("option", { name: "Add “Kazoo”" }).click();
+  // Already listed: Enter doesn't add it twice. The field keeps the focus after each addition.
+  await expect(dialog.getByLabel("Add an instrument")).toBeFocused();
+  await dialog.getByLabel("Add an instrument").fill("kazoo");
+  await dialog.getByLabel("Add an instrument").press("Enter");
+  await expect(dialog.getByRole("listitem").filter({ hasText: "Kazoo" })).toHaveCount(1);
+  await dialog.getByRole("button", { name: "Remove Guitar" }).click();
+  // Typed but not added: Save keeps it too.
+  await dialog.getByLabel("Add an instrument").fill("Ukulele");
+  await dialog.getByLabel("Add an instrument").press("Escape"); // closes the list, not the dialog
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Instruments updated")).toBeVisible();
+
+  const row = leader.getByRole("list", { name: "Lineup" }).locator(":scope > li").nth(0);
+  await expect(row).toContainText("Vocals");
+  await expect(row).toContainText("Kazoo");
+  await expect(row).toContainText("Ukulele");
+  await expect(row).not.toContainText("Guitar");
 });
 
 test("the band leader uploads an avatar, then removes it", async () => {

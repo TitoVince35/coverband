@@ -15,6 +15,8 @@ type Props = {
   id: string;
   value: Instrument | null;
   onChange: (instrument: Instrument | null) => void;
+  /** Called when an instrument is chosen from the list (not while typing): "add" pickers. */
+  onPick?: (instrument: Instrument) => void;
   /** Instruments already chosen elsewhere, left out of the list. */
   exclude?: readonly Instrument[];
   "aria-describedby"?: string | undefined;
@@ -28,7 +30,15 @@ type Props = {
  * type (the known instrument once it names one, free text otherwise), so submitting a form with
  * Enter or a tap keeps it without waiting for the field to lose focus.
  */
-export function InstrumentPicker({ id, value, onChange, exclude, autoFocus, ...aria }: Props) {
+export function InstrumentPicker({
+  id,
+  value,
+  onChange,
+  onPick,
+  exclude,
+  autoFocus,
+  ...aria
+}: Props) {
   const { t } = useTranslation();
   const language = useLanguage();
   const listId = useId();
@@ -62,6 +72,7 @@ export function InstrumentPicker({ id, value, onChange, exclude, autoFocus, ...a
     setText(label(instrument));
     setHighlight(0);
     setOpen(false);
+    onPick?.(instrument);
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
