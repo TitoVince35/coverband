@@ -138,10 +138,18 @@ describe.skipIf(!databaseUrl)("band journal", () => {
         targetId: ids.max ?? "",
         data: { role: "musician" },
       },
+      // Without a role (older or seeded rows): still shown.
+      {
+        action: "member.joined",
+        bandId: band?.id,
+        actorId: ids.max,
+        targetType: "user",
+        targetId: ids.max ?? "",
+      },
     ]);
     const { entries } = await journal("max");
     const joined = entries.filter((e) => e.action === "member.joined");
-    expect(joined.map((e) => e.actorName)).toEqual(["Max Moe"]);
+    expect(joined.map((e) => e.actorName)).toEqual(["Max Moe", "Max Moe"]);
     expect(entries.some((e) => e.action === "band.created")).toBe(true);
   });
 

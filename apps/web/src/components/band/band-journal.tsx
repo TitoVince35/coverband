@@ -27,6 +27,7 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
   const journal = useQuery(bandJournalQuery(bandSlug));
   const now = new Date();
   const words = { today: t("journal.today"), yesterday: t("journal.yesterday") };
+  const entries = journal.data?.filter((entry) => hasSentence(entry.action)) ?? [];
 
   return (
     <Card>
@@ -40,12 +41,12 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
           <p role="alert" className="text-destructive text-sm">
             {errorMessage(t, journal.error)}
           </p>
-        ) : journal.data.length === 0 ? (
+        ) : entries.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t("journal.empty")}</p>
         ) : (
           <ul className="list-disc space-y-2 pl-5 text-sm">
-            {journal.data.map((entry) => {
-              if (!hasSentence(entry.action)) return null;
+            {entries.map((entry) => {
+              if (!hasSentence(entry.action)) return null; // narrows the action's type
               const name = entry.actorName ?? t("journal.someone");
               const sentence =
                 entry.action === "band.genre_changed" && !("genre" in entry && entry.genre)

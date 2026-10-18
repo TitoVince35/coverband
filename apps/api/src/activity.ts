@@ -52,7 +52,7 @@ export async function bandJournal(db: Db, bandId: string, limit = JOURNAL_SIZE) 
       and(
         eq(activity.bandId, bandId),
         // A band leader joins by creating the band: "created the band" says it already.
-        sql`not (${activity.action} = 'member.joined' and ${activity.data}->>'role' = 'leader')`,
+        sql`not (${activity.action} = 'member.joined' and coalesce(${activity.data}->>'role', '') = 'leader')`,
       ),
     )
     .orderBy(desc(activity.createdAt), desc(activity.id))
