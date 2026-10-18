@@ -1,6 +1,6 @@
 import { type Instrument, instrumentLabel, toInstrument } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
-import { type KeyboardEvent, useId, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { InstrumentIcon } from "@/components/instrument-icon";
 import { Input } from "@/components/ui/input";
@@ -24,33 +24,52 @@ type Props = {
 /**
  * Picks one instrument (reusable: musicians now, sheet music and media later). A combobox: the
  * list shows every instrument with its icon, typing filters it (both languages, synonyms), and
- * text that matches nothing can be kept as a custom instrument. Leaving the field with typed text
- * keeps it too (a known instrument when it names one).
+ * text that matches nothing can be kept as a custom instrument. What's typed is the value as you
+ * type (the known instrument once it names one, free text otherwise), so submitting a form with
+ * Enter or a tap keeps it without waiting for the field to lose focus.
  */
 export function InstrumentPicker({ id, value, onChange, exclude, autoFocus, ...aria }: Props) {
   const { t } = useTranslation();
   const language = useLanguage();
   const listId = useId();
   const suggestions = useQuery(instrumentSuggestionsQuery).data ?? [];
-  const [text, setText] = useState(value ? instrumentLabel(value, language) : "");
+  const label = (instrument: Instrument | null) =>
+    instrument ? instrumentLabel(instrument, language) : "";
+  const [text, setText] = useState(label(value));
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(0);
+  const [highlight, setHighlight] = useState(0);
   const anchor = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null);
   const options = pickerOptions(text, language, suggestions, exclude);
-  const current = options[Math.min(active, options.length - 1)];
+  // One index for the highlight, aria-activedescendant and Enter, always within the list.
+  const active = Math.min(highlight, Math.max(options.length - 1, 0));
+  const current = options[active];
+
+  // A value changed from outside (reset by the parent, another language): show it, unless the
+  // user is typing in the field.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: label follows value and language.
+  useEffect(() => {
+    if (document.activeElement !== input.current) setText(label(value));
+  }, [value, language]);
+
+  function show() {
+    setHighlight(0);
+    setOpen(true);
+  }
 
   function choose(instrument: Instrument) {
     onChange(instrument);
-    setText(instrumentLabel(instrument, language));
+    setText(label(instrument));
+    setHighlight(0);
     setOpen(false);
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
+      if (!open) return show();
       const step = event.key === "ArrowDown" ? 1 : -1;
-      setOpen(true);
-      setActive((index) => (index + step + options.length) % Math.max(options.length, 1));
+      setHighlight((active + step + options.length) % Math.max(options.length, 1));
     } else if (event.key === "Enter" && open && current) {
       event.preventDefault();
       choose(current.instrument);
@@ -60,8 +79,9 @@ export function InstrumentPicker({ id, value, onChange, exclude, autoFocus, ...a
     }
   }
 
+  const listed = open && options.length > 0;
   return (
-    <Popover open={open && options.length > 0} onOpenChange={setOpen}>
+    <Popover open={listed} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
         <div ref={anchor} className="relative">
           {value && (
@@ -71,12 +91,13 @@ export function InstrumentPicker({ id, value, onChange, exclude, autoFocus, ...a
             />
           )}
           <Input
+            ref={input}
             id={id}
             role="combobox"
-            aria-expanded={open}
-            aria-controls={listId}
+            aria-expanded={listed}
+            aria-controls={listed ? listId : undefined}
             aria-autocomplete="list"
-            aria-activedescendant={open && current ? `${listId}-${active}` : undefined}
+            aria-activedescendant={listed && current ? `${listId}-${active}` : undefined}
             autoComplete="off"
             autoFocus={autoFocus}
             placeholder={t("instruments.picker.placeholder")}
@@ -84,18 +105,15 @@ export function InstrumentPicker({ id, value, onChange, exclude, autoFocus, ...a
             value={text}
             onChange={(event) => {
               setText(event.target.value);
-              setActive(0);
-              setOpen(true);
-              if (value) onChange(null);
+              onChange(toInstrument(event.target.value));
+              show();
             }}
-            onFocus={() => setOpen(true)}
-            onClick={() => setOpen(true)}
+            onFocus={show}
+            onClick={() => !open && show()}
+            // Tidy what was typed: "bass" reads "Bass guitar" once you move on.
             onBlur={() => {
               setOpen(false);
-              if (!value) {
-                const typed = toInstrument(text);
-                if (typed) choose(typed);
-              }
+              setText(label(value));
             }}
             onKeyDown={onKeyDown}
             {...aria}
@@ -105,7 +123,7 @@ export function InstrumentPicker({ id, value, onChange, exclude, autoFocus, ...a
       {/* In a portal: never clipped by a card or a dialog. Focus stays in the input. */}
       <PopoverContent
         align="start"
-        className="max-h-64 w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
+        className="max-h-[min(16rem,var(--radix-popover-content-available-height))] w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => event.preventDefault()}
         onInteractOutside={(event) => {
@@ -127,7 +145,7 @@ export function InstrumentPicker({ id, value, onChange, exclude, autoFocus, ...a
               )}
               // Before the input's blur, so the click still lands.
               onMouseDown={(event) => event.preventDefault()}
-              onMouseEnter={() => setActive(index)}
+              onMouseEnter={() => setHighlight(index)}
               onClick={() => choose(option.instrument)}
               onKeyDown={(event) => event.key === "Enter" && choose(option.instrument)}
             >
