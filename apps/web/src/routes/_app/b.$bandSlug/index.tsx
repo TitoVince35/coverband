@@ -1,20 +1,17 @@
-import { instrumentsLabel } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BandJournal } from "@/components/band/band-journal";
-import { useLanguage } from "@/i18n/use-language";
 import { bandQuery } from "@/lib/bands";
 
-// Band home page: who you are in the band, and its journal (#84). Repertoire, setlists and gigs
-// come later.
+// Band home page: the welcome, the band's journal (#84), then what's coming (repertoire,
+// setlists and gigs come later).
 export const Route = createFileRoute("/_app/b/$bandSlug/")({
   component: BandHome,
 });
 
 function BandHome() {
   const { t } = useTranslation();
-  const language = useLanguage();
   const { bandSlug } = Route.useParams();
   const { data } = useQuery(bandQuery(bandSlug));
   if (!data) {
@@ -22,24 +19,12 @@ function BandHome() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="space-y-2">
-        <h2 className="font-heading font-semibold text-lg">
-          {t("band.welcome", { band: data.band.name })}
-        </h2>
-        <p>
-          {t("band.you", {
-            details: [
-              t(`band.roles.${data.membership.role}`),
-              instrumentsLabel(data.membership.instruments, language),
-            ]
-              .filter(Boolean)
-              .join(" · "),
-          })}
-        </p>
-        <p className="text-muted-foreground text-sm">{t("band.comingSoon")}</p>
-      </section>
+    <section className="space-y-4">
+      <h2 className="font-heading font-semibold text-lg">
+        {t("band.welcome", { band: data.band.name })}
+      </h2>
       <BandJournal bandSlug={bandSlug} />
-    </div>
+      <p className="text-muted-foreground text-sm">{t("band.comingSoon")}</p>
+    </section>
   );
 }
