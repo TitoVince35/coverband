@@ -16,4 +16,15 @@ export {
   errorCodeForStatus,
   isErrorCode,
 } from "./errors";
+export {
+  INSTRUMENT_NAMES,
+  INSTRUMENTS,
+  type Instrument,
+  type InstrumentCode,
+  instrumentLabel,
+  matchInstrument,
+  normalizeName,
+  searchInstruments,
+  toInstrument,
+} from "./instruments";
 export { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language, pickLanguage } from "./languages";
