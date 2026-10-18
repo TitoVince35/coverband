@@ -50,6 +50,9 @@ export function InstrumentPicker({
   const [highlight, setHighlight] = useState(0);
   const anchor = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
+  // Focus given by autoFocus doesn't open the list (it would cover what's below, like a Save
+  // button); typing or a tap does.
+  const autoFocused = useRef(Boolean(autoFocus));
   const options = pickerOptions(text, language, suggestions, exclude);
   // One index for the highlight, aria-activedescendant and Enter, always within the list.
   const active = Math.min(highlight, Math.max(options.length - 1, 0));
@@ -119,7 +122,10 @@ export function InstrumentPicker({
               onChange(toInstrument(event.target.value));
               show();
             }}
-            onFocus={show}
+            onFocus={() => {
+              if (autoFocused.current) autoFocused.current = false;
+              else show();
+            }}
             onClick={() => !open && show()}
             // Tidy what was typed: "bass" reads "Bass guitar" once you move on.
             onBlur={() => {

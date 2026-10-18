@@ -245,5 +245,20 @@
       "placeholder": "Choisissez ou tapez un instrument",
       "add": "Ajouter « {{label}} »"
     }
+  },
+  "journal": {
+    "title": "Activité récente",
+    "empty": "Rien ne s'est encore passé.",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "someone": "Quelqu'un",
+    "bandCreated": "{{name}} a créé le groupe",
+    "memberJoined": "{{name}} a rejoint le groupe",
+    "genreChanged": "{{name}} a changé le genre : {{genre}}",
+    "genreRemoved": "{{name}} a retiré le genre",
+    "invitationSent": "{{name}} a invité un zicos",
+    "invitationResent": "{{name}} a renvoyé une invitation",
+    "invitationRevoked": "{{name}} a annulé une invitation",
+    "instrumentsChanged": "{{name}} a mis à jour ses instruments"
   }
 }

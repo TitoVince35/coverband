@@ -131,6 +131,8 @@ test("a member edits their own instruments from the lineup", async () => {
   await dialog.getByLabel("Add an instrument").fill("kazoo");
   await dialog.getByLabel("Add an instrument").press("Enter");
   await expect(dialog.getByRole("listitem").filter({ hasText: "Kazoo" })).toHaveCount(1);
+  // The focused field doesn't open its list over the dialog's buttons by itself.
+  await expect(leader.getByRole("listbox")).toHaveCount(0);
   await dialog.getByRole("button", { name: "Remove Guitar" }).click();
   // Typed but not added: Save keeps it too.
   await dialog.getByLabel("Add an instrument").fill("Ukulele");
@@ -143,6 +145,21 @@ test("a member edits their own instruments from the lineup", async () => {
   await expect(row).toContainText("Kazoo");
   await expect(row).toContainText("Ukulele");
   await expect(row).not.toContainText("Guitar");
+});
+
+test("the band's home page shows its latest activity, newest first", async () => {
+  await leader.goto("/");
+  await leader.getByRole("link", { name: band }).first().click();
+  const journal = leader.getByRole("list").filter({ hasText: "created the band" });
+  const entries = journal.getByRole("listitem");
+  // Names as they are now (Lea took a nickname since).
+  await expect(entries.first()).toContainText("Captain Lea updated their instruments");
+  await expect(journal).toContainText("Maxou joined the band");
+  await expect(journal).toContainText("Captain Lea invited a musician");
+  await expect(entries.last()).toContainText("Captain Lea created the band");
+  await expect(entries.first()).toContainText("Today");
+  // Never an email.
+  await expect(journal).not.toContainText("@");
 });
 
 test("the band leader uploads an avatar, then removes it", async () => {

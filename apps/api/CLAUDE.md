@@ -34,6 +34,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - `band_id` is null for events outside a band (band leader invitations, new accounts); band activity is deleted with its band. `actor_id` becomes null when the account is deleted.
 - `data` holds small, non-personal details: IDs, roles, codes, a genre. **Never emails or names.**
 - Invitations record `invitation.sent` only once the email has gone out, since a failed send deletes the invitation.
+- **Band journal:** `GET /api/bands/:bandSlug/activity` (`bandJournal`, members only): the band's latest `JOURNAL_SIZE` (10) events, newest first, with the actor's current display name (null once deleted) and only the details a sentence needs (the new genre); a leader's `member.joined` is left out (`band.created` says it). The web app gives each action a sentence (`src/components/band/band-journal.tsx`): a new band event needs one in both locales, or it isn't shown.
 - Tests check the events with `activityOf(db, targetId)` (`src/test-deps.ts`) and delete the activity outside a band of their test users.
 
 ## Authentication

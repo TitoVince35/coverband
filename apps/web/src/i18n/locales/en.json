@@ -245,5 +245,20 @@
       "placeholder": "Choose or type an instrument",
       "add": "Add “{{label}}”"
     }
+  },
+  "journal": {
+    "title": "Latest activity",
+    "empty": "Nothing has happened yet.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "someone": "Someone",
+    "bandCreated": "{{name}} created the band",
+    "memberJoined": "{{name}} joined the band",
+    "genreChanged": "{{name}} changed the genre to {{genre}}",
+    "genreRemoved": "{{name}} removed the genre",
+    "invitationSent": "{{name}} invited a musician",
+    "invitationResent": "{{name}} sent an invitation again",
+    "invitationRevoked": "{{name}} cancelled an invitation",
+    "instrumentsChanged": "{{name}} updated their instruments"
   }
 }
