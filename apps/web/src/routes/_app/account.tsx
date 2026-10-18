@@ -38,9 +38,15 @@ function AccountPage() {
           {user.name} · {user.email}
         </p>
       </div>
-      <ProfileCard />
-      <AvatarCard user={user} />
-      <ChangePasswordCard />
+      {/* One column on a phone (profile, avatar, password); on wider screens the forms on the
+          left and the avatar on the right. */}
+      <div className="grid max-w-sm gap-6 md:max-w-none md:grid-cols-2 md:items-start">
+        <ProfileCard />
+        <div className="md:col-start-2 md:row-span-2 md:row-start-1">
+          <AvatarCard user={user} />
+        </div>
+        <ChangePasswordCard />
+      </div>
     </section>
   );
 }
@@ -83,7 +89,7 @@ function ProfileCard() {
   ] as const;
 
   return (
-    <Card className="max-w-sm">
+    <Card>
       <CardHeader>
         <CardTitle className="font-heading text-lg">{t("account.profile.title")}</CardTitle>
         <CardDescription>{t("account.profile.description")}</CardDescription>
@@ -167,7 +173,7 @@ function ChangePasswordCard() {
   }
 
   return (
-    <Card className="max-w-sm">
+    <Card>
       <CardHeader>
         <CardTitle className="font-heading text-lg">{t("account.changePassword.title")}</CardTitle>
         <CardDescription>{t("account.changePassword.description")}</CardDescription>
