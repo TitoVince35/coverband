@@ -37,7 +37,6 @@ const DRAWN: Partial<Record<InstrumentCode, ReactNode>> = {
       <circle cx="8" cy="16" r="2.5" />
       <path d="M12.5 11.5 20 4" />
       <path d="M19 2.5l2.5 2.5" />
-      <path d="M12.5 11.5" />
     </>
   ),
   violin: (

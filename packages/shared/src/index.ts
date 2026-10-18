@@ -17,13 +17,16 @@ export {
   isErrorCode,
 } from "./errors";
 export {
+  INSTRUMENT_LABEL_MAX_LENGTH,
   INSTRUMENT_NAMES,
   INSTRUMENTS,
   type Instrument,
   type InstrumentCode,
   instrumentLabel,
+  isInstrumentCode,
   matchInstrument,
   normalizeName,
+  parseInstrument,
   searchInstruments,
   toInstrument,
 } from "./instruments";

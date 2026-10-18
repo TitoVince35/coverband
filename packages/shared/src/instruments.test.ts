@@ -5,6 +5,7 @@ import {
   instrumentLabel,
   matchInstrument,
   normalizeName,
+  parseInstrument,
   searchInstruments,
   toInstrument,
 } from "./instruments";
@@ -48,6 +49,23 @@ describe("matching typed text", () => {
     expect(matchInstrument("Theremin")).toBeNull();
     expect(toInstrument("  Theremin   électrique ")).toEqual({ label: "Theremin électrique" });
     expect(toInstrument("batterie")).toEqual({ code: "drums" });
+    expect(toInstrument("   ")).toBeNull();
+    expect((toInstrument("x".repeat(80)) as { label: string }).label).toHaveLength(50);
+  });
+
+  test("player names match too", () => {
+    expect(matchInstrument("guitarist")).toBe("guitar");
+    expect(matchInstrument("Bassiste")).toBe("bass_guitar");
+    expect(matchInstrument("claviériste")).toBe("keyboards");
+  });
+
+  test("stored values are checked: an unknown code becomes free text", () => {
+    expect(parseInstrument({ code: "piano" })).toEqual({ code: "piano" });
+    expect(parseInstrument({ code: "kazoo" })).toEqual({ label: "kazoo" });
+    expect(parseInstrument({ label: "Basse" })).toEqual({ code: "bass_guitar" });
+    expect(parseInstrument({ label: "" })).toBeNull();
+    expect(parseInstrument("piano")).toBeNull();
+    expect(parseInstrument(null)).toBeNull();
   });
 
   test("labels follow the language; free text is shown as typed", () => {
@@ -72,5 +90,8 @@ describe("searching for the picker", () => {
     expect(searchInstruments("bass", "en")[0]).toBe("bass_guitar");
     expect(searchInstruments("synth", "fr")).toEqual(["keyboards"]);
     expect(searchInstruments("zzz", "en")).toEqual([]);
+    // Nothing comparable left: no match, rather than everything.
+    expect(searchInstruments("Гитара", "en")).toEqual([]);
+    expect(searchInstruments("!!!", "en")).toEqual([]);
   });
 });
