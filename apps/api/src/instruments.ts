@@ -1,18 +1,19 @@
 import {
   INSTRUMENT_LABEL_MAX_LENGTH,
   type Instrument,
+  matchInstrument,
   normalizeName,
   parseInstrument,
 } from "@coverband/shared";
 import { and, asc, count, countDistinct, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db, Tx } from "./db/client";
-import { memberInstruments } from "./db/schema";
+import { bandMembers, memberInstruments } from "./db/schema";
 
 /** Instruments one member can list in a band. */
 export const MAX_INSTRUMENTS = 10;
 
-/** A free-text instrument is suggested to every band once this many bands use it. */
+/** A free-text instrument is suggested to every band once this many bands, and people, use it. */
 export const SHARED_SUGGESTION_BANDS = 2;
 
 /**
@@ -103,6 +104,12 @@ export function setInstruments(
 ) {
   const instruments = cleanInstruments(values);
   return db.transaction(async (tx) => {
+    // Two saves at once (a double tap, two tabs) wait for each other instead of clashing.
+    await tx
+      .select({ userId: bandMembers.userId })
+      .from(bandMembers)
+      .where(and(eq(bandMembers.bandId, member.bandId), eq(bandMembers.userId, member.userId)))
+      .for("update");
     await writeInstruments(tx, member, instruments);
     await recordActivity(tx, {
       action: "member.instruments_changed",
@@ -120,8 +127,9 @@ export function setInstruments(
 }
 
 /**
- * Free-text instruments used in at least SHARED_SUGGESTION_BANDS bands, most used first, shown
- * as typed most often. One band's typo or private label never reaches the others.
+ * Free-text instruments used in at least SHARED_SUGGESTION_BANDS bands by as many people, most
+ * used first, shown as typed most often. One band's (or one person's) typo or private label
+ * never reaches the others.
  */
 export async function sharedCustomInstruments(db: Db, limit = 100): Promise<string[]> {
   const key = sql`lower(${memberInstruments.label})`;
@@ -135,10 +143,15 @@ export async function sharedCustomInstruments(db: Db, limit = 100): Promise<stri
     .from(memberInstruments)
     .where(isNotNull(memberInstruments.label))
     .groupBy(key)
-    .having(sql`count(distinct ${memberInstruments.bandId}) >= ${SHARED_SUGGESTION_BANDS}`)
+    .having(
+      sql`count(distinct ${memberInstruments.bandId}) >= ${SHARED_SUGGESTION_BANDS}
+        and count(distinct ${memberInstruments.userId}) >= ${SHARED_SUGGESTION_BANDS}`,
+    )
     .orderBy(desc(count()), key)
     .limit(limit);
+  // Free text naming a known instrument (older values, or names added to the catalogue since)
+  // is offered as that instrument already.
   return rows
     .map((row) => row.label)
-    .filter((label) => label.length <= INSTRUMENT_LABEL_MAX_LENGTH);
+    .filter((label) => label.length <= INSTRUMENT_LABEL_MAX_LENGTH && !matchInstrument(label));
 }

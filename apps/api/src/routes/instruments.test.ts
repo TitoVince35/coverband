@@ -43,6 +43,9 @@ describe.skipIf(!databaseUrl)("instruments per band membership", () => {
     });
   }
 
+  const bandIdOf = async (slug: string) =>
+    (await db.select({ id: bands.id }).from(bands).where(eq(bands.slug, slug)))[0]?.id ?? "";
+
   const setMine = (who: string, slug: string, instruments: unknown) =>
     call(`/bands/${slug}/members/me/instruments`, who, { method: "PUT", body: { instruments } });
 
@@ -112,6 +115,25 @@ describe.skipIf(!databaseUrl)("instruments per band membership", () => {
     ]);
   });
 
+  test("saves at the same moment all succeed; one whole list wins", async () => {
+    const lists = [
+      [{ code: "drums" }, { code: "vocals" }],
+      [{ code: "piano" }],
+      [{ code: "flute" }, { code: "harmonica" }, { code: "banjo" }],
+      [{ code: "cello" }],
+    ];
+    // A double tap or two tabs, many times over.
+    const responses = await Promise.all(
+      Array.from({ length: 8 }, (_, i) => setMine("amy", slugs.two, lists[i % lists.length])),
+    );
+    expect(responses.map((r) => r.status)).toEqual(Array(8).fill(200));
+    const two = (await (await call(`/bands/${slugs.two}`, "amy")).json()) as {
+      membership: { instruments: unknown[] };
+    };
+    // Never a mix of two lists.
+    expect(lists).toContainEqual(two.membership.instruments);
+  });
+
   test("only members, valid lists only", async () => {
     expect((await setMine("nobody", slugs.one, [])).status).toBe(401);
     expect((await setMine("cat", slugs.one, [{ code: "drums" }])).status).toBe(404);
@@ -130,11 +152,20 @@ describe.skipIf(!databaseUrl)("instruments per band membership", () => {
     const theremin = `Theremin ${run}`;
     await setMine("amy", slugs.one, [{ label: theremin }]);
     expect(await suggestions()).not.toContain(theremin);
-
-    // Another band, another spelling: suggested, as typed most often.
+    // The same person in their two bands: still private.
     await setMine("amy", slugs.two, [{ label: theremin.toUpperCase() }]);
+    expect(await suggestions()).not.toContain(theremin);
+
+    // Someone else too: suggested, as typed most often.
     await setMine("bob", slugs.one, [{ label: theremin }]);
     expect(await suggestions()).toContain(theremin);
+
+    // Free text naming a known instrument (older values) is never offered as custom.
+    await db.insert(memberInstruments).values([
+      { bandId: await bandIdOf(slugs.two), userId: ids.amy ?? "", position: 5, label: "Choeurs" },
+      { bandId: await bandIdOf(slugs.three), userId: ids.cat ?? "", position: 0, label: "Choeurs" },
+    ]);
+    expect(await suggestions()).not.toContain("Choeurs");
     expect((await call("/instruments/suggestions", "nobody")).status).toBe(401);
   });
 
