@@ -1,15 +1,12 @@
-import { avatarUrl, FIELD_MAX_LENGTH, LANGUAGES, type Language } from "@coverband/shared";
+import { FIELD_MAX_LENGTH, LANGUAGES, type Language } from "@coverband/shared";
 import { zValidator } from "@hono/zod-validator";
-import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { bandJournal } from "../activity";
-import { ownAvatarKey } from "../avatars";
-import { updateBandGenre } from "../bands";
-import { bandMembers, bands, users } from "../db/schema";
+import { bandsOf, updateBandGenre } from "../bands";
 import type { AppDeps } from "../deps";
 import { apiError } from "../errors";
-import { instrumentsByBand, instrumentsOf, MAX_INSTRUMENTS, setInstruments } from "../instruments";
+import { instrumentsOf, MAX_INSTRUMENTS, setInstruments } from "../instruments";
 import {
   type InvitationScope,
   invite,
@@ -17,6 +14,7 @@ import {
   resendInvitation,
   revokeInvitation,
 } from "../invitations";
+import { lineupOf } from "../members";
 import { requireLeader, requireMember } from "../middleware/band";
 import { INVITATION_EMAILS, rateLimitUser } from "../middleware/rate-limit";
 import { requireUser, type SessionEnv } from "../middleware/session";
@@ -55,27 +53,7 @@ export function bandRoutes(deps: AppDeps) {
   const { db } = deps;
   return new Hono<SessionEnv>()
     .use(requireUser)
-    .get("/", async (c) => {
-      const rows = await db
-        .select({
-          name: bands.name,
-          slug: bands.slug,
-          genre: bands.genre,
-          role: bandMembers.role,
-          bandId: bands.id,
-        })
-        .from(bandMembers)
-        .innerJoin(bands, eq(bands.id, bandMembers.bandId))
-        .where(eq(bandMembers.userId, c.var.user.id))
-        .orderBy(asc(bands.name));
-      const instruments = await instrumentsByBand(db, c.var.user.id);
-      return c.json({
-        bands: rows.map(({ bandId, ...band }) => ({
-          ...band,
-          instruments: instruments.get(bandId) ?? [],
-        })),
-      });
-    })
+    .get("/", async (c) => c.json({ bands: await bandsOf(db, c.var.user.id) }))
     .route("/:bandSlug", oneBandRoutes(deps));
 }
 
@@ -106,35 +84,7 @@ function oneBandRoutes(deps: AppDeps) {
           band: await updateBandGenre(db, c.var.band.id, genre, c.var.user.id),
         });
       })
-      .get("/members", async (c) => {
-        const rows = await db
-          .select({
-            userId: users.id,
-            name: users.name,
-            firstName: users.firstName,
-            lastName: users.lastName,
-            nickname: users.nickname,
-            role: bandMembers.role,
-            joinedAt: bandMembers.joinedAt,
-            image: users.image,
-          })
-          .from(bandMembers)
-          .innerJoin(users, eq(users.id, bandMembers.userId))
-          .where(eq(bandMembers.bandId, c.var.band.id))
-          .orderBy(asc(bandMembers.joinedAt));
-        // The storage key stays on the server: members get the avatar's URL (null: default avatar).
-        const instruments = await instrumentsOf(
-          db,
-          c.var.band.id,
-          rows.map((row) => row.userId),
-        );
-        const members = rows.map(({ image, ...member }) => ({
-          ...member,
-          instruments: instruments.get(member.userId) ?? [],
-          avatarUrl: avatarUrl(member.userId, ownAvatarKey(member.userId, image)),
-        }));
-        return c.json({ members });
-      })
+      .get("/members", async (c) => c.json({ members: await lineupOf(db, c.var.band.id) }))
       // The band's journal: its latest activity, for every member.
       .get("/activity", async (c) => {
         return c.json({ entries: await bandJournal(db, c.var.band.id) });

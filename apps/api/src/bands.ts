@@ -1,10 +1,48 @@
-import { slugify } from "@coverband/shared";
-import { eq, sql } from "drizzle-orm";
+import { type BandRole, slugify } from "@coverband/shared";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db, Tx } from "./db/client";
 import { isUniqueViolation } from "./db/pg-errors";
-import { bands } from "./db/schema";
+import { bandMembers, bands } from "./db/schema";
 import { AppError } from "./errors";
+import { instrumentsByBand } from "./instruments";
+
+export type Band = typeof bands.$inferSelect;
+
+/** A user's bands by name, with their role and their instruments in each. */
+export async function bandsOf(db: Db, userId: string) {
+  const rows = await db
+    .select({
+      name: bands.name,
+      slug: bands.slug,
+      genre: bands.genre,
+      role: bandMembers.role,
+      bandId: bands.id,
+    })
+    .from(bandMembers)
+    .innerJoin(bands, eq(bands.id, bandMembers.bandId))
+    .where(eq(bandMembers.userId, userId))
+    .orderBy(asc(bands.name));
+  const instruments = await instrumentsByBand(db, userId);
+  return rows.map(({ bandId, ...band }) => ({
+    ...band,
+    instruments: instruments.get(bandId) ?? [],
+  }));
+}
+
+/** The band of this slug and the user's role in it; null when they aren't a member (or no band). */
+export async function membershipOf(
+  db: Db,
+  slug: string,
+  userId: string,
+): Promise<{ band: Band; role: BandRole } | null> {
+  const [row] = await db
+    .select({ band: bands, role: bandMembers.role })
+    .from(bands)
+    .innerJoin(bandMembers, and(eq(bandMembers.bandId, bands.id), eq(bandMembers.userId, userId)))
+    .where(eq(bands.slug, slug));
+  return row ?? null;
+}
 
 export class BandNameTakenError extends AppError {
   constructor() {
