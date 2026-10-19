@@ -1,4 +1,4 @@
-import { findDuplicateSong, songKey } from "@coverband/shared";
+import { findDuplicateSong, type MusicalKey, songKey } from "@coverband/shared";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db } from "./db/client";
@@ -9,10 +9,18 @@ export type SongFields = {
   artist: string;
   standardDuration: number | null;
   ownDuration: number | null;
+  key: MusicalKey | null;
+  bandKey: MusicalKey | null;
+  tempo: number | null;
+  style: string | null;
+  notes: string | null;
 };
 
 /** Some of a song's fields; a field left undefined doesn't change. */
 export type SongChanges = { [F in keyof SongFields]?: SongFields[F] | undefined };
+
+/** A new song: title and artist, the rest optional. */
+export type NewSong = SongChanges & Pick<SongFields, "title" | "artist">;
 
 /** A song with the same title and artist is already in the repertoire (only a warning). */
 export class DuplicateSongError extends Error {
@@ -27,6 +35,11 @@ const columns = {
   artist: songs.artist,
   standardDuration: songs.standardDuration,
   ownDuration: songs.ownDuration,
+  key: songs.key,
+  bandKey: songs.bandKey,
+  tempo: songs.tempo,
+  style: songs.style,
+  notes: songs.notes,
   createdAt: songs.createdAt,
   updatedAt: songs.updatedAt,
 };
@@ -72,7 +85,7 @@ async function checkDuplicate(
 export function addSong(
   db: Db,
   member: Member,
-  fields: SongFields,
+  fields: NewSong,
   options: { confirmDuplicate?: boolean | undefined } = {},
 ) {
   return db.transaction(async (tx) => {

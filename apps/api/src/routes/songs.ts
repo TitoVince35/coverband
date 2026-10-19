@@ -1,4 +1,4 @@
-import { MAX_SONG_DURATION, SONG_MAX_LENGTH } from "@coverband/shared";
+import { MAX_SONG_DURATION, MUSICAL_KEYS, SONG_MAX_LENGTH, SONG_TEMPO } from "@coverband/shared";
 import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
@@ -10,16 +10,34 @@ import { validationHook } from "../validation";
 
 const duration = z.number().int().min(0).max(MAX_SONG_DURATION).nullable();
 
+const key = z.enum(MUSICAL_KEYS).nullable();
+// Optional text: blank is null.
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .transform((text) => text || null);
+
 const songFields = z.object({
   title: z.string().trim().min(1).max(SONG_MAX_LENGTH.title),
   artist: z.string().trim().min(1).max(SONG_MAX_LENGTH.artist),
   standardDuration: duration,
   ownDuration: duration,
+  key,
+  bandKey: key,
+  tempo: z.number().int().min(SONG_TEMPO.min).max(SONG_TEMPO.max).nullable(),
+  style: optionalText(SONG_MAX_LENGTH.style),
+  notes: optionalText(SONG_MAX_LENGTH.notes),
 });
 
 // A song matching one of the repertoire is refused (409 song_duplicate) unless confirmed.
 const confirm = { confirmDuplicate: z.boolean().optional() };
-const addBody = songFields.extend(confirm);
+// The details are optional when adding.
+const addBody = songFields
+  .partial({ key: true, bandKey: true, tempo: true, style: true, notes: true })
+  .extend(confirm);
 const updateBody = songFields.partial().extend(confirm);
 
 const songParam = z.object({ bandSlug: z.string(), songId: z.uuid() });

@@ -1,4 +1,4 @@
-import { formatDuration, normalizeName } from "@coverband/shared";
+import { formatDuration, keyShort, normalizeName } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
@@ -69,6 +69,12 @@ function RepertoirePage() {
                 <ul className="divide-y" aria-label={t("songs.title")}>
                   {shown.map((song) => {
                     const duration = playedDuration(song);
+                    // The key it's played in, and the tempo.
+                    const key = song.bandKey ?? song.key;
+                    const extra = [
+                      key && keyShort(key),
+                      song.tempo && t("songs.bpm", { tempo: song.tempo }),
+                    ].filter(Boolean);
                     return (
                       <li key={song.id}>
                         <Link
@@ -80,11 +86,10 @@ function RepertoirePage() {
                             <p className="truncate font-medium">{song.title}</p>
                             <p className="truncate text-muted-foreground text-sm">{song.artist}</p>
                           </div>
-                          {duration !== null && (
-                            <span className="text-muted-foreground text-sm tabular-nums">
-                              {formatDuration(duration)}
-                            </span>
-                          )}
+                          <div className="shrink-0 text-right text-muted-foreground text-sm tabular-nums">
+                            {duration !== null && <p>{formatDuration(duration)}</p>}
+                            {extra.length > 0 && <p className="text-xs">{extra.join(" · ")}</p>}
+                          </div>
                         </Link>
                       </li>
                     );

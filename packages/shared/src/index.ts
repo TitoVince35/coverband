@@ -31,5 +31,14 @@ export {
   searchInstruments,
   toInstrument,
 } from "./instruments";
+export {
+  isMusicalKey,
+  keyLabel,
+  keyShort,
+  MAJOR_KEYS,
+  MINOR_KEYS,
+  MUSICAL_KEYS,
+  type MusicalKey,
+} from "./keys";
 export { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language, pickLanguage } from "./languages";
-export { findDuplicateSong, SONG_MAX_LENGTH, songKey } from "./songs";
+export { findDuplicateSong, SONG_MAX_LENGTH, SONG_TEMPO, songKey } from "./songs";

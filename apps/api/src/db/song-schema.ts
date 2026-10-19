@@ -1,5 +1,15 @@
+import type { MusicalKey } from "@coverband/shared";
 import { sql } from "drizzle-orm";
-import { check, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  check,
+  index,
+  integer,
+  pgTable,
+  smallint,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { users } from "./auth-schema";
 import { bands } from "./band-schema";
 
@@ -19,6 +29,15 @@ export const songs = pgTable(
     // In seconds: the original timing, and how long the band takes to play it.
     standardDuration: integer(),
     ownDuration: integer(),
+    // Codes from MUSICAL_KEYS (@coverband/shared): the original key, and the band's when it
+    // transposes.
+    key: text().$type<MusicalKey>(),
+    bandKey: text().$type<MusicalKey>(),
+    // Beats per minute.
+    tempo: smallint(),
+    // Free text: the band's earlier styles are suggested.
+    style: text(),
+    notes: text(),
     // Kept as null when the account is deleted.
     createdById: uuid().references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
