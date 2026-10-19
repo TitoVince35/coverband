@@ -92,18 +92,21 @@ export function createLrclibProvider({
         const entries = (await res.json()) as LrclibEntry[];
         if (!Array.isArray(entries)) throw new Error("LRCLIB answered something else");
         // An answer of another shape throws here too: unavailable, never a 500.
-        return entries.map((entry) => ({
-          id: String(entry.id),
-          title: String(entry.trackName),
-          artist: String(entry.artistName),
-          album: typeof entry.albumName === "string" && entry.albumName ? entry.albumName : null,
-          duration: typeof entry.duration === "number" ? Math.round(entry.duration) : null,
-          instrumental: entry.instrumental === true,
-          lyrics:
-            entry.instrumental || typeof entry.plainLyrics !== "string" || !entry.plainLyrics
-              ? null
-              : entry.plainLyrics,
-        }));
+        return entries.map((entry) => {
+          const instrumental = entry.instrumental === true;
+          return {
+            id: String(entry.id),
+            title: String(entry.trackName),
+            artist: String(entry.artistName),
+            album: typeof entry.albumName === "string" && entry.albumName ? entry.albumName : null,
+            duration: typeof entry.duration === "number" ? Math.round(entry.duration) : null,
+            instrumental,
+            lyrics:
+              instrumental || typeof entry.plainLyrics !== "string" || !entry.plainLyrics
+                ? null
+                : entry.plainLyrics,
+          };
+        });
       } catch {
         throw new LyricsUnavailableError();
       }

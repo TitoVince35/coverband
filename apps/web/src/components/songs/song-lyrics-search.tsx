@@ -15,7 +15,8 @@ import {
 import { errorMessage } from "@/lib/errors";
 import { type LyricsMatch, lyricsSearchQuery, updateSong } from "@/lib/songs";
 
-type Song = { title: string; artist: string };
+/** What a lyrics search looks for. */
+export type Song = { title: string; artist: string };
 
 type Props = {
   bandSlug: string;
@@ -45,7 +46,8 @@ export function LyricsSearchDialog({ open, onOpenChange, ...props }: Props) {
  */
 export function WebSearchButton({ song }: { song: Song }) {
   const { t } = useTranslation();
-  const query = t("songs.lyrics.web.query", song);
+  // The title is quoted in the query: its own quotes would break the phrase.
+  const query = t("songs.lyrics.web.query", { ...song, title: song.title.replaceAll('"', "") });
   return (
     <Button variant="outline" asChild>
       <a

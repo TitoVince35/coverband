@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import type { LyricsEntry } from "../../adapters/lyrics";
-import { rankLyrics } from "./lyrics.service";
+import { onlyInstrumental, rankLyrics } from "./lyrics.service";
 
 const entry = (id: string, duration: number | null, lyrics: string | null): LyricsEntry => ({
   id,
@@ -43,4 +43,22 @@ test("without durations, the provider's order; five at most", () => {
   const entries = Array.from({ length: 8 }, (_, i) => entry(String(i), null, `Lyrics ${i}`));
   expect(rankLyrics(entries, 300).map((m) => m.id)).toEqual(["0", "1", "2", "3", "4"]);
   expect(rankLyrics(entries, null)).toHaveLength(5);
+});
+
+test("an instrumental: every entry with the song's title says so", () => {
+  const take5 = (id: string, title: string, instrumental: boolean): LyricsEntry => ({
+    ...entry(id, 324, instrumental ? null : "Won't you stop and take a little time out with me"),
+    title,
+    instrumental,
+  });
+  expect(
+    onlyInstrumental([take5("1", "Take Five", true), take5("2", "take five", true)], "Take Five"),
+  ).toBe(true);
+  // Some versions are sung: not an instrumental.
+  expect(
+    onlyInstrumental([take5("1", "Take Five", true), take5("2", "Take Five", false)], "Take Five"),
+  ).toBe(false);
+  // Only other titles (karaoke versions), or nothing found: not known as one.
+  expect(onlyInstrumental([take5("1", "Take Five (Karaoke)", true)], "Take Five")).toBe(false);
+  expect(onlyInstrumental([], "Take Five")).toBe(false);
 });

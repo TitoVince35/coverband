@@ -6,7 +6,11 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { LyricsView } from "@/components/songs/lyrics-view";
-import { LyricsSearchDialog, WebSearchButton } from "@/components/songs/song-lyrics-search";
+import {
+  LyricsSearchDialog,
+  type Song,
+  WebSearchButton,
+} from "@/components/songs/song-lyrics-search";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +56,7 @@ export function SongLyrics({
   const [editing, setEditing] = useState(false);
   const [searching, setSearching] = useState(false);
   const [viewing, setViewing] = useState(false);
+  const song = { title, artist };
   // Lyrics cleared by someone else while they're viewed: the view closes for good, rather than
   // popping open again when new lyrics come.
   if (viewing && !lyrics) setViewing(false);
@@ -104,7 +109,7 @@ export function SongLyrics({
         bandSlug={bandSlug}
         songId={songId}
         lyrics={lyrics}
-        song={{ title, artist }}
+        song={song}
         open={editing}
         onOpenChange={setEditing}
         onReplace={() => {
@@ -118,7 +123,7 @@ export function SongLyrics({
       <LyricsSearchDialog
         bandSlug={bandSlug}
         songId={songId}
-        song={{ title, artist }}
+        song={song}
         open={searching}
         onOpenChange={setSearching}
         onTypeIn={() => {
@@ -132,7 +137,7 @@ export function SongLyrics({
 
 /** The lyrics in a modal, full screen on a phone; closing it with changes asks first. */
 type EditorProps = Props & {
-  song: { title: string; artist: string };
+  song: Song;
   /** Leaves the editor for the online search. */
   onReplace: () => void;
 };
