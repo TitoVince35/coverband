@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [dev, main]
   pull_request:
 
 # A new push to the same branch or PR cancels the run in progress.
@@ -86,6 +86,29 @@ jobs:
 
       - name: Build web app
         run: bun run build
+
+  deploy-config:
+    name: Production image and infrastructure
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Catches a broken Dockerfile before the deploy workflow does.
+      - name: Build the production image
+        run: docker build -t coverband .
+
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.12.6
+
+      - name: Check the infrastructure code
+        working-directory: infra
+        run: |
+          tofu fmt -check -diff
+          tofu init -backend=false -input=false
+          tofu validate
 
   e2e:
     name: End-to-end tests

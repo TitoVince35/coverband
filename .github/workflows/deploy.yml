@@ -1,0 +1,83 @@
+name: Deploy
+
+# Every push to main whose CI passed goes to production (Scaleway, see infra/README.md).
+# Run by hand (workflow_dispatch) to redeploy main.
+# GitHub reads workflow_run triggers from the default branch (dev): changes here apply once on dev.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# One deploy at a time, never cancelled halfway (migrations).
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Scaleway
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Secrets and variables set by infra/github-secrets.sh.
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+    env:
+      IMAGE: ${{ vars.SCW_REGISTRY_IMAGE }}:${{ github.event.workflow_run.head_sha || github.sha }}
+      CONTAINER_API: https://api.scaleway.com/containers/v1/regions/fr-par/containers/${{ vars.SCW_CONTAINER_ID }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Build and push the image
+        env:
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+        run: |
+          echo "$SCW_SECRET_KEY" | docker login rg.fr-par.scw.cloud -u nologin --password-stdin
+          docker build -t "$IMAGE" -t "${{ vars.SCW_REGISTRY_IMAGE }}:latest" .
+          docker push --all-tags "${{ vars.SCW_REGISTRY_IMAGE }}"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Before the new version takes traffic: the old one keeps serving meanwhile, so a migration
+      # must not break the previous release (add first, remove in a later release).
+      - name: Migrate database
+        env:
+          DATABASE_URL: ${{ secrets.DEPLOY_DATABASE_URL }}
+        run: bun run db:migrate
+
+      - name: Roll out the new image
+        env:
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+        run: |
+          api() { curl -sSf -H "X-Auth-Token: $SCW_SECRET_KEY" -H "Content-Type: application/json" "$@"; }
+          api -X PATCH "$CONTAINER_API" -d "{\"image\": \"$IMAGE\"}" > /dev/null
+          for _ in $(seq 60); do
+            container=$(api "$CONTAINER_API")
+            status=$(jq -r .status <<< "$container")
+            echo "Container: $status"
+            case "$status" in
+              ready) exit 0 ;;
+              error) jq -r '.error_message // "no message"' <<< "$container"; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "Still not ready after 10 minutes"
+          exit 1
+
+      # /api/health doesn't query the database, so it doesn't wake it.
+      - name: Check the app answers
+        run: curl -sSf --retry 10 --retry-delay 5 --retry-all-errors "${{ vars.APP_URL }}/api/health"
