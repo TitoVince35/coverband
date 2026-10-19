@@ -15,6 +15,7 @@
     "dev:web": "bun run --filter @coverband/web dev",
     "build": "bun run --filter @coverband/web build",
     "serve": "WEB_DIST_DIR=apps/web/dist BETTER_AUTH_URL=http://localhost:3000 bun --env-file=.env apps/api/src/main.ts",
+    "serve:lan": "bun run build && bun --env-file=.env apps/api/src/dev/serve-lan.ts",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "bun run --filter '*' typecheck",

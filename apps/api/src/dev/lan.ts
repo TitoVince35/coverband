@@ -1,7 +1,8 @@
 /**
  * `bun run dev:lan`: `bun run dev`, reachable from a phone on the local network.
  * Prints a QR code to the web app, then starts both apps with the LAN URL as the
- * public URL (email links, origin checks). Development only.
+ * public URL (email links, origin checks). Development only. Its helpers also serve
+ * `bun run serve:lan` (`serve-lan.ts`).
  */
 
 import { type NetworkInterfaceInfo, networkInterfaces } from "node:os";
@@ -40,36 +41,59 @@ export function pickLanAddress(
   return candidates[0]?.address;
 }
 
-if (import.meta.main) {
+/** This machine's address on the local network (DEV_HOST overrides it); exits without one. */
+export function lanHost(): string {
   const host = process.env.DEV_HOST || pickLanAddress(networkInterfaces());
   if (!host) {
     console.error("No local network address found. Set DEV_HOST to your machine's LAN IP.");
     process.exit(1);
   }
+  return host;
+}
 
-  const webUrl = `http://${host}:${WEB_PORT}`;
-  const localUrl = process.env.BETTER_AUTH_URL;
-
-  console.log(`\n${renderUnicodeCompact(webUrl, { border: 1 })}\n`);
-  console.log(`${APP_NAME} on the local network: ${webUrl}`);
+/** Prints a QR code to the app on the local network, and how to reach it. */
+export function announce(host: string, appPort: number) {
+  const appUrl = `http://${host}:${appPort}`;
+  console.log(`\n${renderUnicodeCompact(appUrl, { border: 1 })}\n`);
+  console.log(`${APP_NAME} on the local network: ${appUrl}`);
   console.log(`Mailpit:                        http://${host}:${MAILPIT_PORT}`);
-  console.log(`Not reachable? Allow ports ${WEB_PORT} and ${MAILPIT_PORT} in your firewall.\n`);
+  console.log(`Not reachable? Allow ports ${appPort} and ${MAILPIT_PORT} in your firewall.\n`);
+  return appUrl;
+}
 
-  const child = Bun.spawn(["bun", "run", "--parallel", "--filter", "./apps/*", "dev"], {
+/**
+ * Runs a command from the repository root with the LAN URL as the app's public URL (links in
+ * emails, Better Auth's origin checks), logging in through `localUrl` on this machine still
+ * allowed. Exits with the command.
+ */
+export async function runWithLanUrl(
+  command: string[],
+  appUrl: string,
+  localUrl: string | undefined,
+  env: Record<string, string> = {},
+): Promise<never> {
+  const child = Bun.spawn(command, {
     cwd: fileURLToPath(new URL("../../../..", import.meta.url)),
     env: {
       ...process.env,
-      // Vite listens on every interface (see vite.config.ts).
-      DEV_LAN: "1",
-      // Links in emails and Better Auth's origin checks use the LAN URL...
-      BETTER_AUTH_URL: webUrl,
-      // ...and logging in on this machine through localhost keeps working.
+      ...env,
+      BETTER_AUTH_URL: appUrl,
       TRUSTED_ORIGINS: [process.env.TRUSTED_ORIGINS, localUrl].filter(Boolean).join(","),
     },
     stdio: ["inherit", "inherit", "inherit"],
   });
-
-  // Ctrl+C reaches both apps directly: wait for them to stop instead of exiting first.
+  // Ctrl+C reaches the command directly: wait for it to stop instead of exiting first.
   process.on("SIGINT", () => {});
   process.exit(await child.exited);
+}
+
+if (import.meta.main) {
+  const webUrl = announce(lanHost(), WEB_PORT);
+  // Vite listens on every interface (see vite.config.ts).
+  await runWithLanUrl(
+    ["bun", "run", "--parallel", "--filter", "./apps/*", "dev"],
+    webUrl,
+    process.env.BETTER_AUTH_URL,
+    { DEV_LAN: "1" },
+  );
 }
