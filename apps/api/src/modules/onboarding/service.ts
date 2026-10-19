@@ -1,7 +1,7 @@
 import type { SessionUser } from "../../adapters/auth";
 import { AppError } from "../../core/errors";
 import type { AppDeps } from "../../deps";
-import { addMember, bandSlugOf, createBand } from "../bands/service";
+import { addMember, bandOf, createBand } from "../bands/service";
 import { cleanInstruments } from "../instruments/service";
 import {
   consumeInvitation,
@@ -91,11 +91,11 @@ export async function acceptInvitation(
       }
       band = await createBand(tx, { name: input.bandName, genre: input.genre }, userId);
     } else {
-      const slug = invitation.bandId ? await bandSlugOf(tx, invitation.bandId) : null;
-      if (!invitation.bandId || !slug) {
+      const joined = invitation.bandId ? await bandOf(tx, invitation.bandId) : null;
+      if (!invitation.bandId || !joined) {
         throw new AppError("invitation_not_found", "Invitation not found");
       }
-      band = { id: invitation.bandId, slug };
+      band = { id: invitation.bandId, slug: joined.slug };
     }
 
     await addMember(

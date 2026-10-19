@@ -4,6 +4,9 @@ import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { accounts, users } from "../../core/db/schema";
 
+// The module's face for the others: avatar keys are checked here.
+export { ownAvatarKey } from "./avatars";
+
 /** The id of the account with this email, or null. */
 export async function accountIdOf(db: Db | Tx, email: string): Promise<string | null> {
   const [account] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));

@@ -4,8 +4,9 @@ import type { Mailer } from "../../adapters/mail/mailer";
 import { leaderInvitationEmail, musicianInvitationEmail } from "../../adapters/mail/templates";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
-import { bandMembers, bands, invitations, users } from "../../core/db/schema";
+import { invitations, users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
+import { bandOf, hasMemberWithEmail } from "../bands/service";
 
 /** How long an invitation link stays valid (brief 004). */
 export const INVITATION_TTL_MS = 48 * 60 * 60 * 1000;
@@ -98,14 +99,14 @@ export async function pendingInvitation(db: Db, token: string, now: Date) {
       acceptedAt: invitations.acceptedAt,
       revokedAt: invitations.revokedAt,
       inviterName: users.name,
-      bandName: bands.name,
+      bandId: invitations.bandId,
     })
     .from(invitations)
     .innerJoin(users, eq(users.id, invitations.invitedById))
-    .leftJoin(bands, eq(bands.id, invitations.bandId))
     .where(eq(invitations.tokenHash, hashToken(token)));
   checkPending(row, now);
-  return row as NonNullable<typeof row>;
+  const { bandId, ...invitation } = row as NonNullable<typeof row>;
+  return { ...invitation, bandName: bandId ? ((await bandOf(db, bandId))?.name ?? null) : null };
 }
 
 /** Locks the invitation of a link for accepting it (in that transaction). Throws when it can't be. */
@@ -217,12 +218,7 @@ export async function invite(
     // Serializes concurrent invitations of the same email.
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`invite:${email}`}))`);
     if (scope.role === "musician") {
-      const [member] = await tx
-        .select({ id: users.id })
-        .from(bandMembers)
-        .innerJoin(users, eq(users.id, bandMembers.userId))
-        .where(and(eq(bandMembers.bandId, scope.band.id), eq(users.email, email)));
-      if (member) throw new AlreadyMemberError(email);
+      if (await hasMemberWithEmail(tx, scope.band.id, email)) throw new AlreadyMemberError(email);
     }
     const pending = await tx
       .select({ expiresAt: invitations.expiresAt })

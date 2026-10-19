@@ -1,30 +1,15 @@
 import { avatarUrl } from "@coverband/shared";
-import { asc, eq } from "drizzle-orm";
 import type { Db } from "../../core/db/client";
-import { bandMembers, users } from "../../core/db/schema";
+import { membersOf } from "../bands/service";
 import { instrumentsOf } from "../instruments/service";
-import { ownAvatarKey } from "../profile/avatars";
+import { ownAvatarKey } from "../profile/service";
 
 /**
  * A band's lineup, by join date: each member's names, role and instruments. The storage key of
  * their avatar stays on the server: members get its URL (null: default avatar).
  */
 export async function lineupOf(db: Db, bandId: string) {
-  const rows = await db
-    .select({
-      userId: users.id,
-      name: users.name,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      nickname: users.nickname,
-      role: bandMembers.role,
-      joinedAt: bandMembers.joinedAt,
-      image: users.image,
-    })
-    .from(bandMembers)
-    .innerJoin(users, eq(users.id, bandMembers.userId))
-    .where(eq(bandMembers.bandId, bandId))
-    .orderBy(asc(bandMembers.joinedAt));
+  const rows = await membersOf(db, bandId);
   const instruments = await instrumentsOf(
     db,
     bandId,
