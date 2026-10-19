@@ -10,7 +10,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - Send errors with `apiError()` (`src/errors.ts`). It keeps the status as a literal type, so `ensureOk(res)` in the web app narrows typed-client responses to their success body.
 - **Domain refusals** (a duplicate, an expired invitation...) are thrown as an `AppError(code, message, details?)`, or a subclass named after the case (`DuplicateSongError`). The domain never knows HTTP statuses: `ERROR_STATUS` (`src/errors.ts`) gives each code its status, and the app's `onError` sends the JSON error. Routes don't catch them. A new code goes in `ERROR_CODES`, `ERROR_STATUS` (the typecheck asks) and both web locales.
 - Postgres refusals are recognised with `isForeignKeyViolation` / `isUniqueViolation(error, constraint)` (`src/db/pg-errors.ts`).
-- Guards: `requireUser` / `requireAdmin` (`src/middleware/session.ts`, read `c.var.user`). Band routes live under `/api/bands/:bandSlug` with `requireMember(db)` (`src/middleware/band.ts`: sets `c.var.band` and `c.var.membership`, 404 for non-members); band leader actions add `requireLeader` (403).
+- Guards: `requireUser` / `requireAdmin` (`src/middleware/session.ts`). They are typed so the routes after them read a non-null `c.var.user`: never fall back to `?? ""`. Band routes live in the `/api/bands/:bandSlug` sub-app, guarded once by `requireMember(db)` (`src/middleware/band.ts`: sets `c.var.band` and `c.var.membership`, 404 for non-members); band features mount their own sub-app inside it (songs) and rely on that guard. Band leader actions add `requireLeader` (403).
 - Tests build dependencies with `createTestDeps()` (`src/test-deps.ts`, memory mailer and storage).
 
 ## Security

@@ -17,9 +17,9 @@ import {
   resendInvitation,
   revokeInvitation,
 } from "../invitations";
-import { type BandEnv, requireLeader, requireMember } from "../middleware/band";
+import { requireLeader, requireMember } from "../middleware/band";
 import { INVITATION_EMAILS, rateLimitUser } from "../middleware/rate-limit";
-import { requireUser } from "../middleware/session";
+import { requireUser, type SessionEnv } from "../middleware/session";
 import { validationHook } from "../validation";
 import { songRoutes } from "./songs";
 
@@ -53,7 +53,35 @@ const bandBody = z.object({
  */
 export function bandRoutes(deps: AppDeps) {
   const { db } = deps;
-  const member = requireMember(db);
+  return new Hono<SessionEnv>()
+    .use(requireUser)
+    .get("/", async (c) => {
+      const rows = await db
+        .select({
+          name: bands.name,
+          slug: bands.slug,
+          genre: bands.genre,
+          role: bandMembers.role,
+          bandId: bands.id,
+        })
+        .from(bandMembers)
+        .innerJoin(bands, eq(bands.id, bandMembers.bandId))
+        .where(eq(bandMembers.userId, c.var.user.id))
+        .orderBy(asc(bands.name));
+      const instruments = await instrumentsByBand(db, c.var.user.id);
+      return c.json({
+        bands: rows.map(({ bandId, ...band }) => ({
+          ...band,
+          instruments: instruments.get(bandId) ?? [],
+        })),
+      });
+    })
+    .route("/:bandSlug", oneBandRoutes(deps));
+}
+
+/** One band (/api/bands/:bandSlug), for its members only: the guard runs once for every route. */
+function oneBandRoutes(deps: AppDeps) {
+  const { db } = deps;
   const limit = rateLimitUser(db, INVITATION_EMAILS);
   const musiciansOf = (band: { id: string; name: string }): InvitationScope => ({
     role: "musician",
@@ -61,51 +89,24 @@ export function bandRoutes(deps: AppDeps) {
   });
 
   return (
-    new Hono<BandEnv>()
-      .use(requireUser)
+    new Hono<SessionEnv>()
+      .use(requireMember(db))
       .get("/", async (c) => {
-        const rows = await db
-          .select({
-            name: bands.name,
-            slug: bands.slug,
-            genre: bands.genre,
-            role: bandMembers.role,
-            bandId: bands.id,
-          })
-          .from(bandMembers)
-          .innerJoin(bands, eq(bands.id, bandMembers.bandId))
-          .where(eq(bandMembers.userId, c.var.user?.id ?? ""))
-          .orderBy(asc(bands.name));
-        const instruments = await instrumentsByBand(db, c.var.user?.id ?? "");
-        return c.json({
-          bands: rows.map(({ bandId, ...band }) => ({
-            ...band,
-            instruments: instruments.get(bandId) ?? [],
-          })),
-        });
-      })
-      .get("/:bandSlug", member, async (c) => {
         const { id, name, slug, genre } = c.var.band;
-        const userId = c.var.user?.id ?? "";
+        const userId = c.var.user.id;
         const instruments = (await instrumentsOf(db, id, [userId])).get(userId) ?? [];
         return c.json({
           band: { name, slug, genre },
           membership: { ...c.var.membership, instruments },
         });
       })
-      .patch(
-        "/:bandSlug",
-        member,
-        requireLeader,
-        zValidator("json", bandBody, validationHook),
-        async (c) => {
-          const { genre } = c.req.valid("json");
-          return c.json({
-            band: await updateBandGenre(db, c.var.band.id, genre, c.var.user?.id ?? ""),
-          });
-        },
-      )
-      .get("/:bandSlug/members", member, async (c) => {
+      .patch("/", requireLeader, zValidator("json", bandBody, validationHook), async (c) => {
+        const { genre } = c.req.valid("json");
+        return c.json({
+          band: await updateBandGenre(db, c.var.band.id, genre, c.var.user.id),
+        });
+      })
+      .get("/members", async (c) => {
         const rows = await db
           .select({
             userId: users.id,
@@ -135,44 +136,41 @@ export function bandRoutes(deps: AppDeps) {
         return c.json({ members });
       })
       // The band's journal: its latest activity, for every member.
-      .get("/:bandSlug/activity", member, async (c) => {
+      .get("/activity", async (c) => {
         return c.json({ entries: await bandJournal(db, c.var.band.id) });
       })
-      .route("/:bandSlug/songs", songRoutes(deps))
+      .route("/songs", songRoutes(deps))
       // Members change their own instruments only.
       .put(
-        "/:bandSlug/members/me/instruments",
-        member,
+        "/members/me/instruments",
         zValidator("json", instrumentsBody, validationHook),
         async (c) => {
           const instruments = await setInstruments(
             db,
-            { bandId: c.var.band.id, userId: c.var.user?.id ?? "" },
+            { bandId: c.var.band.id, userId: c.var.user.id },
             c.req.valid("json").instruments,
           );
           return c.json({ instruments });
         },
       )
-      .get("/:bandSlug/invitations", member, requireLeader, async (c) => {
+      .get("/invitations", requireLeader, async (c) => {
         return c.json({ invitations: await listInvitations(deps, musiciansOf(c.var.band)) });
       })
       .post(
-        "/:bandSlug/invitations",
-        member,
+        "/invitations",
         requireLeader,
         limit,
         zValidator("json", inviteBody, validationHook),
         async (c) => {
           const invitation = await invite(deps, musiciansOf(c.var.band), {
             ...c.req.valid("json"),
-            invitedById: c.var.user?.id ?? "",
+            invitedById: c.var.user.id,
           });
           return c.json({ id: invitation.id }, 201);
         },
       )
       .post(
-        "/:bandSlug/invitations/:id/resend",
-        member,
+        "/invitations/:id/resend",
         requireLeader,
         limit,
         zValidator("param", idParam, validationHook),
@@ -181,7 +179,7 @@ export function bandRoutes(deps: AppDeps) {
             deps,
             musiciansOf(c.var.band),
             c.req.valid("param").id,
-            c.var.user?.id ?? "",
+            c.var.user.id,
           );
           return invitation
             ? c.json({ id: invitation.id })
@@ -189,8 +187,7 @@ export function bandRoutes(deps: AppDeps) {
         },
       )
       .delete(
-        "/:bandSlug/invitations/:id",
-        member,
+        "/invitations/:id",
         requireLeader,
         zValidator("param", idParam, validationHook),
         async (c) => {
@@ -198,7 +195,7 @@ export function bandRoutes(deps: AppDeps) {
             deps,
             musiciansOf(c.var.band),
             c.req.valid("param").id,
-            c.var.user?.id ?? "",
+            c.var.user.id,
           );
           return revoked ? c.body(null, 204) : apiError(c, 404, "Invitation not found");
         },
