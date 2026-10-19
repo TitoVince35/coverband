@@ -150,7 +150,14 @@ test("a member edits their own instruments from the lineup", async () => {
 test("the band's home page shows its latest activity, newest first", async () => {
   await leader.goto("/");
   await leader.getByRole("link", { name: band }).first().click();
+  // The journal is a closed accordion.
   const journal = leader.getByRole("list", { name: "Latest activity" });
+  await expect(leader.getByRole("button", { name: "Latest activity" })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  await expect(journal).toBeHidden();
+  await leader.getByRole("button", { name: "Latest activity" }).click();
   const entries = journal.getByRole("listitem");
   // Names as they are now (Lea took a nickname since).
   await expect(entries.first()).toContainText("Captain Lea updated their instruments");
@@ -341,6 +348,8 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
 
   // The journal names the songs.
   await leader.getByRole("link", { name: "Home" }).click();
+  // The journal is a closed accordion.
+  await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea updated song “Zombie”",

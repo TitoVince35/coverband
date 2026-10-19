@@ -1,7 +1,7 @@
 import { type ActivityAction, SONG_STATUSES, type SongStatus } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/collapsible-card";
 import { useLanguage } from "@/i18n/use-language";
 import { bandJournalQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
@@ -43,50 +43,46 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
     "status" in entry && isStatus(entry.status) ? t(`journal.status.${entry.status}`) : "";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading text-lg">{t("journal.title")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {journal.isPending ? (
-          <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
-        ) : journal.isError ? (
-          <p role="alert" className="text-destructive text-sm">
-            {errorMessage(t, journal.error)}
-          </p>
-        ) : entries.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t("journal.empty")}</p>
-        ) : (
-          <ul className="list-disc space-y-2 pl-5 text-sm" aria-label={t("journal.title")}>
-            {entries.map((entry) => {
-              if (!hasSentence(entry.action)) return null; // narrows the action's type
-              const name = entry.actorName ?? t("journal.someone");
-              // The song's current title; "a song" once it's gone.
-              const songTitle = "song" in entry ? entry.song : null;
-              const song = songTitle
-                ? t("journal.songTitle", { title: songTitle })
-                : t("journal.aSong");
-              const sentence =
-                entry.action === "band.genre_changed" && !("genre" in entry && entry.genre)
-                  ? t("journal.genreRemoved", { name })
-                  : t(SENTENCES[entry.action], {
-                      name,
-                      genre: "genre" in entry ? entry.genre : "",
-                      song,
-                      status: statusWord(entry),
-                    });
-              return (
-                <li key={entry.id}>
-                  <time dateTime={entry.createdAt} className="text-muted-foreground tabular-nums">
-                    {formatJournalTime(entry.createdAt, now, language, words)}
-                  </time>{" "}
-                  · {sentence}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+    // Closed at first: the journal is a tap away on the band's page.
+    <CollapsibleCard title={t("journal.title")} defaultOpen={false}>
+      {journal.isPending ? (
+        <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
+      ) : journal.isError ? (
+        <p role="alert" className="text-destructive text-sm">
+          {errorMessage(t, journal.error)}
+        </p>
+      ) : entries.length === 0 ? (
+        <p className="text-muted-foreground text-sm">{t("journal.empty")}</p>
+      ) : (
+        <ul className="list-disc space-y-2 pl-5 text-sm" aria-label={t("journal.title")}>
+          {entries.map((entry) => {
+            if (!hasSentence(entry.action)) return null; // narrows the action's type
+            const name = entry.actorName ?? t("journal.someone");
+            // The song's current title; "a song" once it's gone.
+            const songTitle = "song" in entry ? entry.song : null;
+            const song = songTitle
+              ? t("journal.songTitle", { title: songTitle })
+              : t("journal.aSong");
+            const sentence =
+              entry.action === "band.genre_changed" && !("genre" in entry && entry.genre)
+                ? t("journal.genreRemoved", { name })
+                : t(SENTENCES[entry.action], {
+                    name,
+                    genre: "genre" in entry ? entry.genre : "",
+                    song,
+                    status: statusWord(entry),
+                  });
+            return (
+              <li key={entry.id}>
+                <time dateTime={entry.createdAt} className="text-muted-foreground tabular-nums">
+                  {formatJournalTime(entry.createdAt, now, language, words)}
+                </time>{" "}
+                · {sentence}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </CollapsibleCard>
   );
 }
