@@ -25,6 +25,11 @@ describe("media links", () => {
     expect(mediaProvider("https://www.deezer.com/fr/track/1")).toBe("deezer");
     expect(mediaProvider("https://music.apple.com/fr/album/1")).toBe("apple_music");
     expect(mediaProvider("https://soundcloud.com/a/b")).toBe("soundcloud");
+    expect(mediaProvider("https://on.soundcloud.com/abc")).toBe("soundcloud");
+    expect(mediaProvider("https://snd.sc/abc")).toBe("soundcloud");
+    expect(mediaProvider("https://mixcloud.com/dj/mix/")).toBe("mixcloud");
+    expect(mediaProvider("https://www.mixcloud.com/dj/mix/")).toBe("mixcloud");
+    expect(mediaProvider("https://m.mixcloud.com/dj/mix/")).toBe("mixcloud");
   });
 
   test("any other site is a plain link", () => {
@@ -33,5 +38,7 @@ describe("media links", () => {
     // A look-alike domain isn't the provider.
     expect(mediaProvider("https://notyoutube.com/watch")).toBeNull();
     expect(mediaProvider("https://youtube.com.evil.example/watch")).toBeNull();
+    expect(mediaProvider("https://notmixcloud.com/dj/mix/")).toBeNull();
+    expect(mediaProvider("https://mixcloud.com.evil.example/dj/mix/")).toBeNull();
   });
 });
