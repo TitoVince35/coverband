@@ -50,6 +50,13 @@
       "when": 1792373263386,
       "tag": "0006_song_details",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792373856830,
+      "tag": "0007_song_status_energy",
+      "breakpoints": true
     }
   ]
 }

@@ -150,7 +150,7 @@ test("a member edits their own instruments from the lineup", async () => {
 test("the band's home page shows its latest activity, newest first", async () => {
   await leader.goto("/");
   await leader.getByRole("link", { name: band }).first().click();
-  const journal = leader.getByRole("list").filter({ hasText: "created the band" });
+  const journal = leader.getByRole("list", { name: "Latest activity" });
   const entries = journal.getByRole("listitem");
   // Names as they are now (Lea took a nickname since).
   await expect(entries.first()).toContainText("Captain Lea updated their instruments");
@@ -208,13 +208,36 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
     await expect(leader.getByText(text)).toBeVisible();
   }
 
+  // Status and energy: one tap each, saved at once.
+  await expect(leader.getByRole("radio", { name: "Proposed" })).toBeChecked();
+  await leader.getByRole("radio", { name: "Learning" }).click();
+  await expect(leader.getByRole("radio", { name: "Learning" })).toBeChecked();
+  // With the keyboard: arrows move the status, and the focus stays while each one is saved.
+  const statuses = leader.getByRole("group", { name: "Status" });
+  await expect(statuses).toHaveAttribute("aria-busy", "false");
+  await leader.keyboard.press("ArrowRight");
+  await expect(leader.getByRole("radio", { name: "Ready" })).toBeChecked();
+  await expect(leader.getByRole("radio", { name: "Ready" })).toBeFocused();
+  await expect(statuses).toHaveAttribute("aria-busy", "false");
+  await leader.keyboard.press("ArrowLeft");
+  await expect(leader.getByRole("radio", { name: "Learning" })).toBeChecked();
+  await expect(statuses).toHaveAttribute("aria-busy", "false");
+  await leader.getByRole("button", { name: "Rate energy 3 of 3" }).click();
+  await expect(leader.getByText("Energy 3 of 3")).toBeVisible();
+  await leader.getByRole("link", { name: "Repertoire" }).first().click();
+  await leader.getByRole("button", { name: /^Learning/ }).click();
+  await expect(songs).toHaveCount(1);
+  await expect(songs.first()).toContainText("Zombie");
+  await expect(songs.first().getByRole("img", { name: "Energy 3 of 3" })).toBeVisible();
+
   // The journal names the songs.
   await leader.getByRole("link", { name: "Home" }).click();
-  const journal = leader.getByRole("list").filter({ hasText: "created the band" });
+  const journal = leader.getByRole("list", { name: "Latest activity" });
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea updated song “Zombie”",
   );
   await expect(journal).toContainText("Captain Lea added song “Creep”");
+  await expect(journal).toContainText("Captain Lea marked song “Zombie” as learning");
 });
 
 test("the band leader uploads an avatar, then removes it", async () => {

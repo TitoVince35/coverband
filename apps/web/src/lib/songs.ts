@@ -1,4 +1,4 @@
-import type { MusicalKey } from "@coverband/shared";
+import type { MusicalKey, SongStatus } from "@coverband/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ApiRequestError, ensureOk } from "@/lib/errors";
@@ -44,10 +44,15 @@ export type SongFields = {
   tempo: number | null;
   style: string | null;
   notes: string | null;
+  status: SongStatus;
+  energy: number | null;
 };
 
 /** Adds a song; throws `song_duplicate` for a song already in the repertoire, unless confirmed. */
-export async function addSong(bandSlug: string, json: SongFields & { confirmDuplicate?: boolean }) {
+export async function addSong(
+  bandSlug: string,
+  json: Omit<SongFields, "status" | "energy"> & { confirmDuplicate?: boolean },
+) {
   const res = await api.bands[":bandSlug"].songs.$post({ param: { bandSlug }, json });
   return (await (await ensureOk(res)).json()).song;
 }

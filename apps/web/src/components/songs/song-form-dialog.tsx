@@ -69,7 +69,7 @@ export function SongFormDialog({ bandSlug, song, trigger, tooltip }: Props) {
   const [duplicate, setDuplicate] = useState<Duplicate | null>(null);
 
   const save = useMutation({
-    mutationFn: (fields: SongFields & { confirmDuplicate: boolean }) =>
+    mutationFn: (fields: Omit<SongFields, "status" | "energy"> & { confirmDuplicate: boolean }) =>
       song ? updateSong(bandSlug, song.id, fields) : addSong(bandSlug, fields),
     onSuccess: async () => {
       toast.success(song ? t("songs.saved") : t("songs.added"));

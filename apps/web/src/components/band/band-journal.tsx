@@ -1,4 +1,4 @@
-import type { ActivityAction } from "@coverband/shared";
+import { type ActivityAction, SONG_STATUSES, type SongStatus } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,12 @@ const SENTENCES = {
   "member.instruments_changed": "journal.instrumentsChanged",
   "song.added": "journal.songAdded",
   "song.updated": "journal.songUpdated",
+  "song.status_changed": "journal.songStatusChanged",
 } as const satisfies Partial<Record<ActivityAction, string>>;
+
+/** The status a song was given, as a word of the sentence. */
+const isStatus = (value: unknown): value is SongStatus =>
+  typeof value === "string" && (SONG_STATUSES as readonly string[]).includes(value);
 
 const hasSentence = (action: string): action is keyof typeof SENTENCES => action in SENTENCES;
 
@@ -30,6 +35,8 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
   const now = new Date();
   const words = { today: t("journal.today"), yesterday: t("journal.yesterday") };
   const entries = journal.data?.filter((entry) => hasSentence(entry.action)) ?? [];
+  const statusWord = (entry: object) =>
+    "status" in entry && isStatus(entry.status) ? t(`journal.status.${entry.status}`) : "";
 
   return (
     <Card>
@@ -46,7 +53,7 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
         ) : entries.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t("journal.empty")}</p>
         ) : (
-          <ul className="list-disc space-y-2 pl-5 text-sm">
+          <ul className="list-disc space-y-2 pl-5 text-sm" aria-label={t("journal.title")}>
             {entries.map((entry) => {
               if (!hasSentence(entry.action)) return null; // narrows the action's type
               const name = entry.actorName ?? t("journal.someone");
@@ -62,6 +69,7 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
                       name,
                       genre: "genre" in entry ? entry.genre : "",
                       song,
+                      status: statusWord(entry),
                     });
               return (
                 <li key={entry.id}>

@@ -35,7 +35,8 @@ export const JOURNAL_SIZE = 10;
 /**
  * A band's latest activity, newest first, for its journal: what happened, when, and who did it
  * (their current display name; null once their account is deleted). Only band events, and only
- * the details a sentence needs: the new genre, a song's current title (null once deleted); never
+ * the details a sentence needs: the new genre, a song's current title (null once deleted) and new
+ * status; never
  * ids of other rows or emails.
  */
 export async function bandJournal(db: Db, bandId: string, limit = JOURNAL_SIZE) {
@@ -63,6 +64,10 @@ export async function bandJournal(db: Db, bandId: string, limit = JOURNAL_SIZE) 
   return rows.map(({ data, songTitle, ...entry }) => ({
     ...entry,
     ...(entry.action.startsWith("song.") ? { song: songTitle } : {}),
+    // The new status, a code from SONG_STATUSES.
+    ...(entry.action === "song.status_changed"
+      ? { status: typeof data?.status === "string" ? data.status : null }
+      : {}),
     // The new genre is the only detail shown (null: genre removed).
     ...(entry.action === "band.genre_changed"
       ? { genre: typeof data?.genre === "string" ? data.genre : null }

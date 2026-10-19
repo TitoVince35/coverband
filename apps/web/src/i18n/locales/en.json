@@ -77,6 +77,26 @@
       "major": "Major",
       "minor": "Minor"
     },
+    "status": {
+      "label": "Status",
+      "proposed": "Proposed",
+      "learning": "Learning",
+      "ready": "Ready",
+      "all": "All"
+    },
+    "energy": {
+      "label": "Energy",
+      "none": "Not rated",
+      "value": "Energy {{count}} of {{max}}",
+      "set": "Rate energy {{count}} of {{max}}"
+    },
+    "sort": {
+      "label": "Sort by",
+      "title": "Title",
+      "energy": "Energy"
+    },
+    "filter": "Show",
+    "noneWithStatus": "No song is “{{status}}”.",
     "form": {
       "addTitle": "Add a song",
       "editTitle": "Edit the song",
@@ -313,6 +333,12 @@
     "songAdded": "{{name}} added {{song}}",
     "songUpdated": "{{name}} updated {{song}}",
     "songTitle": "song “{{title}}”",
-    "aSong": "a song"
+    "aSong": "a song",
+    "songStatusChanged": "{{name}} marked {{song}} as {{status}}",
+    "status": {
+      "proposed": "proposed",
+      "learning": "learning",
+      "ready": "ready"
+    }
   }
 }

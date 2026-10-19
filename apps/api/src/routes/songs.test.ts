@@ -200,6 +200,35 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     ]);
   });
 
+  test("status and energy: a new song is proposed and not rated", async () => {
+    const song = await songOf(await add("lea", { title: "Africa", artist: "Toto" }));
+    expect(song).toMatchObject({ status: "proposed", energy: null });
+    expect(await songOf(await update("max", song.id, { status: "learning" }))).toMatchObject({
+      status: "learning",
+    });
+    // A new status is its own event; the other changes are listed apart.
+    await update("lea", song.id, { status: "ready", energy: 3 });
+    expect(await activityOf(db, song.id)).toMatchObject([
+      { action: "song.added" },
+      { action: "song.status_changed", actorId: ids.max, data: { status: "learning" } },
+      { action: "song.status_changed", actorId: ids.lea, data: { status: "ready" } },
+      { action: "song.updated", actorId: ids.lea, data: { fields: "energy" } },
+    ]);
+    expect(await songOf(await update("lea", song.id, { energy: null }))).toMatchObject({
+      status: "ready",
+      energy: null,
+    });
+    const journal = (
+      (await (await call(`/bands/${slug}/activity`, "max")).json()) as {
+        entries: { action: string; song?: string; status?: string | null }[];
+      }
+    ).entries;
+    expect(journal.find((e) => e.action === "song.status_changed")).toMatchObject({
+      song: "Africa",
+      status: "ready",
+    });
+  });
+
   test("only valid songs", async () => {
     const invalid = [
       { title: "", artist: "Someone" },
@@ -215,6 +244,9 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
       { title: "Song", artist: "Someone", tempo: 120.5 },
       { title: "Song", artist: "Someone", style: "x".repeat(51) },
       { title: "Song", artist: "Someone", notes: "x".repeat(2001) },
+      { title: "Song", artist: "Someone", status: "done" },
+      { title: "Song", artist: "Someone", energy: 0 },
+      { title: "Song", artist: "Someone", energy: 4 },
     ];
     for (const body of invalid) {
       expect((await add("lea", body)).status).toBe(400);
