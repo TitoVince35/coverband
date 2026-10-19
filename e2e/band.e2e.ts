@@ -208,6 +208,30 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
     await expect(leader.getByText(text)).toBeVisible();
   }
 
+  // A link, for the drummer: the provider shows, it opens in a new tab.
+  await leader.getByRole("button", { name: "Add a link" }).click();
+  const link = leader.getByRole("dialog");
+  await link.getByLabel("Web address").fill("https://www.youtube.com/watch?v=6Ejga4kJUts");
+  await link.getByLabel("Title", { exact: true }).fill("Drum cover");
+  await link.getByLabel("Add an instrument").fill("batterie");
+  await link.getByLabel("Add an instrument").press("Enter");
+  await expect(link.getByText("Drums", { exact: true })).toBeVisible();
+  // Typed, list closed, Enter: added, and the link form stays open.
+  await link.getByLabel("Add an instrument").fill("Cowbell");
+  await link.getByLabel("Add an instrument").press("Escape");
+  await link.getByLabel("Add an instrument").press("Enter");
+  await expect(link.getByText("Cowbell", { exact: true })).toBeVisible();
+  await expect(leader.getByRole("dialog")).toHaveCount(1);
+  await link.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Link added")).toBeVisible();
+  const links = leader.getByRole("list", { name: "Links" }).locator(":scope > li");
+  await expect(links).toHaveCount(1);
+  await expect(links.first()).toContainText("Drum cover");
+  await expect(links.first()).toContainText("YouTube");
+  await expect(links.first()).toContainText("Drums");
+  await expect(links.first()).toContainText("Cowbell");
+  await expect(links.first().getByRole("link")).toHaveAttribute("target", "_blank");
+
   // Status and energy: one tap each, saved at once.
   await expect(leader.getByRole("radio", { name: "Proposed" })).toBeChecked();
   await leader.getByRole("radio", { name: "Learning" }).click();
