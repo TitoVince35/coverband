@@ -36,7 +36,7 @@ const acceptBody = z.object({
  * Invitation links (/api/invitations/:token), public: the token is the proof. Band leaders create
  * their band here (#23), musicians join theirs (#7).
  */
-export function invitationRoutes(deps: AppDeps) {
+export function onboardingRoutes(deps: AppDeps) {
   return new Hono<SessionEnv>()
     .get("/:token", zValidator("param", tokenParam, validationHook), async (c) => {
       return c.json(await getInvitation(deps, c.req.valid("param").token));

@@ -13,9 +13,10 @@ import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 import { apiError } from "../../core/errors";
+import type { SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
-import { type BandEnv, requireLeader } from "../bands/guard";
+import { type BandEnv, requireLeader, requireMember } from "../bands/guard";
 import { MAX_INSTRUMENTS } from "../instruments/service";
 import { addMedia, deleteMedia, mediaOf, updateMedia } from "./media.service";
 import { addSong, deleteSong, getSong, listSongs, setArchived, updateSong } from "./service";
@@ -86,16 +87,14 @@ const mediaFields = z.object({
 const addMediaBody = mediaFields.partial({ title: true, instruments: true });
 const mediaParam = songParam.extend({ mediaId: z.uuid() });
 
-/**
- * A band's repertoire, under /api/bands/:bandSlug/songs: every member reads, adds and edits.
- * Mounted in the band's routes, whose requireMember has loaded the band and the membership.
- */
+/** A band's repertoire, under /api/bands/:bandSlug/songs: every member reads, adds and edits. */
 export function songRoutes(deps: AppDeps) {
   const { db } = deps;
   const who = (c: Context<BandEnv>) => ({ bandId: c.var.band.id, userId: c.var.user.id });
 
   return (
-    new Hono<BandEnv>()
+    new Hono<SessionEnv>()
+      .use(requireMember(db))
       // The repertoire, or its archived songs with ?archived=true.
       .get("/", zValidator("query", listQuery, validationHook), async (c) => {
         const archived = c.req.valid("query").archived === "true";

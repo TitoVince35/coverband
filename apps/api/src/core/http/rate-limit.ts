@@ -12,13 +12,6 @@ export type RateLimitRule = {
   windowMs: number;
 };
 
-/** Invitation send and resend (they send emails): per user, admin and band leader routes together. */
-export const INVITATION_EMAILS: RateLimitRule = {
-  name: "invitation-emails",
-  max: 20,
-  windowMs: 60 * 60 * 1000,
-};
-
 /**
  * Counts one request in a fixed window and returns the seconds to wait, or 0 when allowed.
  * Stored in Better Auth's `rate_limits` table (the server is stateless): `last_request` holds the

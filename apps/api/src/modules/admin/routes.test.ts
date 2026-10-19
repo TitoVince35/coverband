@@ -3,8 +3,9 @@ import { APP_NAME } from "@coverband/shared";
 import { eq, inArray } from "drizzle-orm";
 import { createApp } from "../../app";
 import { activity, invitations, rateLimits, users } from "../../core/db/schema";
-import { hit, INVITATION_EMAILS } from "../../core/http/rate-limit";
+import { hit } from "../../core/http/rate-limit";
 import { activityOf, createTestDeps } from "../../test-deps";
+import { INVITATION_EMAILS } from "../invitations/routes";
 import {
   hashToken,
   INVITATION_TTL_MS,

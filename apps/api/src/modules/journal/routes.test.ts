@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { eq, inArray, like } from "drizzle-orm";
 import { createApp } from "../../app";
-import { JOURNAL_SIZE } from "../../core/activity/record";
 import { activity, bandMembers, bands, users } from "../../core/db/schema";
 import { createTestDeps } from "../../test-deps";
+import { JOURNAL_SIZE } from "./service";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;

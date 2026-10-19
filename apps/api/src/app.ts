@@ -11,9 +11,13 @@ import type { AppDeps } from "./deps";
 import { adminRoutes } from "./modules/admin/routes";
 import { bandRoutes } from "./modules/bands/routes";
 import { instrumentRoutes } from "./modules/instruments/routes";
-import { invitationRoutes } from "./modules/onboarding/routes";
+import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
+import { journalRoutes } from "./modules/journal/routes";
+import { memberRoutes } from "./modules/members/routes";
+import { onboardingRoutes } from "./modules/onboarding/routes";
 import { meRoutes } from "./modules/profile/routes";
 import { userRoutes } from "./modules/profile/user-routes";
+import { songRoutes } from "./modules/songs/routes";
 
 export type AppOptions = {
   deps: AppDeps;
@@ -26,15 +30,24 @@ export type AppOptions = {
 // REST API, mounted under /api. Chained so that AppType carries every route for the typed client.
 // Routes read the logged-in user from `c.var.user` and guard with requireUser / requireAdmin.
 function createApi(deps: AppDeps) {
-  return new Hono<SessionEnv>()
-    .use(loadSession(deps.auth))
-    .route("/health", health)
-    .route("/admin", adminRoutes(deps))
-    .route("/invitations", invitationRoutes(deps))
-    .route("/bands", bandRoutes(deps))
-    .route("/me", meRoutes(deps))
-    .route("/users", userRoutes(deps))
-    .route("/instruments", instrumentRoutes(deps));
+  return (
+    new Hono<SessionEnv>()
+      .use(loadSession(deps.auth))
+      .route("/health", health)
+      .route("/admin", adminRoutes(deps))
+      .route("/admin/invitations", leaderInvitationRoutes(deps))
+      // Invitation links, public: the token is the proof (onboarding).
+      .route("/invitations", onboardingRoutes(deps))
+      .route("/bands", bandRoutes(deps))
+      // A band's features: each sub-app requires membership of the band (404 otherwise).
+      .route("/bands/:bandSlug/members", memberRoutes(deps))
+      .route("/bands/:bandSlug/activity", journalRoutes(deps))
+      .route("/bands/:bandSlug/songs", songRoutes(deps))
+      .route("/bands/:bandSlug/invitations", bandInvitationRoutes(deps))
+      .route("/me", meRoutes(deps))
+      .route("/users", userRoutes(deps))
+      .route("/instruments", instrumentRoutes(deps))
+  );
 }
 
 export type AppType = ReturnType<typeof createApi>;
