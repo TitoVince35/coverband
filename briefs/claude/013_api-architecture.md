@@ -2,7 +2,7 @@
 
 > 🕒 Study posted on Monday 2026/10/19 10:48
 
-Audit of `apps/api` (about 3,500 lines) against two criteria, modularity and clean architecture, then a target structure and a migration plan.
+Answer to [013_api-architecture](../vince/013_api-architecture.md). Audit of `apps/api` (about 3,500 lines) against two criteria, modularity and clean architecture, then a target structure and a migration plan.
 
 ## What's already good
 
