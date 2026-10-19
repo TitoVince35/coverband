@@ -41,4 +41,12 @@ export {
   type MusicalKey,
 } from "./keys";
 export { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language, pickLanguage } from "./languages";
-export { findDuplicateSong, SONG_MAX_LENGTH, SONG_TEMPO, songKey } from "./songs";
+export {
+  findDuplicateSong,
+  MAX_ENERGY,
+  SONG_MAX_LENGTH,
+  SONG_STATUSES,
+  SONG_TEMPO,
+  type SongStatus,
+  songKey,
+} from "./songs";

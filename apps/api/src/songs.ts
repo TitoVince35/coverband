@@ -1,4 +1,4 @@
-import { findDuplicateSong, type MusicalKey, songKey } from "@coverband/shared";
+import { findDuplicateSong, type MusicalKey, type SongStatus, songKey } from "@coverband/shared";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db } from "./db/client";
@@ -14,6 +14,8 @@ export type SongFields = {
   tempo: number | null;
   style: string | null;
   notes: string | null;
+  status: SongStatus;
+  energy: number | null;
 };
 
 /** Some of a song's fields; a field left undefined doesn't change. */
@@ -40,6 +42,8 @@ const columns = {
   tempo: songs.tempo,
   style: songs.style,
   notes: songs.notes,
+  status: songs.status,
+  energy: songs.energy,
   createdAt: songs.createdAt,
   updatedAt: songs.updatedAt,
 };
@@ -141,13 +145,27 @@ export function updateSong(
       .set(Object.fromEntries(changed.map((field) => [field, changes[field]])))
       .where(eq(songs.id, id))
       .returning(columns);
-    await recordActivity(tx, {
-      action: "song.updated",
+    // A new status is its own event ("Lea marked Creep as ready"); the other fields are listed.
+    const event = {
       bandId: member.bandId,
       actorId: member.userId,
       target: { type: "song", id },
-      data: { fields: changed.join(",") },
-    });
+    } as const;
+    if (changes.status !== undefined && changed.includes("status")) {
+      await recordActivity(tx, {
+        ...event,
+        action: "song.status_changed",
+        data: { status: changes.status },
+      });
+    }
+    const others = changed.filter((field) => field !== "status");
+    if (others.length > 0) {
+      await recordActivity(tx, {
+        ...event,
+        action: "song.updated",
+        data: { fields: others.join(",") },
+      });
+    }
     return song ?? null;
   });
 }

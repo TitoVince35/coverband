@@ -1,4 +1,11 @@
-import { MAX_SONG_DURATION, MUSICAL_KEYS, SONG_MAX_LENGTH, SONG_TEMPO } from "@coverband/shared";
+import {
+  MAX_ENERGY,
+  MAX_SONG_DURATION,
+  MUSICAL_KEYS,
+  SONG_MAX_LENGTH,
+  SONG_STATUSES,
+  SONG_TEMPO,
+} from "@coverband/shared";
 import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
@@ -30,13 +37,23 @@ const songFields = z.object({
   tempo: z.number().int().min(SONG_TEMPO.min).max(SONG_TEMPO.max).nullable(),
   style: optionalText(SONG_MAX_LENGTH.style),
   notes: optionalText(SONG_MAX_LENGTH.notes),
+  status: z.enum(SONG_STATUSES),
+  energy: z.number().int().min(1).max(MAX_ENERGY).nullable(),
 });
 
 // A song matching one of the repertoire is refused (409 song_duplicate) unless confirmed.
 const confirm = { confirmDuplicate: z.boolean().optional() };
 // The details are optional when adding.
 const addBody = songFields
-  .partial({ key: true, bandKey: true, tempo: true, style: true, notes: true })
+  .partial({
+    key: true,
+    bandKey: true,
+    tempo: true,
+    style: true,
+    notes: true,
+    status: true,
+    energy: true,
+  })
   .extend(confirm);
 const updateBody = songFields.partial().extend(confirm);
 

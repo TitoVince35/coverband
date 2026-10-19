@@ -77,6 +77,26 @@
       "major": "Majeur",
       "minor": "Mineur"
     },
+    "status": {
+      "label": "Statut",
+      "proposed": "Proposé",
+      "learning": "En cours",
+      "ready": "Prêt",
+      "all": "Tous"
+    },
+    "energy": {
+      "label": "Énergie",
+      "none": "Non notée",
+      "value": "Énergie {{count}} sur {{max}}",
+      "set": "Noter l'énergie {{count}} sur {{max}}"
+    },
+    "sort": {
+      "label": "Trier par",
+      "title": "Titre",
+      "energy": "Énergie"
+    },
+    "filter": "Afficher",
+    "noneWithStatus": "Aucun morceau « {{status}} ».",
     "form": {
       "addTitle": "Ajouter un morceau",
       "editTitle": "Modifier le morceau",
@@ -313,6 +333,12 @@
     "songAdded": "{{name}} a ajouté {{song}}",
     "songUpdated": "{{name}} a modifié {{song}}",
     "songTitle": "le morceau « {{title}} »",
-    "aSong": "un morceau"
+    "aSong": "un morceau",
+    "songStatusChanged": "{{name}} a marqué {{song}} comme « {{status}} »",
+    "status": {
+      "proposed": "proposé",
+      "learning": "en cours",
+      "ready": "prêt"
+    }
   }
 }

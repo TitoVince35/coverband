@@ -8,6 +8,13 @@ export const SONG_MAX_LENGTH = {
   notes: 2000,
 } as const;
 
+/** Where the band is with a song; a new song starts as proposed. */
+export const SONG_STATUSES = ["proposed", "learning", "ready"] as const;
+export type SongStatus = (typeof SONG_STATUSES)[number];
+
+/** Energy is rated from 1 to this many chili peppers (null: not rated). */
+export const MAX_ENERGY = 3;
+
 /** Tempo range accepted, in beats per minute. */
 export const SONG_TEMPO = { min: 20, max: 400 } as const;
 

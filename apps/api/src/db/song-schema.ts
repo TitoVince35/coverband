@@ -1,9 +1,10 @@
-import type { MusicalKey } from "@coverband/shared";
+import { MAX_ENERGY, type MusicalKey, SONG_STATUSES } from "@coverband/shared";
 import { sql } from "drizzle-orm";
 import {
   check,
   index,
   integer,
+  pgEnum,
   pgTable,
   smallint,
   text,
@@ -12,6 +13,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./auth-schema";
 import { bands } from "./band-schema";
+
+export const songStatus = pgEnum("song_status", SONG_STATUSES);
 
 /**
  * A band's repertoire (#88). Title and artist identify a song, without a unique constraint: a
@@ -38,6 +41,9 @@ export const songs = pgTable(
     // Free text: the band's earlier styles are suggested.
     style: text(),
     notes: text(),
+    // One band-wide value each (#90): where the band is with it, and 1 to MAX_ENERGY peppers.
+    status: songStatus().default("proposed").notNull(),
+    energy: smallint(),
     // Kept as null when the account is deleted.
     createdById: uuid().references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
@@ -48,6 +54,7 @@ export const songs = pgTable(
   },
   (table) => [
     index().on(table.bandId),
+    check("songs_energy_range", sql`${table.energy} between 1 and ${sql.raw(String(MAX_ENERGY))}`),
     check(
       "songs_durations_positive",
       sql`${table.standardDuration} >= 0 and ${table.ownDuration} >= 0`,
