@@ -220,6 +220,19 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await leader.keyboard.press("Escape");
   await expect(leader.getByRole("dialog")).toHaveCount(0);
 
+  // The notes, edited in place: Save once they change, a warning before leaving them unsaved.
+  const notes = leader.getByRole("textbox", { name: "Notes" });
+  const saveNotes = leader.getByRole("button", { name: "Save", exact: true });
+  await expect(saveNotes).toBeDisabled();
+  await notes.fill("Big intro, everyone in at bar 5");
+  await leader.getByRole("link", { name: "Repertoire" }).first().click();
+  await expect(leader.getByText("Leave without saving the notes?")).toBeVisible();
+  await leader.getByRole("button", { name: "Stay" }).click();
+  await expect(notes).toHaveValue("Big intro, everyone in at bar 5");
+  await saveNotes.click();
+  await expect(leader.getByText("Notes saved")).toBeVisible();
+  await expect(saveNotes).toBeDisabled();
+
   // A link, for the drummer: the provider shows, it opens in a new tab.
   await leader.getByRole("button", { name: "Add a link" }).click();
   const link = leader.getByRole("dialog");

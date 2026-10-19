@@ -74,6 +74,13 @@
     "bpm": "{{tempo}} BPM",
     "style": "Style",
     "notes": "Notes",
+    "notesSaved": "Notes saved",
+    "unsavedNotes": {
+      "title": "Leave without saving the notes?",
+      "description": "Your changes to the notes will be lost.",
+      "stay": "Stay",
+      "leave": "Leave"
+    },
     "keys": {
       "none": "Not set",
       "major": "Major",
