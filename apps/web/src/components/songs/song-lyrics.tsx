@@ -51,6 +51,9 @@ export function SongLyrics({
   const [editing, setEditing] = useState(false);
   const [searching, setSearching] = useState(false);
   const [viewing, setViewing] = useState(false);
+  // Lyrics cleared by someone else while they're viewed: the view closes for good, rather than
+  // popping open again when new lyrics come.
+  if (viewing && !lyrics) setViewing(false);
 
   return (
     <Card>

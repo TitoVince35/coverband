@@ -13,4 +13,6 @@ test("steps up and down, never past the ends", () => {
   expect(stepLyricsSize(26, -1)).toBe(22);
   expect(stepLyricsSize(LYRICS_SIZES[0], -1)).toBe(LYRICS_SIZES[0]);
   expect(stepLyricsSize(48, 1)).toBe(48);
+  // An unknown size steps from the default one.
+  expect(stepLyricsSize(33, 1)).toBe(32);
 });

@@ -15,8 +15,10 @@ export function parseLyricsSize(value: string | null | undefined): number {
 
 /** The next size up (+1) or down (-1), staying within the sizes. */
 export function stepLyricsSize(size: number, step: 1 | -1): number {
-  const index = (LYRICS_SIZES as readonly number[]).indexOf(parseLyricsSize(String(size)));
-  return LYRICS_SIZES[Math.min(LYRICS_SIZES.length - 1, Math.max(0, index + step))] ?? size;
+  const sizes: readonly number[] = LYRICS_SIZES;
+  const found = sizes.indexOf(size);
+  const index = found === -1 ? sizes.indexOf(DEFAULT_LYRICS_SIZE) : found;
+  return sizes[Math.min(sizes.length - 1, Math.max(0, index + step))] ?? DEFAULT_LYRICS_SIZE;
 }
 
 export function readLyricsSize(): number {
@@ -45,9 +47,11 @@ export function useWakeLock(active: boolean) {
     let lock: WakeLockSentinel | null = null;
     let done = false;
     const request = async () => {
+      // One lock at a time: the first request and a visibility change can overlap.
+      if (lock && !lock.released) return;
       try {
         const next = await navigator.wakeLock.request("screen");
-        if (done) await next.release();
+        if (done || (lock && !lock.released)) await next.release();
         else lock = next;
       } catch {
         // Refused (battery saver, not visible): the screen may sleep, nothing else changes.

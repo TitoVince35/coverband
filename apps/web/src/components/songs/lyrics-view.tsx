@@ -39,7 +39,7 @@ export function LyricsView({ title, lyrics, open, onOpenChange }: Props) {
         showCloseButton={false}
         className="inset-0 h-dvh max-w-none translate-x-0 translate-y-0 grid-rows-[auto_minmax(0,1fr)] gap-0 rounded-none bg-background p-0 ring-0 sm:max-w-none"
       >
-        <div className="flex items-center gap-2 border-b px-4 py-2">
+        <div className="flex items-center gap-2 border-b px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-2">
           <DialogTitle className="min-w-0 flex-1 truncate font-heading text-base">
             {title}
           </DialogTitle>
@@ -50,7 +50,9 @@ export function LyricsView({ title, lyrics, open, onOpenChange }: Props) {
             variant="ghost"
             size="icon"
             aria-label={t("songs.lyrics.view.smaller")}
-            disabled={size === LYRICS_SIZES[0]}
+            // Not disabled: the focus would be lost at the smallest size.
+            aria-disabled={size === LYRICS_SIZES[0]}
+            className="aria-disabled:opacity-50"
             onClick={() => step(-1)}
           >
             <AArrowDown />
@@ -59,7 +61,8 @@ export function LyricsView({ title, lyrics, open, onOpenChange }: Props) {
             variant="ghost"
             size="icon"
             aria-label={t("songs.lyrics.view.larger")}
-            disabled={size === LYRICS_SIZES[LYRICS_SIZES.length - 1]}
+            aria-disabled={size === LYRICS_SIZES[LYRICS_SIZES.length - 1]}
+            className="aria-disabled:opacity-50"
             onClick={() => step(1)}
           >
             <AArrowUp />
@@ -74,7 +77,7 @@ export function LyricsView({ title, lyrics, open, onOpenChange }: Props) {
           </Button>
         </div>
         <div
-          className="overflow-y-auto whitespace-pre-wrap break-words px-5 py-6 leading-snug"
+          className="overflow-y-auto whitespace-pre-wrap break-words px-5 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] leading-snug"
           style={{ fontSize: size }}
         >
           {lyrics}

@@ -285,6 +285,7 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await leader.getByRole("button", { name: "View", exact: true }).click();
   await expect(text).toHaveCSS("font-size", "32px");
   await leader.keyboard.press("Escape");
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
 
   // A link, for the drummer: the provider shows, it opens in a new tab.
   await leader.getByRole("button", { name: "Add a link" }).click();
