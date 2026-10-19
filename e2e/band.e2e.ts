@@ -81,14 +81,14 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   await expect(musician.getByText(`Welcome to ${band}!`)).toBeVisible();
 
   await musician.getByRole("link", { name: "Lineup" }).click();
-  // The lineup's rows (each row also lists its instruments).
+  // The lineup's rows (each row also lists its instruments): the musician first, then the others.
   const lineup = musician.getByRole("list", { name: "Lineup" }).locator(":scope > li");
   await expect(lineup).toHaveCount(2);
-  await expect(lineup.nth(0)).toContainText("Lea Leader");
-  await expect(lineup.nth(0)).toContainText("Guitar");
-  await expect(lineup.nth(1)).toContainText("Maxou");
+  await expect(lineup.nth(0)).toContainText("Maxou");
   // Typed "Bass" in the wizard: stored and shown as the known instrument.
-  await expect(lineup.nth(1)).toContainText("Bass guitar");
+  await expect(lineup.nth(0)).toContainText("Bass guitar");
+  await expect(lineup.nth(1)).toContainText("Lea Leader");
+  await expect(lineup.nth(1)).toContainText("Guitar");
   await musician.context().close();
 });
 
