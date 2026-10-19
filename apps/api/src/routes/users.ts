@@ -14,8 +14,7 @@ export function userRoutes(deps: AppDeps) {
   return new Hono<SessionEnv>()
     .use(requireUser)
     .get("/:id/avatar", zValidator("param", idParam, validationHook), async (c) => {
-      const viewer = c.var.user;
-      const avatar = viewer ? await readAvatar(deps, viewer, c.req.valid("param").id) : null;
+      const avatar = await readAvatar(deps, c.var.user, c.req.valid("param").id);
       if (!avatar) return apiError(c, 404, "No avatar");
       // The URL changes with the file (?v=): a matching URL never goes stale.
       const { pathname, search } = new URL(c.req.url);

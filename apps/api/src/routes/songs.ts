@@ -15,7 +15,7 @@ import { z } from "zod";
 import type { AppDeps } from "../deps";
 import { apiError } from "../errors";
 import { MAX_INSTRUMENTS } from "../instruments";
-import { type BandEnv, requireLeader, requireMember } from "../middleware/band";
+import { type BandEnv, requireLeader } from "../middleware/band";
 import { addMedia, deleteMedia, mediaOf, updateMedia } from "../song-media";
 import { addSong, deleteSong, getSong, listSongs, setArchived, updateSong } from "../songs";
 import { validationHook } from "../validation";
@@ -86,27 +86,26 @@ const mediaFields = z.object({
 const addMediaBody = mediaFields.partial({ title: true, instruments: true });
 const mediaParam = songParam.extend({ mediaId: z.uuid() });
 
-/** A band's repertoire, under /api/bands/:bandSlug/songs: every member reads, adds and edits. */
+/**
+ * A band's repertoire, under /api/bands/:bandSlug/songs: every member reads, adds and edits.
+ * Mounted in the band's routes, whose requireMember has loaded the band and the membership.
+ */
 export function songRoutes(deps: AppDeps) {
   const { db } = deps;
-  const member = requireMember(db);
-  const who = (c: Context<BandEnv>) => ({
-    bandId: c.var.band.id,
-    userId: c.var.user?.id ?? "",
-  });
+  const who = (c: Context<BandEnv>) => ({ bandId: c.var.band.id, userId: c.var.user.id });
 
   return (
     new Hono<BandEnv>()
       // The repertoire, or its archived songs with ?archived=true.
-      .get("/", member, zValidator("query", listQuery, validationHook), async (c) => {
+      .get("/", zValidator("query", listQuery, validationHook), async (c) => {
         const archived = c.req.valid("query").archived === "true";
         return c.json({ songs: await listSongs(db, c.var.band.id, { archived }) });
       })
-      .post("/", member, zValidator("json", addBody, validationHook), async (c) => {
+      .post("/", zValidator("json", addBody, validationHook), async (c) => {
         const { confirmDuplicate, ...fields } = c.req.valid("json");
         return c.json({ song: await addSong(db, who(c), fields, { confirmDuplicate }) }, 201);
       })
-      .get("/:songId", member, zValidator("param", songParam, validationHook), async (c) => {
+      .get("/:songId", zValidator("param", songParam, validationHook), async (c) => {
         const { songId } = c.req.valid("param");
         const song = await getSong(db, c.var.band.id, songId);
         if (!song) return apiError(c, 404, "Song not found");
@@ -114,7 +113,6 @@ export function songRoutes(deps: AppDeps) {
       })
       .patch(
         "/:songId",
-        member,
         zValidator("param", songParam, validationHook),
         zValidator("json", updateBody, validationHook),
         async (c) => {
@@ -126,28 +124,17 @@ export function songRoutes(deps: AppDeps) {
         },
       )
       // Any member archives and restores.
-      .post(
-        "/:songId/archive",
-        member,
-        zValidator("param", songParam, validationHook),
-        async (c) => {
-          const song = await setArchived(db, who(c), c.req.valid("param").songId, true);
-          return song ? c.json({ song }) : apiError(c, 404, "Song not found");
-        },
-      )
-      .post(
-        "/:songId/restore",
-        member,
-        zValidator("param", songParam, validationHook),
-        async (c) => {
-          const song = await setArchived(db, who(c), c.req.valid("param").songId, false);
-          return song ? c.json({ song }) : apiError(c, 404, "Song not found");
-        },
-      )
+      .post("/:songId/archive", zValidator("param", songParam, validationHook), async (c) => {
+        const song = await setArchived(db, who(c), c.req.valid("param").songId, true);
+        return song ? c.json({ song }) : apiError(c, 404, "Song not found");
+      })
+      .post("/:songId/restore", zValidator("param", songParam, validationHook), async (c) => {
+        const song = await setArchived(db, who(c), c.req.valid("param").songId, false);
+        return song ? c.json({ song }) : apiError(c, 404, "Song not found");
+      })
       // Deleting for good is the band leader's, and only for a song nothing uses.
       .delete(
         "/:songId",
-        member,
         requireLeader,
         zValidator("param", songParam, validationHook),
         async (c) => {
@@ -158,7 +145,6 @@ export function songRoutes(deps: AppDeps) {
       // A song's links: every member adds, edits and removes them.
       .post(
         "/:songId/media",
-        member,
         zValidator("param", songParam, validationHook),
         zValidator("json", addMediaBody, validationHook),
         async (c) => {
@@ -173,7 +159,6 @@ export function songRoutes(deps: AppDeps) {
       )
       .patch(
         "/:songId/media/:mediaId",
-        member,
         zValidator("param", mediaParam, validationHook),
         zValidator("json", mediaFields.partial(), validationHook),
         async (c) => {
@@ -184,7 +169,6 @@ export function songRoutes(deps: AppDeps) {
       )
       .delete(
         "/:songId/media/:mediaId",
-        member,
         zValidator("param", mediaParam, validationHook),
         async (c) => {
           const { songId, mediaId } = c.req.valid("param");

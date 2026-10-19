@@ -25,17 +25,17 @@ export function meRoutes(deps: AppDeps) {
     new Hono<SessionEnv>()
       .use(requireUser)
       .patch("/", zValidator("json", profileBody, validationHook), async (c) => {
-        const user = await updateProfile(deps.db, c.var.user?.id ?? "", c.req.valid("json"));
+        const user = await updateProfile(deps.db, c.var.user.id, c.req.valid("json"));
         return c.json({ user });
       })
       // The browser sends the cropped image as the raw body (WebP, or JPEG from Safari), under the
       // 100 KB body limit.
       .put("/avatar", async (c) => {
         const bytes = new Uint8Array(await c.req.arrayBuffer());
-        return c.json({ avatarUrl: await setAvatar(deps, c.var.user?.id ?? "", bytes) });
+        return c.json({ avatarUrl: await setAvatar(deps, c.var.user.id, bytes) });
       })
       .delete("/avatar", async (c) => {
-        await removeAvatar(deps, c.var.user?.id ?? "");
+        await removeAvatar(deps, c.var.user.id);
         return c.body(null, 204);
       })
   );

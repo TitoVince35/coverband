@@ -1,12 +1,13 @@
 import type { BandRole } from "@coverband/shared";
 import { and, eq } from "drizzle-orm";
 import { createMiddleware } from "hono/factory";
+import type { SessionUser } from "../auth";
 import type { Db } from "../db/client";
 import { bandMembers, bands } from "../db/schema";
 import { apiError } from "../errors";
-import type { SessionEnv } from "./session";
+import type { UserEnv } from "./session";
 
-export type BandEnv = SessionEnv & {
+export type BandEnv = UserEnv & {
   Variables: {
     band: typeof bands.$inferSelect;
     membership: { role: BandRole };
@@ -20,7 +21,8 @@ export type BandEnv = SessionEnv & {
  */
 export function requireMember(db: Db) {
   return createMiddleware<BandEnv>(async (c, next) => {
-    const user = c.var.user;
+    // Typed as logged in for the routes after it, but it checks it itself.
+    const user = c.var.user as SessionUser | null;
     if (!user) {
       return apiError(c, 401, "Not logged in");
     }

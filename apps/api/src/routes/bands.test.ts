@@ -117,6 +117,12 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
     expect((await call(`/bands/${bandSlug}/members`, "outsider")).status).toBe(404);
   });
 
+  test("every route of a band is a 404 for someone outside it", async () => {
+    for (const path of ["", "/members", "/activity", "/songs", "/invitations"]) {
+      expect((await call(`/bands/${bandSlug}${path}`, "outsider")).status).toBe(404);
+    }
+  });
+
   test("the lineup gives each member's avatar URL, never the storage key", async () => {
     const bassist = (await userId("bassist")) ?? "";
     const uuid = crypto.randomUUID();

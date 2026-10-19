@@ -63,7 +63,7 @@ export function adminRoutes(deps: AppDeps) {
     })
     .post("/invitations", limit, zValidator("json", inviteBody, validationHook), async (c) => {
       const { email, language } = c.req.valid("json");
-      const invitedById = c.var.user?.id ?? "";
+      const invitedById = c.var.user.id;
       const invitation = await inviteLeader(deps, { email, language, invitedById });
       return c.json({ id: invitation.id }, 201);
     })
@@ -75,7 +75,7 @@ export function adminRoutes(deps: AppDeps) {
         const invitation = await resendLeaderInvitation(
           deps,
           c.req.valid("param").id,
-          c.var.user?.id ?? "",
+          c.var.user.id,
         );
         return invitation
           ? c.json({ id: invitation.id })
@@ -83,11 +83,7 @@ export function adminRoutes(deps: AppDeps) {
       },
     )
     .delete("/invitations/:id", zValidator("param", idParam, validationHook), async (c) => {
-      const revoked = await revokeLeaderInvitation(
-        deps,
-        c.req.valid("param").id,
-        c.var.user?.id ?? "",
-      );
+      const revoked = await revokeLeaderInvitation(deps, c.req.valid("param").id, c.var.user.id);
       return revoked ? c.body(null, 204) : apiError(c, 404, "Invitation not found");
     });
 }
