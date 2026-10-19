@@ -45,10 +45,12 @@ export function LyricsSearchDialog({ open, onOpenChange, ...props }: Props) {
  * Opens a web search for the song's lyrics in a new tab (#136), on the member's own device: they
  * copy the lyrics and paste them in. Nothing goes through our server.
  */
-export function WebSearchButton({ song }: { song: Song }) {
+export function WebSearchButton({ song, text }: { song: Song; text?: string | undefined }) {
   const { t } = useTranslation();
-  // The title is quoted in the query: its own quotes would break the phrase.
-  const query = t("songs.lyrics.web.query", { ...song, title: song.title.replaceAll('"', "") });
+  // A refined search's text (#138), or the title quoted: its own quotes would break the phrase.
+  const query = text
+    ? t("songs.lyrics.web.textQuery", { text })
+    : t("songs.lyrics.web.query", { ...song, title: song.title.replaceAll('"', "") });
   return (
     <Button variant="outline" asChild>
       <a
@@ -73,7 +75,7 @@ function SearchContent({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   // The song's title and artist first; edited, a free search (#138: "Take Five Carmen McRae").
-  const songText = `${song.title} ${song.artist}`;
+  const songText = `${song.title} ${song.artist}`.slice(0, LYRICS_TEXT_MAX);
   const [draft, setDraft] = useState(songText);
   const [text, setText] = useState<string | undefined>();
   const search = useQuery(lyricsSearchQuery(bandSlug, songId, text));
@@ -82,7 +84,11 @@ function SearchContent({
   function onSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const typed = draft.trim();
-    setText(typed && typed !== songText ? typed : undefined);
+    // The song's own title and artist, however spaced or capitalised: the usual search.
+    const next = typed && !sameText(typed, songText) ? typed : undefined;
+    // The same search again (a retry after an error): asked again.
+    if (next === text) void search.refetch();
+    else setText(next);
     setChosen(null);
   }
 
@@ -100,7 +106,7 @@ function SearchContent({
   // Nothing to choose from: find them on the web, or type them in.
   const elsewhere = (
     <div className="flex flex-wrap justify-end gap-2">
-      <WebSearchButton song={song} />
+      <WebSearchButton song={song} text={text} />
       <Button variant="outline" onClick={onTypeIn}>
         {t("songs.lyrics.typeIn")}
       </Button>
@@ -108,7 +114,11 @@ function SearchContent({
   );
 
   return (
-    <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
+    <DialogContent
+      className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg"
+      // Not the search field: a phone's keyboard would cover the matches.
+      onOpenAutoFocus={(event) => event.preventDefault()}
+    >
       <DialogHeader>
         <DialogTitle className="font-heading">{t("songs.lyrics.search.title")}</DialogTitle>
         <DialogDescription>{t("songs.lyrics.search.description")}</DialogDescription>
@@ -118,7 +128,7 @@ function SearchContent({
               aria-label={t("songs.lyrics.search.refine")}
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              maxLength={200}
+              maxLength={LYRICS_TEXT_MAX}
             />
             <Button
               type="submit"
@@ -191,9 +201,7 @@ function SearchContent({
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{firstLine(match.lyrics)}</p>
                   {/* A free search can bring other songs: whose these lyrics are. */}
-                  <p className="truncate text-sm">
-                    {match.artist} – {match.title}
-                  </p>
+                  <p className="truncate text-sm">{t("songs.lyrics.search.recording", match)}</p>
                   <p className="truncate text-muted-foreground text-xs tabular-nums">
                     {[
                       match.album ?? t("songs.lyrics.search.noAlbum"),
@@ -212,6 +220,12 @@ function SearchContent({
     </DialogContent>
   );
 }
+
+/** A free search's longest text, as the API accepts it. */
+const LYRICS_TEXT_MAX = 200;
+
+const sameText = (a: string, b: string) =>
+  a.replace(/\s+/g, " ").trim().toLowerCase() === b.replace(/\s+/g, " ").trim().toLowerCase();
 
 // Matches come trimmed: their first line is never blank.
 const firstLine = (lyrics: string) => lyrics.split("\n", 1)[0];

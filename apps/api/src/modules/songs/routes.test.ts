@@ -312,12 +312,14 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     const instrumental = await call(`/bands/${slug}/songs/${song.id}/lyrics/search`, "max");
     expect(await instrumental.json()).toEqual({ matches: [], instrumental: true });
 
-    // Free text, instead of the title and artist (#138).
-    await call(
+    // Free text, instead of the title and artist (#138): it may be about other recordings, so it
+    // never says the song is an instrumental.
+    const free = await call(
       `/bands/${slug}/songs/${song.id}/lyrics/search?q=${encodeURIComponent(" Linger live ")}`,
       "max",
     );
     expect(lyrics.searches.at(-1)).toEqual({ text: "Linger live" });
+    expect(await free.json()).toEqual({ matches: [], instrumental: false });
     await call(`/bands/${slug}/songs/${song.id}/lyrics/search?q=`, "max");
     expect(lyrics.searches.at(-1)).toEqual({ title: "Linger", artist: "The Cranberries" });
 

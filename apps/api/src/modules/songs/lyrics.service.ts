@@ -44,14 +44,7 @@ export function rankLyrics(
   return [...best.values()]
     .sort((a, b) => distance(a) - distance(b))
     .slice(0, limit)
-    .map(({ id, title, artist, album, duration, lyrics }) => ({
-      id,
-      title,
-      artist,
-      album,
-      duration,
-      lyrics,
-    }));
+    .map(({ instrumental: _, ...match }) => match);
 }
 
 /**
@@ -82,6 +75,7 @@ export async function searchLyrics(
   );
   return {
     matches: rankLyrics(entries, song.standardDuration),
-    instrumental: onlyInstrumental(entries, song.title),
+    // A free search may be about other recordings: it says nothing of this one.
+    instrumental: !text && onlyInstrumental(entries, song.title),
   };
 }
