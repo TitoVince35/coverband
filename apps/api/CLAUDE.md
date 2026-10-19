@@ -8,7 +8,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - `src/core/`: what every feature uses, knowing none of them: `errors.ts`, `db/` (client, migrations runner, `schema.ts` re-exporting every table for Drizzle), `http/` (session guards, validation, rate limiter, security, health), `activity/` (recording events).
 - `src/adapters/`: the outside world behind small interfaces: `auth.ts` (Better Auth, with its tables in `auth-schema.ts`), `storage.ts`, `mail/`.
 - `src/app.ts` is the composition root: it mounts every module's sub-app (a band's features under `/bands/:bandSlug/...`). `src/main.ts` builds the real dependencies and starts the server.
-- Rules: routes call their module's service and never query the database; services never import Hono; a module uses another one through its `service.ts`.
+- Rules, checked by `src/architecture.test.ts` (so by `bun run check`): routes call their module's service and never query the database; only routes and guards import Hono; a module uses another one only through its `service.ts` (or the bands `guard.ts`), and only its own tables plus the auth adapter's (`users`...) and core's (`activity`); `core/` uses no feature; no import cycle between modules. When a module needs another one's data, add a function to that module's service rather than an exception to the check.
 - **Moving or renaming files:** see the `task-workflow` skill (move-only commits).
 
 ## Routes

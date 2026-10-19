@@ -2,7 +2,7 @@ import { avatarUrl } from "@coverband/shared";
 import type { Db } from "../../core/db/client";
 import { membersOf } from "../bands/service";
 import { instrumentsOf } from "../instruments/service";
-import { ownAvatarKey } from "../profile/avatars";
+import { ownAvatarKey } from "../profile/service";
 
 /**
  * A band's lineup, by join date: each member's names, role and instruments. The storage key of
