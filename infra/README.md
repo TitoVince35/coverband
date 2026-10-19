@@ -57,14 +57,18 @@ Done once, in this order. Tools: `tofu` (1.10 or later), `docker`, `gh`.
 9. **The app URL** (`tofu output app_url`) works once Scaleway has issued the TLS certificate of the custom domain, a few minutes after the apply. Meanwhile, `tofu output container_endpoint` is the container's own URL (logins are refused there: it isn't the app URL).
 10. **Reminder:** `tofu output api_keys_expire_at` is the date both API keys expire (a year from now). Put a reminder a month before (see Changing the infrastructure).
 11. **Log in** at the app URL as `admin_email`, with the password from `tofu output -raw admin_password`, and change it.
-12. **Check the client IP** (login rate limiting is per IP, read from `X-Forwarded-For`): after logging in, look at the IP of your session.
+12. **Check the client IP.** Login rate limiting is per IP, read from `X-Real-IP` (`CLIENT_IP_HEADER` in `container.tf`), which Scaleway's proxy overwrites with the caller's IP. Log in once normally, then once with fake headers (replace the email and password):
 
     ```sh
-    psql "$(tofu output -raw deploy_database_url)" -c "select ip_address from sessions order by created_at desc limit 1"
+    curl -s -o /dev/null -w '%{http_code}\n' -X POST "$(tofu output -raw app_url)/api/auth/sign-in/email" \
+      -H "Content-Type: application/json" -H "Origin: $(tofu output -raw app_url)" \
+      -H "X-Real-IP: 1.2.3.4" -H "X-Forwarded-For: 1.2.3.4" \
+      -d '{"email":"you@example.com","password":"..."}'
+    psql "$(tofu output -raw deploy_database_url)" \
+      -c "select coalesce(ip_address, '(null)') as ip, user_agent, created_at from sessions order by created_at desc limit 2"
     ```
 
-    - Your public IP: nothing to do.
-    - Empty: Scaleway's proxy sends several addresses. Find out which are its own, set them in `trusted_proxies` in `terraform.tfvars`, `tofu apply`, log in again and check again. Never trust the whole header: a client could then pick its own IP and dodge the limit.
+    Both sessions (your browser's and curl's) must show your public IP. `(null)` or `1.2.3.4` means the limit doesn't work: stop and look into it.
 
 ## Changing the infrastructure
 

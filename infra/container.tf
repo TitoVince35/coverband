@@ -29,16 +29,17 @@ resource "scaleway_container" "app" {
 
   environment_variables = {
     BETTER_AUTH_URL = local.app_url
-    TRUSTED_PROXIES = var.trusted_proxies
-    ADMIN_EMAIL     = var.admin_email
-    SMTP_HOST       = scaleway_tem_domain.main.smtp_host
-    SMTP_PORT       = "465"
-    SMTP_SECURE     = "true"
-    SMTP_USER       = scaleway_tem_domain.main.smtps_auth_user
-    MAIL_FROM       = local.mail_from
-    S3_ENDPOINT     = "https://s3.fr-par.scw.cloud"
-    S3_REGION       = "fr-par"
-    S3_BUCKET       = scaleway_object_bucket.files.name
+    # Scaleway's proxy overwrites X-Real-IP with the caller's IP; X-Forwarded-For keeps what the client sends.
+    CLIENT_IP_HEADER = "x-real-ip"
+    ADMIN_EMAIL      = var.admin_email
+    SMTP_HOST        = scaleway_tem_domain.main.smtp_host
+    SMTP_PORT        = "465"
+    SMTP_SECURE      = "true"
+    SMTP_USER        = scaleway_tem_domain.main.smtps_auth_user
+    MAIL_FROM        = local.mail_from
+    S3_ENDPOINT      = "https://s3.fr-par.scw.cloud"
+    S3_REGION        = "fr-par"
+    S3_BUCKET        = scaleway_object_bucket.files.name
   }
 
   secret_environment_variables = {

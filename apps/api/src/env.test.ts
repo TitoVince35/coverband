@@ -74,13 +74,11 @@ describe("TRUSTED_ORIGINS", () => {
   });
 });
 
-describe("TRUSTED_PROXIES", () => {
-  test("a comma-separated list of IPs or CIDR ranges, empty by default", () => {
-    expect(loadEnv(valid).TRUSTED_PROXIES).toEqual([]);
-    expect(
-      loadEnv({ ...valid, TRUSTED_PROXIES: "100.64.0.0/10, 2001:db8::1" }).TRUSTED_PROXIES,
-    ).toEqual(["100.64.0.0/10", "2001:db8::1"]);
-    expect(() => loadEnv({ ...valid, TRUSTED_PROXIES: "proxy.local" })).toThrow(/TRUSTED_PROXIES/);
+describe("CLIENT_IP_HEADER", () => {
+  test("a header name, lowercased, x-forwarded-for by default", () => {
+    expect(loadEnv(valid).CLIENT_IP_HEADER).toBe("x-forwarded-for");
+    expect(loadEnv({ ...valid, CLIENT_IP_HEADER: "X-Real-IP" }).CLIENT_IP_HEADER).toBe("x-real-ip");
+    expect(() => loadEnv({ ...valid, CLIENT_IP_HEADER: "x real ip" })).toThrow(/CLIENT_IP_HEADER/);
   });
 });
 

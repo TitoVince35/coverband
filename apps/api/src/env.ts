@@ -35,18 +35,13 @@ const envSchema = z
           .filter(Boolean),
       )
       .pipe(z.array(z.url({ protocol: /^https?$/ }))),
-    // Reverse proxies in front of the app (IPs or CIDR ranges, comma-separated), skipped when
-    // reading the client IP from X-Forwarded-For. Empty: only a single-address header is trusted.
-    TRUSTED_PROXIES: z
+    // Request header holding the client IP, for login rate limits. In production, x-real-ip:
+    // Scaleway's proxy overwrites it, while a client can set its own X-Forwarded-For.
+    CLIENT_IP_HEADER: z
       .string()
-      .default("")
-      .transform((value) =>
-        value
-          .split(",")
-          .map((proxy) => proxy.trim())
-          .filter(Boolean),
-      )
-      .pipe(z.array(z.union([z.ipv4(), z.ipv6(), z.cidrv4(), z.cidrv6()]))),
+      .regex(/^[a-z0-9-]+$/i)
+      .transform((value) => value.toLowerCase())
+      .default("x-forwarded-for"),
     // Default admin, created at startup if no user has this email. Both or neither.
     ADMIN_EMAIL: z.email().optional(),
     ADMIN_PASSWORD: z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH).optional(),

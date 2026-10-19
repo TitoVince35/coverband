@@ -47,9 +47,3 @@ variable "alert_email" {
   type        = string
   default     = null
 }
-
-variable "trusted_proxies" {
-  description = "Scaleway's proxies in front of the container (IPs or CIDR ranges, comma-separated), skipped when reading the client IP from X-Forwarded-For. Empty until the first deployment shows it is needed (README.md)."
-  type        = string
-  default     = ""
-}

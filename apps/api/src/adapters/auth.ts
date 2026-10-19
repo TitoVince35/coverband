@@ -22,8 +22,8 @@ export type AuthOptions = {
   baseURL: string;
   /** Other origins allowed to log in, besides baseURL's (e.g. localhost with `dev:lan`). */
   trustedOrigins?: string[];
-  /** Reverse proxies skipped when reading the client IP from X-Forwarded-For (see env.ts). */
-  trustedProxies?: string[];
+  /** Request header holding the client IP (see env.ts). */
+  clientIpHeader?: string;
   /** Login rate limiting (stored in Postgres). Off in tests that log in repeatedly. */
   rateLimit?: boolean;
 };
@@ -39,7 +39,7 @@ export function createAuth({
   secret,
   baseURL,
   trustedOrigins = [],
-  trustedProxies = [],
+  clientIpHeader = "x-forwarded-for",
   rateLimit = true,
 }: AuthOptions) {
   return betterAuth({
@@ -83,10 +83,9 @@ export function createAuth({
     rateLimit: { enabled: rateLimit, storage: "database" },
     advanced: {
       database: { generateId: "uuid" },
-      // Rate limits are per client IP, read from X-Forwarded-For (set by Scaleway's proxy). A header
-      // with several addresses is only trusted with trustedProxies: otherwise every user would
-      // share one bucket. Checked at the first deployment (#8).
-      ipAddress: { ipAddressHeaders: ["x-forwarded-for"], trustedProxies },
+      // Rate limits are per client IP, read from one header: X-Real-IP in production (written by
+      // Scaleway's proxy, a client can't set it), X-Forwarded-For elsewhere (the e2e tests set it).
+      ipAddress: { ipAddressHeaders: [clientIpHeader] },
     },
     telemetry: { enabled: false },
   });

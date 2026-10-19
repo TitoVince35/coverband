@@ -36,7 +36,7 @@ Nothing has run against Scaleway yet.
 
 ## Left for the first real setup
 
-- **Client IP for the login rate limit:** this part of the issue can only be checked once deployed. Step 11 of `infra/README.md` shows how; if it fails, the fix is setting `trusted_proxies` in `terraform.tfvars`.
+- **Client IP for the login rate limit:** checked on the first deployment. `X-Forwarded-For` gave no usable IP: Scaleway keeps what the client sends there. The app now reads `X-Real-IP` in production, which Scaleway's proxy overwrites (`CLIENT_IP_HEADER`); step 12 of `infra/README.md` checks it, a fake header included.
 - **Table access for the container:** Scaleway's docs suggest the data-only access can use tables created by the deploy key, but don't say so outright. If it can't, the container's database permission in `infra/iam.tf` needs to become `ServerlessSQLDatabaseReadWrite`.
 - **Domain:** buy it at Scaleway first. The setup assumes Scaleway hosts its DNS, which lets Scaleway write the email records (SPF, DKIM) itself.
 
