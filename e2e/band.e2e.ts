@@ -186,6 +186,11 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await dialog.getByRole("button", { name: "Add anyway" }).click();
   await expect(songs).toHaveCount(2);
 
+  // Every field but the notes.
+  await leader.getByRole("button", { name: "Add a song" }).click();
+  await expect(leader.getByRole("dialog").getByLabel("Tempo (BPM)")).toBeVisible();
+  await expect(leader.getByRole("dialog").getByLabel("Notes")).toHaveCount(0);
+  await leader.keyboard.press("Escape");
   await add("Zombie", "The Cranberries");
   await expect(songs).toHaveCount(3);
   await leader.getByRole("searchbox").fill("cranberries");
@@ -193,20 +198,27 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await songs.first().click();
 
   await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
-  await leader.getByRole("button", { name: "Edit the song" }).click();
+  await leader.getByRole("button", { name: "Edit the details" }).click();
   const edit = leader.getByRole("dialog");
+  await expect(edit.getByLabel("Title", { exact: true })).toHaveCount(0);
   await edit.getByLabel("Original duration").fill("5:06");
   await edit.getByLabel("Key", { exact: true }).click();
   await leader.getByRole("option", { name: "E minor" }).click();
   await edit.getByLabel("Tempo (BPM)").fill("84");
   await edit.getByLabel("Style").fill("Alternative rock");
-  await edit.getByLabel("Notes").fill("Big intro, everyone in at bar 5");
   await edit.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Song updated")).toBeVisible();
   await expect(leader.getByRole("dialog")).toHaveCount(0);
-  for (const text of ["5:06", "E minor", "84 BPM", "Alternative rock", "everyone in at bar 5"]) {
+  for (const text of ["5:06", "E minor", "84 BPM", "Alternative rock"]) {
     await expect(leader.getByText(text)).toBeVisible();
   }
+  // The top pencil edits the title and artist only.
+  await leader.getByRole("button", { name: "Edit the song" }).click();
+  const main = leader.getByRole("dialog");
+  await expect(main.getByLabel("Artist", { exact: true })).toHaveValue("The Cranberries");
+  await expect(main.getByLabel("Tempo (BPM)")).toHaveCount(0);
+  await leader.keyboard.press("Escape");
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
 
   // A link, for the drummer: the provider shows, it opens in a new tab.
   await leader.getByRole("button", { name: "Add a link" }).click();

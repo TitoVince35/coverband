@@ -59,6 +59,8 @@
     "noMatch": "Aucun morceau ne correspond à « {{query}} ».",
     "back": "Répertoire",
     "edit": "Modifier le morceau",
+    "details": "Détails",
+    "editDetails": "Modifier les détails",
     "notFound": "Ce morceau n'existe pas.",
     "added": "Morceau ajouté",
     "saved": "Morceau mis à jour",
@@ -137,6 +139,7 @@
     "form": {
       "addTitle": "Ajouter un morceau",
       "editTitle": "Modifier le morceau",
+      "detailsTitle": "Modifier les détails",
       "title": "Titre",
       "artist": "Artiste",
       "standardDuration": "Durée originale",

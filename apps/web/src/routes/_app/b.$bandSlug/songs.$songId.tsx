@@ -8,12 +8,13 @@ import { SongFormDialog } from "@/components/songs/song-form-dialog";
 import { SongMedia } from "@/components/songs/song-media";
 import { EnergyPicker, StatusPicker } from "@/components/songs/song-status";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/i18n/use-language";
 import { bandQuery } from "@/lib/bands";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/format";
 import { type SongFields, songQuery, updateSong } from "@/lib/songs";
+import { cn } from "@/lib/utils";
 
 // A song of the repertoire (#88): what the band knows about it; any member edits it.
 export const Route = createFileRoute("/_app/b/$bandSlug/songs/$songId")({
@@ -71,7 +72,7 @@ function SongPage() {
     change.isPending && change.variables.energy !== undefined
       ? change.variables.energy
       : fields.energy;
-  // What the band knows, in the order it's looked for; unknown fields are left out.
+  // What the band knows, in the order it's looked for; unknown fields show a dash.
   const details = [
     {
       label: t("songs.ownDuration"),
@@ -85,7 +86,7 @@ function SongPage() {
     { label: t("songs.key"), value: fields.key && keyLabel(fields.key, language) },
     { label: t("songs.tempo"), value: fields.tempo && t("songs.bpm", { tempo: fields.tempo }) },
     { label: t("songs.style"), value: fields.style },
-  ].filter((detail) => detail.value);
+  ];
   const date = formatDate(createdAt, language);
 
   return (
@@ -100,6 +101,7 @@ function SongPage() {
         <SongFormDialog
           bandSlug={bandSlug}
           song={song.data}
+          part="main"
           tooltip={t("songs.edit")}
           trigger={
             <Button variant="outline" size="icon-lg" aria-label={t("songs.edit")}>
@@ -125,20 +127,41 @@ function SongPage() {
           {errorMessage(t, change.error)}
         </p>
       )}
-      {details.length > 0 && (
-        <Card>
-          <CardContent>
-            <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
-              {details.map(({ label, value }) => (
-                <div key={label} className="min-w-0">
-                  <dt className="text-muted-foreground text-sm">{label}</dt>
-                  <dd className="break-words font-medium text-lg tabular-nums">{value}</dd>
-                </div>
-              ))}
-            </dl>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-heading text-lg">{t("songs.details")}</CardTitle>
+          <CardAction>
+            <SongFormDialog
+              bandSlug={bandSlug}
+              song={song.data}
+              part="details"
+              tooltip={t("songs.editDetails")}
+              trigger={
+                <Button variant="outline" size="icon" aria-label={t("songs.editDetails")}>
+                  <Pencil />
+                </Button>
+              }
+            />
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
+            {details.map(({ label, value }) => (
+              <div key={label} className="min-w-0">
+                <dt className="text-muted-foreground text-sm">{label}</dt>
+                <dd
+                  className={cn(
+                    "break-words font-medium text-lg tabular-nums",
+                    !value && "text-muted-foreground",
+                  )}
+                >
+                  {value || "—"}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </CardContent>
+      </Card>
       {notes && (
         <Card>
           <CardHeader>
