@@ -4,7 +4,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { isUniqueViolation } from "../../core/db/pg-errors";
-import { bandMembers, bands } from "../../core/db/schema";
+import { bandMembers, bands, users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
 import { instrumentsByBand, writeInstruments } from "../instruments/service";
 
@@ -114,10 +114,56 @@ export async function createBand(
   return band;
 }
 
-/** The slug of a band, or null when there's none. */
-export async function bandSlugOf(db: Db | Tx, id: string): Promise<string | null> {
-  const [band] = await db.select({ slug: bands.slug }).from(bands).where(eq(bands.id, id));
-  return band?.slug ?? null;
+/** A band's name and slug, or null when there's none. */
+export async function bandOf(db: Db | Tx, id: string) {
+  const [band] = await db
+    .select({ name: bands.name, slug: bands.slug })
+    .from(bands)
+    .where(eq(bands.id, id));
+  return band ?? null;
+}
+
+/** Whether the band has a member with this email. */
+export async function hasMemberWithEmail(db: Db | Tx, bandId: string, email: string) {
+  const [member] = await db
+    .select({ userId: bandMembers.userId })
+    .from(bandMembers)
+    .innerJoin(users, eq(users.id, bandMembers.userId))
+    .where(and(eq(bandMembers.bandId, bandId), eq(users.email, email)));
+  return member !== undefined;
+}
+
+/** Every membership, by band name, with the band's name and slug: the admin console. */
+export function allMemberships(db: Db) {
+  return db
+    .select({
+      userId: bandMembers.userId,
+      bandName: bands.name,
+      bandSlug: bands.slug,
+      role: bandMembers.role,
+    })
+    .from(bandMembers)
+    .innerJoin(bands, eq(bands.id, bandMembers.bandId))
+    .orderBy(asc(bands.name));
+}
+
+/** A band's members by join date: their names, role and avatar key (`users.image`). */
+export function membersOf(db: Db, bandId: string) {
+  return db
+    .select({
+      userId: users.id,
+      name: users.name,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      nickname: users.nickname,
+      role: bandMembers.role,
+      joinedAt: bandMembers.joinedAt,
+      image: users.image,
+    })
+    .from(bandMembers)
+    .innerJoin(users, eq(users.id, bandMembers.userId))
+    .where(eq(bandMembers.bandId, bandId))
+    .orderBy(asc(bandMembers.joinedAt));
 }
 
 /** Someone joins a band (accepting an invitation), with their instruments in it. */

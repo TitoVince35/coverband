@@ -1,6 +1,7 @@
-import { asc, eq } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import type { Db } from "../../core/db/client";
-import { bandMembers, bands, users } from "../../core/db/schema";
+import { users } from "../../core/db/schema";
+import { allMemberships } from "../bands/service";
 
 /** Every account, oldest first, with its bands (by name) and its role in each: the admin console. */
 export async function usersWithBands(db: Db) {
@@ -14,16 +15,7 @@ export async function usersWithBands(db: Db) {
     })
     .from(users)
     .orderBy(asc(users.createdAt));
-  const memberships = await db
-    .select({
-      userId: bandMembers.userId,
-      bandName: bands.name,
-      bandSlug: bands.slug,
-      role: bandMembers.role,
-    })
-    .from(bandMembers)
-    .innerJoin(bands, eq(bands.id, bandMembers.bandId))
-    .orderBy(asc(bands.name));
+  const memberships = await allMemberships(db);
   return rows.map((user) => ({
     ...user,
     bands: memberships.filter((m) => m.userId === user.id).map(({ userId: _, ...band }) => band),

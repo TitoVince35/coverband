@@ -8,7 +8,7 @@ import {
 import { and, asc, count, countDistinct, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
-import { bandMembers, memberInstruments } from "../../core/db/schema";
+import { memberInstruments } from "../../core/db/schema";
 
 /** Instruments one member can list in a band. */
 export const MAX_INSTRUMENTS = 10;
@@ -105,11 +105,9 @@ export function setInstruments(
   const instruments = cleanInstruments(values);
   return db.transaction(async (tx) => {
     // Two saves at once (a double tap, two tabs) wait for each other instead of clashing.
-    await tx
-      .select({ userId: bandMembers.userId })
-      .from(bandMembers)
-      .where(and(eq(bandMembers.bandId, member.bandId), eq(bandMembers.userId, member.userId)))
-      .for("update");
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${`instruments:${member.bandId}:${member.userId}`}))`,
+    );
     await writeInstruments(tx, member, instruments);
     await recordActivity(tx, {
       action: "member.instruments_changed",
