@@ -1,18 +1,12 @@
-import { FIELD_MAX_LENGTH } from "@coverband/shared";
+import { bandBody } from "@coverband/shared/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { z } from "zod";
 import { requireUser, type SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import { instrumentsOf } from "../instruments/service";
 import { requireLeader, requireMember } from "./guard";
 import { bandsOf, updateBandGenre } from "./service";
-
-// Only the genre can change: a band name is forever (it is also the band's URL).
-const bandBody = z.object({
-  genre: z.string().trim().max(FIELD_MAX_LENGTH.genre).nullable(),
-});
 
 /**
  * The logged-in user's bands (/api/bands), and each band itself for its members (404 otherwise).

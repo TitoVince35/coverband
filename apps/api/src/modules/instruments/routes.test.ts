@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { MAX_INSTRUMENTS } from "@coverband/shared";
 import { eq, inArray, like } from "drizzle-orm";
 import { createApp } from "../../app";
 import { activity, bandMembers, bands, memberInstruments, users } from "../../core/db/schema";
 import { activityOf, createTestDeps } from "../../test-deps";
-import { cleanInstruments, MAX_INSTRUMENTS } from "./service";
+import { cleanInstruments } from "./service";
 
 test("cleanInstruments checks, dedupes and caps a list, keeping its order", () => {
   expect(

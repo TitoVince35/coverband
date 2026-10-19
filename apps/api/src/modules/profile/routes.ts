@@ -1,20 +1,11 @@
-import { FIELD_MAX_LENGTH } from "@coverband/shared";
+import { profileBody } from "@coverband/shared/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { z } from "zod";
 import { requireUser, type SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import { removeAvatar, setAvatar } from "./avatars";
 import { updateProfile } from "./service";
-
-const text = (max: number) => z.string().trim().min(1).max(max);
-
-const profileBody = z.object({
-  firstName: text(FIELD_MAX_LENGTH.firstName),
-  lastName: text(FIELD_MAX_LENGTH.lastName),
-  nickname: z.string().trim().max(FIELD_MAX_LENGTH.nickname).optional(),
-});
 
 /**
  * The logged-in user's own account (/api/me). Better Auth keeps the profile fields read-only

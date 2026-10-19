@@ -79,6 +79,9 @@
     "packages/shared": {
       "name": "@coverband/shared",
       "version": "0.0.0",
+      "dependencies": {
+        "zod": "^4.6.7",
+      },
     },
   },
   "packages": {

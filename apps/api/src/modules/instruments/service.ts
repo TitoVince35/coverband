@@ -1,6 +1,7 @@
 import {
   INSTRUMENT_LABEL_MAX_LENGTH,
   type Instrument,
+  MAX_INSTRUMENTS,
   matchInstrument,
   normalizeName,
   parseInstrument,
@@ -9,9 +10,6 @@ import { and, asc, count, countDistinct, desc, eq, inArray, isNotNull, sql } fro
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { memberInstruments } from "../../core/db/schema";
-
-/** Instruments one member can list in a band. */
-export const MAX_INSTRUMENTS = 10;
 
 /** A free-text instrument is suggested to every band once this many bands, and people, use it. */
 export const SHARED_SUGGESTION_BANDS = 2;
