@@ -181,7 +181,8 @@
         "description": "Vos modifications des paroles seront perdues.",
         "stay": "Continuer",
         "leave": "Fermer"
-      }
+      },
+      "length": "{{count}} / {{max}} caractères"
     }
   },
   "login": {

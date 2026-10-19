@@ -18,10 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { errorMessage } from "@/lib/errors";
-import { updateSong } from "@/lib/songs";
-
-/** Notes as the API stores them: trimmed, none when blank. */
-const stored = (text: string) => text.trim() || null;
+import { storedText as stored, updateSong } from "@/lib/songs";
 
 /**
  * A song's notes (#121), edited in place: Save is active once they change, and leaving the page

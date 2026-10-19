@@ -20,7 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { errorMessage } from "@/lib/errors";
-import { updateSong } from "@/lib/songs";
+import { storedText, updateSong } from "@/lib/songs";
 
 type Props = { bandSlug: string; songId: string; lyrics: string | null };
 
@@ -46,7 +46,8 @@ export function SongLyrics({ bandSlug, songId, lyrics }: Props) {
     <Card>
       <details open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
         <summary className="flex cursor-pointer list-none items-center gap-2 px-6 outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-          <h3 className="flex-1 font-heading font-medium text-lg">{t("songs.lyrics.title")}</h3>
+          {/* Plain text, like the other cards' titles: a heading is lost inside a summary. */}
+          <span className="flex-1 font-heading font-medium text-lg">{t("songs.lyrics.title")}</span>
           <ChevronDown
             aria-hidden
             className={`size-5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
@@ -96,17 +97,22 @@ function LyricsEditor({
 function EditorContent({ bandSlug, songId, lyrics, onClose }: Props & { onClose: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  // The lyrics as they were when the editor opened: a refetch meanwhile (someone else saving)
+  // doesn't make the draft a change. Saving then replaces theirs: the last one wins.
+  const [base] = useState(lyrics);
   const [draft, setDraft] = useState(lyrics ?? "");
   const [confirming, setConfirming] = useState(false);
-  // As the API stores them: trimmed, none when blank.
-  const changed = (draft.trim() || null) !== lyrics;
+  const changed = storedText(draft) !== base;
+  // Pasted text over the limit isn't cut: it's shown, and can't be saved.
+  const tooLong = draft.trim().length > SONG_MAX_LENGTH.lyrics;
 
   const save = useMutation({
-    mutationFn: () => updateSong(bandSlug, songId, { lyrics: draft.trim() || null }),
+    mutationFn: () => updateSong(bandSlug, songId, { lyrics: storedText(draft) }),
     onSuccess: async () => {
+      // The song first: reopening the editor at once starts from the saved lyrics.
+      await queryClient.invalidateQueries({ queryKey: ["bands", bandSlug] });
       toast.success(t("songs.lyrics.saved"));
       onClose();
-      await queryClient.invalidateQueries({ queryKey: ["bands", bandSlug] });
     },
   });
 
@@ -119,7 +125,7 @@ function EditorContent({ bandSlug, songId, lyrics, onClose }: Props & { onClose:
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (changed && !save.isPending) save.mutate();
+    if (changed && !tooLong && !save.isPending) save.mutate();
   }
 
   // Escape, the close button or a tap outside: with changes, ask first.
@@ -154,10 +160,20 @@ function EditorContent({ bandSlug, songId, lyrics, onClose }: Props & { onClose:
             aria-label={t("songs.lyrics.title")}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            maxLength={SONG_MAX_LENGTH.lyrics}
+            aria-invalid={tooLong}
+            aria-describedby="lyrics-length"
             placeholder={t("songs.lyrics.placeholder")}
             className="min-h-0 flex-1 resize-none"
           />
+          <p
+            id="lyrics-length"
+            className={tooLong ? "text-destructive text-xs" : "text-muted-foreground text-xs"}
+          >
+            {t("songs.lyrics.length", {
+              count: draft.trim().length,
+              max: SONG_MAX_LENGTH.lyrics,
+            })}
+          </p>
           {save.isError && (
             <p role="alert" className="text-destructive text-sm">
               {errorMessage(t, save.error)}
@@ -165,7 +181,7 @@ function EditorContent({ bandSlug, songId, lyrics, onClose }: Props & { onClose:
           )}
         </form>
         <div className="flex justify-end">
-          <Button type="submit" form="lyrics-form" disabled={!changed || save.isPending}>
+          <Button type="submit" form="lyrics-form" disabled={!changed || tooLong || save.isPending}>
             {save.isPending ? t("common.saving") : t("common.save")}
           </Button>
         </div>

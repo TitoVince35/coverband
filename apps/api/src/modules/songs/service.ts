@@ -65,13 +65,20 @@ const detailColumns = { ...columns, lyrics: songs.lyrics, lyricsSource: songs.ly
 
 /**
  * The lyrics' source follows the lyrics: none without lyrics, kept when they're edited, "typed"
- * for lyrics that had none. A source never changes on its own.
+ * for lyrics that had none. A source never changes on its own, nor with the same lyrics.
  */
-function withLyricsSource<C extends SongChanges>(changes: C, current: LyricsSource | null): C {
-  if (changes.lyrics === undefined) return { ...changes, lyricsSource: undefined };
+function withLyricsSource<C extends SongChanges>(
+  changes: C,
+  current: { lyrics: string | null; lyricsSource: LyricsSource | null },
+): C {
+  if (changes.lyrics === undefined || changes.lyrics === current.lyrics) {
+    return { ...changes, lyricsSource: undefined };
+  }
+  const { lyricsSource: currentSource } = current;
   return {
     ...changes,
-    lyricsSource: changes.lyrics === null ? null : (changes.lyricsSource ?? current ?? "typed"),
+    lyricsSource:
+      changes.lyrics === null ? null : (changes.lyricsSource ?? currentSource ?? "typed"),
   };
 }
 
@@ -130,7 +137,7 @@ export function addSong(
     const [song] = await tx
       .insert(songs)
       .values({
-        ...withLyricsSource(fields, null),
+        ...withLyricsSource(fields, { lyrics: null, lyricsSource: null }),
         bandId: member.bandId,
         createdById: member.userId,
       })
@@ -164,7 +171,7 @@ export function updateSong(
       .where(and(eq(songs.bandId, member.bandId), eq(songs.id, id)))
       .for("update");
     if (!current) return null;
-    const changes = withLyricsSource(requested, current.lyricsSource);
+    const changes = withLyricsSource(requested, current);
     const changed = (Object.keys(changes) as (keyof SongFields)[]).filter(
       (field) => changes[field] !== undefined && changes[field] !== current[field],
     );

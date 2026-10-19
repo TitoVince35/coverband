@@ -213,6 +213,12 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
       lyrics: "Now I've heard there was a secret chord",
       lyricsSource: "typed",
     });
+    // The same lyrics: the source doesn't change either, and nothing is recorded.
+    await update("max", song.id, {
+      lyrics: "Now I've heard there was a secret chord",
+      lyricsSource: "lrclib",
+    });
+    expect(await get()).toMatchObject({ lyricsSource: "typed" });
     // Fetched, then edited: still from LRCLIB.
     await update("lea", song.id, { lyrics: "Fetched lyrics", lyricsSource: "lrclib" });
     await update("lea", song.id, { lyrics: "Fetched lyrics, fixed" });

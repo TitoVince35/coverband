@@ -181,7 +181,8 @@
         "description": "Your changes to the lyrics will be lost.",
         "stay": "Keep editing",
         "leave": "Close"
-      }
+      },
+      "length": "{{count}} / {{max}} characters"
     }
   },
   "login": {

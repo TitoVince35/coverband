@@ -72,6 +72,8 @@ export const songs = pgTable(
       "songs_durations_positive",
       sql`${table.standardDuration} >= 0 and ${table.ownDuration} >= 0`,
     ),
+    // Lyrics and their source go together.
+    check("songs_lyrics_source", sql`(${table.lyrics} is null) = (${table.lyricsSource} is null)`),
   ],
 );
 
