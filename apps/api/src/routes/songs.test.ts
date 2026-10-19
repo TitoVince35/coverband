@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { MAX_SONG_DURATION } from "@coverband/shared";
+import { MAX_SONG_DURATION, MEDIA_LIMITS } from "@coverband/shared";
 import { inArray, like } from "drizzle-orm";
 import { createApp } from "../app";
 import { activity, bandMembers, bands, users } from "../db/schema";
@@ -302,6 +302,122 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
       }
     ).entries;
     expect(journal[0]).toMatchObject({ action: "song.deleted", song: null });
+  });
+
+  test("a song's links: members add, edit and remove them", async () => {
+    const song = await songOf(
+      await add("lea", { title: "Smells Like Teen Spirit", artist: "Nirvana" }),
+    );
+    const base = `/bands/${slug}/songs/${song.id}/media`;
+    type Media = { id: string; url: string; title: string | null; instruments: unknown[] };
+    const mediaOf = async (res: Response) => ((await res.json()) as { media: Media }).media;
+
+    const res = await call(base, "max", {
+      method: "POST",
+      body: {
+        url: " https://youtu.be/hTWKbfoikeg ",
+        title: "Drums only",
+        instruments: [{ label: "Batterie" }],
+      },
+    });
+    expect(res.status).toBe(201);
+    const video = await mediaOf(res);
+    // Trimmed, and the instrument matched to its code.
+    expect(video).toMatchObject({
+      url: "https://youtu.be/hTWKbfoikeg",
+      title: "Drums only",
+      instruments: [{ code: "drums" }],
+    });
+    const tab = await mediaOf(
+      await call(base, "lea", {
+        method: "POST",
+        body: { url: "https://tabs.example.com/teen-spirit" },
+      }),
+    );
+    expect(tab).toMatchObject({ title: null, instruments: [] });
+
+    // The song comes with its links, oldest first.
+    const withMedia = (await (await call(`/bands/${slug}/songs/${song.id}`, "lea")).json()) as {
+      song: { media: Media[] };
+    };
+    expect(withMedia.song.media.map((m) => m.id)).toEqual([video.id, tab.id]);
+
+    const edited = await call(`${base}/${tab.id}`, "lea", {
+      method: "PATCH",
+      body: { title: "Guitar tab", instruments: [{ code: "guitar" }] },
+    });
+    expect(await mediaOf(edited)).toMatchObject({
+      url: tab.url,
+      title: "Guitar tab",
+      instruments: [{ code: "guitar" }],
+    });
+
+    expect((await call(`${base}/${video.id}`, "max", { method: "DELETE" })).status).toBe(204);
+    expect((await call(`${base}/${video.id}`, "max", { method: "DELETE" })).status).toBe(404);
+    // Each change is a song update in the journal.
+    expect(await activityOf(db, song.id)).toMatchObject([
+      { action: "song.added" },
+      { action: "song.updated", data: { fields: "media" } },
+      { action: "song.updated", data: { fields: "media" } },
+      { action: "song.updated", data: { fields: "media" } },
+      { action: "song.updated", data: { fields: "media" } },
+    ]);
+  });
+
+  test("links: http(s) only, members of the song's band only, a limit per song", async () => {
+    const song = await songOf(await add("lea", { title: "Linked", artist: "Band" }));
+    const base = `/bands/${slug}/songs/${song.id}/media`;
+    const post = (who: string, body: unknown, path = base) =>
+      call(path, who, { method: "POST", body });
+    for (const url of ["javascript:alert(1)", "ftp://x.org/a", "youtube.com/watch", ""]) {
+      expect((await post("lea", { url })).status).toBe(400);
+    }
+    expect((await post("lea", { url: "https://x.org", title: "x".repeat(101) })).status).toBe(400);
+    expect((await post("zoe", { url: "https://x.org" })).status).toBe(404);
+    // Zoe's own band, this band's song: not found.
+    expect(
+      (await post("zoe", { url: "https://x.org" }, `/bands/${otherSlug}/songs/${song.id}/media`))
+        .status,
+    ).toBe(404);
+    const first = await post("lea", { url: "https://x.org/0" });
+    const media = ((await first.json()) as { media: { id: string } }).media;
+    expect(
+      (
+        await call(`/bands/${otherSlug}/songs/${song.id}/media/${media.id}`, "zoe", {
+          method: "DELETE",
+        })
+      ).status,
+    ).toBe(404);
+    for (let i = 1; i < MEDIA_LIMITS.perSong; i++) {
+      expect((await post("lea", { url: `https://x.org/${i}` })).status).toBe(201);
+    }
+    const tooMany = await post("lea", { url: "https://x.org/one-too-many" });
+    expect(tooMany.status).toBe(409);
+    expect(((await tooMany.json()) as { error: { code: string } }).error.code).toBe(
+      "too_many_links",
+    );
+
+    // Edits: the same rules, and only through the link's own song.
+    const patch = (who: string, body: unknown, path = `${base}/${media.id}`) =>
+      call(path, who, { method: "PATCH", body });
+    expect((await patch("lea", { url: "javascript:alert(1)" })).status).toBe(400);
+    expect(await (await patch("lea", { title: "  " })).json()).toMatchObject({
+      media: { title: null },
+    });
+    expect(
+      (
+        await patch(
+          "zoe",
+          { title: "Mine" },
+          `/bands/${otherSlug}/songs/${song.id}/media/${media.id}`,
+        )
+      ).status,
+    ).toBe(404);
+    const other = await songOf(await add("lea", { title: "Other song", artist: "Band" }));
+    const elsewhere = `/bands/${slug}/songs/${other.id}/media/${media.id}`;
+    expect((await patch("lea", { title: "Moved" }, elsewhere)).status).toBe(404);
+    expect((await call(elsewhere, "lea", { method: "DELETE" })).status).toBe(404);
+    expect((await call(`/bands/${otherSlug}/songs/${song.id}`, "zoe")).status).toBe(404);
   });
 
   test("only valid songs", async () => {

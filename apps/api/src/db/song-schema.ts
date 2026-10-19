@@ -1,9 +1,10 @@
-import { MAX_ENERGY, type MusicalKey, SONG_STATUSES } from "@coverband/shared";
+import { type Instrument, MAX_ENERGY, type MusicalKey, SONG_STATUSES } from "@coverband/shared";
 import { sql } from "drizzle-orm";
 import {
   check,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   smallint,
@@ -62,4 +63,24 @@ export const songs = pgTable(
       sql`${table.standardDuration} >= 0 and ${table.ownDuration} >= 0`,
     ),
   ],
+);
+
+/** A song's links (#92): videos, tracks, tutorials. The provider is read from the URL. */
+export const songMedia = pgTable(
+  "song_media",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    bandId: uuid()
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    songId: uuid()
+      .notNull()
+      .references(() => songs.id, { onDelete: "cascade" }),
+    url: text().notNull(),
+    title: text(),
+    // Who it's for ("Drums only"): known codes or free text, cleaned with cleanInstruments.
+    instruments: jsonb().$type<Instrument[]>().default([]).notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index().on(table.songId)],
 );

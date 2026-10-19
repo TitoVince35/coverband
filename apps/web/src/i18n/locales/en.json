@@ -114,6 +114,26 @@
       "confirm": "Delete for good",
       "done": "Song deleted"
     },
+    "media": {
+      "title": "Links",
+      "add": "Add a link",
+      "empty": "No links yet: videos, tracks, tabs, tutorials…",
+      "edit": "Edit the link {{name}}",
+      "newTab": "(opens in a new tab)",
+      "addTitle": "Add a link",
+      "editTitle": "Edit the link",
+      "url": "Web address",
+      "urlHint": "A YouTube video, a Spotify or Deezer track, a tab…",
+      "urlInvalid": "Type a web address starting with https://",
+      "linkTitle": "Title",
+      "linkTitleHint": "Optional: “Album version”, “Guitar tutorial”, “Drums only”…",
+      "instruments": "Instruments",
+      "instrumentsHint": "Optional: who it's for.",
+      "remove": "Remove",
+      "added": "Link added",
+      "saved": "Link updated",
+      "removed": "Link removed"
+    },
     "form": {
       "addTitle": "Add a song",
       "editTitle": "Edit the song",
@@ -326,7 +346,8 @@
     "too_many_requests": "Too many requests. Try again later.",
     "invalid_image": "This file isn't a usable image. Choose a photo (JPEG, PNG, WebP…).",
     "song_duplicate": "This song is already in your repertoire.",
-    "song_in_use": "This song is used, in a setlist for example: archive it instead."
+    "song_in_use": "This song is used, in a setlist for example: archive it instead.",
+    "too_many_links": "This song already has as many links as it can."
   },
   "instruments": {
     "picker": {

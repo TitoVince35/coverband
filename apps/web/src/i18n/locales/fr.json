@@ -114,6 +114,26 @@
       "confirm": "Supprimer pour de bon",
       "done": "Morceau supprimé"
     },
+    "media": {
+      "title": "Liens",
+      "add": "Ajouter un lien",
+      "empty": "Aucun lien pour l'instant : vidéos, titres, tablatures, tutos…",
+      "edit": "Modifier le lien {{name}}",
+      "newTab": "(s'ouvre dans un nouvel onglet)",
+      "addTitle": "Ajouter un lien",
+      "editTitle": "Modifier le lien",
+      "url": "Adresse web",
+      "urlHint": "Une vidéo YouTube, un titre Spotify ou Deezer, une tablature…",
+      "urlInvalid": "Tapez une adresse web qui commence par https://",
+      "linkTitle": "Titre",
+      "linkTitleHint": "Facultatif : « Version album », « Tuto guitare », « Batterie seule »…",
+      "instruments": "Instruments",
+      "instrumentsHint": "Facultatif : pour qui c'est.",
+      "remove": "Retirer",
+      "added": "Lien ajouté",
+      "saved": "Lien mis à jour",
+      "removed": "Lien retiré"
+    },
     "form": {
       "addTitle": "Ajouter un morceau",
       "editTitle": "Modifier le morceau",
@@ -326,7 +346,8 @@
     "too_many_requests": "Trop de demandes. Réessayez plus tard.",
     "invalid_image": "Ce fichier n'est pas une image utilisable. Choisissez une photo (JPEG, PNG, WebP…).",
     "song_duplicate": "Ce morceau est déjà dans votre répertoire.",
-    "song_in_use": "Ce morceau est utilisé, dans une setlist par exemple : archivez-le plutôt."
+    "song_in_use": "Ce morceau est utilisé, dans une setlist par exemple : archivez-le plutôt.",
+    "too_many_links": "Ce morceau a déjà le nombre maximum de liens."
   },
   "instruments": {
     "picker": {

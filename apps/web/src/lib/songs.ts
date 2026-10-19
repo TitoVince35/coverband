@@ -1,4 +1,4 @@
-import type { MusicalKey, SongStatus } from "@coverband/shared";
+import type { Instrument, MusicalKey, SongStatus } from "@coverband/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ApiRequestError, ensureOk } from "@/lib/errors";
@@ -108,4 +108,31 @@ export async function deleteSong(bandSlug: string, songId: string) {
   await ensureOk(
     await api.bands[":bandSlug"].songs[":songId"].$delete({ param: { bandSlug, songId } }),
   );
+}
+
+export type MediaFields = { url: string; title: string | null; instruments: Instrument[] };
+
+/** Adds a link to a song. */
+export async function addMedia(bandSlug: string, songId: string, json: MediaFields) {
+  const route = api.bands[":bandSlug"].songs[":songId"].media;
+  return (await (await ensureOk(await route.$post({ param: { bandSlug, songId }, json }))).json())
+    .media;
+}
+
+/** Changes a song's link. */
+export async function updateMedia(
+  bandSlug: string,
+  songId: string,
+  mediaId: string,
+  json: Partial<MediaFields>,
+) {
+  const route = api.bands[":bandSlug"].songs[":songId"].media[":mediaId"];
+  const res = await route.$patch({ param: { bandSlug, songId, mediaId }, json });
+  return (await (await ensureOk(res)).json()).media;
+}
+
+/** Removes a song's link. */
+export async function deleteMedia(bandSlug: string, songId: string, mediaId: string) {
+  const route = api.bands[":bandSlug"].songs[":songId"].media[":mediaId"];
+  await ensureOk(await route.$delete({ param: { bandSlug, songId, mediaId } }));
 }

@@ -1,7 +1,10 @@
 import {
+  FIELD_MAX_LENGTH,
   MAX_ENERGY,
   MAX_SONG_DURATION,
+  MEDIA_LIMITS,
   MUSICAL_KEYS,
+  parseMediaUrl,
   SONG_MAX_LENGTH,
   SONG_STATUSES,
   SONG_TEMPO,
@@ -11,7 +14,9 @@ import { type Context, Hono } from "hono";
 import { z } from "zod";
 import type { AppDeps } from "../app";
 import { apiError } from "../errors";
+import { MAX_INSTRUMENTS } from "../instruments";
 import { type BandEnv, requireLeader, requireMember } from "../middleware/band";
+import { addMedia, deleteMedia, mediaOf, TooManyMediaError, updateMedia } from "../song-media";
 import {
   addSong,
   DuplicateSongError,
@@ -70,6 +75,26 @@ const songParam = z.object({ bandSlug: z.string(), songId: z.uuid() });
 
 const listQuery = z.object({ archived: z.enum(["true", "false"]).optional() });
 
+// A song's link: an http(s) URL, an optional title, instruments (checked and tidied on save).
+const mediaFields = z.object({
+  url: z
+    .string()
+    .trim()
+    .max(MEDIA_LIMITS.url)
+    .refine((url) => parseMediaUrl(url) !== null, "Not an http(s) URL"),
+  title: optionalText(MEDIA_LIMITS.title),
+  instruments: z
+    .array(
+      z.union([
+        z.object({ code: z.string().max(50) }),
+        z.object({ label: z.string().max(FIELD_MAX_LENGTH.instrument) }),
+      ]),
+    )
+    .max(MAX_INSTRUMENTS),
+});
+const addMediaBody = mediaFields.partial({ title: true, instruments: true });
+const mediaParam = songParam.extend({ mediaId: z.uuid() });
+
 /** 409 naming the song it matches, for the warning ("Already in your repertoire: …"). */
 const duplicate = (c: Context, { message, song }: DuplicateSongError) =>
   apiError(c, 409, message, "song_duplicate", song);
@@ -100,8 +125,10 @@ export function songRoutes(deps: AppDeps) {
         }
       })
       .get("/:songId", member, zValidator("param", songParam, validationHook), async (c) => {
-        const song = await getSong(db, c.var.band.id, c.req.valid("param").songId);
-        return song ? c.json({ song }) : apiError(c, 404, "Song not found");
+        const { songId } = c.req.valid("param");
+        const song = await getSong(db, c.var.band.id, songId);
+        if (!song) return apiError(c, 404, "Song not found");
+        return c.json({ song: { ...song, media: await mediaOf(db, c.var.band.id, songId) } });
       })
       .patch(
         "/:songId",
@@ -156,6 +183,50 @@ export function songRoutes(deps: AppDeps) {
             }
             throw error;
           }
+        },
+      )
+      // A song's links: every member adds, edits and removes them.
+      .post(
+        "/:songId/media",
+        member,
+        zValidator("param", songParam, validationHook),
+        zValidator("json", addMediaBody, validationHook),
+        async (c) => {
+          const { url, title = null, instruments = [] } = c.req.valid("json");
+          try {
+            const media = await addMedia(db, who(c), c.req.valid("param").songId, {
+              url,
+              title,
+              instruments,
+            });
+            return media ? c.json({ media }, 201) : apiError(c, 404, "Song not found");
+          } catch (error) {
+            if (error instanceof TooManyMediaError) {
+              return apiError(c, 409, error.message, "too_many_links");
+            }
+            throw error;
+          }
+        },
+      )
+      .patch(
+        "/:songId/media/:mediaId",
+        member,
+        zValidator("param", mediaParam, validationHook),
+        zValidator("json", mediaFields.partial(), validationHook),
+        async (c) => {
+          const { songId, mediaId } = c.req.valid("param");
+          const media = await updateMedia(db, who(c), songId, mediaId, c.req.valid("json"));
+          return media ? c.json({ media }) : apiError(c, 404, "Link not found");
+        },
+      )
+      .delete(
+        "/:songId/media/:mediaId",
+        member,
+        zValidator("param", mediaParam, validationHook),
+        async (c) => {
+          const { songId, mediaId } = c.req.valid("param");
+          const deleted = await deleteMedia(db, who(c), songId, mediaId);
+          return deleted ? c.body(null, 204) : apiError(c, 404, "Link not found");
         },
       )
   );

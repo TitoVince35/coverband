@@ -5,6 +5,7 @@ import { ChevronLeft, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ArchivedBanner, SongActions } from "@/components/songs/song-actions";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
+import { SongMedia } from "@/components/songs/song-media";
 import { EnergyPicker, StatusPicker } from "@/components/songs/song-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +60,7 @@ function SongPage() {
     );
   }
 
-  const { title, artist, addedBy, createdAt, notes, ...fields } = song.data;
+  const { title, artist, addedBy, createdAt, notes, media, ...fields } = song.data;
   // One change at a time: a tap while one is saved is ignored (the controls stay focusable).
   const save = (json: Partial<Pick<SongFields, "status" | "energy">>) => {
     if (!change.isPending) change.mutate(json);
@@ -148,6 +149,7 @@ function SongPage() {
           </CardContent>
         </Card>
       )}
+      <SongMedia bandSlug={bandSlug} songId={songId} media={media} />
       <p className="text-muted-foreground text-xs">
         {addedBy ? t("songs.addedBy", { name: addedBy, date }) : t("songs.addedOn", { date })}
       </p>
