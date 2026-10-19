@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { ArchivedBanner, SongActions } from "@/components/songs/song-actions";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
 import { SongMedia } from "@/components/songs/song-media";
+import { SongNotes } from "@/components/songs/song-notes";
 import { EnergyPicker, StatusPicker } from "@/components/songs/song-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -162,17 +163,8 @@ function SongPage() {
           </dl>
         </CardContent>
       </Card>
-      {notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-heading text-lg">{t("songs.notes")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap break-words">{notes}</p>
-          </CardContent>
-        </Card>
-      )}
       <SongMedia bandSlug={bandSlug} songId={songId} media={media} />
+      <SongNotes key={songId} bandSlug={bandSlug} songId={songId} notes={notes} />
       <p className="text-muted-foreground text-xs">
         {addedBy ? t("songs.addedBy", { name: addedBy, date }) : t("songs.addedOn", { date })}
       </p>
