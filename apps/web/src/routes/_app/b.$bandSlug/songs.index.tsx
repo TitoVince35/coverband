@@ -117,9 +117,10 @@ function RepertoirePage() {
                 <ul className="divide-y" aria-label={t("songs.title")}>
                   {shown.map((song) => {
                     const duration = playedDuration(song);
-                    // The key it's played in, and the tempo.
+                    // How long the band plays it, the key it's played in, and the tempo.
                     const key = song.bandKey ?? song.key;
                     const extra = [
+                      duration !== null && formatDuration(duration),
                       key && keyShort(key),
                       song.tempo && t("songs.bpm", { tempo: song.tempo }),
                     ].filter(Boolean);
@@ -128,19 +129,25 @@ function RepertoirePage() {
                         <Link
                           to="/b/$bandSlug/songs/$songId"
                           params={{ bandSlug, songId: song.id }}
-                          className="flex items-center gap-3 rounded-lg px-3 py-3 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                          className="block space-y-0.5 rounded-lg px-3 py-3 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="truncate font-medium">{song.title}</p>
+                          {/* A long title wraps onto a second line rather than being cut. */}
+                          <div className="flex items-start gap-3">
+                            <p className="line-clamp-2 min-w-0 flex-1 break-words font-medium">
+                              {song.title}
+                            </p>
+                            <div className="shrink-0">
                               <SongStatusBadge status={song.status} />
-                              <EnergyPeppers energy={song.energy} className="text-xs" />
                             </div>
-                            <p className="truncate text-muted-foreground text-sm">{song.artist}</p>
                           </div>
-                          <div className="shrink-0 text-right text-muted-foreground text-sm tabular-nums">
-                            {duration !== null && <p>{formatDuration(duration)}</p>}
-                            {extra.length > 0 && <p className="text-xs">{extra.join(" · ")}</p>}
+                          <div className="flex items-center gap-3 text-muted-foreground text-sm">
+                            <p className="min-w-0 flex-1 truncate">{song.artist}</p>
+                            {(extra.length > 0 || song.energy) && (
+                              <p className="flex shrink-0 items-center gap-1.5 text-xs tabular-nums">
+                                {extra.length > 0 && <span>{extra.join(" · ")}</span>}
+                                <EnergyPeppers energy={song.energy} />
+                              </p>
+                            )}
                           </div>
                         </Link>
                       </li>
