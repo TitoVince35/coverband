@@ -4,15 +4,13 @@ import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { bandJournal } from "../activity";
-import type { AppDeps } from "../app";
 import { ownAvatarKey } from "../avatars";
 import { updateBandGenre } from "../bands";
 import { bandMembers, bands, users } from "../db/schema";
+import type { AppDeps } from "../deps";
 import { apiError } from "../errors";
 import { instrumentsByBand, instrumentsOf, MAX_INSTRUMENTS, setInstruments } from "../instruments";
 import {
-  AlreadyInvitedError,
-  AlreadyMemberError,
   type InvitationScope,
   invite,
   listInvitations,
@@ -165,21 +163,11 @@ export function bandRoutes(deps: AppDeps) {
         limit,
         zValidator("json", inviteBody, validationHook),
         async (c) => {
-          try {
-            const invitation = await invite(deps, musiciansOf(c.var.band), {
-              ...c.req.valid("json"),
-              invitedById: c.var.user?.id ?? "",
-            });
-            return c.json({ id: invitation.id }, 201);
-          } catch (error) {
-            if (error instanceof AlreadyInvitedError) {
-              return apiError(c, 409, error.message, "already_invited");
-            }
-            if (error instanceof AlreadyMemberError) {
-              return apiError(c, 409, error.message, "already_member");
-            }
-            throw error;
-          }
+          const invitation = await invite(deps, musiciansOf(c.var.band), {
+            ...c.req.valid("json"),
+            invitedById: c.var.user?.id ?? "",
+          });
+          return c.json({ id: invitation.id }, 201);
         },
       )
       .post(

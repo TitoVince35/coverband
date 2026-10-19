@@ -1,8 +1,8 @@
 import { asc, eq } from "drizzle-orm";
-import type { AppDeps } from "./app";
 import { createAuth } from "./auth";
 import { createDb, type Db } from "./db/client";
 import { activity } from "./db/schema";
+import type { AppDeps } from "./deps";
 import { createMemoryMailer } from "./mail/mailer";
 import { createMemoryStorage } from "./storage";
 

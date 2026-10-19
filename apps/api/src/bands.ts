@@ -2,11 +2,13 @@ import { slugify } from "@coverband/shared";
 import { eq, sql } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db, Tx } from "./db/client";
+import { isUniqueViolation } from "./db/pg-errors";
 import { bands } from "./db/schema";
+import { AppError } from "./errors";
 
-export class BandNameTakenError extends Error {
+export class BandNameTakenError extends AppError {
   constructor() {
-    super("Band name already taken");
+    super("band_name_taken", "Band name already taken");
   }
 }
 
@@ -33,12 +35,6 @@ async function freeSlug(tx: Tx, base: string): Promise<string> {
   return slug;
 }
 
-/** Two people choosing the same name at the same moment: the unique index decides. */
-function isNameClash(error: unknown): boolean {
-  const cause = (error as { cause?: { code?: string; constraint_name?: string } })?.cause;
-  return cause?.code === "23505" && cause.constraint_name === "bands_name_lower_unique";
-}
-
 export async function createBand(
   tx: Tx,
   input: { name: string; genre?: string | undefined },
@@ -53,7 +49,8 @@ export async function createBand(
     if (!band) throw new Error("Band insert returned nothing");
     return band;
   } catch (error) {
-    throw isNameClash(error) ? new BandNameTakenError() : error;
+    // Two people choosing the same name at the same moment: the unique index decides.
+    throw isUniqueViolation(error, "bands_name_lower_unique") ? new BandNameTakenError() : error;
   }
 }
 

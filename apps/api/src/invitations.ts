@@ -3,6 +3,7 @@ import { and, desc, eq, isNull, type SQL, sql } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db, Tx } from "./db/client";
 import { bandMembers, invitations, users } from "./db/schema";
+import { AppError } from "./errors";
 import type { Mailer } from "./mail/mailer";
 import { leaderInvitationEmail, musicianInvitationEmail } from "./mail/templates";
 
@@ -29,15 +30,15 @@ export type InvitationScope =
 
 export const LEADER_INVITATIONS: InvitationScope = { role: "leader" };
 
-export class AlreadyInvitedError extends Error {
+export class AlreadyInvitedError extends AppError {
   constructor(email: string) {
-    super(`${email} already has a pending invitation`);
+    super("already_invited", `${email} already has a pending invitation`);
   }
 }
 
-export class AlreadyMemberError extends Error {
+export class AlreadyMemberError extends AppError {
   constructor(email: string) {
-    super(`${email} is already a member of this band`);
+    super("already_member", `${email} is already a member of this band`);
   }
 }
 

@@ -3,11 +3,10 @@ import { zValidator } from "@hono/zod-validator";
 import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import type { AppDeps } from "../app";
 import { bandMembers, bands, users } from "../db/schema";
+import type { AppDeps } from "../deps";
 import { apiError } from "../errors";
 import {
-  AlreadyInvitedError,
   inviteLeader,
   listLeaderInvitations,
   resendLeaderInvitation,
@@ -65,15 +64,8 @@ export function adminRoutes(deps: AppDeps) {
     .post("/invitations", limit, zValidator("json", inviteBody, validationHook), async (c) => {
       const { email, language } = c.req.valid("json");
       const invitedById = c.var.user?.id ?? "";
-      try {
-        const invitation = await inviteLeader(deps, { email, language, invitedById });
-        return c.json({ id: invitation.id }, 201);
-      } catch (error) {
-        if (error instanceof AlreadyInvitedError) {
-          return apiError(c, 409, error.message, "already_invited");
-        }
-        throw error;
-      }
+      const invitation = await inviteLeader(deps, { email, language, invitedById });
+      return c.json({ id: invitation.id }, 201);
     })
     .post(
       "/invitations/:id/resend",

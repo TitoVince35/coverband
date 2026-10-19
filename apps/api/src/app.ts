@@ -3,10 +3,8 @@ import { serveStatic } from "@hono/bun";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
-import type { Auth } from "./auth";
-import type { Db } from "./db/client";
-import { apiError } from "./errors";
-import type { Mailer } from "./mail/mailer";
+import type { AppDeps } from "./deps";
+import { AppError, apiError, appErrorResponse } from "./errors";
 import { requestGuards, securityHeaders } from "./middleware/security";
 import { loadSession, type SessionEnv } from "./middleware/session";
 import { adminRoutes } from "./routes/admin";
@@ -16,20 +14,6 @@ import { instrumentRoutes } from "./routes/instruments";
 import { invitationRoutes } from "./routes/invitations";
 import { meRoutes } from "./routes/me";
 import { userRoutes } from "./routes/users";
-import type { Storage } from "./storage";
-
-/** Services the API routes use. Tests can pass a database that is never connected to. */
-export type AppDeps = {
-  auth: Auth;
-  db: Db;
-  mailer: Mailer;
-  /** Object storage for files (avatars). */
-  storage: Storage;
-  /** Public URL of the web app, for links in emails. */
-  appUrl: string;
-  /** Other origins the web app may be loaded from (`bun run dev:lan`). */
-  trustedOrigins?: string[];
-};
 
 export type AppOptions = {
   deps: AppDeps;
@@ -63,7 +47,11 @@ export function createApp({ deps, webDistDir, log = true }: AppOptions) {
   }
   app.use(securityHeaders({ https: deps.appUrl.startsWith("https:") }));
 
+  // Expected refusals thrown by the domain become their JSON error; anything else is a 500.
   app.onError((err, c) => {
+    if (err instanceof AppError) {
+      return appErrorResponse(c, err);
+    }
     if (err instanceof HTTPException) {
       return apiError(c, err.status, err.message || "Request refused");
     }

@@ -2,9 +2,8 @@ import { FIELD_MAX_LENGTH } from "@coverband/shared";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import type { AppDeps } from "../app";
-import { InvalidImageError, removeAvatar, setAvatar } from "../avatars";
-import { apiError } from "../errors";
+import { removeAvatar, setAvatar } from "../avatars";
+import type { AppDeps } from "../deps";
 import { requireUser, type SessionEnv } from "../middleware/session";
 import { updateProfile } from "../profile";
 import { validationHook } from "../validation";
@@ -33,14 +32,7 @@ export function meRoutes(deps: AppDeps) {
       // 100 KB body limit.
       .put("/avatar", async (c) => {
         const bytes = new Uint8Array(await c.req.arrayBuffer());
-        try {
-          return c.json({ avatarUrl: await setAvatar(deps, c.var.user?.id ?? "", bytes) });
-        } catch (error) {
-          if (error instanceof InvalidImageError) {
-            return apiError(c, 400, error.message, "invalid_image");
-          }
-          throw error;
-        }
+        return c.json({ avatarUrl: await setAvatar(deps, c.var.user?.id ?? "", bytes) });
       })
       .delete("/avatar", async (c) => {
         await removeAvatar(deps, c.var.user?.id ?? "");

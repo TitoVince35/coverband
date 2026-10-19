@@ -2,8 +2,9 @@ import { ADMIN_ROLE, avatarUrl } from "@coverband/shared";
 import { and, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "./activity";
-import type { AppDeps } from "./app";
 import { bandMembers, users } from "./db/schema";
+import type { AppDeps } from "./deps";
+import { AppError } from "./errors";
 
 type Deps = Pick<AppDeps, "db" | "storage">;
 
@@ -29,9 +30,9 @@ export function ownAvatarKey(userId: string, image: string | null | undefined): 
   return image && pattern.test(image) ? image : null;
 }
 
-export class InvalidImageError extends Error {
+export class InvalidImageError extends AppError {
   constructor() {
-    super("Not a WebP or JPEG image");
+    super("invalid_image", "Not a WebP or JPEG image");
   }
 }
 

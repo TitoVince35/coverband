@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import type { AppDeps } from "../app";
+import type { AppDeps } from "../deps";
 import { sharedCustomInstruments } from "../instruments";
 import { requireUser, type SessionEnv } from "../middleware/session";
 
