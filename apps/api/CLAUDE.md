@@ -58,6 +58,10 @@ Name and slug logic in `src/bands.ts`. Band names are unique case-insensitively;
 
 Instruments are per band membership (`member_instruments`, `src/instruments.ts`): an ordered list (the first is the main one) of known codes or free text, never both (a database check). Values are always cleaned with `cleanInstruments` (`parseInstrument` from `@coverband/shared`: free text matching a known instrument becomes its code, unknown codes become free text, duplicates dropped, at most `MAX_INSTRUMENTS`). Members change only their own (`PUT /api/bands/:bandSlug/members/me/instruments`). Free text used in at least two bands is suggested to everyone (`GET /api/instruments/suggestions`); one band's own labels never are.
 
+## Songs
+
+A band's repertoire (`songs`, `src/songs.ts`, routes in `src/routes/songs.ts` under `/api/bands/:bandSlug/songs`): every member lists, adds and edits songs. Title and artist identify a song **without a unique constraint**: a song matching another one of the band (`findDuplicateSong` / `songKey` from `@coverband/shared`: case, accents, punctuation and spaces ignored) is refused with 409 `song_duplicate` unless the request sends `confirmDuplicate: true`, which the web app asks for ("add anyway"). An edit is only checked when its title or artist changes. Durations are seconds (`standardDuration`: the original, `ownDuration`: the band's), typed as `m:ss` (`parseDuration`). Activity: `song.added`, `song.updated` (with the names of the changed fields); the journal shows the song's current title.
+
 ## Files
 
 - Object storage through a `Storage` (`src/storage.ts`, `AppDeps.storage`): `put`, `get` (a stream, or null), `delete`. Bun's built-in S3 client, no SDK. Garage locally (`docker/garage/`, started and prepared by `bun run db:up`, also in CI), Scaleway Object Storage in production: only `S3_*` configuration. Setting up the Scaleway bucket and its key is a production setup step (#8).

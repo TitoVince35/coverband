@@ -16,6 +16,8 @@ const SENTENCES = {
   "invitation.resent": "journal.invitationResent",
   "invitation.revoked": "journal.invitationRevoked",
   "member.instruments_changed": "journal.instrumentsChanged",
+  "song.added": "journal.songAdded",
+  "song.updated": "journal.songUpdated",
 } as const satisfies Partial<Record<ActivityAction, string>>;
 
 const hasSentence = (action: string): action is keyof typeof SENTENCES => action in SENTENCES;
@@ -48,12 +50,18 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
             {entries.map((entry) => {
               if (!hasSentence(entry.action)) return null; // narrows the action's type
               const name = entry.actorName ?? t("journal.someone");
+              // The song's current title; "a song" once it's gone.
+              const songTitle = "song" in entry ? entry.song : null;
+              const song = songTitle
+                ? t("journal.songTitle", { title: songTitle })
+                : t("journal.aSong");
               const sentence =
                 entry.action === "band.genre_changed" && !("genre" in entry && entry.genre)
                   ? t("journal.genreRemoved", { name })
                   : t(SENTENCES[entry.action], {
                       name,
                       genre: "genre" in entry ? entry.genre : "",
+                      song,
                     });
               return (
                 <li key={entry.id}>

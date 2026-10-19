@@ -51,6 +51,9 @@ function BandLayout() {
         >
           {t("band.home")}
         </Link>
+        <Link to="/b/$bandSlug/songs" params={{ bandSlug }} className={tab}>
+          {t("songs.title")}
+        </Link>
         <Link to="/b/$bandSlug/lineup" params={{ bandSlug }} className={tab}>
           {t("lineup.title")}
         </Link>

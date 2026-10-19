@@ -9,6 +9,7 @@ export function apiError<S extends ContentfulStatusCode>(
   status: S,
   message: string,
   code: ErrorCode = errorCodeForStatus(status),
+  details?: Record<string, string>,
 ) {
-  return c.json<ApiErrorBody, S>({ error: { code, message } }, status);
+  return c.json<ApiErrorBody, S>({ error: { code, message, ...(details && { details }) } }, status);
 }

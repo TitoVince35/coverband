@@ -36,6 +36,13 @@
       "when": 1792334000828,
       "tag": "0004_member_instruments",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792372448453,
+      "tag": "0005_songs",
+      "breakpoints": true
     }
   ]
 }

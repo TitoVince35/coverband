@@ -20,12 +20,14 @@ export const ERROR_CODES = [
   "already_member",
   "too_many_requests",
   "invalid_image",
+  "song_duplicate",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
 export type ApiErrorBody = {
-  error: { code: ErrorCode; message: string };
+  /** `details`: what the web app needs to explain some errors (the song a duplicate matches). */
+  error: { code: ErrorCode; message: string; details?: Record<string, string> };
 };
 
 const CODE_BY_STATUS: Record<number, ErrorCode> = {

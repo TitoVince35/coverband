@@ -13,11 +13,13 @@ export const ACTIVITY_ACTIONS = [
   "user.profile_updated",
   "user.avatar_changed",
   "member.instruments_changed",
+  "song.added",
+  "song.updated",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
 
 /** What an activity is about (`target_type`). */
-export const ACTIVITY_TARGETS = ["invitation", "user", "band"] as const;
+export const ACTIVITY_TARGETS = ["invitation", "user", "band", "song"] as const;
 
 export type ActivityTarget = (typeof ACTIVITY_TARGETS)[number];
