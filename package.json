@@ -14,7 +14,7 @@
     "dev:api": "bun --env-file=.env run --filter @coverband/api dev",
     "dev:web": "bun run --filter @coverband/web dev",
     "build": "bun run --filter @coverband/web build",
-    "serve": "WEB_DIST_DIR=apps/web/dist BETTER_AUTH_URL=http://localhost:3000 bun --env-file=.env apps/api/src/index.ts",
+    "serve": "WEB_DIST_DIR=apps/web/dist BETTER_AUTH_URL=http://localhost:3000 bun --env-file=.env apps/api/src/main.ts",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "bun run --filter '*' typecheck",
@@ -25,7 +25,7 @@
     "db:down": "docker compose down",
     "db:generate": "bun --env-file=.env run --filter @coverband/api db:generate",
     "db:migrate": "bun --env-file=.env run --filter @coverband/api db:migrate",
-    "mail:test": "bun --env-file=.env apps/api/src/mail/send-test.ts",
+    "mail:test": "bun --env-file=.env apps/api/src/adapters/mail/send-test.ts",
     "db:studio": "bun --env-file=.env run --filter @coverband/api db:studio"
   },
   "devDependencies": {

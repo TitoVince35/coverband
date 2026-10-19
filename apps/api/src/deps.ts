@@ -1,7 +1,7 @@
-import type { Auth } from "./auth";
-import type { Db } from "./db/client";
-import type { Mailer } from "./mail/mailer";
-import type { Storage } from "./storage";
+import type { Auth } from "./adapters/auth";
+import type { Mailer } from "./adapters/mail/mailer";
+import type { Storage } from "./adapters/storage";
+import type { Db } from "./core/db/client";
 
 /** Services the API routes use. Tests can pass a database that is never connected to. */
 export type AppDeps = {

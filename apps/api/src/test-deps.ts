@@ -1,10 +1,10 @@
 import { asc, eq } from "drizzle-orm";
-import { createAuth } from "./auth";
-import { createDb, type Db } from "./db/client";
-import { activity } from "./db/schema";
+import { createAuth } from "./adapters/auth";
+import { createMemoryMailer } from "./adapters/mail/mailer";
+import { createMemoryStorage } from "./adapters/storage";
+import { createDb, type Db } from "./core/db/client";
+import { activity } from "./core/db/schema";
 import type { AppDeps } from "./deps";
-import { createMemoryMailer } from "./mail/mailer";
-import { createMemoryStorage } from "./storage";
 
 /**
  * App dependencies for tests. Without a database URL, the database is never connected to

@@ -8,11 +8,11 @@
   },
   "scripts": {
     "dev": "bun run --parallel dev:server db:studio",
-    "dev:server": "bun --watch src/index.ts",
-    "start": "bun src/index.ts",
+    "dev:server": "bun --watch src/main.ts",
+    "start": "bun src/main.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "bun src/db/migrate.ts",
+    "db:migrate": "bun src/core/db/migrate.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

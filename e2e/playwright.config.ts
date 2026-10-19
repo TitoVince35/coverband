@@ -31,7 +31,7 @@ export default defineConfig({
   ],
   // Production-like: the API serves the built web app (`bun run build` + `bun run serve`).
   webServer: {
-    command: "bun run build && bun apps/api/src/index.ts",
+    command: "bun run build && bun apps/api/src/main.ts",
     cwd: "..",
     url: `${baseURL}/api/health`,
     reuseExistingServer: !ci,

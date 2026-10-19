@@ -34,7 +34,7 @@ bun run e2e          # end-to-end tests (Playwright): builds and serves the app 
 cp .env.example .env # first time only
 bun run db:up        # start local Postgres (port 5432), Mailpit (SMTP 1025, emails at http://localhost:8025)
                      # and Garage (S3 storage on http://localhost:3900, bucket and dev key created; web UI on :3909)
-bun run db:generate  # generate a SQL migration from apps/api/src/db/schema.ts
+bun run db:generate  # generate a SQL migration from apps/api/src/core/db/schema.ts
 bun run db:migrate   # apply pending migrations
 bun run db:studio    # browse the database
 bun run mail:test you@example.com fr   # send a test email (lands in Mailpit locally)
