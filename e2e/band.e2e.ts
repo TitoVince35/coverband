@@ -233,21 +233,45 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(leader.getByText("Notes saved")).toBeVisible();
   await expect(saveNotes).toBeDisabled();
 
-  // The lyrics: closed on a phone; typed in a modal that asks before closing with changes.
+  // The lyrics: closed on a phone. Searched online (a fake LRCLIB), the version closest to the
+  // original duration first; previewed, then used.
   await leader.getByText("Lyrics", { exact: true }).click();
   await expect(leader.getByText("No lyrics yet.")).toBeVisible();
-  await leader.getByRole("button", { name: "Type them in" }).click();
+  await leader.getByRole("button", { name: "Search lyrics online" }).click();
+  const found = leader.getByRole("list", { name: "Lyrics found" }).getByRole("button");
+  await expect(found).toHaveCount(2);
+  await expect(found.first()).toContainText("No Need to Argue · 5:06");
+  await found.first().click();
+  await expect(leader.getByRole("dialog")).toContainText("Child is slowly taken");
+  await leader.getByRole("button", { name: "Use these lyrics" }).click();
+  await expect(leader.getByText("Lyrics saved")).toBeVisible();
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
+  await expect(leader.getByText("Lyrics from LRCLIB")).toBeVisible();
+
+  // From the editor, "Replace from online" asks first when there are changes, then searches.
+  await leader.getByRole("button", { name: "Edit", exact: true }).click();
+  await leader.getByRole("dialog").getByRole("textbox", { name: "Lyrics" }).fill("Typo");
+  await leader.getByRole("button", { name: "Replace from online" }).click();
+  await leader.getByRole("alertdialog").getByRole("button", { name: "Close" }).click();
+  await expect(leader.getByRole("list", { name: "Lyrics found" })).toBeVisible();
+  await leader.keyboard.press("Escape");
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
+
+  // Edited in a modal that asks before closing with changes.
+  await leader.getByRole("button", { name: "Edit", exact: true }).click();
   const lyrics = leader.getByRole("dialog");
   await lyrics
     .getByRole("textbox", { name: "Lyrics" })
-    .fill("Another head hangs lowly\nChild is slowly taken");
+    .fill("Another head hangs lowly\nChild is slowly taken\nAnd the violence caused such silence");
   await leader.keyboard.press("Escape");
   await expect(leader.getByText("Close without saving the lyrics?")).toBeVisible();
   await leader.getByRole("button", { name: "Keep editing" }).click();
   await lyrics.getByRole("button", { name: "Save" }).click();
-  await expect(leader.getByText("Lyrics saved")).toBeVisible();
+  await expect(leader.getByText("Lyrics saved").first()).toBeVisible();
   await expect(leader.getByRole("dialog")).toHaveCount(0);
-  await expect(leader.getByText("Child is slowly taken")).toBeVisible();
+  await expect(leader.getByText("And the violence caused such silence")).toBeVisible();
+  // Still credited: fetched, then fixed.
+  await expect(leader.getByText("Lyrics from LRCLIB")).toBeVisible();
 
   // A link, for the drummer: the provider shows, it opens in a new tab.
   await leader.getByRole("button", { name: "Add a link" }).click();

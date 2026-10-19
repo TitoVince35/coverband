@@ -182,7 +182,20 @@
         "stay": "Continuer",
         "leave": "Fermer"
       },
-      "length": "{{count}} / {{max}} caractères"
+      "length": "{{count}} / {{max}} caractères",
+      "credit": "Paroles fournies par LRCLIB",
+      "search": {
+        "button": "Chercher les paroles en ligne",
+        "replace": "Remplacer depuis Internet",
+        "title": "Paroles en ligne",
+        "searching": "Recherche…",
+        "none": "Aucune parole trouvée pour ce morceau.",
+        "matches": "Paroles trouvées",
+        "noAlbum": "Album inconnu",
+        "back": "Retour",
+        "use": "Utiliser ces paroles",
+        "description": "Paroles trouvées en ligne pour ce morceau : choisissez une version."
+      }
     }
   },
   "login": {
@@ -374,7 +387,8 @@
     "invalid_image": "Ce fichier n'est pas une image utilisable. Choisissez une photo (JPEG, PNG, WebP…).",
     "song_duplicate": "Ce morceau est déjà dans votre répertoire.",
     "song_in_use": "Ce morceau est utilisé, dans une setlist par exemple : archivez-le plutôt.",
-    "too_many_links": "Ce morceau a déjà le nombre maximum de liens."
+    "too_many_links": "Ce morceau a déjà le nombre maximum de liens.",
+    "lyrics_unavailable": "Le service de paroles ne répond pas pour l'instant. Réessayez plus tard, ou saisissez-les."
   },
   "instruments": {
     "picker": {

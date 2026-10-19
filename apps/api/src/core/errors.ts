@@ -34,6 +34,7 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   song_duplicate: 409,
   song_in_use: 409,
   too_many_links: 409,
+  lyrics_unavailable: 503,
 };
 
 /**

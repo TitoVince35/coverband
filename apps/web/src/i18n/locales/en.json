@@ -182,7 +182,20 @@
         "stay": "Keep editing",
         "leave": "Close"
       },
-      "length": "{{count}} / {{max}} characters"
+      "length": "{{count}} / {{max}} characters",
+      "credit": "Lyrics from LRCLIB",
+      "search": {
+        "button": "Search lyrics online",
+        "replace": "Replace from online",
+        "title": "Lyrics online",
+        "searching": "Searching…",
+        "none": "No lyrics found for this song.",
+        "matches": "Lyrics found",
+        "noAlbum": "Unknown album",
+        "back": "Back",
+        "use": "Use these lyrics",
+        "description": "Lyrics found online for this song: choose a version."
+      }
     }
   },
   "login": {
@@ -374,7 +387,8 @@
     "invalid_image": "This file isn't a usable image. Choose a photo (JPEG, PNG, WebP…).",
     "song_duplicate": "This song is already in your repertoire.",
     "song_in_use": "This song is used, in a setlist for example: archive it instead.",
-    "too_many_links": "This song already has as many links as it can."
+    "too_many_links": "This song already has as many links as it can.",
+    "lyrics_unavailable": "The lyrics service isn't answering right now. Try again later, or type them in."
   },
   "instruments": {
     "picker": {

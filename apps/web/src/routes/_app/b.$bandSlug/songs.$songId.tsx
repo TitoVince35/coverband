@@ -165,7 +165,12 @@ function SongPage() {
         </CardContent>
       </Card>
       <SongMedia bandSlug={bandSlug} songId={songId} media={media} />
-      <SongLyrics bandSlug={bandSlug} songId={songId} lyrics={song.data.lyrics} />
+      <SongLyrics
+        bandSlug={bandSlug}
+        songId={songId}
+        lyrics={song.data.lyrics}
+        source={song.data.lyricsSource}
+      />
       <SongNotes key={songId} bandSlug={bandSlug} songId={songId} notes={notes} />
       <p className="text-muted-foreground text-xs">
         {addedBy ? t("songs.addedBy", { name: addedBy, date }) : t("songs.addedOn", { date })}

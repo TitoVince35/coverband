@@ -23,6 +23,7 @@ export const ERROR_CODES = [
   "song_duplicate",
   "song_in_use",
   "too_many_links",
+  "lyrics_unavailable",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

@@ -1,5 +1,6 @@
 import { APP_NAME } from "@coverband/shared";
 import { createAuth } from "./adapters/auth";
+import { createLrclibProvider } from "./adapters/lyrics";
 import { createSmtpMailer } from "./adapters/mail/mailer";
 import { createS3Storage } from "./adapters/storage";
 import { createApp } from "./app";
@@ -31,6 +32,10 @@ const app = createApp({
     db,
     mailer,
     storage,
+    lyrics: createLrclibProvider({
+      userAgent: `${APP_NAME} (${env.BETTER_AUTH_URL})`,
+      baseUrl: env.LRCLIB_URL,
+    }),
     appUrl: env.BETTER_AUTH_URL,
     trustedOrigins: env.TRUSTED_ORIGINS,
   },
