@@ -2,11 +2,10 @@ import { FIELD_MAX_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@cov
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import type { AppDeps } from "../app";
 import { isBandNameAvailable } from "../bands";
-import { apiError } from "../errors";
+import type { AppDeps } from "../deps";
 import type { SessionEnv } from "../middleware/session";
-import { acceptInvitation, getInvitation, OnboardingError } from "../onboarding";
+import { acceptInvitation, getInvitation } from "../onboarding";
 import { validationHook } from "../validation";
 
 const text = (max: number) => z.string().trim().min(1).max(max);
@@ -39,12 +38,6 @@ const acceptBody = z.object({
  */
 export function invitationRoutes(deps: AppDeps) {
   return new Hono<SessionEnv>()
-    .onError((error, c) => {
-      if (error instanceof OnboardingError) {
-        return apiError(c, error.status, error.message, error.code);
-      }
-      throw error;
-    })
     .get("/:token", zValidator("param", tokenParam, validationHook), async (c) => {
       return c.json(await getInvitation(deps, c.req.valid("param").token));
     })

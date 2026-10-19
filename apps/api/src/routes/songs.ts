@@ -12,21 +12,12 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
-import type { AppDeps } from "../app";
+import type { AppDeps } from "../deps";
 import { apiError } from "../errors";
 import { MAX_INSTRUMENTS } from "../instruments";
 import { type BandEnv, requireLeader, requireMember } from "../middleware/band";
-import { addMedia, deleteMedia, mediaOf, TooManyMediaError, updateMedia } from "../song-media";
-import {
-  addSong,
-  DuplicateSongError,
-  deleteSong,
-  getSong,
-  listSongs,
-  SongInUseError,
-  setArchived,
-  updateSong,
-} from "../songs";
+import { addMedia, deleteMedia, mediaOf, updateMedia } from "../song-media";
+import { addSong, deleteSong, getSong, listSongs, setArchived, updateSong } from "../songs";
 import { validationHook } from "../validation";
 
 const duration = z.number().int().min(0).max(MAX_SONG_DURATION).nullable();
@@ -95,10 +86,6 @@ const mediaFields = z.object({
 const addMediaBody = mediaFields.partial({ title: true, instruments: true });
 const mediaParam = songParam.extend({ mediaId: z.uuid() });
 
-/** 409 naming the song it matches, for the warning ("Already in your repertoire: …"). */
-const duplicate = (c: Context, { message, song }: DuplicateSongError) =>
-  apiError(c, 409, message, "song_duplicate", song);
-
 /** A band's repertoire, under /api/bands/:bandSlug/songs: every member reads, adds and edits. */
 export function songRoutes(deps: AppDeps) {
   const { db } = deps;
@@ -117,12 +104,7 @@ export function songRoutes(deps: AppDeps) {
       })
       .post("/", member, zValidator("json", addBody, validationHook), async (c) => {
         const { confirmDuplicate, ...fields } = c.req.valid("json");
-        try {
-          return c.json({ song: await addSong(db, who(c), fields, { confirmDuplicate }) }, 201);
-        } catch (error) {
-          if (error instanceof DuplicateSongError) return duplicate(c, error);
-          throw error;
-        }
+        return c.json({ song: await addSong(db, who(c), fields, { confirmDuplicate }) }, 201);
       })
       .get("/:songId", member, zValidator("param", songParam, validationHook), async (c) => {
         const { songId } = c.req.valid("param");
@@ -137,15 +119,10 @@ export function songRoutes(deps: AppDeps) {
         zValidator("json", updateBody, validationHook),
         async (c) => {
           const { confirmDuplicate, ...changes } = c.req.valid("json");
-          try {
-            const song = await updateSong(db, who(c), c.req.valid("param").songId, changes, {
-              confirmDuplicate,
-            });
-            return song ? c.json({ song }) : apiError(c, 404, "Song not found");
-          } catch (error) {
-            if (error instanceof DuplicateSongError) return duplicate(c, error);
-            throw error;
-          }
+          const song = await updateSong(db, who(c), c.req.valid("param").songId, changes, {
+            confirmDuplicate,
+          });
+          return song ? c.json({ song }) : apiError(c, 404, "Song not found");
         },
       )
       // Any member archives and restores.
@@ -174,15 +151,8 @@ export function songRoutes(deps: AppDeps) {
         requireLeader,
         zValidator("param", songParam, validationHook),
         async (c) => {
-          try {
-            const deleted = await deleteSong(db, who(c), c.req.valid("param").songId);
-            return deleted ? c.body(null, 204) : apiError(c, 404, "Song not found");
-          } catch (error) {
-            if (error instanceof SongInUseError) {
-              return apiError(c, 409, error.message, "song_in_use");
-            }
-            throw error;
-          }
+          const deleted = await deleteSong(db, who(c), c.req.valid("param").songId);
+          return deleted ? c.body(null, 204) : apiError(c, 404, "Song not found");
         },
       )
       // A song's links: every member adds, edits and removes them.
@@ -193,19 +163,12 @@ export function songRoutes(deps: AppDeps) {
         zValidator("json", addMediaBody, validationHook),
         async (c) => {
           const { url, title = null, instruments = [] } = c.req.valid("json");
-          try {
-            const media = await addMedia(db, who(c), c.req.valid("param").songId, {
-              url,
-              title,
-              instruments,
-            });
-            return media ? c.json({ media }, 201) : apiError(c, 404, "Song not found");
-          } catch (error) {
-            if (error instanceof TooManyMediaError) {
-              return apiError(c, 409, error.message, "too_many_links");
-            }
-            throw error;
-          }
+          const media = await addMedia(db, who(c), c.req.valid("param").songId, {
+            url,
+            title,
+            instruments,
+          });
+          return media ? c.json({ media }, 201) : apiError(c, 404, "Song not found");
         },
       )
       .patch(

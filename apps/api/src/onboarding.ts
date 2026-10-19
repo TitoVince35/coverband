@@ -1,33 +1,24 @@
-import { displayName, type ErrorCode } from "@coverband/shared";
+import { displayName } from "@coverband/shared";
 import { and, eq } from "drizzle-orm";
 import { recordActivity } from "./activity";
-import type { AppDeps } from "./app";
 import type { SessionUser } from "./auth";
-import { BandNameTakenError, createBand } from "./bands";
+import { createBand } from "./bands";
 import { accounts, bandMembers, bands, invitations, users } from "./db/schema";
+import type { AppDeps } from "./deps";
+import { AppError } from "./errors";
 import { cleanInstruments, writeInstruments } from "./instruments";
 import { hashToken, invitationStatus } from "./invitations";
 
-/** An expected refusal, turned into an API error with a stable code. */
-export class OnboardingError extends Error {
-  constructor(
-    readonly status: 400 | 401 | 403 | 404 | 409 | 410,
-    readonly code: ErrorCode,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-
 type Deps = Pick<AppDeps, "db" | "auth"> & { now?: () => Date };
 
+/** Why an invitation that isn't pending can't be used. */
 const PROBLEMS = {
-  expired: new OnboardingError(410, "invitation_expired", "Invitation expired"),
-  revoked: new OnboardingError(410, "invitation_revoked", "Invitation revoked"),
-  accepted: new OnboardingError(410, "invitation_used", "Invitation already used"),
+  expired: () => new AppError("invitation_expired", "Invitation expired"),
+  revoked: () => new AppError("invitation_revoked", "Invitation revoked"),
+  accepted: () => new AppError("invitation_used", "Invitation already used"),
 } as const;
 
-const notFound = () => new OnboardingError(404, "invitation_not_found", "Invitation not found");
+const notFound = () => new AppError("invitation_not_found", "Invitation not found");
 
 /** Public view of an invitation, for the wizard. Throws if it can no longer be used. */
 export async function getInvitation({ db, now = () => new Date() }: Deps, token: string) {
@@ -48,7 +39,7 @@ export async function getInvitation({ db, now = () => new Date() }: Deps, token:
     .where(eq(invitations.tokenHash, hashToken(token)));
   if (!row) throw notFound();
   const status = invitationStatus(row, now());
-  if (status !== "pending") throw PROBLEMS[status];
+  if (status !== "pending") throw PROBLEMS[status]();
 
   const [account] = await db.select({ id: users.id }).from(users).where(eq(users.email, row.email));
   return {
@@ -90,14 +81,7 @@ export async function acceptInvitation(
     ? await (await deps.auth.$context).password.hash(input.newAccount.password)
     : null;
 
-  try {
-    return await createMembership(deps, token, input, sessionUser, now, passwordHash);
-  } catch (error) {
-    if (error instanceof BandNameTakenError) {
-      throw new OnboardingError(409, "band_name_taken", "Band name already taken");
-    }
-    throw error;
-  }
+  return createMembership(deps, token, input, sessionUser, now, passwordHash);
 }
 
 function createMembership(
@@ -116,7 +100,7 @@ function createMembership(
       .for("update");
     if (!invitation) throw notFound();
     const status = invitationStatus(invitation, now);
-    if (status !== "pending") throw PROBLEMS[status];
+    if (status !== "pending") throw PROBLEMS[status]();
 
     const [existing] = await tx
       .select({ id: users.id })
@@ -126,18 +110,18 @@ function createMembership(
     let userId: string;
     if (existing) {
       if (!sessionUser) {
-        throw new OnboardingError(401, "unauthorized", "Log in to accept this invitation");
+        throw new AppError("unauthorized", "Log in to accept this invitation");
       }
       if (sessionUser.id !== existing.id) {
-        throw new OnboardingError(403, "invitation_wrong_account", "Logged in as someone else");
+        throw new AppError("invitation_wrong_account", "Logged in as someone else");
       }
       userId = existing.id;
     } else {
       if (sessionUser) {
-        throw new OnboardingError(403, "invitation_wrong_account", "Logged in as someone else");
+        throw new AppError("invitation_wrong_account", "Logged in as someone else");
       }
       if (!input.newAccount || !passwordHash) {
-        throw new OnboardingError(400, "bad_request", "Profile and password are required");
+        throw new AppError("bad_request", "Profile and password are required");
       }
       const { firstName, lastName, nickname, password: _ } = input.newAccount;
       const [user] = await tx
@@ -171,7 +155,7 @@ function createMembership(
     let band: { id: string; slug: string };
     if (invitation.role === "leader") {
       if (!input.bandName) {
-        throw new OnboardingError(400, "bad_request", "Band name is required");
+        throw new AppError("bad_request", "Band name is required");
       }
       band = await createBand(tx, { name: input.bandName, genre: input.genre });
       await recordActivity(tx, {
@@ -191,7 +175,7 @@ function createMembership(
         .from(bandMembers)
         .where(and(eq(bandMembers.bandId, joined.id), eq(bandMembers.userId, userId)));
       if (member) {
-        throw new OnboardingError(409, "already_member", "Already a member of this band");
+        throw new AppError("already_member", "Already a member of this band");
       }
       band = joined;
     }

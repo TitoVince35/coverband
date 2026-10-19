@@ -2,7 +2,9 @@ import { findDuplicateSong, type MusicalKey, type SongStatus, songKey } from "@c
 import { and, asc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db } from "./db/client";
+import { isForeignKeyViolation } from "./db/pg-errors";
 import { songs, users } from "./db/schema";
+import { AppError } from "./errors";
 
 export type SongFields = {
   title: string;
@@ -25,9 +27,10 @@ export type SongChanges = { [F in keyof SongFields]?: SongFields[F] | undefined 
 export type NewSong = SongChanges & Pick<SongFields, "title" | "artist">;
 
 /** A song with the same title and artist is already in the repertoire (only a warning). */
-export class DuplicateSongError extends Error {
+// Its details name the song it matches, for the warning ("Already in your repertoire: …").
+export class DuplicateSongError extends AppError {
   constructor(readonly song: { id: string; title: string; artist: string }) {
-    super("A song with this title and artist is already in the repertoire");
+    super("song_duplicate", "A song with this title and artist is already in the repertoire", song);
   }
 }
 
@@ -207,9 +210,9 @@ export function setArchived(db: Db, member: Member, id: string, archived: boolea
 }
 
 /** Something uses the song (a setlist): it can only be archived. */
-export class SongInUseError extends Error {
+export class SongInUseError extends AppError {
   constructor() {
-    super("This song is used: archive it instead");
+    super("song_in_use", "This song is used: archive it instead");
   }
 }
 
@@ -235,8 +238,6 @@ export async function deleteSong(db: Db, member: Member, id: string) {
       return true;
     });
   } catch (error) {
-    const cause = (error as { cause?: { code?: string } })?.cause;
-    if (cause?.code === "23503") throw new SongInUseError(); // foreign_key_violation
-    throw error;
+    throw isForeignKeyViolation(error) ? new SongInUseError() : error;
   }
 }

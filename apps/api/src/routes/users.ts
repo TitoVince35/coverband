@@ -1,8 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import type { AppDeps } from "../app";
 import { readAvatar } from "../avatars";
+import type { AppDeps } from "../deps";
 import { apiError } from "../errors";
 import { requireUser, type SessionEnv } from "../middleware/session";
 import { validationHook } from "../validation";

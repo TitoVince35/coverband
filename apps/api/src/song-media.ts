@@ -3,6 +3,7 @@ import { and, asc, count, eq } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db, Tx } from "./db/client";
 import { songMedia, songs } from "./db/schema";
+import { AppError } from "./errors";
 import { cleanInstruments } from "./instruments";
 
 export type MediaFields = { url: string; title: string | null; instruments: readonly unknown[] };
@@ -18,9 +19,9 @@ const columns = {
 };
 
 /** A song has as many links as it may. */
-export class TooManyMediaError extends Error {
+export class TooManyMediaError extends AppError {
   constructor() {
-    super(`A song has at most ${MEDIA_LIMITS.perSong} links`);
+    super("too_many_links", `A song has at most ${MEDIA_LIMITS.perSong} links`);
   }
 }
 
