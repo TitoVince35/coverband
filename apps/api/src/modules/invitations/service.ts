@@ -4,7 +4,7 @@ import type { Mailer } from "../../adapters/mail/mailer";
 import { leaderInvitationEmail, musicianInvitationEmail } from "../../adapters/mail/templates";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
-import { bandMembers, invitations, users } from "../../core/db/schema";
+import { bandMembers, bands, invitations, users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
 
 /** How long an invitation link stays valid (brief 004). */
@@ -63,6 +63,65 @@ export function invitationStatus(
   if (invitation.acceptedAt) return "accepted";
   if (invitation.revokedAt) return "revoked";
   return invitation.expiresAt <= now ? "expired" : "pending";
+}
+
+/** Why an invitation that isn't pending can't be used. */
+const PROBLEMS = {
+  expired: () => new AppError("invitation_expired", "Invitation expired"),
+  revoked: () => new AppError("invitation_revoked", "Invitation revoked"),
+  accepted: () => new AppError("invitation_used", "Invitation already used"),
+} as const;
+
+const notFound = () => new AppError("invitation_not_found", "Invitation not found");
+
+/** Throws unless the invitation can still be accepted. */
+function checkPending(
+  invitation: { acceptedAt: Date | null; revokedAt: Date | null; expiresAt: Date } | undefined,
+  now: Date,
+) {
+  if (!invitation) throw notFound();
+  const status = invitationStatus(invitation, now);
+  if (status !== "pending") throw PROBLEMS[status]();
+}
+
+/**
+ * The invitation of a link, for the wizard: who invited, to which band (musicians). Throws
+ * when it can no longer be used.
+ */
+export async function pendingInvitation(db: Db, token: string, now: Date) {
+  const [row] = await db
+    .select({
+      email: invitations.email,
+      role: invitations.role,
+      language: invitations.language,
+      expiresAt: invitations.expiresAt,
+      acceptedAt: invitations.acceptedAt,
+      revokedAt: invitations.revokedAt,
+      inviterName: users.name,
+      bandName: bands.name,
+    })
+    .from(invitations)
+    .innerJoin(users, eq(users.id, invitations.invitedById))
+    .leftJoin(bands, eq(bands.id, invitations.bandId))
+    .where(eq(invitations.tokenHash, hashToken(token)));
+  checkPending(row, now);
+  return row as NonNullable<typeof row>;
+}
+
+/** Locks the invitation of a link for accepting it (in that transaction). Throws when it can't be. */
+export async function lockPendingInvitation(tx: Tx, token: string, now: Date) {
+  const [invitation] = await tx
+    .select()
+    .from(invitations)
+    .where(eq(invitations.tokenHash, hashToken(token)))
+    .for("update");
+  checkPending(invitation, now);
+  return invitation as NonNullable<typeof invitation>;
+}
+
+/** Marks an accepted invitation used, with the band it led to (a band leader's new band). */
+export async function consumeInvitation(tx: Tx, id: string, bandId: string, now: Date) {
+  await tx.update(invitations).set({ acceptedAt: now, bandId }).where(eq(invitations.id, id));
 }
 
 /** Records an invitation event, in the scope's band (none for band leader invitations). */

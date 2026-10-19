@@ -62,7 +62,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - `src/modules/invitations/service.ts` is the only way to get an account. Role `leader` (creates a band, sent by an admin) or `musician` (joins a band, sent by that band's leader).
 - Functions take an `InvitationScope` (`LEADER_INVITATIONS` or the musicians of one band), so an id from another scope is not found.
 - Only the token's SHA-256 hash is stored. If the email can't be sent, the invitation is deleted.
-- Accepting goes through the public `/api/invitations/:token` routes and `src/modules/onboarding/service.ts`: everything (account if new, band, membership, invitation consumed) in **one transaction, nothing before the last wizard step**. A new account is created with Better Auth's password hasher and the `credential` account shape, then logged in. Someone who already has an account must be logged in as the invited email.
+- Accepting goes through the public `/api/invitations/:token` routes and `src/modules/onboarding/service.ts`: everything (account if new, band, membership, invitation consumed) in **one transaction, nothing before the last wizard step**. Onboarding owns no table: it calls each module's service with its transaction (`lockPendingInvitation` / `consumeInvitation`, `createAccount`, `createBand`, `addMember`), and each records its own event. A new account is created with Better Auth's password hasher and the `credential` account shape, then logged in. Someone who already has an account must be logged in as the invited email.
 
 ## Bands
 
