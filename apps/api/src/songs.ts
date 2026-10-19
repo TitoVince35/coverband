@@ -1,5 +1,5 @@
 import { findDuplicateSong, type MusicalKey, type SongStatus, songKey } from "@coverband/shared";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { recordActivity } from "./activity";
 import type { Db } from "./db/client";
 import { songs, users } from "./db/schema";
@@ -44,16 +44,22 @@ const columns = {
   notes: songs.notes,
   status: songs.status,
   energy: songs.energy,
+  archivedAt: songs.archivedAt,
   createdAt: songs.createdAt,
   updatedAt: songs.updatedAt,
 };
 
-/** A band's repertoire, by title. */
-export function listSongs(db: Db, bandId: string) {
+/** A band's repertoire by title: its current songs, or its archived ones. */
+export function listSongs(db: Db, bandId: string, { archived = false } = {}) {
   return db
     .select(columns)
     .from(songs)
-    .where(eq(songs.bandId, bandId))
+    .where(
+      and(
+        eq(songs.bandId, bandId),
+        archived ? isNotNull(songs.archivedAt) : isNull(songs.archivedAt),
+      ),
+    )
     .orderBy(asc(sql`lower(${songs.title})`), asc(sql`lower(${songs.artist})`));
 }
 
@@ -77,10 +83,11 @@ async function checkDuplicate(
   options: { confirmDuplicate?: boolean | undefined; exceptId?: string },
 ) {
   if (options.confirmDuplicate) return;
+  // The repertoire only: an archived song can be added again (and restored even if it was).
   const others = await db
     .select({ id: songs.id, title: songs.title, artist: songs.artist })
     .from(songs)
-    .where(eq(songs.bandId, member.bandId));
+    .where(and(eq(songs.bandId, member.bandId), isNull(songs.archivedAt)));
   const match = findDuplicateSong(others, song, options.exceptId);
   if (match) throw new DuplicateSongError(match);
 }
@@ -168,4 +175,68 @@ export function updateSong(
     }
     return song ?? null;
   });
+}
+
+/**
+ * A member archives a song (out of the repertoire, kept everywhere else) or restores it. Returns
+ * the song, or null when the band has no such song. Archiving an archived song changes nothing.
+ */
+export function setArchived(db: Db, member: Member, id: string, archived: boolean) {
+  return db.transaction(async (tx) => {
+    const [current] = await tx
+      .select({ archivedAt: songs.archivedAt })
+      .from(songs)
+      .where(and(eq(songs.bandId, member.bandId), eq(songs.id, id)))
+      .for("update");
+    if (!current) return null;
+    if ((current.archivedAt !== null) !== archived) {
+      await tx
+        .update(songs)
+        .set({ archivedAt: archived ? new Date() : null })
+        .where(eq(songs.id, id));
+      await recordActivity(tx, {
+        action: archived ? "song.archived" : "song.restored",
+        bandId: member.bandId,
+        actorId: member.userId,
+        target: { type: "song", id },
+      });
+    }
+    const [song] = await tx.select(columns).from(songs).where(eq(songs.id, id));
+    return song ?? null;
+  });
+}
+
+/** Something uses the song (a setlist): it can only be archived. */
+export class SongInUseError extends Error {
+  constructor() {
+    super("This song is used: archive it instead");
+  }
+}
+
+/**
+ * Deletes a song for good (band leaders). Whatever uses a song (setlists) references it with a
+ * foreign key that refuses the deletion: that refusal becomes SongInUseError. Returns false when
+ * the band has no such song.
+ */
+export async function deleteSong(db: Db, member: Member, id: string) {
+  try {
+    return await db.transaction(async (tx) => {
+      const deleted = await tx
+        .delete(songs)
+        .where(and(eq(songs.bandId, member.bandId), eq(songs.id, id)))
+        .returning({ id: songs.id });
+      if (deleted.length === 0) return false;
+      await recordActivity(tx, {
+        action: "song.deleted",
+        bandId: member.bandId,
+        actorId: member.userId,
+        target: { type: "song", id },
+      });
+      return true;
+    });
+  } catch (error) {
+    const cause = (error as { cause?: { code?: string } })?.cause;
+    if (cause?.code === "23503") throw new SongInUseError(); // foreign_key_violation
+    throw error;
+  }
 }

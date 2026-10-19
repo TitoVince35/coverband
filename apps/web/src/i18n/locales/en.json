@@ -97,6 +97,23 @@
     },
     "filter": "Show",
     "noneWithStatus": "No song is “{{status}}”.",
+    "archive": {
+      "button": "Archive",
+      "hint": "An archived song leaves the repertoire and stays in setlists and the journal. You can restore it.",
+      "done": "Song archived",
+      "restored": "Song restored",
+      "banner": "This song is archived: it's out of the repertoire.",
+      "restore": "Restore",
+      "list": "Archived songs",
+      "empty": "No archived songs."
+    },
+    "delete": {
+      "button": "Delete",
+      "title": "Delete “{{title}}”?",
+      "description": "It will be gone for good. To take it out of the repertoire and keep it, archive it instead.",
+      "confirm": "Delete for good",
+      "done": "Song deleted"
+    },
     "form": {
       "addTitle": "Add a song",
       "editTitle": "Edit the song",
@@ -308,7 +325,8 @@
     "already_member": "This person is already a member of the band.",
     "too_many_requests": "Too many requests. Try again later.",
     "invalid_image": "This file isn't a usable image. Choose a photo (JPEG, PNG, WebP…).",
-    "song_duplicate": "This song is already in your repertoire."
+    "song_duplicate": "This song is already in your repertoire.",
+    "song_in_use": "This song is used, in a setlist for example: archive it instead."
   },
   "instruments": {
     "picker": {
@@ -339,6 +357,9 @@
       "proposed": "proposed",
       "learning": "learning",
       "ready": "ready"
-    }
+    },
+    "songArchived": "{{name}} archived {{song}}",
+    "songRestored": "{{name}} restored {{song}}",
+    "songDeleted": "{{name}} deleted {{song}}"
   }
 }

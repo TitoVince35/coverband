@@ -229,6 +229,81 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     });
   });
 
+  test("any member archives and restores; archived songs are listed apart", async () => {
+    const song = await songOf(await add("lea", { title: "Macarena", artist: "Los del Rio" }));
+    const archive = (who: string) =>
+      call(`/bands/${slug}/songs/${song.id}/archive`, who, { method: "POST" });
+    const titles = async (query = "") =>
+      (
+        (await (await call(`/bands/${slug}/songs${query}`, "lea")).json()) as { songs: Song[] }
+      ).songs.map((s) => s.title);
+
+    const res = await archive("max");
+    expect(res.status).toBe(200);
+    expect(((await songOf(res)) as Song & { archivedAt: string | null }).archivedAt).not.toBeNull();
+    expect(await titles()).not.toContain("Macarena");
+    expect(await titles("?archived=true")).toEqual(["Macarena"]);
+    // Twice: nothing more happens.
+    expect((await archive("lea")).status).toBe(200);
+    // An archived song doesn't count as a duplicate.
+    expect((await add("lea", { title: "Macarena", artist: "Los del Rio" })).status).toBe(201);
+
+    const restored = await call(`/bands/${slug}/songs/${song.id}/restore`, "lea", {
+      method: "POST",
+    });
+    expect(
+      ((await songOf(restored)) as Song & { archivedAt: string | null }).archivedAt,
+    ).toBeNull();
+    expect(await titles("?archived=true")).toEqual([]);
+    // Twice: nothing more happens either.
+    expect(
+      (await call(`/bands/${slug}/songs/${song.id}/restore`, "max", { method: "POST" })).status,
+    ).toBe(200);
+    expect(await activityOf(db, song.id)).toMatchObject([
+      { action: "song.added" },
+      { action: "song.archived", actorId: ids.max },
+      { action: "song.restored", actorId: ids.lea },
+    ]);
+    expect((await archive("zoe")).status).toBe(404);
+  });
+
+  test("band leaders delete a song for good, unless something uses it", async () => {
+    const song = await songOf(await add("max", { title: "Gangnam Style", artist: "Psy" }));
+    const remove = (who: string) =>
+      call(`/bands/${slug}/songs/${song.id}`, who, { method: "DELETE" });
+    expect((await remove("max")).status).toBe(403);
+    expect((await remove("zoe")).status).toBe(404);
+
+    // Something referencing the song (as setlists will) refuses the deletion.
+    await sql`create table test_song_uses_${sql.unsafe(run)} (song_id uuid references songs on delete restrict)`;
+    try {
+      await sql`insert into ${sql(`test_song_uses_${run}`)} values (${song.id})`;
+      const refused = await remove("lea");
+      expect(refused.status).toBe(409);
+      expect(((await refused.json()) as { error: { code: string } }).error.code).toBe(
+        "song_in_use",
+      );
+      expect((await call(`/bands/${slug}/songs/${song.id}`, "lea")).status).toBe(200);
+    } finally {
+      await sql`drop table ${sql(`test_song_uses_${run}`)}`;
+    }
+
+    expect((await remove("lea")).status).toBe(204);
+    expect((await call(`/bands/${slug}/songs/${song.id}`, "lea")).status).toBe(404);
+    expect((await remove("lea")).status).toBe(404);
+    expect(await activityOf(db, song.id)).toMatchObject([
+      { action: "song.added" },
+      { action: "song.deleted", actorId: ids.lea },
+    ]);
+    // The journal still tells it, without the title.
+    const journal = (
+      (await (await call(`/bands/${slug}/activity`, "max")).json()) as {
+        entries: { action: string; song?: string | null }[];
+      }
+    ).entries;
+    expect(journal[0]).toMatchObject({ action: "song.deleted", song: null });
+  });
+
   test("only valid songs", async () => {
     const invalid = [
       { title: "", artist: "Someone" },
@@ -268,17 +343,18 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     expect((await call(`/bands/${slug}/songs/not-a-uuid`, "lea")).status).toBe(400);
   });
 
-  test("the journal names the song", async () => {
+  test("the journal names the song, by its current title", async () => {
+    const song = await songOf(await add("lea", { title: "Hallelujah", artist: "Leonard Cohen" }));
+    await update("max", song.id, { title: "Hallelujah (Buckley)", artist: "Jeff Buckley" });
     const entries = (
       (await (await call(`/bands/${slug}/activity`, "lea")).json()) as {
         entries: { action: string; song?: string | null }[];
       }
     ).entries;
-    expect(entries[0]).toMatchObject({ action: "song.added", song: "Private" });
-    // The current title: "Help" was renamed since.
-    const updates = entries.filter((e) => e.action === "song.updated").map((e) => e.song);
-    expect(updates).toContain("Hey Jude");
-    expect(updates).not.toContain("Help");
+    expect(entries.slice(0, 2)).toMatchObject([
+      { action: "song.updated", song: "Hallelujah (Buckley)" },
+      { action: "song.added", song: "Hallelujah (Buckley)" },
+    ]);
     // Other events carry no song.
     expect(entries.every((e) => e.action.startsWith("song.") || !("song" in e))).toBe(true);
   });

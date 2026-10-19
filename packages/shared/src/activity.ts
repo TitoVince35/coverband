@@ -16,6 +16,9 @@ export const ACTIVITY_ACTIONS = [
   "song.added",
   "song.updated",
   "song.status_changed",
+  "song.archived",
+  "song.restored",
+  "song.deleted",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
