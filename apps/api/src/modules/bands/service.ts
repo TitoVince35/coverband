@@ -1,4 +1,4 @@
-import { type BandRole, slugify } from "@coverband/shared";
+import { type BandRole, type Instrument, slugify } from "@coverband/shared";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "../../core/activity/record";
@@ -6,7 +6,7 @@ import type { Db, Tx } from "../../core/db/client";
 import { isUniqueViolation } from "../../core/db/pg-errors";
 import { bandMembers, bands } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
-import { instrumentsByBand } from "../instruments/service";
+import { instrumentsByBand, writeInstruments } from "../instruments/service";
 
 export type Band = typeof bands.$inferSelect;
 
@@ -86,23 +86,62 @@ async function freeSlug(tx: Tx, base: string): Promise<string> {
   return slug;
 }
 
+/** A band leader creates their band (its leader membership is added by addMember). */
 export async function createBand(
   tx: Tx,
   input: { name: string; genre?: string | undefined },
+  actorId: string,
 ): Promise<{ id: string; slug: string }> {
   const name = input.name.trim();
   if (!(await isBandNameAvailable(tx, name))) throw new BandNameTakenError();
+  let band: { id: string; slug: string } | undefined;
   try {
-    const [band] = await tx
+    [band] = await tx
       .insert(bands)
       .values({ name, slug: await freeSlug(tx, slugify(name)), genre: input.genre?.trim() || null })
       .returning({ id: bands.id, slug: bands.slug });
-    if (!band) throw new Error("Band insert returned nothing");
-    return band;
   } catch (error) {
     // Two people choosing the same name at the same moment: the unique index decides.
     throw isUniqueViolation(error, "bands_name_lower_unique") ? new BandNameTakenError() : error;
   }
+  if (!band) throw new Error("Band insert returned nothing");
+  await recordActivity(tx, {
+    action: "band.created",
+    bandId: band.id,
+    actorId,
+    target: { type: "band", id: band.id },
+  });
+  return band;
+}
+
+/** The slug of a band, or null when there's none. */
+export async function bandSlugOf(db: Db | Tx, id: string): Promise<string | null> {
+  const [band] = await db.select({ slug: bands.slug }).from(bands).where(eq(bands.id, id));
+  return band?.slug ?? null;
+}
+
+/** Someone joins a band (accepting an invitation), with their instruments in it. */
+export async function addMember(
+  tx: Tx,
+  member: { bandId: string; userId: string; role: BandRole },
+  instruments: readonly Instrument[],
+  invitationId: string,
+) {
+  const { bandId, userId, role } = member;
+  const [existing] = await tx
+    .select({ userId: bandMembers.userId })
+    .from(bandMembers)
+    .where(and(eq(bandMembers.bandId, bandId), eq(bandMembers.userId, userId)));
+  if (existing) throw new AppError("already_member", "Already a member of this band");
+  await tx.insert(bandMembers).values({ bandId, userId, role });
+  await writeInstruments(tx, { bandId, userId }, instruments);
+  await recordActivity(tx, {
+    action: "member.joined",
+    bandId,
+    actorId: userId,
+    target: { type: "user", id: userId },
+    data: { role, invitationId },
+  });
 }
 
 /** Changes a band's genre. The name (and so the URL) never changes: choose it carefully. */
