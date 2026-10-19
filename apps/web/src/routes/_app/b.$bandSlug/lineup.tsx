@@ -8,8 +8,10 @@ import { InviteDialog } from "@/components/invitations/invite-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
+import { useLanguage } from "@/i18n/use-language";
 import { bandInvitations, bandQuery, membersQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
+import { lineupOrder } from "@/lib/lineup";
 
 // Lineup: every member with their instruments and role; each member edits their own instruments
 // (#77). The band leader also invites musicians.
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/_app/b/$bandSlug/lineup")({
 
 function LineupPage() {
   const { t } = useTranslation();
+  const language = useLanguage();
   const { bandSlug } = Route.useParams();
   const { user } = Route.useRouteContext();
   const band = useQuery(bandQuery(bandSlug));
@@ -50,7 +53,7 @@ function LineupPage() {
             </p>
           ) : (
             <ul className="divide-y" aria-label={t("lineup.title")}>
-              {members.data.map((member) => {
+              {lineupOrder(members.data, user.id, language).map((member) => {
                 const fullName = [member.firstName, member.lastName].filter(Boolean).join(" ");
                 return (
                   <li key={member.userId} className="flex items-center gap-3 py-3">
@@ -64,7 +67,13 @@ function LineupPage() {
                         {member.userId === user.id && (
                           <span className="text-muted-foreground text-xs">({t("lineup.you")})</span>
                         )}
-                        {member.role === "leader" && <Badge>{t("band.roles.leader")}</Badge>}
+                        {member.role === "leader" && (
+                          <Badge>
+                            <span className="inline-block first-letter:uppercase">
+                              {t("band.roles.leader")}
+                            </span>
+                          </Badge>
+                        )}
                       </div>
                       {fullName && fullName !== member.name && (
                         <p className="text-muted-foreground text-sm">{fullName}</p>
