@@ -194,13 +194,18 @@
         "noAlbum": "Unknown album",
         "back": "Back",
         "use": "Use these lyrics",
-        "description": "Lyrics found online for this song: choose a version."
+        "description": "Lyrics found online for this song: choose a version.",
+        "instrumental": "LRCLIB lists this song as an instrumental."
       },
       "view": {
         "button": "View",
         "description": "The lyrics, full screen.",
         "smaller": "Smaller text",
         "larger": "Larger text"
+      },
+      "web": {
+        "button": "Search the web",
+        "query": "\"{{title}}\" {{artist}} lyrics"
       }
     }
   },

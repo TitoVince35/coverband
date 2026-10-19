@@ -44,7 +44,10 @@ export function rankLyrics(
     .map(({ id, album, duration, lyrics }) => ({ id, album, duration, lyrics }));
 }
 
-/** Searches a band's song's lyrics online; null when the band has no such song. */
+/**
+ * Searches a band's song's lyrics online: the matches, and whether the provider only knows it as
+ * an instrumental (every entry found says so). Null when the band has no such song.
+ */
 export async function searchLyrics(
   db: Db,
   provider: LyricsProvider,
@@ -54,5 +57,8 @@ export async function searchLyrics(
   const song = await getSong(db, bandId, songId);
   if (!song) return null;
   const entries = await provider.search({ title: song.title, artist: song.artist });
-  return rankLyrics(entries, song.standardDuration);
+  return {
+    matches: rankLyrics(entries, song.standardDuration),
+    instrumental: entries.length > 0 && entries.every((entry) => entry.instrumental),
+  };
 }

@@ -11,6 +11,8 @@ export type LyricsEntry = {
   duration: number | null;
   /** Plain text; null for an instrumental or an entry without plain lyrics. */
   lyrics: string | null;
+  /** The provider says this recording has no lyrics. */
+  instrumental: boolean;
 };
 
 /** Where lyrics are searched (#130): LRCLIB, or a fake in tests. */
@@ -96,6 +98,7 @@ export function createLrclibProvider({
           artist: String(entry.artistName),
           album: typeof entry.albumName === "string" && entry.albumName ? entry.albumName : null,
           duration: typeof entry.duration === "number" ? Math.round(entry.duration) : null,
+          instrumental: entry.instrumental === true,
           lyrics:
             entry.instrumental || typeof entry.plainLyrics !== "string" || !entry.plainLyrics
               ? null

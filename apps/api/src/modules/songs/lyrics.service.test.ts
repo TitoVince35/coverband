@@ -9,6 +9,7 @@ const entry = (id: string, duration: number | null, lyrics: string | null): Lyri
   album: `Album ${id}`,
   duration,
   lyrics,
+  instrumental: false,
 });
 
 test("each text once, the version closest to the song's duration", () => {

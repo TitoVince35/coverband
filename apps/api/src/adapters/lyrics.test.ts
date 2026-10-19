@@ -44,6 +44,7 @@ describe("LRCLIB", () => {
         album: "Still",
         duration: 258,
         lyrics: "Waiting at the window",
+        instrumental: false,
       },
     ]);
     expect(urls).toEqual([
