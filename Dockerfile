@@ -1,0 +1,35 @@
+# Production image: the API, serving the built web app on the same origin (one container).
+# Built and pushed by the deploy workflow (.github/workflows/deploy.yml); try it locally with
+# `docker build -t coverband .`. Migrations are not run here: the deploy job runs them first.
+
+FROM oven/bun:1.4.3 AS build
+WORKDIR /app
+COPY package.json bun.lock ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/shared/package.json packages/shared/
+COPY e2e/package.json e2e/
+RUN bun install --frozen-lockfile
+COPY . .
+RUN bun run build
+
+# Only the API's runtime dependencies: no Vite, Playwright or drizzle-kit.
+FROM oven/bun:1.4.3-slim
+WORKDIR /app
+ENV NODE_ENV=production
+COPY package.json bun.lock ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/shared/package.json packages/shared/
+COPY e2e/package.json e2e/
+RUN bun install --frozen-lockfile --production --filter @coverband/api && rm -rf ~/.bun/install/cache
+COPY packages/shared packages/shared
+COPY apps/api/src apps/api/src
+COPY apps/api/tsconfig.json apps/api/
+COPY tsconfig.base.json ./
+COPY --from=build /app/apps/web/dist apps/web/dist
+ENV WEB_DIST_DIR=/app/apps/web/dist
+USER bun
+# Scaleway Serverless Containers set PORT to the container's port (3000, see infra/).
+EXPOSE 3000
+CMD ["bun", "apps/api/src/main.ts"]
