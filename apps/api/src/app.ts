@@ -9,6 +9,7 @@ import { requestGuards, securityHeaders } from "./core/http/security";
 import { loadSession, type SessionEnv } from "./core/http/session";
 import type { AppDeps } from "./deps";
 import { adminRoutes } from "./modules/admin/routes";
+import { bandJournalSource } from "./modules/bands/journal";
 import { bandRoutes } from "./modules/bands/routes";
 import { instrumentRoutes } from "./modules/instruments/routes";
 import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
@@ -17,6 +18,7 @@ import { memberRoutes } from "./modules/members/routes";
 import { onboardingRoutes } from "./modules/onboarding/routes";
 import { meRoutes } from "./modules/profile/routes";
 import { userRoutes } from "./modules/profile/user-routes";
+import { songJournalSource } from "./modules/songs/journal";
 import { songRoutes } from "./modules/songs/routes";
 
 export type AppOptions = {
@@ -41,7 +43,10 @@ function createApi(deps: AppDeps) {
       .route("/bands", bandRoutes(deps))
       // A band's features: each sub-app requires membership of the band (404 otherwise).
       .route("/bands/:bandSlug/members", memberRoutes(deps))
-      .route("/bands/:bandSlug/activity", journalRoutes(deps))
+      .route(
+        "/bands/:bandSlug/activity",
+        journalRoutes(deps, [bandJournalSource, songJournalSource]),
+      )
       .route("/bands/:bandSlug/songs", songRoutes(deps))
       .route("/bands/:bandSlug/invitations", bandInvitationRoutes(deps))
       .route("/me", meRoutes(deps))
