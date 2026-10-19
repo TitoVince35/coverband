@@ -43,6 +43,13 @@
       "when": 1792372448453,
       "tag": "0005_songs",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792373263386,
+      "tag": "0006_song_details",
+      "breakpoints": true
     }
   ]
 }

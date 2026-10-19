@@ -194,10 +194,19 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
 
   await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
   await leader.getByRole("button", { name: "Edit the song" }).click();
-  await leader.getByRole("dialog").getByLabel("Original duration").fill("5:06");
-  await leader.getByRole("dialog").getByRole("button", { name: "Save" }).click();
+  const edit = leader.getByRole("dialog");
+  await edit.getByLabel("Original duration").fill("5:06");
+  await edit.getByLabel("Key", { exact: true }).click();
+  await leader.getByRole("option", { name: "E minor" }).click();
+  await edit.getByLabel("Tempo (BPM)").fill("84");
+  await edit.getByLabel("Style").fill("Alternative rock");
+  await edit.getByLabel("Notes").fill("Big intro, everyone in at bar 5");
+  await edit.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Song updated")).toBeVisible();
-  await expect(leader.getByText("5:06")).toBeVisible();
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
+  for (const text of ["5:06", "E minor", "84 BPM", "Alternative rock", "everyone in at bar 5"]) {
+    await expect(leader.getByText(text)).toBeVisible();
+  }
 
   // The journal names the songs.
   await leader.getByRole("link", { name: "Home" }).click();

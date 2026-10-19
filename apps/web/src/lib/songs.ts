@@ -1,3 +1,4 @@
+import type { MusicalKey } from "@coverband/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ApiRequestError, ensureOk } from "@/lib/errors";
@@ -38,6 +39,11 @@ export type SongFields = {
   artist: string;
   standardDuration: number | null;
   ownDuration: number | null;
+  key: MusicalKey | null;
+  bandKey: MusicalKey | null;
+  tempo: number | null;
+  style: string | null;
+  notes: string | null;
 };
 
 /** Adds a song; throws `song_duplicate` for a song already in the repertoire, unless confirmed. */

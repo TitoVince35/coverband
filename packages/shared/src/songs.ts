@@ -4,7 +4,12 @@ import { normalizeName } from "./instruments";
 export const SONG_MAX_LENGTH = {
   title: 100,
   artist: 100,
+  style: 50,
+  notes: 2000,
 } as const;
+
+/** Tempo range accepted, in beats per minute. */
+export const SONG_TEMPO = { min: 20, max: 400 } as const;
 
 /**
  * What makes two songs the same for the duplicate warning: title and artist, ignoring case,

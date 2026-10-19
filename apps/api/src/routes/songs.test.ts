@@ -171,6 +171,35 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     ).toBe(200);
   });
 
+  test("a song's details: keys, tempo, style and notes", async () => {
+    const song = await songOf(
+      await add("max", { title: "Wonderwall", artist: "Oasis", key: "F#m", tempo: 87 }),
+    );
+    expect(song).toMatchObject({ key: "F#m", bandKey: null, tempo: 87, style: null, notes: null });
+    const res = await update("lea", song.id, {
+      bandKey: "Em",
+      style: "  Britpop ",
+      notes: "Capo 2\nWe skip the 2nd verse",
+    });
+    expect(await songOf(res)).toMatchObject({
+      key: "F#m",
+      bandKey: "Em",
+      tempo: 87,
+      style: "Britpop",
+      notes: "Capo 2\nWe skip the 2nd verse",
+    });
+    // Blank text is no text.
+    expect(await songOf(await update("lea", song.id, { style: "  ", tempo: null }))).toMatchObject({
+      style: null,
+      tempo: null,
+    });
+    expect(await activityOf(db, song.id)).toMatchObject([
+      { action: "song.added" },
+      { action: "song.updated", data: { fields: "bandKey,style,notes" } },
+      { action: "song.updated", data: { fields: "tempo,style" } },
+    ]);
+  });
+
   test("only valid songs", async () => {
     const invalid = [
       { title: "", artist: "Someone" },
@@ -180,6 +209,12 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
       { title: "Song", artist: "Someone", ownDuration: -1 },
       { title: "Song", artist: "Someone", ownDuration: MAX_SONG_DURATION + 1 },
       { title: "Song", artist: "Someone", standardDuration: 3.5 },
+      { title: "Song", artist: "Someone", key: "H" },
+      { title: "Song", artist: "Someone", bandKey: "Dbm" },
+      { title: "Song", artist: "Someone", tempo: 10 },
+      { title: "Song", artist: "Someone", tempo: 120.5 },
+      { title: "Song", artist: "Someone", style: "x".repeat(51) },
+      { title: "Song", artist: "Someone", notes: "x".repeat(2001) },
     ];
     for (const body of invalid) {
       expect((await add("lea", body)).status).toBe(400);
@@ -209,7 +244,9 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     ).entries;
     expect(entries[0]).toMatchObject({ action: "song.added", song: "Private" });
     // The current title: "Help" was renamed since.
-    expect(entries.find((e) => e.action === "song.updated")).toMatchObject({ song: "Hey Jude" });
+    const updates = entries.filter((e) => e.action === "song.updated").map((e) => e.song);
+    expect(updates).toContain("Hey Jude");
+    expect(updates).not.toContain("Help");
     // Other events carry no song.
     expect(entries.every((e) => e.action.startsWith("song.") || !("song" in e))).toBe(true);
   });
