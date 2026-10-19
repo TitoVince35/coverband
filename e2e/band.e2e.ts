@@ -349,6 +349,16 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
     .filter({ hasText: /Creep/ })
     .filter({ hasText: /Radiohead/ })
     .click();
+  // LRCLIB only knows it as an instrumental: said so, with a web search to look further.
+  await leader.getByText("Lyrics", { exact: true }).click();
+  await leader.getByRole("button", { name: "Search lyrics online" }).click();
+  await expect(leader.getByText("LRCLIB lists this song as an instrumental.")).toBeVisible();
+  await expect(leader.getByRole("link", { name: "Search the web" })).toHaveAttribute(
+    "href",
+    `https://www.google.com/search?q=${encodeURIComponent('"Creep" Radiohead lyrics')}`,
+  );
+  await leader.keyboard.press("Escape");
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
   await leader.getByRole("button", { name: "Archive" }).click();
   await expect(leader.getByText("This song is archived")).toBeVisible();
   await leader.getByRole("link", { name: "Repertoire" }).first().click();

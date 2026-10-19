@@ -258,6 +258,7 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
         album: "Live",
         duration: 300,
         lyrics: "If you, if you could return",
+        instrumental: false,
       },
       {
         id: "2",
@@ -266,6 +267,7 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
         album: "Everybody Else",
         duration: 274,
         lyrics: "If you, if you could return",
+        instrumental: false,
       },
       {
         id: "3",
@@ -274,17 +276,34 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
         album: null,
         duration: null,
         lyrics: null,
+        instrumental: false,
       },
     ];
     const res = await call(`/bands/${slug}/songs/${song.id}/lyrics/search`, "max");
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
+      instrumental: false,
       matches: [
         { id: "2", album: "Everybody Else", duration: 274, lyrics: "If you, if you could return" },
       ],
     });
     expect(lyrics.searches.at(-1)).toEqual({ title: "Linger", artist: "The Cranberries" });
     expect(await activityOf(db, song.id)).toMatchObject([{ action: "song.added" }]);
+
+    // Only instrumentals found: said so, rather than "nothing found".
+    lyrics.entries = [
+      {
+        id: "4",
+        title: "Linger",
+        artist: "The Cranberries",
+        album: null,
+        duration: 274,
+        lyrics: null,
+        instrumental: true,
+      },
+    ];
+    const instrumental = await call(`/bands/${slug}/songs/${song.id}/lyrics/search`, "max");
+    expect(await instrumental.json()).toEqual({ matches: [], instrumental: true });
 
     // Another band's song, or the service down.
     expect((await call(`/bands/${slug}/songs/${song.id}/lyrics/search`, "zoe")).status).toBe(404);

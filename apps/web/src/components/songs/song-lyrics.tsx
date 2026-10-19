@@ -6,7 +6,11 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { LyricsView } from "@/components/songs/lyrics-view";
-import { LyricsSearchDialog } from "@/components/songs/song-lyrics-search";
+import {
+  LyricsSearchDialog,
+  type Song,
+  WebSearchButton,
+} from "@/components/songs/song-lyrics-search";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,12 +49,14 @@ export function SongLyrics({
   lyrics,
   source,
   title,
-}: Props & { source: LyricsSource | null; title: string }) {
+  artist,
+}: Props & { source: LyricsSource | null; title: string; artist: string }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(startsOpen);
   const [editing, setEditing] = useState(false);
   const [searching, setSearching] = useState(false);
   const [viewing, setViewing] = useState(false);
+  const song = { title, artist };
   // Lyrics cleared by someone else while they're viewed: the view closes for good, rather than
   // popping open again when new lyrics come.
   if (viewing && !lyrics) setViewing(false);
@@ -103,6 +109,7 @@ export function SongLyrics({
         bandSlug={bandSlug}
         songId={songId}
         lyrics={lyrics}
+        song={song}
         open={editing}
         onOpenChange={setEditing}
         onReplace={() => {
@@ -116,6 +123,7 @@ export function SongLyrics({
       <LyricsSearchDialog
         bandSlug={bandSlug}
         songId={songId}
+        song={song}
         open={searching}
         onOpenChange={setSearching}
         onTypeIn={() => {
@@ -129,6 +137,7 @@ export function SongLyrics({
 
 /** The lyrics in a modal, full screen on a phone; closing it with changes asks first. */
 type EditorProps = Props & {
+  song: Song;
   /** Leaves the editor for the online search. */
   onReplace: () => void;
 };
@@ -150,6 +159,7 @@ function EditorContent({
   bandSlug,
   songId,
   lyrics,
+  song,
   onReplace,
   onClose,
 }: EditorProps & { onClose: () => void }) {
@@ -245,10 +255,13 @@ function EditorContent({
           )}
         </form>
         <div className="flex flex-wrap justify-between gap-2">
-          <Button variant="outline" onClick={replace}>
-            <Search />
-            {t("songs.lyrics.search.replace")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={replace}>
+              <Search />
+              {t("songs.lyrics.search.replace")}
+            </Button>
+            <WebSearchButton song={song} />
+          </div>
           <Button type="submit" form="lyrics-form" disabled={!changed || tooLong || save.isPending}>
             {save.isPending ? t("common.saving") : t("common.save")}
           </Button>

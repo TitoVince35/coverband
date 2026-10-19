@@ -44,10 +44,24 @@ describe("LRCLIB", () => {
         album: "Still",
         duration: 258,
         lyrics: "Waiting at the window",
+        instrumental: false,
       },
     ]);
     expect(urls).toEqual([
       "https://lrclib.test/proxy/api/search?track_name=The+only+mistake&artist_name=Joy+Division",
+    ]);
+  });
+
+  test("an instrumental has no lyrics, whatever text comes with it", async () => {
+    const fetch = async () =>
+      Response.json([
+        { ...entry, instrumental: true },
+        { ...entry, id: 8, plainLyrics: "" },
+      ]);
+    const provider = createLrclibProvider({ userAgent: "test", fetch });
+    expect(await provider.search(song)).toMatchObject([
+      { id: "7", instrumental: true, lyrics: null },
+      { id: "8", instrumental: false, lyrics: null },
     ]);
   });
 

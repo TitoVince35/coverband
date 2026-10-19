@@ -1,6 +1,6 @@
 import { formatDuration } from "@coverband/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Globe, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -15,9 +15,13 @@ import {
 import { errorMessage } from "@/lib/errors";
 import { type LyricsMatch, lyricsSearchQuery, updateSong } from "@/lib/songs";
 
+/** What a lyrics search looks for. */
+export type Song = { title: string; artist: string };
+
 type Props = {
   bandSlug: string;
   songId: string;
+  song: Song;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Nothing found, or the service down: type them in instead. */
@@ -36,9 +40,32 @@ export function LyricsSearchDialog({ open, onOpenChange, ...props }: Props) {
   );
 }
 
+/**
+ * Opens a web search for the song's lyrics in a new tab (#136), on the member's own device: they
+ * copy the lyrics and paste them in. Nothing goes through our server.
+ */
+export function WebSearchButton({ song }: { song: Song }) {
+  const { t } = useTranslation();
+  // The title is quoted in the query: its own quotes would break the phrase.
+  const query = t("songs.lyrics.web.query", { ...song, title: song.title.replaceAll('"', "") });
+  return (
+    <Button variant="outline" asChild>
+      <a
+        href={`https://www.google.com/search?q=${encodeURIComponent(query)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Globe />
+        {t("songs.lyrics.web.button")}
+      </a>
+    </Button>
+  );
+}
+
 function SearchContent({
   bandSlug,
   songId,
+  song,
   onTypeIn,
   onClose,
 }: Omit<Props, "open" | "onOpenChange"> & { onClose: () => void }) {
@@ -58,10 +85,14 @@ function SearchContent({
     },
   });
 
-  const typeIn = (
-    <Button variant="outline" onClick={onTypeIn}>
-      {t("songs.lyrics.typeIn")}
-    </Button>
+  // Nothing to choose from: find them on the web, or type them in.
+  const elsewhere = (
+    <div className="flex flex-wrap justify-end gap-2">
+      <WebSearchButton song={song} />
+      <Button variant="outline" onClick={onTypeIn}>
+        {t("songs.lyrics.typeIn")}
+      </Button>
+    </div>
   );
 
   return (
@@ -80,12 +111,16 @@ function SearchContent({
           <p role="alert" className="text-destructive">
             {errorMessage(t, search.error)}
           </p>
-          <div className="flex justify-end">{typeIn}</div>
+          {elsewhere}
         </div>
-      ) : search.data.length === 0 ? (
+      ) : search.data.matches.length === 0 ? (
         <div className="space-y-4">
-          <p>{t("songs.lyrics.search.none")}</p>
-          <div className="flex justify-end">{typeIn}</div>
+          <p>
+            {search.data.instrumental
+              ? t("songs.lyrics.search.instrumental")
+              : t("songs.lyrics.search.none")}
+          </p>
+          {elsewhere}
         </div>
       ) : chosen ? (
         <>
@@ -115,7 +150,7 @@ function SearchContent({
           className="-mx-2 min-h-0 divide-y overflow-y-auto"
           aria-label={t("songs.lyrics.search.matches")}
         >
-          {search.data.map((match) => (
+          {search.data.matches.map((match) => (
             <li key={match.id}>
               <button
                 type="button"

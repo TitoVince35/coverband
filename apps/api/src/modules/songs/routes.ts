@@ -73,8 +73,8 @@ export function songRoutes(deps: AppDeps) {
         lyricsLimit,
         async (c) => {
           const { songId } = c.req.valid("param");
-          const matches = await searchLyrics(db, deps.lyrics, c.var.band.id, songId);
-          return matches ? c.json({ matches }) : apiError(c, 404, "Song not found");
+          const found = await searchLyrics(db, deps.lyrics, c.var.band.id, songId);
+          return found ? c.json(found) : apiError(c, 404, "Song not found");
         },
       )
       // Any member archives and restores.

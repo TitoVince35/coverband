@@ -1,6 +1,6 @@
 /**
  * A fake LRCLIB for the end-to-end tests (started by playwright.config.ts): two versions of
- * "Zombie" with different lyrics, nothing for any other song.
+ * "Zombie" with different lyrics, "Creep" as an instrumental, nothing for any other song.
  */
 const ZOMBIE = [
   {
@@ -23,6 +23,18 @@ const ZOMBIE = [
   },
 ];
 
+const CREEP = [
+  {
+    id: 3,
+    trackName: "Creep",
+    artistName: "Radiohead",
+    albumName: "Pablo Honey",
+    duration: 238,
+    instrumental: true,
+    plainLyrics: null,
+  },
+];
+
 Bun.serve({
   port: Number(process.env.PORT ?? 3101),
   fetch(req) {
@@ -30,6 +42,6 @@ Bun.serve({
     if (url.pathname === "/health") return new Response("ok");
     if (url.pathname !== "/api/search") return new Response("Not found", { status: 404 });
     const title = url.searchParams.get("track_name")?.toLowerCase();
-    return Response.json(title === "zombie" ? ZOMBIE : []);
+    return Response.json(title === "zombie" ? ZOMBIE : title === "creep" ? CREEP : []);
   },
 });

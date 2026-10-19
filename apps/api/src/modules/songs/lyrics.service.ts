@@ -1,4 +1,4 @@
-import { SONG_MAX_LENGTH } from "@coverband/shared";
+import { normalizeName, SONG_MAX_LENGTH } from "@coverband/shared";
 import type { LyricsEntry, LyricsProvider } from "../../adapters/lyrics";
 import type { Db } from "../../core/db/client";
 import { getSong } from "./service";
@@ -44,7 +44,19 @@ export function rankLyrics(
     .map(({ id, album, duration, lyrics }) => ({ id, album, duration, lyrics }));
 }
 
-/** Searches a band's song's lyrics online; null when the band has no such song. */
+/**
+ * Whether the provider only knows the song as an instrumental: every entry with the song's title
+ * says so. Entries for other titles (a fuzzy search's karaoke versions) don't count.
+ */
+export function onlyInstrumental(entries: readonly LyricsEntry[], title: string): boolean {
+  const same = entries.filter((entry) => normalizeName(entry.title) === normalizeName(title));
+  return same.length > 0 && same.every((entry) => entry.instrumental);
+}
+
+/**
+ * Searches a band's song's lyrics online: the matches, and whether the provider only knows it as
+ * an instrumental (`onlyInstrumental`). Null when the band has no such song.
+ */
 export async function searchLyrics(
   db: Db,
   provider: LyricsProvider,
@@ -54,5 +66,8 @@ export async function searchLyrics(
   const song = await getSong(db, bandId, songId);
   if (!song) return null;
   const entries = await provider.search({ title: song.title, artist: song.artist });
-  return rankLyrics(entries, song.standardDuration);
+  return {
+    matches: rankLyrics(entries, song.standardDuration),
+    instrumental: onlyInstrumental(entries, song.title),
+  };
 }

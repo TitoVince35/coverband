@@ -194,13 +194,18 @@
         "noAlbum": "Album inconnu",
         "back": "Retour",
         "use": "Utiliser ces paroles",
-        "description": "Paroles trouvées en ligne pour ce morceau : choisissez une version."
+        "description": "Paroles trouvées en ligne pour ce morceau : choisissez une version.",
+        "instrumental": "LRCLIB classe ce morceau comme instrumental."
       },
       "view": {
         "button": "Afficher",
         "description": "Les paroles, en plein écran.",
         "smaller": "Texte plus petit",
         "larger": "Texte plus grand"
+      },
+      "web": {
+        "button": "Chercher sur le web",
+        "query": "\"{{title}}\" {{artist}} paroles"
       }
     }
   },

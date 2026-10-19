@@ -171,6 +171,7 @@ function SongPage() {
         lyrics={song.data.lyrics}
         source={song.data.lyricsSource}
         title={title}
+        artist={artist}
       />
       <SongNotes key={songId} bandSlug={bandSlug} songId={songId} notes={notes} />
       <p className="text-muted-foreground text-xs">
