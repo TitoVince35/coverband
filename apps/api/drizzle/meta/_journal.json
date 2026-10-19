@@ -71,6 +71,13 @@
       "when": 1792375219670,
       "tag": "0009_song_media",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792423098115,
+      "tag": "0010_song_lyrics",
+      "breakpoints": true
     }
   ]
 }

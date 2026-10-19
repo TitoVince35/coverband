@@ -10,7 +10,7 @@ import { MAX_INSTRUMENTS } from "./instruments";
 import { MUSICAL_KEYS } from "./keys";
 import { LANGUAGES, type Language } from "./languages";
 import { MEDIA_LIMITS, parseMediaUrl } from "./media";
-import { MAX_ENERGY, SONG_MAX_LENGTH, SONG_STATUSES, SONG_TEMPO } from "./songs";
+import { LYRICS_SOURCES, MAX_ENERGY, SONG_MAX_LENGTH, SONG_STATUSES, SONG_TEMPO } from "./songs";
 
 /** Required text, trimmed. */
 const text = (max: number) => z.string().trim().min(1).max(max);
@@ -87,6 +87,8 @@ const songFields = z.object({
   tempo: z.number().int().min(SONG_TEMPO.min).max(SONG_TEMPO.max).nullable(),
   style: optionalText(SONG_MAX_LENGTH.style),
   notes: optionalText(SONG_MAX_LENGTH.notes),
+  lyrics: optionalText(SONG_MAX_LENGTH.lyrics),
+  lyricsSource: z.enum(LYRICS_SOURCES).nullable(),
   status: z.enum(SONG_STATUSES),
   energy: z.number().int().min(1).max(MAX_ENERGY).nullable(),
 });
@@ -102,6 +104,8 @@ export const addSongBody = songFields
     tempo: true,
     style: true,
     notes: true,
+    lyrics: true,
+    lyricsSource: true,
     status: true,
     energy: true,
   })

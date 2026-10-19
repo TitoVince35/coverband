@@ -6,7 +6,12 @@ export const SONG_MAX_LENGTH = {
   artist: 100,
   style: 50,
   notes: 2000,
+  lyrics: 10_000,
 } as const;
+
+/** Where a song's lyrics come from: fetched from LRCLIB, or typed by a member. */
+export const LYRICS_SOURCES = ["lrclib", "typed"] as const;
+export type LyricsSource = (typeof LYRICS_SOURCES)[number];
 
 /** Where the band is with a song; a new song starts as proposed. */
 export const SONG_STATUSES = ["proposed", "learning", "ready"] as const;

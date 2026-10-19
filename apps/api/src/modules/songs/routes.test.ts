@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { MAX_SONG_DURATION, MEDIA_LIMITS } from "@coverband/shared";
+import { MAX_SONG_DURATION, MEDIA_LIMITS, SONG_MAX_LENGTH } from "@coverband/shared";
 import { inArray, like } from "drizzle-orm";
 import { createApp } from "../../app";
 import { activity, bandMembers, bands, users } from "../../core/db/schema";
@@ -198,6 +198,46 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
       { action: "song.updated", data: { fields: "bandKey,style,notes" } },
       { action: "song.updated", data: { fields: "tempo,style" } },
     ]);
+  });
+
+  test("lyrics: with one song only, their source follows them, their own event", async () => {
+    const song = await songOf(await add("lea", { title: "Suzanne", artist: "Leonard Cohen" }));
+    const get = async () => songOf(await call(`/bands/${slug}/songs/${song.id}`, "max"));
+    expect(await get()).toMatchObject({ lyrics: null, lyricsSource: null });
+
+    // Typed: the source is "typed", whatever was sent alone.
+    await update("max", song.id, { lyricsSource: "lrclib" });
+    expect(await get()).toMatchObject({ lyrics: null, lyricsSource: null });
+    await update("max", song.id, { lyrics: "  Now I've heard there was a secret chord\n " });
+    expect(await get()).toMatchObject({
+      lyrics: "Now I've heard there was a secret chord",
+      lyricsSource: "typed",
+    });
+    // Fetched, then edited: still from LRCLIB.
+    await update("lea", song.id, { lyrics: "Fetched lyrics", lyricsSource: "lrclib" });
+    await update("lea", song.id, { lyrics: "Fetched lyrics, fixed" });
+    expect(await get()).toMatchObject({ lyrics: "Fetched lyrics, fixed", lyricsSource: "lrclib" });
+    // Cleared: no source either.
+    await update("lea", song.id, { lyrics: "  " });
+    expect(await get()).toMatchObject({ lyrics: null, lyricsSource: null });
+
+    // Never in the repertoire's list.
+    const list = (await (await call(`/bands/${slug}/songs`, "max")).json()) as {
+      songs: Record<string, unknown>[];
+    };
+    expect(list.songs.find((s) => s.id === song.id)).not.toHaveProperty("lyrics");
+
+    expect(await activityOf(db, song.id)).toMatchObject([
+      { action: "song.added" },
+      { action: "song.lyrics_changed", actorId: ids.max },
+      { action: "song.lyrics_changed", actorId: ids.lea },
+      { action: "song.lyrics_changed", actorId: ids.lea },
+      { action: "song.lyrics_changed", actorId: ids.lea },
+    ]);
+    const tooLong = await update("lea", song.id, {
+      lyrics: "a".repeat(SONG_MAX_LENGTH.lyrics + 1),
+    });
+    expect(tooLong.status).toBe(400);
   });
 
   test("status and energy: a new song is proposed and not rated", async () => {

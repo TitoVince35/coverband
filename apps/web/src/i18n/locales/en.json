@@ -3,7 +3,8 @@
     "loading": "Loading…",
     "cancel": "Cancel",
     "save": "Save",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "close": "Close"
   },
   "home": {
     "title": "Welcome to {{appName}}",
@@ -166,6 +167,21 @@
       "adding": "Adding…",
       "addAnyway": "Add anyway",
       "saveAnyway": "Save anyway"
+    },
+    "lyrics": {
+      "title": "Lyrics",
+      "empty": "No lyrics yet.",
+      "typeIn": "Type them in",
+      "edit": "Edit",
+      "editTitle": "Edit the lyrics",
+      "placeholder": "Paste or type the lyrics…",
+      "saved": "Lyrics saved",
+      "unsaved": {
+        "title": "Close without saving the lyrics?",
+        "description": "Your changes to the lyrics will be lost.",
+        "stay": "Keep editing",
+        "leave": "Close"
+      }
     }
   },
   "login": {
@@ -391,6 +407,7 @@
     },
     "songArchived": "{{name}} archived {{song}}",
     "songRestored": "{{name}} restored {{song}}",
-    "songDeleted": "{{name}} deleted {{song}}"
+    "songDeleted": "{{name}} deleted {{song}}",
+    "songLyricsChanged": "{{name}} updated the lyrics of {{song}}"
   }
 }

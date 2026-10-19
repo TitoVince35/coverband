@@ -1,4 +1,10 @@
-import { findDuplicateSong, type MusicalKey, type SongStatus, songKey } from "@coverband/shared";
+import {
+  findDuplicateSong,
+  type LyricsSource,
+  type MusicalKey,
+  type SongStatus,
+  songKey,
+} from "@coverband/shared";
 import { and, asc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
 import type { Db } from "../../core/db/client";
@@ -16,6 +22,8 @@ export type SongFields = {
   tempo: number | null;
   style: string | null;
   notes: string | null;
+  lyrics: string | null;
+  lyricsSource: LyricsSource | null;
   status: SongStatus;
   energy: number | null;
 };
@@ -52,6 +60,21 @@ const columns = {
   updatedAt: songs.updatedAt,
 };
 
+// Lyrics (#129) can be long: only with one song, never in the repertoire's list.
+const detailColumns = { ...columns, lyrics: songs.lyrics, lyricsSource: songs.lyricsSource };
+
+/**
+ * The lyrics' source follows the lyrics: none without lyrics, kept when they're edited, "typed"
+ * for lyrics that had none. A source never changes on its own.
+ */
+function withLyricsSource<C extends SongChanges>(changes: C, current: LyricsSource | null): C {
+  if (changes.lyrics === undefined) return { ...changes, lyricsSource: undefined };
+  return {
+    ...changes,
+    lyricsSource: changes.lyrics === null ? null : (changes.lyricsSource ?? current ?? "typed"),
+  };
+}
+
 /** A band's repertoire by title: its current songs, or its archived ones. */
 export function listSongs(db: Db, bandId: string, { archived = false } = {}) {
   return db
@@ -69,7 +92,7 @@ export function listSongs(db: Db, bandId: string, { archived = false } = {}) {
 /** One song of a band, with who added it (their current display name; null once deleted). */
 export async function getSong(db: Db, bandId: string, id: string) {
   const [song] = await db
-    .select({ ...columns, addedBy: users.name })
+    .select({ ...detailColumns, addedBy: users.name })
     .from(songs)
     .leftJoin(users, eq(users.id, songs.createdById))
     .where(and(eq(songs.bandId, bandId), eq(songs.id, id)));
@@ -106,7 +129,11 @@ export function addSong(
     await checkDuplicate(tx, member, fields, options);
     const [song] = await tx
       .insert(songs)
-      .values({ ...fields, bandId: member.bandId, createdById: member.userId })
+      .values({
+        ...withLyricsSource(fields, null),
+        bandId: member.bandId,
+        createdById: member.userId,
+      })
       .returning(columns);
     if (!song) throw new Error("Song not inserted");
     await recordActivity(tx, {
@@ -127,16 +154,17 @@ export function updateSong(
   db: Db,
   member: Member,
   id: string,
-  changes: SongChanges,
+  requested: SongChanges,
   options: { confirmDuplicate?: boolean | undefined } = {},
 ) {
   return db.transaction(async (tx) => {
     const [current] = await tx
-      .select(columns)
+      .select(detailColumns)
       .from(songs)
       .where(and(eq(songs.bandId, member.bandId), eq(songs.id, id)))
       .for("update");
     if (!current) return null;
+    const changes = withLyricsSource(requested, current.lyricsSource);
     const changed = (Object.keys(changes) as (keyof SongFields)[]).filter(
       (field) => changes[field] !== undefined && changes[field] !== current[field],
     );
@@ -154,7 +182,7 @@ export function updateSong(
       .update(songs)
       .set(Object.fromEntries(changed.map((field) => [field, changes[field]])))
       .where(eq(songs.id, id))
-      .returning(columns);
+      .returning(detailColumns);
     // A new status is its own event ("Lea marked Creep as ready"); the other fields are listed.
     const event = {
       bandId: member.bandId,
@@ -168,7 +196,13 @@ export function updateSong(
         data: { status: changes.status },
       });
     }
-    const others = changed.filter((field) => field !== "status");
+    // New lyrics too ("Lea updated the lyrics of Creep").
+    if (changed.includes("lyrics") || changed.includes("lyricsSource")) {
+      await recordActivity(tx, { ...event, action: "song.lyrics_changed" });
+    }
+    const others = changed.filter(
+      (field) => field !== "status" && field !== "lyrics" && field !== "lyricsSource",
+    );
     if (others.length > 0) {
       await recordActivity(tx, {
         ...event,
