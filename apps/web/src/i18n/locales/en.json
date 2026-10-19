@@ -59,6 +59,8 @@
     "noMatch": "No song matches “{{query}}”.",
     "back": "Repertoire",
     "edit": "Edit the song",
+    "details": "Details",
+    "editDetails": "Edit the details",
     "notFound": "This song doesn't exist.",
     "added": "Song added",
     "saved": "Song updated",
@@ -137,6 +139,7 @@
     "form": {
       "addTitle": "Add a song",
       "editTitle": "Edit the song",
+      "detailsTitle": "Edit the details",
       "title": "Title",
       "artist": "Artist",
       "standardDuration": "Original duration",

@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
 import { addSong, type Song, type SongFields, songsQuery, updateSong } from "@/lib/songs";
@@ -34,6 +33,8 @@ type Props = {
   bandSlug: string;
   /** The song to edit; adds a new one when absent. */
   song?: Song;
+  /** What it edits of the song: its title and artist, or its details. */
+  part?: "main" | "details";
   /** The button opening the dialog. */
   trigger: ReactNode;
   /** Shown next to the button (an icon button's name). */
@@ -45,11 +46,15 @@ type Duplicate = { title: string; artist: string };
 
 const durations = ["standardDuration", "ownDuration"] as const;
 
+type Main = Pick<SongFields, "title" | "artist">;
+type Details = Pick<SongFields, (typeof durations)[number] | "key" | "bandKey" | "tempo" | "style">;
+
 /**
- * Adds a song to the repertoire, or edits one. A song with the same title and artist as another
- * one of the repertoire is a warning: saving again confirms it (#88).
+ * Adds a song to the repertoire (every field but the notes), or edits one block of it: its title
+ * and artist, or its details (#120). A song with the same title and artist as another one of the
+ * repertoire is a warning: saving again confirms it (#88).
  */
-export function SongFormDialog({ bandSlug, song, trigger, tooltip }: Props) {
+export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const repertoire = useQuery(songsQuery(bandSlug));
@@ -61,6 +66,8 @@ export function SongFormDialog({ bandSlug, song, trigger, tooltip }: Props) {
         .reverse(),
     ).values(),
   ].sort((a, b) => a.localeCompare(b));
+  const withMain = !song || part === "main";
+  const withDetails = !song || part === "details";
   const [open, setOpen] = useState(false);
   const [invalid, setInvalid] = useState<(typeof durations)[number][]>([]);
   // The durations are readable but over the limit.
@@ -69,8 +76,11 @@ export function SongFormDialog({ bandSlug, song, trigger, tooltip }: Props) {
   const [duplicate, setDuplicate] = useState<Duplicate | null>(null);
 
   const save = useMutation({
-    mutationFn: (fields: Omit<SongFields, "status" | "energy"> & { confirmDuplicate: boolean }) =>
-      song ? updateSong(bandSlug, song.id, fields) : addSong(bandSlug, fields),
+    mutationFn: (fields: Partial<Main & Details> & { confirmDuplicate: boolean }) =>
+      song
+        ? updateSong(bandSlug, song.id, fields)
+        : // Adding: the form has every field.
+          addSong(bandSlug, fields as Main & Details & { confirmDuplicate: boolean }),
     onSuccess: async () => {
       toast.success(song ? t("songs.saved") : t("songs.added"));
       onOpenChange(false);
@@ -81,7 +91,7 @@ export function SongFormDialog({ bandSlug, song, trigger, tooltip }: Props) {
       // Someone added the same song meanwhile: the same warning.
       if (error instanceof ApiRequestError && error.code === "song_duplicate") {
         save.reset();
-        const { title = fields.title, artist = fields.artist } = error.details;
+        const { title = fields.title ?? "", artist = fields.artist ?? "" } = error.details;
         setDuplicate({ title, artist });
       }
     },
@@ -115,26 +125,29 @@ export function SongFormDialog({ bandSlug, song, trigger, tooltip }: Props) {
       const value = text(name);
       return isMusicalKey(value) ? value : null;
     };
-    const fields = {
-      title: text("title"),
-      artist: text("artist"),
+    const main: Main = { title: text("title"), artist: text("artist") };
+    const details: Details = {
       ...parsed,
       key: key("key"),
       bandKey: key("bandKey"),
       tempo: text("tempo") ? Number(text("tempo")) : null,
       style: text("style") || null,
-      notes: text("notes") || null,
     };
     // Like the API: only a different song is checked (an accepted duplicate stays accepted).
-    const renamed = !song || songKey(song) !== songKey(fields);
+    const renamed = withMain && (!song || songKey(song) !== songKey(main));
     if (!duplicate && renamed) {
-      const match = findDuplicateSong(repertoire.data ?? [], fields, song?.id);
+      const match = findDuplicateSong(repertoire.data ?? [], main, song?.id);
       if (match) {
         setDuplicate({ title: match.title, artist: match.artist });
         return;
       }
     }
-    save.mutate({ ...fields, confirmDuplicate: duplicate !== null });
+    // Only the fields shown: the others stay as they are.
+    save.mutate({
+      ...(withMain && main),
+      ...(withDetails && details),
+      confirmDuplicate: duplicate !== null,
+    });
   }
 
   const submitLabel = save.isPending
@@ -166,106 +179,108 @@ export function SongFormDialog({ bandSlug, song, trigger, tooltip }: Props) {
         <form onSubmit={onSubmit} className="space-y-4">
           <DialogHeader>
             <DialogTitle className="font-heading">
-              {song ? t("songs.form.editTitle") : t("songs.form.addTitle")}
+              {!song
+                ? t("songs.form.addTitle")
+                : withMain
+                  ? t("songs.form.editTitle")
+                  : t("songs.form.detailsTitle")}
             </DialogTitle>
           </DialogHeader>
-          {(["title", "artist"] as const).map((name) => (
-            <div key={name} className="space-y-2">
-              <Label htmlFor={`song-${name}`}>{t(`songs.form.${name}`)}</Label>
-              <Input
-                id={`song-${name}`}
-                name={name}
-                defaultValue={song?.[name] ?? ""}
-                maxLength={SONG_MAX_LENGTH[name]}
-                autoComplete="off"
-                required
-                // A different song: the warning no longer applies.
-                onChange={() => setDuplicate(null)}
-              />
-            </div>
-          ))}
-          <div className="grid grid-cols-2 gap-4">
-            {durations.map((name) => (
+          {withMain &&
+            (["title", "artist"] as const).map((name) => (
               <div key={name} className="space-y-2">
                 <Label htmlFor={`song-${name}`}>{t(`songs.form.${name}`)}</Label>
                 <Input
                   id={`song-${name}`}
                   name={name}
-                  defaultValue={song?.[name] != null ? formatDuration(song[name]) : ""}
-                  placeholder="3:45"
+                  defaultValue={song?.[name] ?? ""}
+                  maxLength={SONG_MAX_LENGTH[name]}
                   autoComplete="off"
-                  aria-invalid={invalid.includes(name)}
-                  aria-describedby="song-duration-hint"
-                  onChange={() => setInvalid((list) => list.filter((n) => n !== name))}
+                  required
+                  // A different song: the warning no longer applies.
+                  onChange={() => setDuplicate(null)}
                 />
               </div>
             ))}
-          </div>
-          <p
-            id="song-duration-hint"
-            className={
-              invalid.length > 0 ? "text-destructive text-xs" : "text-muted-foreground text-xs"
-            }
-            role={invalid.length > 0 ? "alert" : undefined}
-          >
-            {invalid.length === 0
-              ? t("songs.form.durationHint")
-              : tooLong
-                ? t("songs.form.durationTooLong", { max: formatDuration(MAX_SONG_DURATION) })
-                : t("songs.form.invalidDuration")}
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            {(["key", "bandKey"] as const).map((name) => (
-              <div key={name} className="space-y-2">
-                <Label htmlFor={`song-${name}`}>{t(`songs.form.${name}`)}</Label>
-                <KeySelect id={`song-${name}`} name={name} defaultValue={song?.[name] ?? null} />
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="song-tempo">{t("songs.form.tempo")}</Label>
-              <Input
-                id="song-tempo"
-                name="tempo"
-                type="number"
-                inputMode="numeric"
-                min={SONG_TEMPO.min}
-                max={SONG_TEMPO.max}
-                step={1}
-                placeholder="120"
-                defaultValue={song?.tempo ?? ""}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="song-style">{t("songs.form.style")}</Label>
-              <Input
-                id="song-style"
-                name="style"
-                list="song-styles"
-                defaultValue={song?.style ?? ""}
-                maxLength={SONG_MAX_LENGTH.style}
-                autoComplete="off"
-              />
-              {/* The band's earlier styles, suggested as you type. */}
-              <datalist id="song-styles">
-                {styles.map((style) => (
-                  <option key={style} value={style} />
+          {withDetails && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                {durations.map((name) => (
+                  <div key={name} className="space-y-2">
+                    <Label htmlFor={`song-${name}`}>{t(`songs.form.${name}`)}</Label>
+                    <Input
+                      id={`song-${name}`}
+                      name={name}
+                      defaultValue={song?.[name] != null ? formatDuration(song[name]) : ""}
+                      placeholder="3:45"
+                      autoComplete="off"
+                      aria-invalid={invalid.includes(name)}
+                      aria-describedby="song-duration-hint"
+                      onChange={() => setInvalid((list) => list.filter((n) => n !== name))}
+                    />
+                  </div>
                 ))}
-              </datalist>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="song-notes">{t("songs.form.notes")}</Label>
-            <Textarea
-              id="song-notes"
-              name="notes"
-              defaultValue={song?.notes ?? ""}
-              maxLength={SONG_MAX_LENGTH.notes}
-              placeholder={t("songs.form.notesPlaceholder")}
-              rows={3}
-            />
-          </div>
+              </div>
+              <p
+                id="song-duration-hint"
+                className={
+                  invalid.length > 0 ? "text-destructive text-xs" : "text-muted-foreground text-xs"
+                }
+                role={invalid.length > 0 ? "alert" : undefined}
+              >
+                {invalid.length === 0
+                  ? t("songs.form.durationHint")
+                  : tooLong
+                    ? t("songs.form.durationTooLong", { max: formatDuration(MAX_SONG_DURATION) })
+                    : t("songs.form.invalidDuration")}
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                {(["key", "bandKey"] as const).map((name) => (
+                  <div key={name} className="space-y-2">
+                    <Label htmlFor={`song-${name}`}>{t(`songs.form.${name}`)}</Label>
+                    <KeySelect
+                      id={`song-${name}`}
+                      name={name}
+                      defaultValue={song?.[name] ?? null}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="song-tempo">{t("songs.form.tempo")}</Label>
+                  <Input
+                    id="song-tempo"
+                    name="tempo"
+                    type="number"
+                    inputMode="numeric"
+                    min={SONG_TEMPO.min}
+                    max={SONG_TEMPO.max}
+                    step={1}
+                    placeholder="120"
+                    defaultValue={song?.tempo ?? ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="song-style">{t("songs.form.style")}</Label>
+                  <Input
+                    id="song-style"
+                    name="style"
+                    list="song-styles"
+                    defaultValue={song?.style ?? ""}
+                    maxLength={SONG_MAX_LENGTH.style}
+                    autoComplete="off"
+                  />
+                  {/* The band's earlier styles, suggested as you type. */}
+                  <datalist id="song-styles">
+                    {styles.map((style) => (
+                      <option key={style} value={style} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+            </>
+          )}
           {duplicate && (
             <div role="alert" className="space-y-1 rounded-lg bg-amber-500/15 p-3 text-sm">
               <p className="font-medium">{t("songs.form.duplicate", duplicate)}</p>
