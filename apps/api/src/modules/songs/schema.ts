@@ -1,4 +1,10 @@
-import { type Instrument, MAX_ENERGY, type MusicalKey, SONG_STATUSES } from "@coverband/shared";
+import {
+  type Instrument,
+  LYRICS_SOURCES,
+  MAX_ENERGY,
+  type MusicalKey,
+  SONG_STATUSES,
+} from "@coverband/shared";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -16,6 +22,7 @@ import { users } from "../../adapters/auth-schema";
 import { bands } from "../bands/schema";
 
 export const songStatus = pgEnum("song_status", SONG_STATUSES);
+export const lyricsSource = pgEnum("lyrics_source", LYRICS_SOURCES);
 
 /**
  * A band's repertoire (#88). Title and artist identify a song, without a unique constraint: a
@@ -42,6 +49,9 @@ export const songs = pgTable(
     // Free text: the band's earlier styles are suggested.
     style: text(),
     notes: text(),
+    // Lyrics (#129) and where they come from; both null when there are none.
+    lyrics: text(),
+    lyricsSource: lyricsSource(),
     // One band-wide value each (#90): where the band is with it, and 1 to MAX_ENERGY peppers.
     status: songStatus().default("proposed").notNull(),
     energy: smallint(),
@@ -62,6 +72,8 @@ export const songs = pgTable(
       "songs_durations_positive",
       sql`${table.standardDuration} >= 0 and ${table.ownDuration} >= 0`,
     ),
+    // Lyrics and their source go together.
+    check("songs_lyrics_source", sql`(${table.lyrics} is null) = (${table.lyricsSource} is null)`),
   ],
 );
 

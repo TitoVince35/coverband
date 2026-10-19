@@ -5,6 +5,7 @@ import { ChevronLeft, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ArchivedBanner, SongActions } from "@/components/songs/song-actions";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
+import { SongLyrics } from "@/components/songs/song-lyrics";
 import { SongMedia } from "@/components/songs/song-media";
 import { SongNotes } from "@/components/songs/song-notes";
 import { EnergyPicker, StatusPicker } from "@/components/songs/song-status";
@@ -164,6 +165,7 @@ function SongPage() {
         </CardContent>
       </Card>
       <SongMedia bandSlug={bandSlug} songId={songId} media={media} />
+      <SongLyrics bandSlug={bandSlug} songId={songId} lyrics={song.data.lyrics} />
       <SongNotes key={songId} bandSlug={bandSlug} songId={songId} notes={notes} />
       <p className="text-muted-foreground text-xs">
         {addedBy ? t("songs.addedBy", { name: addedBy, date }) : t("songs.addedOn", { date })}

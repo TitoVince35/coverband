@@ -1,4 +1,4 @@
-import type { Instrument, MusicalKey, SongStatus } from "@coverband/shared";
+import type { Instrument, LyricsSource, MusicalKey, SongStatus } from "@coverband/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ApiRequestError, ensureOk } from "@/lib/errors";
@@ -46,6 +46,8 @@ export type SongFields = {
   tempo: number | null;
   style: string | null;
   notes: string | null;
+  lyrics: string | null;
+  lyricsSource: LyricsSource | null;
   status: SongStatus;
   energy: number | null;
 };
@@ -53,7 +55,7 @@ export type SongFields = {
 /** Adds a song; throws `song_duplicate` for a song already in the repertoire, unless confirmed. */
 export async function addSong(
   bandSlug: string,
-  json: Omit<SongFields, "status" | "energy" | "notes"> & {
+  json: Omit<SongFields, "status" | "energy" | "notes" | "lyrics" | "lyricsSource"> & {
     notes?: string | null;
     confirmDuplicate?: boolean;
   },
@@ -74,6 +76,9 @@ export async function updateSong(
   });
   return (await (await ensureOk(res)).json()).song;
 }
+
+/** Free text as the API stores it: trimmed, none when blank (notes, lyrics). */
+export const storedText = (text: string) => text.trim() || null;
 
 /** The duration a setlist uses: the band's own, else the original. */
 export const playedDuration = (song: Pick<SongFields, "standardDuration" | "ownDuration">) =>

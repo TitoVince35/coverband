@@ -233,6 +233,22 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(leader.getByText("Notes saved")).toBeVisible();
   await expect(saveNotes).toBeDisabled();
 
+  // The lyrics: closed on a phone; typed in a modal that asks before closing with changes.
+  await leader.getByText("Lyrics", { exact: true }).click();
+  await expect(leader.getByText("No lyrics yet.")).toBeVisible();
+  await leader.getByRole("button", { name: "Type them in" }).click();
+  const lyrics = leader.getByRole("dialog");
+  await lyrics
+    .getByRole("textbox", { name: "Lyrics" })
+    .fill("Another head hangs lowly\nChild is slowly taken");
+  await leader.keyboard.press("Escape");
+  await expect(leader.getByText("Close without saving the lyrics?")).toBeVisible();
+  await leader.getByRole("button", { name: "Keep editing" }).click();
+  await lyrics.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Lyrics saved")).toBeVisible();
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
+  await expect(leader.getByText("Child is slowly taken")).toBeVisible();
+
   // A link, for the drummer: the provider shows, it opens in a new tab.
   await leader.getByRole("button", { name: "Add a link" }).click();
   const link = leader.getByRole("dialog");
@@ -285,7 +301,8 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea updated song “Zombie”",
   );
-  await expect(journal).toContainText("Captain Lea added song “Creep”");
+  await expect(journal).toContainText("Captain Lea added song “Zombie”");
+  await expect(journal).toContainText("Captain Lea updated the lyrics of song “Zombie”");
   await expect(journal).toContainText("Captain Lea marked song “Zombie” as learning");
 
   // Archive a song, find it apart, restore it; the band leader deletes the copy for good.

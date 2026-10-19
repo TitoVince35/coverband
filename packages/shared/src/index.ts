@@ -52,6 +52,8 @@ export {
 } from "./media";
 export {
   findDuplicateSong,
+  LYRICS_SOURCES,
+  type LyricsSource,
   MAX_ENERGY,
   SONG_MAX_LENGTH,
   SONG_STATUSES,
