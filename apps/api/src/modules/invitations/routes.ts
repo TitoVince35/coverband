@@ -1,4 +1,4 @@
-import { LANGUAGES, type Language } from "@coverband/shared";
+import { invitationBody } from "@coverband/shared/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -24,11 +24,6 @@ export const INVITATION_EMAILS: RateLimitRule = {
   windowMs: 60 * 60 * 1000,
 };
 
-const inviteBody = z.object({
-  email: z.string().trim().toLowerCase().pipe(z.email()),
-  language: z.enum(Object.keys(LANGUAGES) as [Language, ...Language[]]),
-});
-
 const idParam = z.object({ id: z.uuid() });
 
 /** Band leader invitations (/api/admin/invitations), sent by application admins. */
@@ -39,7 +34,7 @@ export function leaderInvitationRoutes(deps: AppDeps) {
     .get("/", async (c) => {
       return c.json({ invitations: await listInvitations(deps, LEADER_INVITATIONS) });
     })
-    .post("/", limit, zValidator("json", inviteBody, validationHook), async (c) => {
+    .post("/", limit, zValidator("json", invitationBody, validationHook), async (c) => {
       const invitation = await invite(deps, LEADER_INVITATIONS, {
         ...c.req.valid("json"),
         invitedById: c.var.user.id,
@@ -71,7 +66,7 @@ export function bandInvitationRoutes(deps: AppDeps) {
     .get("/", async (c) => {
       return c.json({ invitations: await listInvitations(deps, musiciansOf(c.var.band)) });
     })
-    .post("/", limit, zValidator("json", inviteBody, validationHook), async (c) => {
+    .post("/", limit, zValidator("json", invitationBody, validationHook), async (c) => {
       const invitation = await invite(deps, musiciansOf(c.var.band), {
         ...c.req.valid("json"),
         invitedById: c.var.user.id,

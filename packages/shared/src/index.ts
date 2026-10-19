@@ -25,6 +25,7 @@ export {
   instrumentLabel,
   instrumentsLabel,
   isInstrumentCode,
+  MAX_INSTRUMENTS,
   matchInstrument,
   normalizeName,
   parseInstrument,

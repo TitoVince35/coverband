@@ -38,6 +38,9 @@ export type Instrument = { code: InstrumentCode } | { label: string };
 /** Longest free-text instrument (the onboarding's instrument field already used it). */
 export const INSTRUMENT_LABEL_MAX_LENGTH = FIELD_MAX_LENGTH.instrument;
 
+/** Instruments one member can list in a band (and a song's link can name). */
+export const MAX_INSTRUMENTS = 10;
+
 export function isInstrumentCode(value: unknown): value is InstrumentCode {
   return typeof value === "string" && (INSTRUMENTS as readonly string[]).includes(value);
 }

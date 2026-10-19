@@ -1,4 +1,4 @@
-import { type Instrument, instrumentLabel } from "@coverband/shared";
+import { type Instrument, instrumentLabel, MAX_INSTRUMENTS } from "@coverband/shared";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,9 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/i18n/use-language";
 import { instrumentKey } from "@/lib/instrument-picker";
-
-/** Same limit as the API. */
-export const MAX_INSTRUMENTS = 10;
 
 /** The list with an instrument added at the end, unless it's already there. */
 export const withAdded = (current: Instrument[], instrument: Instrument | null) =>
