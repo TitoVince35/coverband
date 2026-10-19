@@ -6,6 +6,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 
 - REST under `/api` (resource URLs, HTTP verbs, status codes, JSON). No OpenAPI for now.
 - One Hono sub-app per resource in `src/routes/`, built by a function taking `AppDeps` (`src/deps.ts`: auth, db, mailer, storage, appUrl) and mounted in `src/app.ts` with **chained calls** so `AppType` keeps every route. The web app calls it through the typed client from `@coverband/api/client` (Hono calls this "RPC"; see `briefs/claude/003_rest-vs-rpc.md`).
+- Routes don't query the database (no `drizzle-orm` or `db/schema` import): they validate, call a domain function (`src/songs.ts`, `src/bands.ts`, `src/members.ts`, `src/admin.ts`...) and shape the response.
 - Validate input with `zValidator(..., validationHook)` (`src/validation.ts`: invalid input becomes a 400 `bad_request`).
 - Send errors with `apiError()` (`src/errors.ts`). It keeps the status as a literal type, so `ensureOk(res)` in the web app narrows typed-client responses to their success body.
 - **Domain refusals** (a duplicate, an expired invitation...) are thrown as an `AppError(code, message, details?)`, or a subclass named after the case (`DuplicateSongError`). The domain never knows HTTP statuses: `ERROR_STATUS` (`src/errors.ts`) gives each code its status, and the app's `onError` sends the JSON error. Routes don't catch them. A new code goes in `ERROR_CODES`, `ERROR_STATUS` (the typecheck asks) and both web locales.
