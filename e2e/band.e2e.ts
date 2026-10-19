@@ -357,6 +357,13 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
     "href",
     `https://www.google.com/search?q=${encodeURIComponent('"Creep" Radiohead lyrics')}`,
   );
+  // A free search, refined from the song's title and artist, finds a sung version.
+  await expect(leader.getByRole("textbox", { name: "Search for" })).toHaveValue("Creep Radiohead");
+  await leader.getByRole("textbox", { name: "Search for" }).fill("Creep acoustic");
+  await leader.getByRole("button", { name: "Search again" }).click();
+  await expect(leader.getByRole("list", { name: "Lyrics found" })).toContainText(
+    "Radiohead – Creep (Acoustic)",
+  );
   await leader.keyboard.press("Escape");
   await expect(leader.getByRole("dialog")).toHaveCount(0);
   await leader.getByRole("button", { name: "Archive" }).click();

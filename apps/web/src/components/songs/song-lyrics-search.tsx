@@ -1,7 +1,7 @@
 import { formatDuration } from "@coverband/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Globe, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight, Globe, Loader2, Search } from "lucide-react";
+import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { errorMessage } from "@/lib/errors";
 import { type LyricsMatch, lyricsSearchQuery, updateSong } from "@/lib/songs";
 
@@ -44,10 +45,12 @@ export function LyricsSearchDialog({ open, onOpenChange, ...props }: Props) {
  * Opens a web search for the song's lyrics in a new tab (#136), on the member's own device: they
  * copy the lyrics and paste them in. Nothing goes through our server.
  */
-export function WebSearchButton({ song }: { song: Song }) {
+export function WebSearchButton({ song, text }: { song: Song; text?: string | undefined }) {
   const { t } = useTranslation();
-  // The title is quoted in the query: its own quotes would break the phrase.
-  const query = t("songs.lyrics.web.query", { ...song, title: song.title.replaceAll('"', "") });
+  // A refined search's text (#138), or the title quoted: its own quotes would break the phrase.
+  const query = text
+    ? t("songs.lyrics.web.textQuery", { text })
+    : t("songs.lyrics.web.query", { ...song, title: song.title.replaceAll('"', "") });
   return (
     <Button variant="outline" asChild>
       <a
@@ -71,8 +74,23 @@ function SearchContent({
 }: Omit<Props, "open" | "onOpenChange"> & { onClose: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const search = useQuery(lyricsSearchQuery(bandSlug, songId));
+  // The song's title and artist first; edited, a free search (#138: "Take Five Carmen McRae").
+  const songText = `${song.title} ${song.artist}`.slice(0, LYRICS_TEXT_MAX);
+  const [draft, setDraft] = useState(songText);
+  const [text, setText] = useState<string | undefined>();
+  const search = useQuery(lyricsSearchQuery(bandSlug, songId, text));
   const [chosen, setChosen] = useState<LyricsMatch | null>(null);
+
+  function onSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const typed = draft.trim();
+    // The song's own title and artist, however spaced or capitalised: the usual search.
+    const next = typed && !sameText(typed, songText) ? typed : undefined;
+    // The same search again (a retry after an error): asked again.
+    if (next === text) void search.refetch();
+    else setText(next);
+    setChosen(null);
+  }
 
   const use = useMutation({
     mutationFn: (match: LyricsMatch) =>
@@ -88,7 +106,7 @@ function SearchContent({
   // Nothing to choose from: find them on the web, or type them in.
   const elsewhere = (
     <div className="flex flex-wrap justify-end gap-2">
-      <WebSearchButton song={song} />
+      <WebSearchButton song={song} text={text} />
       <Button variant="outline" onClick={onTypeIn}>
         {t("songs.lyrics.typeIn")}
       </Button>
@@ -96,10 +114,33 @@ function SearchContent({
   );
 
   return (
-    <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
+    <DialogContent
+      className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg"
+      // Not the search field: a phone's keyboard would cover the matches.
+      onOpenAutoFocus={(event) => event.preventDefault()}
+    >
       <DialogHeader>
         <DialogTitle className="font-heading">{t("songs.lyrics.search.title")}</DialogTitle>
         <DialogDescription>{t("songs.lyrics.search.description")}</DialogDescription>
+        {!chosen && (
+          <form onSubmit={onSearch} className="flex gap-2 pt-2">
+            <Input
+              aria-label={t("songs.lyrics.search.refine")}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              maxLength={LYRICS_TEXT_MAX}
+            />
+            <Button
+              type="submit"
+              variant="outline"
+              size="icon"
+              aria-label={t("songs.lyrics.search.again")}
+              disabled={search.isFetching}
+            >
+              <Search />
+            </Button>
+          </form>
+        )}
       </DialogHeader>
       {search.isPending ? (
         <div role="status" className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
@@ -159,6 +200,8 @@ function SearchContent({
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{firstLine(match.lyrics)}</p>
+                  {/* A free search can bring other songs: whose these lyrics are. */}
+                  <p className="truncate text-sm">{t("songs.lyrics.search.recording", match)}</p>
                   <p className="truncate text-muted-foreground text-xs tabular-nums">
                     {[
                       match.album ?? t("songs.lyrics.search.noAlbum"),
@@ -177,6 +220,12 @@ function SearchContent({
     </DialogContent>
   );
 }
+
+/** A free search's longest text, as the API accepts it. */
+const LYRICS_TEXT_MAX = 200;
+
+const sameText = (a: string, b: string) =>
+  a.replace(/\s+/g, " ").trim().toLowerCase() === b.replace(/\s+/g, " ").trim().toLowerCase();
 
 // Matches come trimmed: their first line is never blank.
 const firstLine = (lyrics: string) => lyrics.split("\n", 1)[0];

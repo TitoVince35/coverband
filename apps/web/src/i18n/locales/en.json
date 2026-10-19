@@ -195,7 +195,10 @@
         "back": "Back",
         "use": "Use these lyrics",
         "description": "Lyrics found online for this song: choose a version.",
-        "instrumental": "LRCLIB lists this song as an instrumental."
+        "instrumental": "LRCLIB lists this song as an instrumental.",
+        "refine": "Search for",
+        "again": "Search again",
+        "recording": "{{artist}} – {{title}}"
       },
       "view": {
         "button": "View",
@@ -205,7 +208,8 @@
       },
       "web": {
         "button": "Search the web",
-        "query": "\"{{title}}\" {{artist}} lyrics"
+        "query": "\"{{title}}\" {{artist}} lyrics",
+        "textQuery": "{{text}} lyrics"
       }
     }
   },
