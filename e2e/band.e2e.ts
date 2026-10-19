@@ -212,6 +212,12 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   for (const text of ["5:06", "E minor", "84 BPM", "Alternative rock"]) {
     await expect(leader.getByText(text)).toBeVisible();
   }
+  // Details: an accordion, open at first.
+  await leader.getByRole("button", { name: "Details", exact: true }).click();
+  await expect(leader.getByText("84 BPM")).toBeHidden();
+  await expect(leader.getByRole("button", { name: "Edit the details" })).toBeHidden();
+  await leader.getByRole("button", { name: "Details", exact: true }).click();
+  await expect(leader.getByText("84 BPM")).toBeVisible();
   // The top pencil edits the title and artist only.
   await leader.getByRole("button", { name: "Edit the song" }).click();
   const main = leader.getByRole("dialog");

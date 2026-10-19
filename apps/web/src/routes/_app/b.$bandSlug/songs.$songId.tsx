@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { CollapsibleCard } from "@/components/collapsible-card";
 import { ArchivedBanner, SongActions } from "@/components/songs/song-actions";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
 import { SongLyrics } from "@/components/songs/song-lyrics";
@@ -10,7 +11,6 @@ import { SongMedia } from "@/components/songs/song-media";
 import { SongNotes } from "@/components/songs/song-notes";
 import { EnergyPicker, StatusPicker } from "@/components/songs/song-status";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/i18n/use-language";
 import { bandQuery } from "@/lib/bands";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
@@ -129,42 +129,35 @@ function SongPage() {
           {errorMessage(t, change.error)}
         </p>
       )}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-heading text-lg">{t("songs.details")}</CardTitle>
-          <CardAction>
-            <SongFormDialog
-              bandSlug={bandSlug}
-              song={song.data}
-              part="details"
-              tooltip={t("songs.editDetails")}
-              trigger={
-                <Button variant="outline" size="icon" aria-label={t("songs.editDetails")}>
-                  <Pencil />
-                </Button>
-              }
-            />
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
-            {details.map(({ label, value }) => (
-              <div key={label} className="min-w-0">
-                <dt className="text-muted-foreground text-sm">{label}</dt>
-                <dd
-                  className={cn(
-                    "break-words font-medium text-lg tabular-nums",
-                    !value && "text-muted-foreground",
-                  )}
-                >
-                  {value || "—"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </CardContent>
-      </Card>
-      <SongMedia bandSlug={bandSlug} songId={songId} media={media} />
+      <CollapsibleCard title={t("songs.details")} defaultOpen>
+        <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
+          {details.map(({ label, value }) => (
+            <div key={label} className="min-w-0">
+              <dt className="text-muted-foreground text-sm">{label}</dt>
+              <dd
+                className={cn(
+                  "break-words font-medium text-lg tabular-nums",
+                  !value && "text-muted-foreground",
+                )}
+              >
+                {value || "—"}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        {/* Below the details: hidden with them when the block is closed. */}
+        <SongFormDialog
+          bandSlug={bandSlug}
+          song={song.data}
+          part="details"
+          trigger={
+            <Button variant="outline" className="mt-4">
+              <Pencil />
+              {t("songs.editDetails")}
+            </Button>
+          }
+        />
+      </CollapsibleCard>
       <SongLyrics
         bandSlug={bandSlug}
         songId={songId}
@@ -173,6 +166,7 @@ function SongPage() {
         title={title}
         artist={artist}
       />
+      <SongMedia bandSlug={bandSlug} songId={songId} media={media} />
       <SongNotes key={songId} bandSlug={bandSlug} songId={songId} notes={notes} />
       <p className="text-muted-foreground text-xs">
         {addedBy ? t("songs.addedBy", { name: addedBy, date }) : t("songs.addedOn", { date })}

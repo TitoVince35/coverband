@@ -1,10 +1,11 @@
 import { type LyricsSource, SONG_MAX_LENGTH } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import { ChevronDown, Maximize2, Pencil, Search, XIcon } from "lucide-react";
+import { Maximize2, Pencil, Search, XIcon } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { CollapsibleCard } from "@/components/collapsible-card";
 import { LyricsView } from "@/components/songs/lyrics-view";
 import {
   LyricsSearchDialog,
@@ -22,7 +23,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { errorMessage } from "@/lib/errors";
@@ -52,7 +52,6 @@ export function SongLyrics({
   artist,
 }: Props & { source: LyricsSource | null; title: string; artist: string }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(startsOpen);
   const [editing, setEditing] = useState(false);
   const [searching, setSearching] = useState(false);
   const [viewing, setViewing] = useState(false);
@@ -62,49 +61,39 @@ export function SongLyrics({
   if (viewing && !lyrics) setViewing(false);
 
   return (
-    <Card>
-      <details open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
-        <summary className="flex cursor-pointer list-none items-center gap-2 px-6 outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-          {/* Plain text, like the other cards' titles: a heading is lost inside a summary. */}
-          <span className="flex-1 font-heading font-medium text-lg">{t("songs.lyrics.title")}</span>
-          <ChevronDown
-            aria-hidden
-            className={`size-5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
-          />
-        </summary>
-        <CardContent className="space-y-4 pt-4">
-          {lyrics ? (
-            <div className="space-y-2">
-              <div className="max-h-[50dvh] overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-muted/50 p-3">
-                {lyrics}
-              </div>
-              {source === "lrclib" && (
-                <p className="text-muted-foreground text-xs">{t("songs.lyrics.credit")}</p>
-              )}
+    <CollapsibleCard title={t("songs.lyrics.title")} defaultOpen={startsOpen}>
+      <div className="space-y-4">
+        {lyrics ? (
+          <div className="space-y-2">
+            <div className="max-h-[50dvh] overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-muted/50 p-3">
+              {lyrics}
             </div>
-          ) : (
-            <p className="text-muted-foreground text-sm">{t("songs.lyrics.empty")}</p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {lyrics && (
-              <Button onClick={() => setViewing(true)}>
-                <Maximize2 />
-                {t("songs.lyrics.view.button")}
-              </Button>
+            {source === "lrclib" && (
+              <p className="text-muted-foreground text-xs">{t("songs.lyrics.credit")}</p>
             )}
-            {!lyrics && (
-              <Button onClick={() => setSearching(true)}>
-                <Search />
-                {t("songs.lyrics.search.button")}
-              </Button>
-            )}
-            <Button variant="outline" onClick={() => setEditing(true)}>
-              <Pencil />
-              {lyrics ? t("songs.lyrics.edit") : t("songs.lyrics.typeIn")}
-            </Button>
           </div>
-        </CardContent>
-      </details>
+        ) : (
+          <p className="text-muted-foreground text-sm">{t("songs.lyrics.empty")}</p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {lyrics && (
+            <Button onClick={() => setViewing(true)}>
+              <Maximize2 />
+              {t("songs.lyrics.view.button")}
+            </Button>
+          )}
+          {!lyrics && (
+            <Button onClick={() => setSearching(true)}>
+              <Search />
+              {t("songs.lyrics.search.button")}
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => setEditing(true)}>
+            <Pencil />
+            {lyrics ? t("songs.lyrics.edit") : t("songs.lyrics.typeIn")}
+          </Button>
+        </div>
+      </div>
       <LyricsEditor
         bandSlug={bandSlug}
         songId={songId}
@@ -131,7 +120,7 @@ export function SongLyrics({
           setEditing(true);
         }}
       />
-    </Card>
+    </CollapsibleCard>
   );
 }
 
