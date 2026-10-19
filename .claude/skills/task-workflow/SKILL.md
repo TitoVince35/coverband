@@ -11,7 +11,8 @@ For each task (issue `#NN`):
 1. Move it to **In progress** and create a branch `NN-short-title` from `main`.
 2. Commit with `bun run check` passing.
    CI (`.github/workflows/ci.yml`) runs a dependency audit (`bun audit`, fails on high and critical), lint, typecheck, migrations, tests (with a Postgres service, so DB tests run) and the web build on every PR and on `main`. Keep it green: a PR is ready for review only when CI passes.
-3. Push and open a PR whose body contains `Closes #NN`. The board automation moves it to **In review**.
+   Moving or renaming files gets its own commit: the moves plus the import path updates they need, nothing else (`bun run check` passes). Content changes go in the next commits. Git detects renames by similarity, so a file that also changes a lot in the move commit loses its history (`git log --follow`, blame, the PR's rename view).
+3. Push and open a PR whose body contains `Closes #NN`. The board automation moves it to **In review**. A PR with a move commit says in its body to merge it with a merge commit, never squash: squashing would fold the move into the content changes on `main`.
 4. Vince reviews and merges. Automation moves the task to **Done** and closes the issue.
 5. If the issue is listed in the `## Issues` section of a brief (`briefs/vince/`) and all issues there are now closed, add the `Issues completed on ...` timestamp line to that brief (see the Briefs rules in the root `CLAUDE.md`). Check this after a merge you learn about, and when starting the next task.
 
