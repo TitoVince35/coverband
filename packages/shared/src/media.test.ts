@@ -25,6 +25,10 @@ describe("media links", () => {
     expect(mediaProvider("https://www.deezer.com/fr/track/1")).toBe("deezer");
     expect(mediaProvider("https://music.apple.com/fr/album/1")).toBe("apple_music");
     expect(mediaProvider("https://soundcloud.com/a/b")).toBe("soundcloud");
+    expect(mediaProvider("https://on.soundcloud.com/abc")).toBe("soundcloud");
+    expect(mediaProvider("https://snd.sc/abc")).toBe("soundcloud");
+    expect(mediaProvider("https://www.mixcloud.com/dj/mix/")).toBe("mixcloud");
+    expect(mediaProvider("https://m.mixcloud.com/dj/mix/")).toBe("mixcloud");
   });
 
   test("any other site is a plain link", () => {

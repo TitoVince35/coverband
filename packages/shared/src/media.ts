@@ -5,6 +5,7 @@ export const MEDIA_PROVIDERS = [
   "deezer",
   "apple_music",
   "soundcloud",
+  "mixcloud",
 ] as const;
 export type MediaProvider = (typeof MEDIA_PROVIDERS)[number];
 
@@ -15,6 +16,7 @@ export const MEDIA_PROVIDER_NAMES: Record<MediaProvider, string> = {
   deezer: "Deezer",
   apple_music: "Apple Music",
   soundcloud: "SoundCloud",
+  mixcloud: "Mixcloud",
 };
 
 /** Limits shared by the API and the forms. */
@@ -32,6 +34,7 @@ const DOMAINS: [string, MediaProvider][] = [
   ["music.apple.com", "apple_music"],
   ["soundcloud.com", "soundcloud"],
   ["snd.sc", "soundcloud"],
+  ["mixcloud.com", "mixcloud"],
 ];
 
 /** A typed link as a URL, if it is one we accept: http or https only, within the length limit. */

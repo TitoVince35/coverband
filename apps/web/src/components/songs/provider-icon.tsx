@@ -4,6 +4,7 @@ import {
   type SimpleIcon,
   siApplemusic,
   siDeezer,
+  siMixcloud,
   siSoundcloud,
   siSpotify,
   siYoutube,
@@ -17,7 +18,11 @@ const ICONS: Record<MediaProvider, SimpleIcon> = {
   deezer: siDeezer,
   apple_music: siApplemusic,
   soundcloud: siSoundcloud,
+  mixcloud: siMixcloud,
 };
+
+/** Too dark on the dark theme's cards (under 3:1): drawn in the text colour there. */
+const DARK_ON_DARK: readonly MediaProvider[] = ["mixcloud"];
 
 /** The logo of the site a link points to (a chain link for any other site). Decorative. */
 export function ProviderIcon({ url, className }: { url: string; className?: string }) {
@@ -27,7 +32,12 @@ export function ProviderIcon({ url, className }: { url: string; className?: stri
   }
   const icon = ICONS[provider];
   return (
-    <svg viewBox="0 0 24 24" aria-hidden className={cn("size-5", className)} fill={`#${icon.hex}`}>
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className={cn("size-5", DARK_ON_DARK.includes(provider) && "dark:fill-foreground", className)}
+      fill={`#${icon.hex}`}
+    >
       <path d={icon.path} />
     </svg>
   );
