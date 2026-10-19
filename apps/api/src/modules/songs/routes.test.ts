@@ -18,7 +18,7 @@ type Song = {
 };
 
 describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
-  const { deps, db, sql, auth } = createTestDeps(databaseUrl);
+  const { deps, db, sql, auth, lyrics } = createTestDeps(databaseUrl);
   const app = createApp({ deps, log: false });
 
   const run = crypto.randomUUID().slice(0, 8);
@@ -244,6 +244,55 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
       lyrics: "a".repeat(SONG_MAX_LENGTH.lyrics + 1),
     });
     expect(tooLong.status).toBe(400);
+  });
+
+  test("lyrics search: ranked matches from the provider, nothing saved", async () => {
+    const song = await songOf(
+      await add("lea", { title: "Linger", artist: "The Cranberries", standardDuration: 275 }),
+    );
+    lyrics.entries = [
+      {
+        id: "1",
+        title: "Linger",
+        artist: "The Cranberries",
+        album: "Live",
+        duration: 300,
+        lyrics: "If you, if you could return",
+      },
+      {
+        id: "2",
+        title: "Linger",
+        artist: "The Cranberries",
+        album: "Everybody Else",
+        duration: 274,
+        lyrics: "If you, if you could return",
+      },
+      {
+        id: "3",
+        title: "Linger",
+        artist: "The Cranberries",
+        album: null,
+        duration: null,
+        lyrics: null,
+      },
+    ];
+    const res = await call(`/bands/${slug}/songs/${song.id}/lyrics/search`, "max");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      matches: [
+        { id: "2", album: "Everybody Else", duration: 274, lyrics: "If you, if you could return" },
+      ],
+    });
+    expect(lyrics.searches.at(-1)).toEqual({ title: "Linger", artist: "The Cranberries" });
+    expect(await activityOf(db, song.id)).toMatchObject([{ action: "song.added" }]);
+
+    // Another band's song, or the service down.
+    expect((await call(`/bands/${slug}/songs/${song.id}/lyrics/search`, "zoe")).status).toBe(404);
+    lyrics.down = true;
+    const down = await call(`/bands/${slug}/songs/${song.id}/lyrics/search`, "max");
+    lyrics.down = false;
+    expect(down.status).toBe(503);
+    expect(await down.json()).toMatchObject({ error: { code: "lyrics_unavailable" } });
   });
 
   test("status and energy: a new song is proposed and not rated", async () => {

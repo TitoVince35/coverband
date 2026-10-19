@@ -8,10 +8,12 @@ import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 import { apiError } from "../../core/errors";
+import { type RateLimitRule, rateLimitUser } from "../../core/http/rate-limit";
 import type { SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import { type BandEnv, requireLeader, requireMember } from "../bands/guard";
+import { searchLyrics } from "./lyrics.service";
 import { addMedia, deleteMedia, mediaOf, updateMedia } from "./media.service";
 import { addSong, deleteSong, getSong, listSongs, setArchived, updateSong } from "./service";
 
@@ -21,9 +23,17 @@ const listQuery = z.object({ archived: z.enum(["true", "false"]).optional() });
 
 const mediaParam = songParam.extend({ mediaId: z.uuid() });
 
+/** Lyrics searches call LRCLIB: per user, a fair use of a free service. */
+export const LYRICS_SEARCHES: RateLimitRule = {
+  name: "lyrics-searches",
+  max: 30,
+  windowMs: 60 * 60 * 1000,
+};
+
 /** A band's repertoire, under /api/bands/:bandSlug/songs: every member reads, adds and edits. */
 export function songRoutes(deps: AppDeps) {
   const { db } = deps;
+  const lyricsLimit = rateLimitUser(db, LYRICS_SEARCHES);
   const who = (c: Context<BandEnv>) => ({ bandId: c.var.band.id, userId: c.var.user.id });
 
   return (
@@ -54,6 +64,17 @@ export function songRoutes(deps: AppDeps) {
             confirmDuplicate,
           });
           return song ? c.json({ song }) : apiError(c, 404, "Song not found");
+        },
+      )
+      // Lyrics found online for the song (#130), to choose from: nothing is saved.
+      .get(
+        "/:songId/lyrics/search",
+        lyricsLimit,
+        zValidator("param", songParam, validationHook),
+        async (c) => {
+          const { songId } = c.req.valid("param");
+          const matches = await searchLyrics(db, deps.lyrics, c.var.band.id, songId);
+          return matches ? c.json({ matches }) : apiError(c, 404, "Song not found");
         },
       )
       // Any member archives and restores.

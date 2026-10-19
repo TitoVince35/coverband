@@ -3,6 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 /** Own port, so end-to-end runs never clash with `bun run dev` (3000 and 5173). */
 export const E2E_PORT = 3100;
 const baseURL = `http://localhost:${E2E_PORT}`;
+/** The fake LRCLIB the app searches lyrics on (`fake-lrclib.ts`). */
+export const FAKE_LRCLIB_PORT = 3101;
 const ci = Boolean(process.env.CI);
 
 export default defineConfig({
@@ -30,12 +32,26 @@ export default defineConfig({
     },
   ],
   // Production-like: the API serves the built web app (`bun run build` + `bun run serve`).
-  webServer: {
-    command: "bun run build && bun apps/api/src/main.ts",
-    cwd: "..",
-    url: `${baseURL}/api/health`,
-    reuseExistingServer: !ci,
-    timeout: 180_000,
-    env: { PORT: String(E2E_PORT), BETTER_AUTH_URL: baseURL, WEB_DIST_DIR: "apps/web/dist" },
-  },
+  webServer: [
+    {
+      command: "bun run build && bun apps/api/src/main.ts",
+      cwd: "..",
+      url: `${baseURL}/api/health`,
+      reuseExistingServer: !ci,
+      timeout: 180_000,
+      env: {
+        PORT: String(E2E_PORT),
+        BETTER_AUTH_URL: baseURL,
+        WEB_DIST_DIR: "apps/web/dist",
+        LRCLIB_URL: `http://localhost:${FAKE_LRCLIB_PORT}`,
+      },
+    },
+    // Lyrics searches never reach the real LRCLIB.
+    {
+      command: "bun fake-lrclib.ts",
+      url: `http://localhost:${FAKE_LRCLIB_PORT}/health`,
+      reuseExistingServer: !ci,
+      env: { PORT: String(FAKE_LRCLIB_PORT) },
+    },
+  ],
 });

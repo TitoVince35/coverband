@@ -144,3 +144,27 @@ export async function deleteMedia(bandSlug: string, songId: string, mediaId: str
   const route = api.bands[":bandSlug"].songs[":songId"].media[":mediaId"];
   await ensureOk(await route.$delete({ param: { bandSlug, songId, mediaId } }));
 }
+
+/**
+ * Lyrics found online for a song (#130), to choose from. Each search calls LRCLIB (rate-limited):
+ * not retried, kept while the cache lasts.
+ */
+export const lyricsSearchQuery = (bandSlug: string, songId: string) =>
+  queryOptions({
+    queryKey: ["lyrics-search", bandSlug, songId],
+    retry: false,
+    queryFn: async () =>
+      (
+        await (
+          await ensureOk(
+            await api.bands[":bandSlug"].songs[":songId"].lyrics.search.$get({
+              param: { bandSlug, songId },
+            }),
+          )
+        ).json()
+      ).matches,
+  });
+
+export type LyricsMatch = Awaited<
+  ReturnType<ReturnType<typeof lyricsSearchQuery>["queryFn"] & {}>
+>[number];

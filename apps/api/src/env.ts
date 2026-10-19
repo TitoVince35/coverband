@@ -58,6 +58,8 @@ const envSchema = z
     SMTP_USER: z.string().min(1).optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(3),
+    // Where song lyrics are searched (#130). The end-to-end tests point it at a fake.
+    LRCLIB_URL: z.url({ protocol: /^https?$/ }).default("https://lrclib.net"),
     ...s3Schema.shape,
   })
   .refine((env) => (env.ADMIN_EMAIL === undefined) === (env.ADMIN_PASSWORD === undefined), {

@@ -1,5 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import { createAuth } from "./adapters/auth";
+import { createMemoryLyricsProvider } from "./adapters/lyrics";
 import { createMemoryMailer } from "./adapters/mail/mailer";
 import { createMemoryStorage } from "./adapters/storage";
 import { createDb, type Db } from "./core/db/client";
@@ -14,6 +15,7 @@ export function createTestDeps(databaseUrl = "postgres://unused@localhost:1/unus
   const { db, sql } = createDb(databaseUrl);
   const mailer = createMemoryMailer();
   const storage = createMemoryStorage();
+  const lyrics = createMemoryLyricsProvider();
   const auth = createAuth({
     db,
     mailer,
@@ -21,8 +23,8 @@ export function createTestDeps(databaseUrl = "postgres://unused@localhost:1/unus
     baseURL: "http://localhost:3000",
     rateLimit: false,
   });
-  const deps: AppDeps = { auth, db, mailer, storage, appUrl: "http://localhost:3000" };
-  return { deps, db, sql, auth, mailer, storage };
+  const deps: AppDeps = { auth, db, mailer, storage, lyrics, appUrl: "http://localhost:3000" };
+  return { deps, db, sql, auth, mailer, storage, lyrics };
 }
 
 /** Activity recorded about a target, oldest first (events of one transaction by action). */

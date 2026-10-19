@@ -1,10 +1,11 @@
-import { SONG_MAX_LENGTH } from "@coverband/shared";
+import { type LyricsSource, SONG_MAX_LENGTH } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import { ChevronDown, Pencil, XIcon } from "lucide-react";
+import { ChevronDown, Pencil, Search, XIcon } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { LyricsSearchDialog } from "@/components/songs/song-lyrics-search";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,10 +38,16 @@ const startsOpen = () => {
  * A song's lyrics (#129): a block closed on a phone, open on a wider screen, whose text is half a
  * screen tall and scrolls. Any member edits them in a modal.
  */
-export function SongLyrics({ bandSlug, songId, lyrics }: Props) {
+export function SongLyrics({
+  bandSlug,
+  songId,
+  lyrics,
+  source,
+}: Props & { source: LyricsSource | null }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(startsOpen);
   const [editing, setEditing] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   return (
     <Card>
@@ -55,13 +62,24 @@ export function SongLyrics({ bandSlug, songId, lyrics }: Props) {
         </summary>
         <CardContent className="space-y-4 pt-4">
           {lyrics ? (
-            <div className="max-h-[50dvh] overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-muted/50 p-3">
-              {lyrics}
+            <div className="space-y-2">
+              <div className="max-h-[50dvh] overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-muted/50 p-3">
+                {lyrics}
+              </div>
+              {source === "lrclib" && (
+                <p className="text-muted-foreground text-xs">{t("songs.lyrics.credit")}</p>
+              )}
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">{t("songs.lyrics.empty")}</p>
           )}
           <div className="flex flex-wrap gap-2">
+            {!lyrics && (
+              <Button onClick={() => setSearching(true)}>
+                <Search />
+                {t("songs.lyrics.search.button")}
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setEditing(true)}>
               <Pencil />
               {lyrics ? t("songs.lyrics.edit") : t("songs.lyrics.typeIn")}
@@ -75,17 +93,36 @@ export function SongLyrics({ bandSlug, songId, lyrics }: Props) {
         lyrics={lyrics}
         open={editing}
         onOpenChange={setEditing}
+        onReplace={() => {
+          setEditing(false);
+          setSearching(true);
+        }}
+      />
+      <LyricsSearchDialog
+        bandSlug={bandSlug}
+        songId={songId}
+        open={searching}
+        onOpenChange={setSearching}
+        onTypeIn={() => {
+          setSearching(false);
+          setEditing(true);
+        }}
       />
     </Card>
   );
 }
 
 /** The lyrics in a modal, full screen on a phone; closing it with changes asks first. */
+type EditorProps = Props & {
+  /** Leaves the editor for the online search. */
+  onReplace: () => void;
+};
+
 function LyricsEditor({
   open,
   onOpenChange,
   ...props
-}: Props & { open: boolean; onOpenChange: (open: boolean) => void }) {
+}: EditorProps & { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Each opening starts from the saved lyrics. */}
@@ -94,14 +131,21 @@ function LyricsEditor({
   );
 }
 
-function EditorContent({ bandSlug, songId, lyrics, onClose }: Props & { onClose: () => void }) {
+function EditorContent({
+  bandSlug,
+  songId,
+  lyrics,
+  onReplace,
+  onClose,
+}: EditorProps & { onClose: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   // The lyrics as they were when the editor opened: a refetch meanwhile (someone else saving)
   // doesn't make the draft a change. Saving then replaces theirs: the last one wins.
   const [base] = useState(lyrics);
   const [draft, setDraft] = useState(lyrics ?? "");
-  const [confirming, setConfirming] = useState(false);
+  // Leaving with changes asks first: then close, or go and search online.
+  const [confirming, setConfirming] = useState<"close" | "replace" | null>(null);
   const changed = storedText(draft) !== base;
   // Pasted text over the limit isn't cut: it's shown, and can't be saved.
   const tooLong = draft.trim().length > SONG_MAX_LENGTH.lyrics;
@@ -131,8 +175,13 @@ function EditorContent({ bandSlug, songId, lyrics, onClose }: Props & { onClose:
   // Escape, the close button or a tap outside: with changes, ask first.
   function close(event?: Event) {
     event?.preventDefault();
-    if (changed) setConfirming(true);
+    if (changed) setConfirming("close");
     else onClose();
+  }
+
+  function replace() {
+    if (changed) setConfirming("replace");
+    else onReplace();
   }
 
   return (
@@ -180,17 +229,21 @@ function EditorContent({ bandSlug, songId, lyrics, onClose }: Props & { onClose:
             </p>
           )}
         </form>
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-between gap-2">
+          <Button variant="outline" onClick={replace}>
+            <Search />
+            {t("songs.lyrics.search.replace")}
+          </Button>
           <Button type="submit" form="lyrics-form" disabled={!changed || tooLong || save.isPending}>
             {save.isPending ? t("common.saving") : t("common.save")}
           </Button>
         </div>
       </DialogContent>
       <AlertDialog
-        open={confirming || blocker.status === "blocked"}
+        open={confirming !== null || blocker.status === "blocked"}
         onOpenChange={(next) => {
           if (next) return;
-          setConfirming(false);
+          setConfirming(null);
           blocker.reset?.();
         }}
       >
@@ -205,6 +258,7 @@ function EditorContent({ bandSlug, songId, lyrics, onClose }: Props & { onClose:
               variant="destructive"
               onClick={() => {
                 if (blocker.status === "blocked") blocker.proceed();
+                else if (confirming === "replace") onReplace();
                 else onClose();
               }}
             >
