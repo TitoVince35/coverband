@@ -1,10 +1,11 @@
 import { type LyricsSource, SONG_MAX_LENGTH } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBlocker } from "@tanstack/react-router";
-import { ChevronDown, Pencil, Search, XIcon } from "lucide-react";
+import { ChevronDown, Maximize2, Pencil, Search, XIcon } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { LyricsView } from "@/components/songs/lyrics-view";
 import { LyricsSearchDialog } from "@/components/songs/song-lyrics-search";
 import {
   AlertDialog,
@@ -43,11 +44,16 @@ export function SongLyrics({
   songId,
   lyrics,
   source,
-}: Props & { source: LyricsSource | null }) {
+  title,
+}: Props & { source: LyricsSource | null; title: string }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(startsOpen);
   const [editing, setEditing] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [viewing, setViewing] = useState(false);
+  // Lyrics cleared by someone else while they're viewed: the view closes for good, rather than
+  // popping open again when new lyrics come.
+  if (viewing && !lyrics) setViewing(false);
 
   return (
     <Card>
@@ -74,6 +80,12 @@ export function SongLyrics({
             <p className="text-muted-foreground text-sm">{t("songs.lyrics.empty")}</p>
           )}
           <div className="flex flex-wrap gap-2">
+            {lyrics && (
+              <Button onClick={() => setViewing(true)}>
+                <Maximize2 />
+                {t("songs.lyrics.view.button")}
+              </Button>
+            )}
             {!lyrics && (
               <Button onClick={() => setSearching(true)}>
                 <Search />
@@ -98,6 +110,9 @@ export function SongLyrics({
           setSearching(true);
         }}
       />
+      {lyrics && (
+        <LyricsView title={title} lyrics={lyrics} open={viewing} onOpenChange={setViewing} />
+      )}
       <LyricsSearchDialog
         bandSlug={bandSlug}
         songId={songId}
