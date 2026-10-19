@@ -195,6 +195,12 @@
         "back": "Retour",
         "use": "Utiliser ces paroles",
         "description": "Paroles trouvées en ligne pour ce morceau : choisissez une version."
+      },
+      "view": {
+        "button": "Afficher",
+        "description": "Les paroles, en plein écran.",
+        "smaller": "Texte plus petit",
+        "larger": "Texte plus grand"
       }
     }
   },

@@ -273,6 +273,19 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   // Still credited: fetched, then fixed.
   await expect(leader.getByText("Lyrics from LRCLIB")).toBeVisible();
 
+  // Full screen for the stage: a larger text, remembered on the device.
+  await leader.getByRole("button", { name: "View", exact: true }).click();
+  const view = leader.getByRole("dialog", { name: "Zombie" });
+  const text = view.getByText("And the violence caused such silence");
+  await expect(text).toHaveCSS("font-size", "26px");
+  await view.getByRole("button", { name: "Larger text" }).click();
+  await expect(text).toHaveCSS("font-size", "32px");
+  await view.getByRole("button", { name: "Close" }).click();
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
+  await leader.getByRole("button", { name: "View", exact: true }).click();
+  await expect(text).toHaveCSS("font-size", "32px");
+  await leader.keyboard.press("Escape");
+
   // A link, for the drummer: the provider shows, it opens in a new tab.
   await leader.getByRole("button", { name: "Add a link" }).click();
   const link = leader.getByRole("dialog");

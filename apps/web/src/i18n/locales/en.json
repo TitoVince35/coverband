@@ -195,6 +195,12 @@
         "back": "Back",
         "use": "Use these lyrics",
         "description": "Lyrics found online for this song: choose a version."
+      },
+      "view": {
+        "button": "View",
+        "description": "The lyrics, full screen.",
+        "smaller": "Smaller text",
+        "larger": "Larger text"
       }
     }
   },
