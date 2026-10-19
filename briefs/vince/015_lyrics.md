@@ -3,6 +3,8 @@
 > 🕒 Brief posted on Monday 2026/10/19 17:02
 >
 > 🕒 Brief settled on Monday 2026/10/19 17:10
+>
+> 🕒 Issues completed on Monday 2026/10/19 18:14
 
 ## Description
 
@@ -58,3 +60,5 @@ If there are several matches, let the user choose from a curated list (5 at most
 - [#129 Lyrics field and block](https://github.com/TitoVince35/coverband/issues/129)
 - [#130 Search lyrics online (LRCLIB)](https://github.com/TitoVince35/coverband/issues/130)
 - [#131 Full-screen lyrics view](https://github.com/TitoVince35/coverband/issues/131)
+- [#136 Lyrics: search the web, and instrumentals](https://github.com/TitoVince35/coverband/issues/136)
+- [#138 Lyrics: refine the search (free text)](https://github.com/TitoVince35/coverband/issues/138)
