@@ -35,20 +35,49 @@ type LrclibEntry = {
   plainLyrics: string | null;
 };
 
+/** Answers worth asking again: LRCLIB says it's busy (503) or asks to slow down (429). */
+const RETRIED_STATUSES = new Set([429, 502, 503, 504]);
+
 /**
  * LRCLIB (lrclib.net): free, no key; it asks clients to name themselves in the User-Agent. Its
  * lyrics come from its community, without a licence from the rights holders (see
  * briefs/claude/014_lyrics.md). Nothing is cached: the server keeps no state.
+ *
+ * When it's overloaded, LRCLIB refuses part of the requests at random ("server busy"): a busy
+ * answer or a network failure is asked again after each of `retryDelaysMs`.
  */
 export function createLrclibProvider({
   userAgent,
   baseUrl = "https://lrclib.net",
   timeoutMs = 8000,
+  retryDelaysMs = [400, 1000],
+  fetch = globalThis.fetch,
 }: {
   userAgent: string;
   baseUrl?: string;
+  /** Per request. */
   timeoutMs?: number;
+  retryDelaysMs?: readonly number[];
+  /** Tests pass their own. */
+  fetch?: (url: URL, init: RequestInit) => Promise<Response>;
 }): LyricsProvider {
+  /** The answer, once LRCLIB isn't busy; throws when it never answers. */
+  async function get(url: URL): Promise<Response> {
+    for (let attempt = 0; ; attempt++) {
+      const delay = retryDelaysMs[attempt];
+      try {
+        const res = await fetch(url, {
+          headers: { "user-agent": userAgent, accept: "application/json" },
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+        if (res.ok || !RETRIED_STATUSES.has(res.status) || delay === undefined) return res;
+      } catch (error) {
+        if (delay === undefined) throw error;
+      }
+      await Bun.sleep(delay);
+    }
+  }
+
   return {
     async search({ title, artist }) {
       // Relative: a path in the base URL (a proxy) is kept.
@@ -56,10 +85,7 @@ export function createLrclibProvider({
       url.searchParams.set("track_name", title);
       url.searchParams.set("artist_name", artist);
       try {
-        const res = await fetch(url, {
-          headers: { "user-agent": userAgent, accept: "application/json" },
-          signal: AbortSignal.timeout(timeoutMs),
-        });
+        const res = await get(url);
         if (!res.ok) throw new Error(`LRCLIB answered ${res.status}`);
         const entries = (await res.json()) as LrclibEntry[];
         if (!Array.isArray(entries)) throw new Error("LRCLIB answered something else");
