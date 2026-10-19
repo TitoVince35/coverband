@@ -162,6 +162,52 @@ test("the band's home page shows its latest activity, newest first", async () =>
   await expect(journal).not.toContainText("@");
 });
 
+test("members build the repertoire: add, the duplicate warning, edit", async () => {
+  await leader.getByRole("link", { name: "Repertoire" }).click();
+  await expect(leader.getByText("No songs yet")).toBeVisible();
+  const add = async (title: string, artist: string, own?: string) => {
+    await leader.getByRole("button", { name: "Add a song" }).click();
+    const dialog = leader.getByRole("dialog");
+    await dialog.getByLabel("Title", { exact: true }).fill(title);
+    await dialog.getByLabel("Artist", { exact: true }).fill(artist);
+    if (own) await dialog.getByLabel("Our duration").fill(own);
+    await dialog.getByRole("button", { name: "Add", exact: true }).click();
+    return dialog;
+  };
+  await add("Creep", "Radiohead", "4:10");
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
+  const songs = leader.getByRole("list", { name: "Repertoire" }).getByRole("listitem");
+  await expect(songs).toHaveCount(1);
+  await expect(songs.first()).toContainText("4:10");
+
+  // The same song, typed differently: a warning, then added if confirmed.
+  const dialog = await add("creep", "RADIOHEAD");
+  await expect(dialog.getByText("Already in your repertoire: Creep – Radiohead.")).toBeVisible();
+  await dialog.getByRole("button", { name: "Add anyway" }).click();
+  await expect(songs).toHaveCount(2);
+
+  await add("Zombie", "The Cranberries");
+  await expect(songs).toHaveCount(3);
+  await leader.getByRole("searchbox").fill("cranberries");
+  await expect(songs).toHaveCount(1);
+  await songs.first().click();
+
+  await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
+  await leader.getByRole("button", { name: "Edit the song" }).click();
+  await leader.getByRole("dialog").getByLabel("Original duration").fill("5:06");
+  await leader.getByRole("dialog").getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Song updated")).toBeVisible();
+  await expect(leader.getByText("5:06")).toBeVisible();
+
+  // The journal names the songs.
+  await leader.getByRole("link", { name: "Home" }).click();
+  const journal = leader.getByRole("list").filter({ hasText: "created the band" });
+  await expect(journal.getByRole("listitem").first()).toContainText(
+    "Captain Lea updated song “Zombie”",
+  );
+  await expect(journal).toContainText("Captain Lea added song “Creep”");
+});
+
 test("the band leader uploads an avatar, then removes it", async () => {
   await leader.goto("/account");
   await leader

@@ -20,6 +20,8 @@ import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppBBandSlugRouteImport } from './routes/_app/b.$bandSlug'
 import { Route as AppBBandSlugIndexRouteImport } from './routes/_app/b.$bandSlug/index'
 import { Route as AppBBandSlugLineupRouteImport } from './routes/_app/b.$bandSlug/lineup'
+import { Route as AppBBandSlugSongsIndexRouteImport } from './routes/_app/b.$bandSlug/songs.index'
+import { Route as AppBBandSlugSongsSongIdRouteImport } from './routes/_app/b.$bandSlug/songs.$songId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -75,6 +77,16 @@ const AppBBandSlugLineupRoute = AppBBandSlugLineupRouteImport.update({
   path: '/lineup',
   getParentRoute: () => AppBBandSlugRoute,
 } as any)
+const AppBBandSlugSongsIndexRoute = AppBBandSlugSongsIndexRouteImport.update({
+  id: '/songs/',
+  path: '/songs/',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
+const AppBBandSlugSongsSongIdRoute = AppBBandSlugSongsSongIdRouteImport.update({
+  id: '/songs/$songId',
+  path: '/songs/$songId',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -87,6 +99,8 @@ export interface FileRoutesByFullPath {
   '/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug/': typeof AppBBandSlugIndexRoute
+  '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
+  '/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -98,6 +112,8 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug': typeof AppBBandSlugIndexRoute
+  '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
+  '/b/$bandSlug/songs': typeof AppBBandSlugSongsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -112,6 +128,8 @@ export interface FileRoutesById {
   '/_app/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
   '/_app/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/_app/b/$bandSlug/': typeof AppBBandSlugIndexRoute
+  '/_app/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
+  '/_app/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -126,6 +144,8 @@ export interface FileRouteTypes {
     | '/b/$bandSlug'
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug/'
+    | '/b/$bandSlug/songs/$songId'
+    | '/b/$bandSlug/songs/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -137,6 +157,8 @@ export interface FileRouteTypes {
     | '/'
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug'
+    | '/b/$bandSlug/songs/$songId'
+    | '/b/$bandSlug/songs'
   id:
     | '__root__'
     | '/_app'
@@ -150,6 +172,8 @@ export interface FileRouteTypes {
     | '/_app/b/$bandSlug'
     | '/_app/b/$bandSlug/lineup'
     | '/_app/b/$bandSlug/'
+    | '/_app/b/$bandSlug/songs/$songId'
+    | '/_app/b/$bandSlug/songs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -239,17 +263,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugLineupRouteImport
       parentRoute: typeof AppBBandSlugRoute
     }
+    '/_app/b/$bandSlug/songs/': {
+      id: '/_app/b/$bandSlug/songs/'
+      path: '/songs'
+      fullPath: '/b/$bandSlug/songs/'
+      preLoaderRoute: typeof AppBBandSlugSongsIndexRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
+    '/_app/b/$bandSlug/songs/$songId': {
+      id: '/_app/b/$bandSlug/songs/$songId'
+      path: '/songs/$songId'
+      fullPath: '/b/$bandSlug/songs/$songId'
+      preLoaderRoute: typeof AppBBandSlugSongsSongIdRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
   }
 }
 
 interface AppBBandSlugRouteChildren {
   AppBBandSlugLineupRoute: typeof AppBBandSlugLineupRoute
   AppBBandSlugIndexRoute: typeof AppBBandSlugIndexRoute
+  AppBBandSlugSongsSongIdRoute: typeof AppBBandSlugSongsSongIdRoute
+  AppBBandSlugSongsIndexRoute: typeof AppBBandSlugSongsIndexRoute
 }
 
 const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
   AppBBandSlugLineupRoute: AppBBandSlugLineupRoute,
   AppBBandSlugIndexRoute: AppBBandSlugIndexRoute,
+  AppBBandSlugSongsSongIdRoute: AppBBandSlugSongsSongIdRoute,
+  AppBBandSlugSongsIndexRoute: AppBBandSlugSongsIndexRoute,
 }
 
 const AppBBandSlugRouteWithChildren = AppBBandSlugRoute._addFileChildren(

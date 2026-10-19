@@ -1,7 +1,7 @@
 import type { ActivityAction, ActivityTarget } from "@coverband/shared";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { Db, Tx } from "./db/client";
-import { activity, users } from "./db/schema";
+import { activity, songs, users } from "./db/schema";
 
 export type ActivityEvent = {
   action: ActivityAction;
@@ -35,7 +35,8 @@ export const JOURNAL_SIZE = 10;
 /**
  * A band's latest activity, newest first, for its journal: what happened, when, and who did it
  * (their current display name; null once their account is deleted). Only band events, and only
- * the details a sentence needs: never ids of other rows, emails or free text.
+ * the details a sentence needs: the new genre, a song's current title (null once deleted); never
+ * ids of other rows or emails.
  */
 export async function bandJournal(db: Db, bandId: string, limit = JOURNAL_SIZE) {
   const rows = await db
@@ -45,9 +46,11 @@ export async function bandJournal(db: Db, bandId: string, limit = JOURNAL_SIZE) 
       createdAt: activity.createdAt,
       actorName: users.name,
       data: activity.data,
+      songTitle: songs.title,
     })
     .from(activity)
     .leftJoin(users, eq(users.id, activity.actorId))
+    .leftJoin(songs, and(eq(activity.targetType, "song"), eq(songs.id, activity.targetId)))
     .where(
       and(
         eq(activity.bandId, bandId),
@@ -57,8 +60,9 @@ export async function bandJournal(db: Db, bandId: string, limit = JOURNAL_SIZE) 
     )
     .orderBy(desc(activity.createdAt), desc(activity.id))
     .limit(limit);
-  return rows.map(({ data, ...entry }) => ({
+  return rows.map(({ data, songTitle, ...entry }) => ({
     ...entry,
+    ...(entry.action.startsWith("song.") ? { song: songTitle } : {}),
     // The new genre is the only detail shown (null: genre removed).
     ...(entry.action === "band.genre_changed"
       ? { genre: typeof data?.genre === "string" ? data.genre : null }

@@ -23,6 +23,7 @@ import { type BandEnv, requireLeader, requireMember } from "../middleware/band";
 import { INVITATION_EMAILS, rateLimitUser } from "../middleware/rate-limit";
 import { requireUser } from "../middleware/session";
 import { validationHook } from "../validation";
+import { songRoutes } from "./songs";
 
 const inviteBody = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email()),
@@ -139,6 +140,7 @@ export function bandRoutes(deps: AppDeps) {
       .get("/:bandSlug/activity", member, async (c) => {
         return c.json({ entries: await bandJournal(db, c.var.band.id) });
       })
+      .route("/:bandSlug/songs", songRoutes(deps))
       // Members change their own instruments only.
       .put(
         "/:bandSlug/members/me/instruments",

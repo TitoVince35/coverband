@@ -8,7 +8,7 @@ export { APP_NAME } from "./app";
 export { ADMIN_ROLE, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./auth";
 export { AVATAR_SIZE, avatarUrl } from "./avatars";
 export { BAND_ROLES, type BandRole, displayName, FIELD_MAX_LENGTH, slugify } from "./bands";
-export { formatDuration } from "./duration";
+export { formatDuration, MAX_SONG_DURATION, parseDuration } from "./duration";
 export {
   type ApiErrorBody,
   ERROR_CODES,
@@ -32,3 +32,4 @@ export {
   toInstrument,
 } from "./instruments";
 export { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language, pickLanguage } from "./languages";
+export { findDuplicateSong, SONG_MAX_LENGTH, songKey } from "./songs";

@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next";
 import { BandJournal } from "@/components/band/band-journal";
 import { bandQuery } from "@/lib/bands";
 
-// Band home page: the welcome, the band's journal (#84), then what's coming (repertoire,
-// setlists and gigs come later).
+// Band home page: the welcome, the band's journal (#84), then what's coming (setlists and gigs
+// come later).
 export const Route = createFileRoute("/_app/b/$bandSlug/")({
   component: BandHome,
 });

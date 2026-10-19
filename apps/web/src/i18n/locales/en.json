@@ -14,7 +14,7 @@
   "band": {
     "welcome": "Welcome to {{band}}!",
     "notFound": "This band doesn't exist or you're not a member.",
-    "comingSoon": "Repertoire, setlists and gigs are coming soon.",
+    "comingSoon": "Setlists and gigs are coming soon.",
     "roles": {
       "leader": "band leader",
       "musician": "musician"
@@ -49,6 +49,39 @@
       "main": "main",
       "none": "No instrument yet.",
       "saved": "Instruments updated"
+    }
+  },
+  "songs": {
+    "title": "Repertoire",
+    "add": "Add a song",
+    "search": "Search by title or artist",
+    "empty": "No songs yet. Add the first one!",
+    "noMatch": "No song matches “{{query}}”.",
+    "back": "Repertoire",
+    "edit": "Edit the song",
+    "notFound": "This song doesn't exist.",
+    "added": "Song added",
+    "saved": "Song updated",
+    "standardDuration": "Original duration",
+    "ownDuration": "Our duration",
+    "addedBy": "Added by {{name}} on {{date}}",
+    "addedOn": "Added on {{date}}",
+    "form": {
+      "addTitle": "Add a song",
+      "editTitle": "Edit the song",
+      "title": "Title",
+      "artist": "Artist",
+      "standardDuration": "Original duration",
+      "ownDuration": "Our duration",
+      "durationHint": "Optional, as m:ss (3:45).",
+      "invalidDuration": "Type a duration as m:ss, like 3:45.",
+      "durationTooLong": "A duration is at most {{max}}.",
+      "duplicate": "Already in your repertoire: {{title}} – {{artist}}.",
+      "duplicateHint": "Another version? Tell it apart in its title, like “{{title}} (acoustic)”.",
+      "add": "Add",
+      "adding": "Adding…",
+      "addAnyway": "Add anyway",
+      "saveAnyway": "Save anyway"
     }
   },
   "login": {
@@ -237,7 +270,8 @@
     "band_name_taken": "This band name is already taken.",
     "already_member": "This person is already a member of the band.",
     "too_many_requests": "Too many requests. Try again later.",
-    "invalid_image": "This file isn't a usable image. Choose a photo (JPEG, PNG, WebP…)."
+    "invalid_image": "This file isn't a usable image. Choose a photo (JPEG, PNG, WebP…).",
+    "song_duplicate": "This song is already in your repertoire."
   },
   "instruments": {
     "picker": {
@@ -258,6 +292,10 @@
     "invitationSent": "{{name}} invited a musician",
     "invitationResent": "{{name}} sent an invitation again",
     "invitationRevoked": "{{name}} cancelled an invitation",
-    "instrumentsChanged": "{{name}} updated their instruments"
+    "instrumentsChanged": "{{name}} updated their instruments",
+    "songAdded": "{{name}} added {{song}}",
+    "songUpdated": "{{name}} updated {{song}}",
+    "songTitle": "song “{{title}}”",
+    "aSong": "a song"
   }
 }

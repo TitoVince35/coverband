@@ -14,7 +14,7 @@
   "band": {
     "welcome": "Bienvenue dans {{band}} !",
     "notFound": "Ce groupe n'existe pas ou vous n'en faites pas partie.",
-    "comingSoon": "Le répertoire, les setlists et les concerts arrivent bientôt.",
+    "comingSoon": "Les setlists et les concerts arrivent bientôt.",
     "roles": {
       "leader": "band leader",
       "musician": "zicos"
@@ -49,6 +49,39 @@
       "main": "principal",
       "none": "Aucun instrument pour l'instant.",
       "saved": "Instruments mis à jour"
+    }
+  },
+  "songs": {
+    "title": "Répertoire",
+    "add": "Ajouter un morceau",
+    "search": "Rechercher par titre ou artiste",
+    "empty": "Aucun morceau pour l'instant. Ajoutez le premier !",
+    "noMatch": "Aucun morceau ne correspond à « {{query}} ».",
+    "back": "Répertoire",
+    "edit": "Modifier le morceau",
+    "notFound": "Ce morceau n'existe pas.",
+    "added": "Morceau ajouté",
+    "saved": "Morceau mis à jour",
+    "standardDuration": "Durée originale",
+    "ownDuration": "Notre durée",
+    "addedBy": "Ajouté par {{name}} le {{date}}",
+    "addedOn": "Ajouté le {{date}}",
+    "form": {
+      "addTitle": "Ajouter un morceau",
+      "editTitle": "Modifier le morceau",
+      "title": "Titre",
+      "artist": "Artiste",
+      "standardDuration": "Durée originale",
+      "ownDuration": "Notre durée",
+      "durationHint": "Facultatif, au format m:ss (3:45).",
+      "invalidDuration": "Tapez une durée au format m:ss, par exemple 3:45.",
+      "durationTooLong": "Une durée ne dépasse pas {{max}}.",
+      "duplicate": "Déjà dans votre répertoire : {{title}} – {{artist}}.",
+      "duplicateHint": "Une autre version ? Précisez-le dans le titre, par exemple « {{title}} (acoustique) ».",
+      "add": "Ajouter",
+      "adding": "Ajout…",
+      "addAnyway": "Ajouter quand même",
+      "saveAnyway": "Enregistrer quand même"
     }
   },
   "login": {
@@ -237,7 +270,8 @@
     "band_name_taken": "Ce nom de groupe est déjà pris.",
     "already_member": "Cette personne fait déjà partie du groupe.",
     "too_many_requests": "Trop de demandes. Réessayez plus tard.",
-    "invalid_image": "Ce fichier n'est pas une image utilisable. Choisissez une photo (JPEG, PNG, WebP…)."
+    "invalid_image": "Ce fichier n'est pas une image utilisable. Choisissez une photo (JPEG, PNG, WebP…).",
+    "song_duplicate": "Ce morceau est déjà dans votre répertoire."
   },
   "instruments": {
     "picker": {
@@ -258,6 +292,10 @@
     "invitationSent": "{{name}} a invité un zicos",
     "invitationResent": "{{name}} a renvoyé une invitation",
     "invitationRevoked": "{{name}} a annulé une invitation",
-    "instrumentsChanged": "{{name}} a mis à jour ses instruments"
+    "instrumentsChanged": "{{name}} a mis à jour ses instruments",
+    "songAdded": "{{name}} a ajouté {{song}}",
+    "songUpdated": "{{name}} a modifié {{song}}",
+    "songTitle": "le morceau « {{title}} »",
+    "aSong": "un morceau"
   }
 }

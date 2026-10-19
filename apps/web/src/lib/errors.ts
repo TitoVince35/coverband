@@ -6,6 +6,8 @@ export class ApiRequestError extends Error {
   constructor(
     readonly code: string,
     message: string,
+    /** The API's details about the error, if any (the song a duplicate matches). */
+    readonly details: Record<string, string> = {},
   ) {
     super(message);
     this.name = "ApiRequestError";
@@ -22,9 +24,11 @@ export async function ensureOk<R extends { ok: boolean; status: number; json(): 
   if (res.ok) {
     return res as Exclude<R, { ok: false }>;
   }
-  const body = (await res.json().catch(() => null)) as { error?: { code?: unknown } } | null;
+  const body = (await res.json().catch(() => null)) as {
+    error?: { code?: unknown; details?: Record<string, string> };
+  } | null;
   const code = isErrorCode(body?.error?.code) ? body.error.code : "internal_error";
-  throw new ApiRequestError(code, `API returned ${res.status} (${code})`);
+  throw new ApiRequestError(code, `API returned ${res.status} (${code})`, body?.error?.details);
 }
 
 /** User-facing, translated message for any error raised while calling the API. */
