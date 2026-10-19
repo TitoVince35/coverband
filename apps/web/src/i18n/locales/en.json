@@ -193,7 +193,8 @@
         "matches": "Lyrics found",
         "noAlbum": "Unknown album",
         "back": "Back",
-        "use": "Use these lyrics"
+        "use": "Use these lyrics",
+        "description": "Lyrics found online for this song: choose a version."
       }
     }
   },

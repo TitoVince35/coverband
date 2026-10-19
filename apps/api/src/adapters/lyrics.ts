@@ -51,29 +51,33 @@ export function createLrclibProvider({
 }): LyricsProvider {
   return {
     async search({ title, artist }) {
-      const url = new URL("/api/search", baseUrl);
+      // Relative: a path in the base URL (a proxy) is kept.
+      const url = new URL("api/search", baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
       url.searchParams.set("track_name", title);
       url.searchParams.set("artist_name", artist);
-      let entries: LrclibEntry[];
       try {
         const res = await fetch(url, {
           headers: { "user-agent": userAgent, accept: "application/json" },
           signal: AbortSignal.timeout(timeoutMs),
         });
         if (!res.ok) throw new Error(`LRCLIB answered ${res.status}`);
-        entries = (await res.json()) as LrclibEntry[];
+        const entries = (await res.json()) as LrclibEntry[];
+        if (!Array.isArray(entries)) throw new Error("LRCLIB answered something else");
+        // An answer of another shape throws here too: unavailable, never a 500.
+        return entries.map((entry) => ({
+          id: String(entry.id),
+          title: String(entry.trackName),
+          artist: String(entry.artistName),
+          album: typeof entry.albumName === "string" && entry.albumName ? entry.albumName : null,
+          duration: typeof entry.duration === "number" ? Math.round(entry.duration) : null,
+          lyrics:
+            entry.instrumental || typeof entry.plainLyrics !== "string" || !entry.plainLyrics
+              ? null
+              : entry.plainLyrics,
+        }));
       } catch {
         throw new LyricsUnavailableError();
       }
-      if (!Array.isArray(entries)) throw new LyricsUnavailableError();
-      return entries.map((entry) => ({
-        id: String(entry.id),
-        title: entry.trackName,
-        artist: entry.artistName,
-        album: entry.albumName || null,
-        duration: typeof entry.duration === "number" ? Math.round(entry.duration) : null,
-        lyrics: entry.instrumental ? null : entry.plainLyrics || null,
-      }));
     },
   };
 }

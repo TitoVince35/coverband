@@ -193,7 +193,8 @@
         "matches": "Paroles trouvées",
         "noAlbum": "Album inconnu",
         "back": "Retour",
-        "use": "Utiliser ces paroles"
+        "use": "Utiliser ces paroles",
+        "description": "Paroles trouvées en ligne pour ce morceau : choisissez une version."
       }
     }
   },

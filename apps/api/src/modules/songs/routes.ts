@@ -69,8 +69,8 @@ export function songRoutes(deps: AppDeps) {
       // Lyrics found online for the song (#130), to choose from: nothing is saved.
       .get(
         "/:songId/lyrics/search",
-        lyricsLimit,
         zValidator("param", songParam, validationHook),
+        lyricsLimit,
         async (c) => {
           const { songId } = c.req.valid("param");
           const matches = await searchLyrics(db, deps.lyrics, c.var.band.id, songId);

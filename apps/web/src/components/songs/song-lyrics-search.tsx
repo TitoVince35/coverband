@@ -51,9 +51,10 @@ function SearchContent({
     mutationFn: (match: LyricsMatch) =>
       updateSong(bandSlug, songId, { lyrics: match.lyrics, lyricsSource: "lrclib" }),
     onSuccess: async () => {
+      // The song first: the block shows the new lyrics as the modal closes.
+      await queryClient.invalidateQueries({ queryKey: ["bands", bandSlug] });
       toast.success(t("songs.lyrics.saved"));
       onClose();
-      await queryClient.invalidateQueries({ queryKey: ["bands", bandSlug] });
     },
   });
 
@@ -67,7 +68,7 @@ function SearchContent({
     <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-lg">
       <DialogHeader>
         <DialogTitle className="font-heading">{t("songs.lyrics.search.title")}</DialogTitle>
-        <DialogDescription>{t("songs.lyrics.credit")}</DialogDescription>
+        <DialogDescription>{t("songs.lyrics.search.description")}</DialogDescription>
       </DialogHeader>
       {search.isPending ? (
         <div role="status" className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
@@ -92,6 +93,7 @@ function SearchContent({
             {chosen.lyrics}
           </div>
           <div className="space-y-2">
+            <p className="text-muted-foreground text-xs">{t("songs.lyrics.credit")}</p>
             {use.isError && (
               <p role="alert" className="text-destructive text-sm">
                 {errorMessage(t, use.error)}
@@ -141,8 +143,5 @@ function SearchContent({
   );
 }
 
-const firstLine = (lyrics: string) =>
-  lyrics
-    .split("\n")
-    .find((line) => line.trim())
-    ?.trim() ?? lyrics;
+// Matches come trimmed: their first line is never blank.
+const firstLine = (lyrics: string) => lyrics.split("\n", 1)[0];

@@ -147,11 +147,11 @@ export async function deleteMedia(bandSlug: string, songId: string, mediaId: str
 
 /**
  * Lyrics found online for a song (#130), to choose from. Each search calls LRCLIB (rate-limited):
- * not retried, kept while the cache lasts.
+ * not retried, kept while the cache lasts, searched again once the song changes (its title).
  */
 export const lyricsSearchQuery = (bandSlug: string, songId: string) =>
   queryOptions({
-    queryKey: ["lyrics-search", bandSlug, songId],
+    queryKey: ["bands", bandSlug, "songs", songId, "lyrics-search"],
     retry: false,
     queryFn: async () =>
       (

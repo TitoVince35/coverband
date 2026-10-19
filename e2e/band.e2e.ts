@@ -248,6 +248,15 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(leader.getByRole("dialog")).toHaveCount(0);
   await expect(leader.getByText("Lyrics from LRCLIB")).toBeVisible();
 
+  // From the editor, "Replace from online" asks first when there are changes, then searches.
+  await leader.getByRole("button", { name: "Edit", exact: true }).click();
+  await leader.getByRole("dialog").getByRole("textbox", { name: "Lyrics" }).fill("Typo");
+  await leader.getByRole("button", { name: "Replace from online" }).click();
+  await leader.getByRole("alertdialog").getByRole("button", { name: "Close" }).click();
+  await expect(leader.getByRole("list", { name: "Lyrics found" })).toBeVisible();
+  await leader.keyboard.press("Escape");
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
+
   // Edited in a modal that asks before closing with changes.
   await leader.getByRole("button", { name: "Edit", exact: true }).click();
   const lyrics = leader.getByRole("dialog");

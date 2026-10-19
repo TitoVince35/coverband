@@ -37,7 +37,8 @@ export default defineConfig({
       command: "bun run build && bun apps/api/src/main.ts",
       cwd: "..",
       url: `${baseURL}/api/health`,
-      reuseExistingServer: !ci,
+      // Never reused: a server started otherwise would search the real LRCLIB.
+      reuseExistingServer: false,
       timeout: 180_000,
       env: {
         PORT: String(E2E_PORT),
