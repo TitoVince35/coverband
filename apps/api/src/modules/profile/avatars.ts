@@ -1,10 +1,10 @@
 import { ADMIN_ROLE, avatarUrl } from "@coverband/shared";
-import { and, eq } from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
+import { eq } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
-import { bandMembers, users } from "../../core/db/schema";
+import { users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
 import type { AppDeps } from "../../deps";
+import { shareABand } from "../bands/service";
 
 type Deps = Pick<AppDeps, "db" | "storage">;
 
@@ -111,14 +111,7 @@ async function canSee(
   userId: string,
 ) {
   if (viewer.id === userId || viewer.role === ADMIN_ROLE) return true;
-  const theirs = alias(bandMembers, "theirs");
-  const [shared] = await db
-    .select({ bandId: bandMembers.bandId })
-    .from(bandMembers)
-    .innerJoin(theirs, and(eq(theirs.bandId, bandMembers.bandId), eq(theirs.userId, userId)))
-    .where(eq(bandMembers.userId, viewer.id))
-    .limit(1);
-  return shared !== undefined;
+  return shareABand(db, viewer.id, userId);
 }
 
 /** The avatar file, or null when there is none or the viewer may not see it (a 404 either way). */

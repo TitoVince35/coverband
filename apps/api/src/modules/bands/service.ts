@@ -1,5 +1,6 @@
 import { type BandRole, slugify } from "@coverband/shared";
 import { and, asc, eq, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { isUniqueViolation } from "../../core/db/pg-errors";
@@ -42,6 +43,18 @@ export async function membershipOf(
     .innerJoin(bandMembers, and(eq(bandMembers.bandId, bands.id), eq(bandMembers.userId, userId)))
     .where(eq(bands.slug, slug));
   return row ?? null;
+}
+
+/** Whether two users are members of a same band. */
+export async function shareABand(db: Db, userId: string, otherId: string) {
+  const theirs = alias(bandMembers, "theirs");
+  const [shared] = await db
+    .select({ bandId: bandMembers.bandId })
+    .from(bandMembers)
+    .innerJoin(theirs, and(eq(theirs.bandId, bandMembers.bandId), eq(theirs.userId, otherId)))
+    .where(eq(bandMembers.userId, userId))
+    .limit(1);
+  return shared !== undefined;
 }
 
 export class BandNameTakenError extends AppError {
