@@ -15,9 +15,12 @@ export type LyricsEntry = {
   instrumental: boolean;
 };
 
+/** What to search: a song by title and artist, or free text (#138: "Take Five Carmen McRae"). */
+export type LyricsQuery = { title: string; artist: string } | { text: string };
+
 /** Where lyrics are searched (#130): LRCLIB, or a fake in tests. */
 export type LyricsProvider = {
-  search(song: { title: string; artist: string }): Promise<LyricsEntry[]>;
+  search(query: LyricsQuery): Promise<LyricsEntry[]>;
 };
 
 /** The lyrics service doesn't answer (down, slow, refusing): the member types them in. */
@@ -81,11 +84,15 @@ export function createLrclibProvider({
   }
 
   return {
-    async search({ title, artist }) {
+    async search(query) {
       // Relative: a path in the base URL (a proxy) is kept.
       const url = new URL("api/search", baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
-      url.searchParams.set("track_name", title);
-      url.searchParams.set("artist_name", artist);
+      if ("text" in query) {
+        url.searchParams.set("q", query.text);
+      } else {
+        url.searchParams.set("track_name", query.title);
+        url.searchParams.set("artist_name", query.artist);
+      }
       try {
         const res = await get(url);
         if (!res.ok) throw new Error(`LRCLIB answered ${res.status}`);
@@ -116,7 +123,7 @@ export function createLrclibProvider({
 
 /** Tests: answers with the given entries for every search, and remembers the searches. */
 export function createMemoryLyricsProvider(entries: LyricsEntry[] = []) {
-  const searches: { title: string; artist: string }[] = [];
+  const searches: LyricsQuery[] = [];
   const provider: LyricsProvider & {
     entries: LyricsEntry[];
     searches: typeof searches;
@@ -125,8 +132,8 @@ export function createMemoryLyricsProvider(entries: LyricsEntry[] = []) {
     entries,
     searches,
     down: false,
-    async search(song) {
-      searches.push(song);
+    async search(query) {
+      searches.push(query);
       if (provider.down) throw new LyricsUnavailableError();
       return provider.entries;
     },

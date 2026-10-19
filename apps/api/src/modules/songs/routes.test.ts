@@ -284,7 +284,14 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     expect(await res.json()).toEqual({
       instrumental: false,
       matches: [
-        { id: "2", album: "Everybody Else", duration: 274, lyrics: "If you, if you could return" },
+        {
+          id: "2",
+          title: "Linger",
+          artist: "The Cranberries",
+          album: "Everybody Else",
+          duration: 274,
+          lyrics: "If you, if you could return",
+        },
       ],
     });
     expect(lyrics.searches.at(-1)).toEqual({ title: "Linger", artist: "The Cranberries" });
@@ -304,6 +311,15 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     ];
     const instrumental = await call(`/bands/${slug}/songs/${song.id}/lyrics/search`, "max");
     expect(await instrumental.json()).toEqual({ matches: [], instrumental: true });
+
+    // Free text, instead of the title and artist (#138).
+    await call(
+      `/bands/${slug}/songs/${song.id}/lyrics/search?q=${encodeURIComponent(" Linger live ")}`,
+      "max",
+    );
+    expect(lyrics.searches.at(-1)).toEqual({ text: "Linger live" });
+    await call(`/bands/${slug}/songs/${song.id}/lyrics/search?q=`, "max");
+    expect(lyrics.searches.at(-1)).toEqual({ title: "Linger", artist: "The Cranberries" });
 
     // Another band's song, or the service down.
     expect((await call(`/bands/${slug}/songs/${song.id}/lyrics/search`, "zoe")).status).toBe(404);

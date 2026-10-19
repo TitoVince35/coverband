@@ -25,6 +25,8 @@ test("each text once, the version closest to the song's duration", () => {
   expect(matches.map((m) => m.id)).toEqual(["album", "other"]);
   expect(matches[0]).toEqual({
     id: "album",
+    title: "Zombie",
+    artist: "The Cranberries",
     album: "Album album",
     duration: 306,
     lyrics: "Another head hangs lowly",

@@ -1,6 +1,7 @@
 /**
  * A fake LRCLIB for the end-to-end tests (started by playwright.config.ts): two versions of
- * "Zombie" with different lyrics, "Creep" as an instrumental, nothing for any other song.
+ * "Zombie" with different lyrics, "Creep" as an instrumental (but a free search for "creep
+ * acoustic" finds a sung version), nothing for any other song.
  */
 const ZOMBIE = [
   {
@@ -35,12 +36,26 @@ const CREEP = [
   },
 ];
 
+const CREEP_ACOUSTIC = [
+  {
+    id: 4,
+    trackName: "Creep (Acoustic)",
+    artistName: "Radiohead",
+    albumName: "My Iron Lung",
+    duration: 260,
+    instrumental: false,
+    plainLyrics: "When you were here before\nCouldn't look you in the eye",
+  },
+];
+
 Bun.serve({
   port: Number(process.env.PORT ?? 3101),
   fetch(req) {
     const url = new URL(req.url);
     if (url.pathname === "/health") return new Response("ok");
     if (url.pathname !== "/api/search") return new Response("Not found", { status: 404 });
+    const text = url.searchParams.get("q")?.toLowerCase();
+    if (text !== undefined) return Response.json(text === "creep acoustic" ? CREEP_ACOUSTIC : []);
     const title = url.searchParams.get("track_name")?.toLowerCase();
     return Response.json(title === "zombie" ? ZOMBIE : title === "creep" ? CREEP : []);
   },

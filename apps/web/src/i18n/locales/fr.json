@@ -195,7 +195,9 @@
         "back": "Retour",
         "use": "Utiliser ces paroles",
         "description": "Paroles trouvées en ligne pour ce morceau : choisissez une version.",
-        "instrumental": "LRCLIB classe ce morceau comme instrumental."
+        "instrumental": "LRCLIB classe ce morceau comme instrumental.",
+        "refine": "Rechercher",
+        "again": "Relancer la recherche"
       },
       "view": {
         "button": "Afficher",

@@ -1,7 +1,7 @@
 import { formatDuration } from "@coverband/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Globe, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight, Globe, Loader2, Search } from "lucide-react";
+import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { errorMessage } from "@/lib/errors";
 import { type LyricsMatch, lyricsSearchQuery, updateSong } from "@/lib/songs";
 
@@ -71,8 +72,19 @@ function SearchContent({
 }: Omit<Props, "open" | "onOpenChange"> & { onClose: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const search = useQuery(lyricsSearchQuery(bandSlug, songId));
+  // The song's title and artist first; edited, a free search (#138: "Take Five Carmen McRae").
+  const songText = `${song.title} ${song.artist}`;
+  const [draft, setDraft] = useState(songText);
+  const [text, setText] = useState<string | undefined>();
+  const search = useQuery(lyricsSearchQuery(bandSlug, songId, text));
   const [chosen, setChosen] = useState<LyricsMatch | null>(null);
+
+  function onSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const typed = draft.trim();
+    setText(typed && typed !== songText ? typed : undefined);
+    setChosen(null);
+  }
 
   const use = useMutation({
     mutationFn: (match: LyricsMatch) =>
@@ -100,6 +112,25 @@ function SearchContent({
       <DialogHeader>
         <DialogTitle className="font-heading">{t("songs.lyrics.search.title")}</DialogTitle>
         <DialogDescription>{t("songs.lyrics.search.description")}</DialogDescription>
+        {!chosen && (
+          <form onSubmit={onSearch} className="flex gap-2 pt-2">
+            <Input
+              aria-label={t("songs.lyrics.search.refine")}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              maxLength={200}
+            />
+            <Button
+              type="submit"
+              variant="outline"
+              size="icon"
+              aria-label={t("songs.lyrics.search.again")}
+              disabled={search.isFetching}
+            >
+              <Search />
+            </Button>
+          </form>
+        )}
       </DialogHeader>
       {search.isPending ? (
         <div role="status" className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
@@ -159,6 +190,10 @@ function SearchContent({
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{firstLine(match.lyrics)}</p>
+                  {/* A free search can bring other songs: whose these lyrics are. */}
+                  <p className="truncate text-sm">
+                    {match.artist} – {match.title}
+                  </p>
                   <p className="truncate text-muted-foreground text-xs tabular-nums">
                     {[
                       match.album ?? t("songs.lyrics.search.noAlbum"),

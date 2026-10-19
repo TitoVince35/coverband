@@ -150,15 +150,17 @@ export async function deleteMedia(bandSlug: string, songId: string, mediaId: str
  * instrumental (#136). Each search calls LRCLIB (rate-limited):
  * not retried, kept while the cache lasts, searched again once the song changes (its title).
  */
-export const lyricsSearchQuery = (bandSlug: string, songId: string) =>
+export const lyricsSearchQuery = (bandSlug: string, songId: string, text?: string) =>
   queryOptions({
-    queryKey: ["bands", bandSlug, "songs", songId, "lyrics-search"],
+    // A free search (#138) is its own search; none: the song's title and artist.
+    queryKey: ["bands", bandSlug, "songs", songId, "lyrics-search", text ?? null],
     retry: false,
     queryFn: async () =>
       await (
         await ensureOk(
           await api.bands[":bandSlug"].songs[":songId"].lyrics.search.$get({
             param: { bandSlug, songId },
+            query: text ? { q: text } : {},
           }),
         )
       ).json(),

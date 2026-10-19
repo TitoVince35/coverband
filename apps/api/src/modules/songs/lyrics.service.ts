@@ -6,6 +6,9 @@ import { getSong } from "./service";
 /** Lyrics found for a song, offered to choose from. */
 export type LyricsMatch = {
   id: string;
+  /** The recording's: a free search can bring other songs and artists. */
+  title: string;
+  artist: string;
   album: string | null;
   duration: number | null;
   lyrics: string;
@@ -41,7 +44,14 @@ export function rankLyrics(
   return [...best.values()]
     .sort((a, b) => distance(a) - distance(b))
     .slice(0, limit)
-    .map(({ id, album, duration, lyrics }) => ({ id, album, duration, lyrics }));
+    .map(({ id, title, artist, album, duration, lyrics }) => ({
+      id,
+      title,
+      artist,
+      album,
+      duration,
+      lyrics,
+    }));
 }
 
 /**
@@ -62,10 +72,14 @@ export async function searchLyrics(
   provider: LyricsProvider,
   bandId: string,
   songId: string,
+  /** Free text instead of the song's title and artist (#138). */
+  text?: string,
 ) {
   const song = await getSong(db, bandId, songId);
   if (!song) return null;
-  const entries = await provider.search({ title: song.title, artist: song.artist });
+  const entries = await provider.search(
+    text ? { text } : { title: song.title, artist: song.artist },
+  );
   return {
     matches: rankLyrics(entries, song.standardDuration),
     instrumental: onlyInstrumental(entries, song.title),

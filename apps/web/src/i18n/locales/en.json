@@ -195,7 +195,9 @@
         "back": "Back",
         "use": "Use these lyrics",
         "description": "Lyrics found online for this song: choose a version.",
-        "instrumental": "LRCLIB lists this song as an instrumental."
+        "instrumental": "LRCLIB lists this song as an instrumental.",
+        "refine": "Search for",
+        "again": "Search again"
       },
       "view": {
         "button": "View",

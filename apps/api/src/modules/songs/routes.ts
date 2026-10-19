@@ -21,6 +21,9 @@ const songParam = z.object({ bandSlug: z.string(), songId: z.uuid() });
 
 const listQuery = z.object({ archived: z.enum(["true", "false"]).optional() });
 
+/** A free lyrics search (#138); without it, the song's title and artist are searched. */
+const lyricsSearchQuery = z.object({ q: z.string().trim().max(200).optional() });
+
 const mediaParam = songParam.extend({ mediaId: z.uuid() });
 
 /** Lyrics searches call LRCLIB: per user, a fair use of a free service. */
@@ -70,10 +73,12 @@ export function songRoutes(deps: AppDeps) {
       .get(
         "/:songId/lyrics/search",
         zValidator("param", songParam, validationHook),
+        zValidator("query", lyricsSearchQuery, validationHook),
         lyricsLimit,
         async (c) => {
           const { songId } = c.req.valid("param");
-          const found = await searchLyrics(db, deps.lyrics, c.var.band.id, songId);
+          const { q } = c.req.valid("query");
+          const found = await searchLyrics(db, deps.lyrics, c.var.band.id, songId, q || undefined);
           return found ? c.json(found) : apiError(c, 404, "Song not found");
         },
       )
