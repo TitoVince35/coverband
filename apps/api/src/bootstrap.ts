@@ -1,5 +1,5 @@
 import { ADMIN_ROLE } from "@coverband/shared";
-import type { Auth } from "./auth";
+import type { Auth } from "./adapters/auth";
 
 export type AdminCredentials = { email: string; password: string };
 

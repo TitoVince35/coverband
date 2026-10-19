@@ -3,17 +3,17 @@ import { serveStatic } from "@hono/bun";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
+import { AppError, apiError, appErrorResponse } from "./core/errors";
+import { health } from "./core/http/health";
+import { requestGuards, securityHeaders } from "./core/http/security";
+import { loadSession, type SessionEnv } from "./core/http/session";
 import type { AppDeps } from "./deps";
-import { AppError, apiError, appErrorResponse } from "./errors";
-import { requestGuards, securityHeaders } from "./middleware/security";
-import { loadSession, type SessionEnv } from "./middleware/session";
-import { adminRoutes } from "./routes/admin";
-import { bandRoutes } from "./routes/bands";
-import { health } from "./routes/health";
-import { instrumentRoutes } from "./routes/instruments";
-import { invitationRoutes } from "./routes/invitations";
-import { meRoutes } from "./routes/me";
-import { userRoutes } from "./routes/users";
+import { adminRoutes } from "./modules/admin/routes";
+import { bandRoutes } from "./modules/bands/routes";
+import { instrumentRoutes } from "./modules/instruments/routes";
+import { invitationRoutes } from "./modules/onboarding/routes";
+import { meRoutes } from "./modules/profile/routes";
+import { userRoutes } from "./modules/profile/user-routes";
 
 export type AppOptions = {
   deps: AppDeps;

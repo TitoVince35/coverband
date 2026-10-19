@@ -1,7 +1,7 @@
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@coverband/shared";
 import { z } from "zod";
-import type { SmtpConfig } from "./mail/mailer";
-import type { S3Config } from "./storage";
+import type { SmtpConfig } from "./adapters/mail/mailer";
+import type { S3Config } from "./adapters/storage";
 
 const databaseUrl = z.url({ protocol: /^postgres(ql)?$/ });
 
