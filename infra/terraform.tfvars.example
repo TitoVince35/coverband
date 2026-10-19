@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (git-ignored) and fill in.
+project_id      = "00000000-0000-0000-0000-000000000000"
+organization_id = "00000000-0000-0000-0000-000000000000"
+domain          = "coverband.fr"
+admin_email     = "you@example.com"
+mail_from       = "Coverband Beta <noreply@coverband.fr>"
+# app_subdomain = "app"
+# budget_eur    = 20
+# alert_email   = "you@example.com"

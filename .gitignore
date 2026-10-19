@@ -12,3 +12,6 @@ test-results/
 
 # TanStack Router plugin temp files
 .tanstack/
+
+# Personal Claude Code settings
+.claude/settings.local.json

@@ -29,7 +29,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - The CSP only allows our own origin. The inline theme script of `apps/web/index.html` is allowed by its hash (`THEME_SCRIPT_HASH`): when the script changes, the test fails and shows the new hash. Inline styles stay allowed (React style props, toasts). Anything loaded from another origin (fonts, images, scripts) needs a CSP change.
 - Guards on `/api/*`, Better Auth included (`requestGuards`): request bodies up to 100 KB (413 otherwise; files will go straight to Object Storage), and `hono/csrf`, which refuses form-style requests (form, multipart, `text/plain`) from other origins than the app URL and `TRUSTED_ORIGINS`.
 - Rate limits. Better Auth limits its own endpoints per client IP (login and password change: 3 per 10 s; reset requests: 3 per minute; others: 100 per 10 s), with counters in Postgres. Our routes that send emails use `rateLimitUser(db, rule)` (`src/core/http/rate-limit.ts`, fixed window per user, stored in the same `rate_limits` table with `coverband:` keys): invitation send and resend, 20 per hour (`INVITATION_EMAILS`, `src/modules/invitations/routes.ts`); lyrics searches, which call LRCLIB, 30 per hour (`LYRICS_SEARCHES`, `src/modules/songs/routes.ts`). Over the limit: 429 `too_many_requests` with `Retry-After`.
-- Client IP: Better Auth reads `X-Forwarded-For`. A header with several addresses is only trusted when the proxies are listed in `TRUSTED_PROXIES`; otherwise every client would share one rate limit bucket. Check it on deployment (#8): look at the header, log in, and check `sessions.ip_address` holds your IP.
+- Client IP: Better Auth reads it from one header, `CLIENT_IP_HEADER`: `x-forwarded-for` by default (the e2e tests give each login its own), `x-real-ip` in production (`infra/container.tf`). Scaleway's proxy overwrites `X-Real-IP`, while a client can send its own `X-Forwarded-For` and dodge the limits.
 - **No CORS, on purpose.** The API serves the web app on the same origin in production, and Vite proxies `/api` in development. CORS would only loosen the browser's cross-origin rules: never add it.
 
 ## Database
@@ -76,7 +76,7 @@ A band's repertoire (`songs`, `src/modules/songs/service.ts`, routes in `src/mod
 
 ## Files
 
-- Object storage through a `Storage` (`src/adapters/storage.ts`, `AppDeps.storage`): `put`, `get` (a stream, or null), `delete`. Bun's built-in S3 client, no SDK. Garage locally (`docker/garage/`, started and prepared by `bun run db:up`, also in CI), Scaleway Object Storage in production: only `S3_*` configuration. Setting up the Scaleway bucket and its key is a production setup step (#8).
+- Object storage through a `Storage` (`src/adapters/storage.ts`, `AppDeps.storage`): `put`, `get` (a stream, or null), `delete`. Bun's built-in S3 client, no SDK. Garage locally (`docker/garage/`, started and prepared by `bun run db:up`, also in CI), Scaleway Object Storage in production: only `S3_*` configuration. In production, the bucket and its key are created by `infra/` (OpenTofu).
 - The bucket is private: files are served by API routes that check who may see them, never by public bucket URLs.
 - Keys are paths with a fresh UUID per version (`users/{id}/avatar/{uuid}.webp`): a new file gets a new key, and the old object is deleted.
 - Tests use `createMemoryStorage()`; the S3 integration test runs when `S3_ENDPOINT` is set (locally and in CI).

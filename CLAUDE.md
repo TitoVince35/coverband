@@ -4,7 +4,7 @@ An installable web app (PWA) for music bands: repertoire, setlists, gigs, member
 Multi-tenant: each band's data is private; a musician can belong to several bands.
 
 Product briefs and technical decisions live in `briefs/`. Read them before making structural choices.
-App-specific conventions: `apps/api/CLAUDE.md` and `apps/web/CLAUDE.md`. Task workflow (GitHub board, branches, PRs): the `task-workflow` skill.
+App-specific conventions: `apps/api/CLAUDE.md` and `apps/web/CLAUDE.md`. Task workflow (GitHub board, branches, PRs, releases): the `task-workflow` skill.
 
 ## Stack
 
@@ -42,6 +42,12 @@ bun run db:studio    # browse the database
 bun run mail:test you@example.com fr   # send a test email (lands in Mailpit locally)
 bun run db:down      # stop Postgres (add -v to docker compose down to wipe data)
 ```
+
+## Deployment
+
+- Branches: `dev` is the default branch (feature PRs, quick changes); `main` is production, protected, changed only through PRs (a release is a PR from `dev` to `main`). Details in the `task-workflow` skill.
+- Every push to `main` whose CI passes is deployed to Scaleway by `.github/workflows/deploy.yml`: it builds the `Dockerfile` image, runs migrations, then rolls out the container. **Migrations run while the previous release still serves**: never break it in one step (add a column first, remove the old one in a later release).
+- The infrastructure is code in `infra/` (OpenTofu, encrypted state in Object Storage): first setup and changes in `infra/README.md`. A new environment variable goes in `apps/api/src/env.ts`, `.env.example` and `infra/container.tf`, applied before merging the code that needs it.
 
 ## Conventions
 
