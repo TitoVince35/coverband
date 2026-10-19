@@ -22,6 +22,7 @@ import { Route as AppBBandSlugIndexRouteImport } from './routes/_app/b.$bandSlug
 import { Route as AppBBandSlugLineupRouteImport } from './routes/_app/b.$bandSlug/lineup'
 import { Route as AppBBandSlugSongsIndexRouteImport } from './routes/_app/b.$bandSlug/songs.index'
 import { Route as AppBBandSlugSongsSongIdRouteImport } from './routes/_app/b.$bandSlug/songs.$songId'
+import { Route as AppBBandSlugSongsArchivedRouteImport } from './routes/_app/b.$bandSlug/songs.archived'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -87,6 +88,12 @@ const AppBBandSlugSongsSongIdRoute = AppBBandSlugSongsSongIdRouteImport.update({
   path: '/songs/$songId',
   getParentRoute: () => AppBBandSlugRoute,
 } as any)
+const AppBBandSlugSongsArchivedRoute =
+  AppBBandSlugSongsArchivedRouteImport.update({
+    id: '/songs/archived',
+    path: '/songs/archived',
+    getParentRoute: () => AppBBandSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug/': typeof AppBBandSlugIndexRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
+  '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
   '/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -113,6 +121,7 @@ export interface FileRoutesByTo {
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug': typeof AppBBandSlugIndexRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
+  '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
   '/b/$bandSlug/songs': typeof AppBBandSlugSongsIndexRoute
 }
 export interface FileRoutesById {
@@ -129,6 +138,7 @@ export interface FileRoutesById {
   '/_app/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/_app/b/$bandSlug/': typeof AppBBandSlugIndexRoute
   '/_app/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
+  '/_app/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
   '/_app/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
 }
 export interface FileRouteTypes {
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug/'
     | '/b/$bandSlug/songs/$songId'
+    | '/b/$bandSlug/songs/archived'
     | '/b/$bandSlug/songs/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug'
     | '/b/$bandSlug/songs/$songId'
+    | '/b/$bandSlug/songs/archived'
     | '/b/$bandSlug/songs'
   id:
     | '__root__'
@@ -173,6 +185,7 @@ export interface FileRouteTypes {
     | '/_app/b/$bandSlug/lineup'
     | '/_app/b/$bandSlug/'
     | '/_app/b/$bandSlug/songs/$songId'
+    | '/_app/b/$bandSlug/songs/archived'
     | '/_app/b/$bandSlug/songs/'
   fileRoutesById: FileRoutesById
 }
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugSongsSongIdRouteImport
       parentRoute: typeof AppBBandSlugRoute
     }
+    '/_app/b/$bandSlug/songs/archived': {
+      id: '/_app/b/$bandSlug/songs/archived'
+      path: '/songs/archived'
+      fullPath: '/b/$bandSlug/songs/archived'
+      preLoaderRoute: typeof AppBBandSlugSongsArchivedRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
   }
 }
 
@@ -284,6 +304,7 @@ interface AppBBandSlugRouteChildren {
   AppBBandSlugLineupRoute: typeof AppBBandSlugLineupRoute
   AppBBandSlugIndexRoute: typeof AppBBandSlugIndexRoute
   AppBBandSlugSongsSongIdRoute: typeof AppBBandSlugSongsSongIdRoute
+  AppBBandSlugSongsArchivedRoute: typeof AppBBandSlugSongsArchivedRoute
   AppBBandSlugSongsIndexRoute: typeof AppBBandSlugSongsIndexRoute
 }
 
@@ -291,6 +312,7 @@ const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
   AppBBandSlugLineupRoute: AppBBandSlugLineupRoute,
   AppBBandSlugIndexRoute: AppBBandSlugIndexRoute,
   AppBBandSlugSongsSongIdRoute: AppBBandSlugSongsSongIdRoute,
+  AppBBandSlugSongsArchivedRoute: AppBBandSlugSongsArchivedRoute,
   AppBBandSlugSongsIndexRoute: AppBBandSlugSongsIndexRoute,
 }
 

@@ -97,6 +97,23 @@
     },
     "filter": "Afficher",
     "noneWithStatus": "Aucun morceau « {{status}} ».",
+    "archive": {
+      "button": "Archiver",
+      "hint": "Un morceau archivé quitte le répertoire et reste dans les setlists et l'activité. Vous pourrez le restaurer.",
+      "done": "Morceau archivé",
+      "restored": "Morceau restauré",
+      "banner": "Ce morceau est archivé : il ne fait plus partie du répertoire.",
+      "restore": "Restaurer",
+      "list": "Morceaux archivés",
+      "empty": "Aucun morceau archivé."
+    },
+    "delete": {
+      "button": "Supprimer",
+      "title": "Supprimer « {{title}} » ?",
+      "description": "Il disparaîtra pour de bon. Pour le retirer du répertoire en le gardant, archivez-le plutôt.",
+      "confirm": "Supprimer pour de bon",
+      "done": "Morceau supprimé"
+    },
     "form": {
       "addTitle": "Ajouter un morceau",
       "editTitle": "Modifier le morceau",
@@ -308,7 +325,8 @@
     "already_member": "Cette personne fait déjà partie du groupe.",
     "too_many_requests": "Trop de demandes. Réessayez plus tard.",
     "invalid_image": "Ce fichier n'est pas une image utilisable. Choisissez une photo (JPEG, PNG, WebP…).",
-    "song_duplicate": "Ce morceau est déjà dans votre répertoire."
+    "song_duplicate": "Ce morceau est déjà dans votre répertoire.",
+    "song_in_use": "Ce morceau est utilisé, dans une setlist par exemple : archivez-le plutôt."
   },
   "instruments": {
     "picker": {
@@ -339,6 +357,9 @@
       "proposed": "proposé",
       "learning": "en cours",
       "ready": "prêt"
-    }
+    },
+    "songArchived": "{{name}} a archivé {{song}}",
+    "songRestored": "{{name}} a restauré {{song}}",
+    "songDeleted": "{{name}} a supprimé {{song}}"
   }
 }

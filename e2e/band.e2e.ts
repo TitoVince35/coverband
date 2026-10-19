@@ -238,6 +238,29 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   );
   await expect(journal).toContainText("Captain Lea added song “Creep”");
   await expect(journal).toContainText("Captain Lea marked song “Zombie” as learning");
+
+  // Archive a song, find it apart, restore it; the band leader deletes the copy for good.
+  await leader.getByRole("link", { name: "Repertoire" }).click();
+  await songs
+    .filter({ hasText: /Creep/ })
+    .filter({ hasText: /Radiohead/ })
+    .click();
+  await leader.getByRole("button", { name: "Archive" }).click();
+  await expect(leader.getByText("This song is archived")).toBeVisible();
+  await leader.getByRole("link", { name: "Repertoire" }).first().click();
+  await expect(songs).toHaveCount(2);
+  await leader.getByRole("link", { name: /Archived songs/ }).click();
+  await leader.getByRole("list", { name: "Archived songs" }).getByRole("link").click();
+  await leader.getByRole("button", { name: "Restore" }).click();
+  await expect(leader.getByText("This song is archived")).toHaveCount(0);
+
+  await leader.getByRole("link", { name: "Repertoire" }).first().click();
+  await expect(songs).toHaveCount(3);
+  await songs.filter({ hasText: /RADIOHEAD/ }).click();
+  await leader.getByRole("button", { name: "Delete" }).click();
+  await leader.getByRole("button", { name: "Delete for good" }).click();
+  await expect(leader.getByText("Song deleted")).toBeVisible();
+  await expect(songs).toHaveCount(2);
 });
 
 test("the band leader uploads an avatar, then removes it", async () => {

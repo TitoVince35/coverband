@@ -3,11 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ArchivedBanner, SongActions } from "@/components/songs/song-actions";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
 import { EnergyPicker, StatusPicker } from "@/components/songs/song-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/i18n/use-language";
+import { bandQuery } from "@/lib/bands";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/format";
 import { type SongFields, songQuery, updateSong } from "@/lib/songs";
@@ -22,6 +24,7 @@ function SongPage() {
   const language = useLanguage();
   const { bandSlug, songId } = Route.useParams();
   const song = useQuery(songQuery(bandSlug, songId));
+  const isLeader = useQuery(bandQuery(bandSlug)).data?.membership.role === "leader";
   const queryClient = useQueryClient();
   // Status and energy change with a tap, saved at once.
   const change = useMutation({
@@ -87,6 +90,7 @@ function SongPage() {
   return (
     <section className="space-y-4">
       {back}
+      {song.data.archivedAt && <ArchivedBanner bandSlug={bandSlug} songId={songId} />}
       <div className="flex items-start gap-4">
         <div className="min-w-0 flex-1">
           <h2 className="break-words font-heading font-semibold text-xl">{title}</h2>
@@ -147,6 +151,7 @@ function SongPage() {
       <p className="text-muted-foreground text-xs">
         {addedBy ? t("songs.addedBy", { name: addedBy, date }) : t("songs.addedOn", { date })}
       </p>
+      <SongActions bandSlug={bandSlug} song={song.data} isLeader={isLeader} />
     </section>
   );
 }

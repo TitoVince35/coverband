@@ -44,6 +44,8 @@ export const songs = pgTable(
     // One band-wide value each (#90): where the band is with it, and 1 to MAX_ENERGY peppers.
     status: songStatus().default("proposed").notNull(),
     energy: smallint(),
+    // Archived (#91): out of the repertoire, kept for setlists, gigs and the journal.
+    archivedAt: timestamp({ withTimezone: true }),
     // Kept as null when the account is deleted.
     createdById: uuid().references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),

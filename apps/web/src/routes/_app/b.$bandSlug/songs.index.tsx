@@ -1,7 +1,7 @@
 import { formatDuration, keyShort, SONG_STATUSES, type SongStatus } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, Search } from "lucide-react";
+import { Archive, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { errorMessage } from "@/lib/errors";
 import { type RepertoireSort, repertoireView } from "@/lib/repertoire";
-import { playedDuration, songsQuery } from "@/lib/songs";
+import { archivedSongsQuery, playedDuration, songsQuery } from "@/lib/songs";
 import { cn } from "@/lib/utils";
 
 // The band's repertoire (#88): every song, searchable, filtered on its status and sorted by title
@@ -31,6 +31,7 @@ function RepertoirePage() {
   const { t } = useTranslation();
   const { bandSlug } = Route.useParams();
   const songs = useQuery(songsQuery(bandSlug));
+  const archived = useQuery(archivedSongsQuery(bandSlug)).data?.length ?? 0;
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<SongStatus | "all">("all");
   const [sort, setSort] = useState<RepertoireSort>("title");
@@ -150,6 +151,16 @@ function RepertoirePage() {
             </Card>
           )}
         </>
+      )}
+      {archived > 0 && (
+        <Link
+          to="/b/$bandSlug/songs/archived"
+          params={{ bandSlug }}
+          className="inline-flex items-center gap-2 text-muted-foreground text-sm hover:text-foreground"
+        >
+          <Archive className="size-4" />
+          {t("songs.archive.list")} <span className="tabular-nums">({archived})</span>
+        </Link>
       )}
     </section>
   );

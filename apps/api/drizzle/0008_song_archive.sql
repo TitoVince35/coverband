@@ -1,0 +1,1 @@
+ALTER TABLE "songs" ADD COLUMN "archived_at" timestamp with time zone;

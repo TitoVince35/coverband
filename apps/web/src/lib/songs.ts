@@ -10,7 +10,9 @@ export const songsQuery = (bandSlug: string) =>
     queryFn: async () =>
       (
         await (
-          await ensureOk(await api.bands[":bandSlug"].songs.$get({ param: { bandSlug } }))
+          await ensureOk(
+            await api.bands[":bandSlug"].songs.$get({ param: { bandSlug }, query: {} }),
+          )
         ).json()
       ).songs,
   });
@@ -73,3 +75,37 @@ export async function updateSong(
 /** The duration a setlist uses: the band's own, else the original. */
 export const playedDuration = (song: Pick<SongFields, "standardDuration" | "ownDuration">) =>
   song.ownDuration ?? song.standardDuration;
+
+/** The band's archived songs, by title. */
+export const archivedSongsQuery = (bandSlug: string) =>
+  queryOptions({
+    queryKey: ["bands", bandSlug, "songs", "archived"],
+    queryFn: async () =>
+      (
+        await (
+          await ensureOk(
+            await api.bands[":bandSlug"].songs.$get({
+              param: { bandSlug },
+              query: { archived: "true" },
+            }),
+          )
+        ).json()
+      ).songs,
+  });
+
+/** Archives a song (any member), or restores it. */
+export async function setSongArchived(bandSlug: string, songId: string, archived: boolean) {
+  const param = { bandSlug, songId };
+  const route = api.bands[":bandSlug"].songs[":songId"];
+  const res = archived
+    ? await route.archive.$post({ param })
+    : await route.restore.$post({ param });
+  return (await (await ensureOk(res)).json()).song;
+}
+
+/** Deletes a song for good (band leaders); throws `song_in_use` when something uses it. */
+export async function deleteSong(bandSlug: string, songId: string) {
+  await ensureOk(
+    await api.bands[":bandSlug"].songs[":songId"].$delete({ param: { bandSlug, songId } }),
+  );
+}
