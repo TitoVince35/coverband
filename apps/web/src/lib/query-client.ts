@@ -5,6 +5,7 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import { clearOfflineCache } from "@/lib/offline-cache";
+import { clearSavedLogos } from "@/lib/offline-logos";
 
 /**
  * How long fetched data counts as fresh. Serverless SQL Database is billed per minute awake and
@@ -57,6 +58,8 @@ export const SESSION_KEY = ["session"] as const;
  */
 export function removeUserQueries(queryClient: QueryClient) {
   queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== SESSION_KEY[0] });
+  // And the band logos saved for offline use (#178).
+  void clearSavedLogos();
 }
 
 /** After a logout (or every session revoked): no session and no cached user data. */
