@@ -1,16 +1,18 @@
 /**
  * `bun run dev:lan`: `bun run dev`, reachable from a phone on the local network.
  * Prints a QR code to the web app, then starts both apps with the LAN URL as the
- * public URL (email links, origin checks). Development only. Its helpers also serve
- * `bun run serve:lan` (`serve-lan.ts`).
+ * public URL (email links, origin checks). HTTPS when mkcert is installed (`tls.ts`).
+ * Development only. Its helpers also serve the other modes (`dev.ts`, `serve.ts`,
+ * `serve-lan.ts`).
  */
 
 import { type NetworkInterfaceInfo, networkInterfaces } from "node:os";
 import { fileURLToPath } from "node:url";
 import { APP_NAME } from "@coverband/shared";
 import { renderUnicodeCompact } from "uqr";
+import { type LocalTls, localTls, rootCertificate } from "./tls";
 
-const WEB_PORT = 5173;
+export const WEB_PORT = 5173;
 const MAILPIT_PORT = 8025;
 
 // Docker bridges, VMs and VPNs: not reachable from a phone on the Wi-Fi.
@@ -51,26 +53,65 @@ export function lanHost(): string {
   return host;
 }
 
-/** Prints a QR code to the app on the local network, and how to reach it. */
-export function announce(host: string, appPort: number) {
-  const appUrl = `http://${host}:${appPort}`;
+/** Port of the plain http page handing phones mkcert's root certificate (LAN modes). */
+const ROOT_CERT_PORT = 3080;
+
+/**
+ * Serves mkcert's root certificate (never its key) over plain http, the only way a phone can fetch
+ * it before trusting it. Returns its URL, or undefined without one.
+ */
+export function serveRootCertificate(host: string): string | undefined {
+  const file = rootCertificate();
+  if (!file) return undefined;
+  Bun.serve({
+    port: ROOT_CERT_PORT,
+    fetch: () =>
+      new Response(Bun.file(file), {
+        headers: {
+          "content-type": "application/x-x509-ca-cert",
+          "content-disposition": 'attachment; filename="coverband-dev-ca.crt"',
+        },
+      }),
+  });
+  return `http://${host}:${ROOT_CERT_PORT}`;
+}
+
+/** Prints a QR code to the app on the local network (and one to the root certificate), and how to reach them. */
+export function announce(appUrl: string, rootCertUrl?: string) {
+  const { hostname, port } = new URL(appUrl);
+  const ports = [port, MAILPIT_PORT, ...(rootCertUrl ? [ROOT_CERT_PORT] : [])];
   console.log(`\n${renderUnicodeCompact(appUrl, { border: 1 })}\n`);
   console.log(`${APP_NAME} on the local network: ${appUrl}`);
-  console.log(`Mailpit:                        http://${host}:${MAILPIT_PORT}`);
-  console.log(`Not reachable? Allow ports ${appPort} and ${MAILPIT_PORT} in your firewall.\n`);
-  return appUrl;
+  console.log(`Mailpit:                        http://${hostname}:${MAILPIT_PORT}`);
+  if (rootCertUrl) {
+    console.log(`\n${renderUnicodeCompact(rootCertUrl, { border: 1 })}\n`);
+    console.log(`First time on a phone? Install this root certificate: ${rootCertUrl}`);
+    console.log("  Android: Settings › Security › Install a certificate › CA certificate.");
+    console.log(
+      "  iPhone: install the downloaded profile (Settings › General › VPN & Device Management),",
+    );
+    console.log("  then trust it in Settings › General › About › Certificate Trust Settings.");
+  }
+  console.log(`Not reachable? Allow ports ${ports.join(", ")} in your firewall.\n`);
+}
+
+/** The app's URL: https when there is a local certificate. */
+export function appUrl(host: string, port: number, tls: LocalTls | undefined) {
+  return `${tls ? "https" : "http"}://${host}:${port}`;
 }
 
 /**
- * Runs a command from the repository root with the LAN URL as the app's public URL (links in
- * emails, Better Auth's origin checks), logging in through `localUrl` on this machine still
- * allowed. Exits with the command.
+ * Runs a command from the repository root with the given environment, `appUrl` as the app's public
+ * URL (links in emails, Better Auth's origin checks), and logging in through `localUrl` on this
+ * machine still allowed. Exits with the command.
  */
-export async function runWithLanUrl(
+export async function runApp(
   command: string[],
-  appUrl: string,
-  localUrl: string | undefined,
-  env: Record<string, string> = {},
+  {
+    appUrl,
+    localUrl,
+    env = {},
+  }: { appUrl: string; localUrl?: string; env?: Record<string, string> },
 ): Promise<never> {
   const child = Bun.spawn(command, {
     cwd: fileURLToPath(new URL("../../../..", import.meta.url)),
@@ -87,13 +128,25 @@ export async function runWithLanUrl(
   process.exit(await child.exited);
 }
 
+/** The certificate for Vite (`DEV_TLS_*`, read by apps/web/vite.config.ts). */
+export function viteTlsEnv(tls: LocalTls | undefined): Record<string, string> {
+  return tls ? { DEV_TLS_CERT_FILE: tls.certFile, DEV_TLS_KEY_FILE: tls.keyFile } : {};
+}
+
+/** The certificate for the API server (`TLS_*`, read by src/env.ts). */
+export function apiTlsEnv(tls: LocalTls | undefined): Record<string, string> {
+  return tls ? { TLS_CERT_FILE: tls.certFile, TLS_KEY_FILE: tls.keyFile } : {};
+}
+
 if (import.meta.main) {
-  const webUrl = announce(lanHost(), WEB_PORT);
-  // Vite listens on every interface (see vite.config.ts).
-  await runWithLanUrl(
-    ["bun", "run", "--parallel", "--filter", "./apps/*", "dev"],
-    webUrl,
-    process.env.BETTER_AUTH_URL,
-    { DEV_LAN: "1" },
-  );
+  const host = lanHost();
+  const tls = localTls([host]);
+  const webUrl = appUrl(host, WEB_PORT, tls);
+  announce(webUrl, tls && serveRootCertificate(host));
+  // Vite listens on every interface (see vite.config.ts) and serves HTTPS with the certificate.
+  await runApp(["bun", "run", "--parallel", "--filter", "./apps/*", "dev"], {
+    appUrl: webUrl,
+    localUrl: appUrl("localhost", WEB_PORT, tls),
+    env: { DEV_LAN: "1", ...viteTlsEnv(tls) },
+  });
 }

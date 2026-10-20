@@ -59,9 +59,17 @@ const app = createApp({
 });
 
 // Started here rather than by a default export, which makes Bun print its own non-JSON line.
-const server = Bun.serve({ port: env.PORT, fetch: app.fetch });
+const server = Bun.serve({
+  port: env.PORT,
+  fetch: app.fetch,
+  // Local HTTPS only (`bun run serve`); Scaleway terminates TLS in production.
+  ...(env.TLS_CERT_FILE &&
+    env.TLS_KEY_FILE && {
+      tls: { cert: Bun.file(env.TLS_CERT_FILE), key: Bun.file(env.TLS_KEY_FILE) },
+    }),
+});
 
-log.info(`${APP_NAME} API listening on http://localhost:${server.port}`, {
+log.info(`${APP_NAME} API listening on ${server.url.origin}`, {
   version: rootPackage.version,
   build: env.BUILD_SHA,
 });

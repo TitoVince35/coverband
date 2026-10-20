@@ -11,13 +11,24 @@ import { apiError } from "../errors";
 export const THEME_SCRIPT_HASH = "'sha256-ZM9GNmt7T0gMIeww6lU14YKqfvB7pQIX/adMqcZu4Gw='";
 
 /**
- * Security headers on every response, API and web app.
- * HSTS only when the app is served over HTTPS (production): browsers would otherwise stick to
- * HTTPS on localhost.
+ * Whether browsers should be told to always use HTTPS for the app (HSTS): only for a real domain.
+ * Local HTTPS (#163) is left out: HSTS on localhost would force HTTPS on every localhost port,
+ * other projects included, for a year.
  */
-export function securityHeaders({ https }: { https: boolean }) {
+export function wantsHsts(appUrl: string) {
+  const { protocol, hostname } = new URL(appUrl);
+  const local =
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost") ||
+    /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) ||
+    hostname.startsWith("[");
+  return protocol === "https:" && !local;
+}
+
+/** Security headers on every response, API and web app. HSTS as `wantsHsts` says. */
+export function securityHeaders({ hsts }: { hsts: boolean }) {
   return secureHeaders({
-    strictTransportSecurity: https ? "max-age=31536000; includeSubDomains" : false,
+    strictTransportSecurity: hsts ? "max-age=31536000; includeSubDomains" : false,
     // Invitation and password reset tokens are in URLs: never send them to other sites.
     referrerPolicy: "no-referrer",
     xFrameOptions: "DENY",
