@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { type Browser, expect, type Page, test } from "@playwright/test";
+import { type Browser, expect, type Locator, type Page, test } from "@playwright/test";
 import { ADMIN, bandName, email, invitationLink, login, PASSWORD } from "./support";
 
 // One story, in order: each step builds on the previous one.
@@ -206,6 +206,28 @@ test("the band leader adds the band's logo: on the band page and in the list, th
     .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBe(256);
   await expect(bandLink.getByText("ER", { exact: true })).toBeHidden();
+
+  // Saved on the device (#178): offline, the list and the band page show it from there.
+  await leader.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  await expect.poll(() => savedLogos(leader)).toBe(1);
+  // The band list with its logo is saved too (a delayed write).
+  await expect.poll(() => savedCopy(leader)).toContain("/logo/thumbnail?v=");
+  await leader.context().setOffline(true);
+  await leader.reload();
+  await expect(leader.getByText("You're offline")).toBeVisible();
+  const fromDevice = (scope: Locator) => scope.locator('img[src^="blob:"]');
+  await expect
+    .poll(() => fromDevice(bandLink).evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(900);
+  await bandLink.click();
+  await expect
+    .poll(() =>
+      fromDevice(leader.locator("main")).evaluate((img: HTMLImageElement) => img.naturalWidth),
+    )
+    .toBe(900);
+  await leader.context().setOffline(false);
+  await leader.goto("/");
+  await expect(leader.getByText("You're offline")).toBeHidden();
 
   await bandLink.click();
   await leader.getByRole("button", { name: "Edit band" }).click();
@@ -457,6 +479,26 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(leader.getByText("Song deleted")).toBeVisible();
   await expect(songs).toHaveCount(2);
 });
+
+/** How many band logos the app saved on the device for offline use (#178). */
+function savedLogos(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        const open = indexedDB.open("coverband");
+        // Never create the app's database before the app does.
+        open.onupgradeneeded = () => open.transaction?.abort();
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains("logos")) return resolve(0);
+          const count = db.transaction("logos").objectStore("logos").count();
+          count.onsuccess = () => resolve(count.result);
+          count.onerror = () => resolve(0);
+        };
+        open.onerror = () => resolve(0);
+      }),
+  );
+}
 
 /** The data the app saved on the device for offline use (#165), as JSON, or "" before any. */
 function savedCopy(page: Page) {

@@ -10,11 +10,14 @@ export function LogoPlate({
   background,
   alt,
   className,
+  onError,
 }: {
   src: string;
   background: LogoBackground;
   alt: string;
   className?: string;
+  /** The image didn't load (offline, server unreachable). */
+  onError?: (() => void) | undefined;
 }) {
   return (
     <div
@@ -25,7 +28,7 @@ export function LogoPlate({
         className,
       )}
     >
-      <img src={src} alt={alt} className="max-h-full max-w-full object-contain" />
+      <img src={src} alt={alt} onError={onError} className="max-h-full max-w-full object-contain" />
     </div>
   );
 }

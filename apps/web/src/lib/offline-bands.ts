@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { api } from "@/lib/api";
 import { bandJournalQuery, bandQuery, membersQuery, myBandsQuery } from "@/lib/bands";
 import { ensureOk } from "@/lib/errors";
+import { keepLogoOffline } from "@/lib/offline-logos";
 import { useOnline } from "@/lib/online";
 import { songQuery, songsQuery } from "@/lib/songs";
 
@@ -27,11 +28,18 @@ export const songDetailsQuery = (bandSlug: string) =>
 
 /**
  * Loads what a band needs offline (#165): its page, journal, lineup, repertoire and every song,
- * each only if no longer fresh: every load wakes the database.
+ * each only if no longer fresh: every load wakes the database. And its logo (#178), downloaded
+ * only when it changed.
  */
 export async function keepBandOffline(queryClient: QueryClient, bandSlug: string) {
+  const keepLogo = async () => {
+    await queryClient.prefetchQuery(bandQuery(bandSlug));
+    // Unknown (the band failed to load): leave the saved logo as it is.
+    const band = queryClient.getQueryData(bandQuery(bandSlug).queryKey)?.band;
+    if (band) await keepLogoOffline(bandSlug, band.logo);
+  };
   await Promise.all([
-    queryClient.prefetchQuery(bandQuery(bandSlug)),
+    keepLogo(),
     queryClient.prefetchQuery(bandJournalQuery(bandSlug)),
     queryClient.prefetchQuery(membersQuery(bandSlug)),
     queryClient.prefetchQuery(songsQuery(bandSlug)),

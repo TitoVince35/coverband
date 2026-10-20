@@ -15,6 +15,8 @@ export const OFFLINE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const DB_NAME = "coverband";
 const STORE = "query-cache";
 const KEY = "client";
+/** Band logos saved for offline use (#178, `offline-logos.ts`). */
+export const LOGO_STORE = "logos";
 
 /** Which queries are saved: what the app needs to read a band offline. Never invitations (emails). */
 export function isKeptOffline(queryKey: QueryKey) {
@@ -30,25 +32,39 @@ const SAVE_DELAY_MS = 500;
 
 let database: Promise<IDBDatabase> | undefined;
 
-/** One connection for the app's life: writes stay in order. */
+/** One connection for the app's life: writes stay in order. Version 2 adds the logos (#178). */
 function openStore() {
   database ??= new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    const request = indexedDB.open(DB_NAME, 2);
+    request.onupgradeneeded = () => {
+      for (const name of [STORE, LOGO_STORE]) {
+        if (!request.result.objectStoreNames.contains(name)) {
+          request.result.createObjectStore(name);
+        }
+      }
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
   return database;
 }
 
-async function run<T>(mode: IDBTransactionMode, action: (store: IDBObjectStore) => IDBRequest<T>) {
+/** One request on a store of the app's offline database. */
+export async function runOffline<T>(
+  name: string,
+  mode: IDBTransactionMode,
+  action: (store: IDBObjectStore) => IDBRequest<T>,
+) {
   const db = await openStore();
   return new Promise<T>((resolve, reject) => {
-    const request = action(db.transaction(STORE, mode).objectStore(STORE));
+    const request = action(db.transaction(name, mode).objectStore(name));
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
+
+const run = <T>(mode: IDBTransactionMode, action: (store: IDBObjectStore) => IDBRequest<T>) =>
+  runOffline(STORE, mode, action);
 
 function failed(error: unknown) {
   // No offline copy this time; the app works on.
