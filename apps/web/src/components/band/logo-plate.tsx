@@ -19,7 +19,7 @@ export function LogoPlate({
   return (
     <div
       className={cn(
-        "flex items-center justify-center overflow-hidden rounded-md p-[8%] ring-1 ring-border",
+        "flex items-center justify-center overflow-hidden rounded-md p-2 ring-1 ring-border",
         // Fixed colours, on purpose: the plate is the logo's, not the theme's.
         background === "dark" ? "bg-[#0c090c]" : "bg-white",
         className,

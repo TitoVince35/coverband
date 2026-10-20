@@ -116,7 +116,7 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
           src={shown}
           background={background}
           alt={picked ? t("band.logo.preview") : t("band.logo.current")}
-          className="h-32 w-full"
+          className="h-32 w-full p-4"
         />
       ) : (
         <p className="text-muted-foreground text-sm">{t("band.logo.none")}</p>
