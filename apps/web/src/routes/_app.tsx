@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { sessionQuery } from "@/lib/auth";
+import { useKeepBandsOffline } from "@/lib/offline-bands";
 import { guardData } from "@/lib/query-client";
 
 // Pathless layout for every page that needs a logged-in user. Public pages (login, and later
@@ -12,5 +13,11 @@ export const Route = createFileRoute("/_app")({
     }
     return { user: session.user };
   },
-  component: Outlet,
+  component: AppLayout,
 });
+
+function AppLayout() {
+  // Every band ready for offline use (#165), whichever page the user lands on.
+  useKeepBandsOffline();
+  return <Outlet />;
+}

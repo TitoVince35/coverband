@@ -456,6 +456,28 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(songs).toHaveCount(2);
 });
 
+/** The data the app saved on the device for offline use (#165), as JSON, or "" before any. */
+function savedCopy(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<string>((resolve) => {
+        const open = indexedDB.open("coverband");
+        // Never create the app's database before the app does.
+        open.onupgradeneeded = () => open.transaction?.abort();
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains("query-cache")) return resolve("");
+          const get = db.transaction("query-cache").objectStore("query-cache").get("client");
+          get.onsuccess = () => resolve(JSON.stringify(get.result ?? ""));
+          get.onerror = () => resolve("");
+        };
+        open.onerror = () => resolve("");
+      }),
+  );
+}
+
+const lyricsLine = "And the violence caused such silence";
+
 test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async ({ browser }) => {
   // A device that never opened the song: the home page saves every band for offline use.
   const context = await browser.newContext();
@@ -464,27 +486,7 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await expect(page.getByRole("link", { name: new RegExp(band) })).toBeVisible();
   // The service worker serves the app itself without a connection.
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
-  const lyricsLine = "And the violence caused such silence";
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          new Promise<string>((resolve) => {
-            const open = indexedDB.open("coverband");
-            // Never create the app's database before the app does.
-            open.onupgradeneeded = () => open.transaction?.abort();
-            open.onsuccess = () => {
-              const db = open.result;
-              if (!db.objectStoreNames.contains("query-cache")) return resolve("");
-              const get = db.transaction("query-cache").objectStore("query-cache").get("client");
-              get.onsuccess = () => resolve(JSON.stringify(get.result ?? ""));
-              get.onerror = () => resolve("");
-            };
-            open.onerror = () => resolve("");
-          }),
-      ),
-    )
-    .toContain(lyricsLine);
+  await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
 
   await context.setOffline(true);
   await page.reload();
@@ -506,6 +508,26 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await context.setOffline(false);
   await expect(page.getByText("You're offline")).toBeHidden();
   await expect(edit).toBeEnabled();
+  await context.close();
+});
+
+test("logging out and in again saves everything again (#174)", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await login(page, leaderEmail, PASSWORD);
+  await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
+
+  await page.getByRole("button", { name: "Account" }).click();
+  await page.getByRole("menuitem", { name: "Log out" }).click();
+  await expect(page).toHaveURL(/\/login/);
+  await expect.poll(() => savedCopy(page)).not.toContain(lyricsLine);
+
+  // At once, without reloading the app (logging out doesn't): the repertoire is loaded again.
+  await page.getByLabel("Email").fill(leaderEmail);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page.getByRole("link", { name: new RegExp(band) })).toBeVisible();
+  await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
   await context.close();
 });
 
