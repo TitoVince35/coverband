@@ -45,6 +45,25 @@
       "genreHint": "Facultatif.",
       "saved": "Groupe mis à jour",
       "nameForever": "Le nom d'un groupe, c'est pour toujours : il ne peut pas être modifié."
+    },
+    "logo": {
+      "title": "Logo",
+      "none": "Pas encore de logo : les initiales du groupe s'affichent à la place.",
+      "choose": "Choisir un logo",
+      "change": "Changer le logo",
+      "save": "Enregistrer le logo",
+      "saved": "Logo enregistré",
+      "remove": "Retirer le logo",
+      "removing": "Retrait…",
+      "removed": "Logo retiré",
+      "preview": "Aperçu du nouveau logo",
+      "current": "Le logo du groupe",
+      "background": "Fond",
+      "backgrounds": {
+        "light": "Clair",
+        "dark": "Sombre"
+      },
+      "hint": "PNG, WebP ou JPEG. Une image grande et nette s'imprime mieux sur les setlists ; un fond transparent va avec les deux fonds."
     }
   },
   "lineup": {

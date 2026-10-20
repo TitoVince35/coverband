@@ -169,6 +169,44 @@ test("the band's home page shows its latest activity, newest first", async () =>
   await expect(journal).not.toContainText("@");
 });
 
+test("the band leader adds the band's logo, on a dark background, then removes it", async () => {
+  await leader.goto("/");
+  await leader.getByRole("link", { name: band }).first().click();
+  await leader.getByRole("button", { name: "Edit band" }).click();
+  const dialog = leader.getByRole("dialog");
+  await expect(dialog.getByText("No logo yet")).toBeVisible();
+
+  // A horizontal logo with a transparent background: fitted, never cropped.
+  await dialog
+    .locator('input[type="file"]')
+    .setInputFiles(fileURLToPath(new URL("./fixtures/logo.png", import.meta.url)));
+  // Shown, not only there: the preview is a blob: image, which the security policy must allow.
+  const preview = dialog.getByRole("img", { name: "Preview of the new logo" });
+  await expect.poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
+  await dialog.getByRole("radio", { name: "Dark" }).check();
+  await dialog.getByRole("button", { name: "Save the logo" }).click();
+  await expect(leader.getByText("Logo saved")).toBeVisible();
+
+  const current = dialog.getByRole("img", { name: "The band's logo" });
+  await expect(current).toBeVisible();
+  // Served by the API, the whole image: 900 × 300 is under the 2,000 px limit.
+  await expect.poll(() => current.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
+  await expect(dialog.getByRole("radio", { name: "Dark" })).toBeChecked();
+
+  await dialog.getByRole("button", { name: "Remove the logo" }).click();
+  await expect(leader.getByText("Logo removed")).toBeVisible();
+  await expect(dialog.getByText("No logo yet")).toBeVisible();
+  await leader.keyboard.press("Escape");
+
+  await leader.getByRole("button", { name: "Latest activity" }).click();
+  const journal = leader.getByRole("list", { name: "Latest activity" });
+  await expect(journal.getByRole("listitem").first()).toContainText(
+    "Captain Lea removed the band's logo",
+  );
+  await expect(journal).toContainText("Captain Lea changed the band's logo");
+  await leader.getByRole("button", { name: "Latest activity" }).click();
+});
+
 test("members build the repertoire: add, the duplicate warning, edit", async () => {
   await leader.getByRole("link", { name: "Repertoire" }).click();
   await expect(leader.getByText("No songs yet")).toBeVisible();
@@ -479,7 +517,9 @@ test("the band leader uploads an avatar, then removes it", async () => {
   await leader
     .locator('input[type="file"]')
     .setInputFiles(fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url)));
-  await expect(leader.getByRole("img", { name: "Preview of your new avatar" })).toBeVisible();
+  // Shown, not only there: the preview is a blob: image, which the security policy must allow.
+  const preview = leader.getByRole("img", { name: "Preview of your new avatar" });
+  await expect.poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(512);
   await leader.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Avatar updated.")).toBeVisible();
 

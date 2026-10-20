@@ -45,6 +45,25 @@
       "genreHint": "Optional.",
       "saved": "Band updated",
       "nameForever": "A band name is forever: it can't be changed."
+    },
+    "logo": {
+      "title": "Logo",
+      "none": "No logo yet: the band's initials show instead.",
+      "choose": "Choose a logo",
+      "change": "Change the logo",
+      "save": "Save the logo",
+      "saved": "Logo saved",
+      "remove": "Remove the logo",
+      "removing": "Removing…",
+      "removed": "Logo removed",
+      "preview": "Preview of the new logo",
+      "current": "The band's logo",
+      "background": "Background",
+      "backgrounds": {
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "hint": "PNG, WebP or JPEG. A large, sharp image prints better on setlists; a transparent background suits both backgrounds."
     }
   },
   "lineup": {

@@ -38,7 +38,9 @@ export function securityHeaders({ hsts }: { hsts: boolean }) {
       scriptSrc: ["'self'", THEME_SCRIPT_HASH],
       // React style props and the toast library set inline styles.
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:"],
+      // blob: images the app makes itself: an avatar's or logo's preview before upload, a band
+      // logo saved for offline use.
+      imgSrc: ["'self'", "data:", "blob:"],
       fontSrc: ["'self'"],
       connectSrc: ["'self'"],
       workerSrc: ["'self'"],
