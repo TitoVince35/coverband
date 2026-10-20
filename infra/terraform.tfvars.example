@@ -5,5 +5,6 @@ domain          = "coverband.fr"
 admin_email     = "you@example.com"
 mail_from       = "Coverband Beta <noreply@coverband.fr>"
 # app_subdomain = "app"
+# beta_access_code = "..."   # empty or unset: no gate
 # budget_eur    = 20
 # alert_email   = "you@example.com"

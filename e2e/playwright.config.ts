@@ -5,6 +5,9 @@ export const E2E_PORT = 3100;
 const baseURL = `http://localhost:${E2E_PORT}`;
 /** The fake LRCLIB the app searches lyrics on (`fake-lrclib.ts`). */
 export const FAKE_LRCLIB_PORT = 3101;
+/** A second server of the same build, with a beta access code (`access.e2e.ts`). */
+export const GATED_PORT = 3102;
+export const GATED_ACCESS_CODE = "e2e access code";
 const ci = Boolean(process.env.CI);
 
 export default defineConfig({
@@ -44,6 +47,21 @@ export default defineConfig({
         PORT: String(E2E_PORT),
         BETTER_AUTH_URL: baseURL,
         WEB_DIST_DIR: "apps/web/dist",
+        LRCLIB_URL: `http://localhost:${FAKE_LRCLIB_PORT}`,
+      },
+    },
+    // The same build behind the beta access code. Started with the first one, whose build is
+    // done before any test runs.
+    {
+      command: "bun apps/api/src/main.ts",
+      cwd: "..",
+      url: `http://localhost:${GATED_PORT}/api/health`,
+      reuseExistingServer: false,
+      env: {
+        PORT: String(GATED_PORT),
+        BETTER_AUTH_URL: `http://localhost:${GATED_PORT}`,
+        WEB_DIST_DIR: "apps/web/dist",
+        BETA_ACCESS_CODE: GATED_ACCESS_CODE,
         LRCLIB_URL: `http://localhost:${FAKE_LRCLIB_PORT}`,
       },
     },
