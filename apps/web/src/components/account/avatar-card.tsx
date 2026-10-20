@@ -16,6 +16,7 @@ import { sessionAvatarUrl, UserAvatar } from "@/components/user-avatar";
 import { sessionQuery } from "@/lib/auth";
 import { prepareAvatar } from "@/lib/avatar";
 import { ensureOk, errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 
 /**
  * The logged-in user's avatar (#60): pick a photo (the camera on phones), see the cropped result,
@@ -27,6 +28,8 @@ export function AvatarCard({
   user: { id: string; name: string; image?: string | null | undefined };
 }) {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const router = useRouter();
   const [picked, setPicked] = useState<{ blob: Blob; url: string } | null>(null);
@@ -126,7 +129,7 @@ export function AvatarCard({
       <CardFooter className="mt-6 flex-col items-stretch gap-2">
         {picked ? (
           <>
-            <Button onClick={() => save.mutate(picked.blob)} disabled={busy}>
+            <Button onClick={() => save.mutate(picked.blob)} disabled={!online || busy}>
               {save.isPending ? t("account.avatar.saving") : t("account.avatar.save")}
             </Button>
             <Button
@@ -142,7 +145,7 @@ export function AvatarCard({
           </>
         ) : (
           <>
-            <Button asChild disabled={busy}>
+            <Button asChild disabled={!online || busy}>
               <label className="cursor-pointer">
                 {current ? t("account.avatar.change") : t("account.avatar.choose")}
                 <input
@@ -150,12 +153,12 @@ export function AvatarCard({
                   accept="image/*"
                   className="sr-only"
                   onChange={onPick}
-                  disabled={busy}
+                  disabled={!online || busy}
                 />
               </label>
             </Button>
             {current && (
-              <Button variant="outline" onClick={() => remove.mutate()} disabled={busy}>
+              <Button variant="outline" onClick={() => remove.mutate()} disabled={!online || busy}>
                 {remove.isPending ? t("account.avatar.removing") : t("account.avatar.remove")}
               </Button>
             )}

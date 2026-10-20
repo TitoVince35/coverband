@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { errorMessage } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
+import { useOnline } from "@/lib/online";
 
 export type Invitation = {
   id: string;
@@ -41,6 +42,8 @@ export function InvitationsList({
   revoke: revokeOne,
 }: InvitationsListProps) {
   const { t, i18n } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const invitations = useQuery({ queryKey, queryFn: list });
 
@@ -108,13 +111,13 @@ export function InvitationsList({
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={resend.isPending}
+                      disabled={!online || resend.isPending}
                       onClick={() => resend.mutate({ id: invitation.id, email: invitation.email })}
                     >
                       {t("invitations.resend")}
                     </Button>
                     <AlertDialog>
-                      <AlertDialogTrigger asChild>
+                      <AlertDialogTrigger asChild disabled={!online}>
                         <Button variant="ghost" size="sm" className="text-destructive">
                           {t("invitations.revoke")}
                         </Button>

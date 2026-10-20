@@ -25,6 +25,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language } from "@/i18n/languages";
 import { errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 
 export type InviteDialogProps = {
   /** Tooltip and accessible name of the "+" button. */
@@ -49,6 +50,8 @@ export function InviteDialog({
   invalidates,
 }: InviteDialogProps) {
   const { t, i18n } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   // The email's language defaults to the inviter's own language, and follows it until changed.
@@ -83,7 +86,7 @@ export function InviteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <DialogTrigger asChild>
+          <DialogTrigger asChild disabled={!online}>
             <Button size="icon-lg" className="size-12 rounded-full" aria-label={label}>
               <Plus className="size-6" />
             </Button>

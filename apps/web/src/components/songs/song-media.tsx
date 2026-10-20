@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 import { addMedia, deleteMedia, updateMedia } from "@/lib/songs";
 
 type Media = { id: string; url: string; title: string | null; instruments: Instrument[] };
@@ -135,6 +136,8 @@ function MediaDialog({
   trigger: ReactNode;
 }) {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [instruments, setInstruments] = useState<Instrument[]>(media?.instruments ?? []);
@@ -188,7 +191,9 @@ function MediaDialog({
   const busy = save.isPending || remove.isPending;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger asChild disabled={!online}>
+        {trigger}
+      </DialogTrigger>
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <form onSubmit={onSubmit} className="space-y-4">
           <DialogHeader>

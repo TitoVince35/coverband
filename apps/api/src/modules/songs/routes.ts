@@ -14,8 +14,16 @@ import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import { type BandEnv, requireLeader, requireMember } from "../bands/guard";
 import { searchLyrics } from "./lyrics.service";
-import { addMedia, deleteMedia, mediaOf, updateMedia } from "./media.service";
-import { addSong, deleteSong, getSong, listSongs, setArchived, updateSong } from "./service";
+import { addMedia, deleteMedia, mediaOf, mediaOfBand, updateMedia } from "./media.service";
+import {
+  addSong,
+  deleteSong,
+  getSong,
+  listSongs,
+  setArchived,
+  songDetails,
+  updateSong,
+} from "./service";
 
 const songParam = z.object({ bandSlug: z.string(), songId: z.uuid() });
 
@@ -50,6 +58,14 @@ export function songRoutes(deps: AppDeps) {
       .post("/", zValidator("json", addSongBody, validationHook), async (c) => {
         const { confirmDuplicate, ...fields } = c.req.valid("json");
         return c.json({ song: await addSong(db, who(c), fields, { confirmDuplicate }) }, 201);
+      })
+      // The whole repertoire as each song's page shows it (lyrics, links), for offline use (#165).
+      .get("/details", async (c) => {
+        const [details, mediaOf] = await Promise.all([
+          songDetails(db, c.var.band.id),
+          mediaOfBand(db, c.var.band.id),
+        ]);
+        return c.json({ songs: details.map((song) => ({ ...song, media: mediaOf(song.id) })) });
       })
       .get("/:songId", zValidator("param", songParam, validationHook), async (c) => {
         const { songId } = c.req.valid("param");

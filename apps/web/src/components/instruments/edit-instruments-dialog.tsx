@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import { ensureOk, errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 
 /**
  * Your own instruments in a band (#77), from your row of the lineup: remove with ✕, add with the
@@ -30,6 +31,8 @@ export function EditInstrumentsDialog({
   instruments: readonly Instrument[];
 }) {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [list, setList] = useState<Instrument[]>([...instruments]);
@@ -63,7 +66,7 @@ export function EditInstrumentsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild disabled={!online}>
         <Button variant="ghost" size="icon" aria-label={t("lineup.instruments.edit")}>
           <Pencil />
         </Button>

@@ -18,12 +18,15 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import { ensureOk, errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 
 type Band = { name: string; slug: string; genre: string | null };
 
 /** Band leader only: edit the band's genre. The name is forever (it is also the band's URL). */
 export function EditBandDialog({ band }: { band: Band }) {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
@@ -56,7 +59,7 @@ export function EditBandDialog({ band }: { band: Band }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <DialogTrigger asChild>
+          <DialogTrigger asChild disabled={!online}>
             <Button variant="outline" size="icon-lg" aria-label={t("band.edit.button")}>
               <Pencil />
             </Button>

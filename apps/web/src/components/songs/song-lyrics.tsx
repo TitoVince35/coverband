@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 import { storedText, updateSong } from "@/lib/songs";
 
 type Props = { bandSlug: string; songId: string; lyrics: string | null };
@@ -52,6 +53,8 @@ export function SongLyrics({
   artist,
 }: Props & { source: LyricsSource | null; title: string; artist: string }) {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const [editing, setEditing] = useState(false);
   const [searching, setSearching] = useState(false);
   const [viewing, setViewing] = useState(false);
@@ -83,12 +86,12 @@ export function SongLyrics({
             </Button>
           )}
           {!lyrics && (
-            <Button onClick={() => setSearching(true)}>
+            <Button disabled={!online} onClick={() => setSearching(true)}>
               <Search />
               {t("songs.lyrics.search.button")}
             </Button>
           )}
-          <Button variant="outline" onClick={() => setEditing(true)}>
+          <Button variant="outline" disabled={!online} onClick={() => setEditing(true)}>
             <Pencil />
             {lyrics ? t("songs.lyrics.edit") : t("songs.lyrics.typeIn")}
           </Button>

@@ -74,6 +74,10 @@ const envSchema = z
     MAIL_FROM: z.string().min(3),
     // Shared code keeping the beta private (#148): asked once per device. Empty: no gate.
     BETA_ACCESS_CODE: z.string().trim().default(""),
+    // Local HTTPS certificate (#163), set by `bun run serve` / `serve:lan` when mkcert is installed.
+    // Unset in production: Scaleway terminates TLS. Both or neither.
+    TLS_CERT_FILE: z.string().min(1).optional(),
+    TLS_KEY_FILE: z.string().min(1).optional(),
     // Shared with the Scaleway cron triggers calling /api/internal (#45). Unset: no such routes.
     CRON_SECRET: z.string().min(32).optional(),
     // Commit the image was built from (set by the deploy workflow's Docker build), for /api/health.
@@ -86,6 +90,10 @@ const envSchema = z
   .refine((env) => (env.ADMIN_EMAIL === undefined) === (env.ADMIN_PASSWORD === undefined), {
     message: "Set both ADMIN_EMAIL and ADMIN_PASSWORD, or neither",
     path: ["ADMIN_PASSWORD"],
+  })
+  .refine((env) => (env.TLS_CERT_FILE === undefined) === (env.TLS_KEY_FILE === undefined), {
+    message: "Set both TLS_CERT_FILE and TLS_KEY_FILE, or neither",
+    path: ["TLS_KEY_FILE"],
   });
 
 export type Env = z.infer<typeof envSchema>;
