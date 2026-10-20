@@ -21,6 +21,8 @@ export type AppDeps = {
   trustedOrigins?: string[];
   /** Version and build of the running release (`/api/health`). */
   buildInfo: BuildInfo;
+  /** Other hostnames of the container, redirected to appUrl (the bare domain). */
+  redirectHosts?: string[];
   /** The beta access code; absent: no gate. */
   access?: AccessConfig;
 };
