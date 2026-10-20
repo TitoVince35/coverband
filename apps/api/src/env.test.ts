@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { loadDatabaseEnv, loadEnv, s3Config } from "./env";
+import { loadDatabaseEnv, loadEnv, loadLogEnv, logConfig, s3Config } from "./env";
 
 const valid = {
   DATABASE_URL: "postgres://u:p@localhost:5432/db",
@@ -26,6 +26,22 @@ describe("loadEnv", () => {
     });
     expect(() => loadEnv({ ...valid, S3_BUCKET: undefined })).toThrow(/S3_BUCKET/);
     expect(() => loadEnv({ ...valid, S3_ENDPOINT: "localhost:3900" })).toThrow(/S3_ENDPOINT/);
+  });
+
+  test("logs: info and JSON by default, validated", () => {
+    expect(logConfig(loadEnv(valid))).toEqual({ level: "info", format: "json" });
+    expect(logConfig(loadLogEnv({ LOG_LEVEL: "debug", LOG_FORMAT: "pretty" }))).toEqual({
+      level: "debug",
+      format: "pretty",
+    });
+    expect(() => loadEnv({ ...valid, LOG_LEVEL: "verbose" })).toThrow(/LOG_LEVEL/);
+    expect(() => loadEnv({ ...valid, LOG_FORMAT: "text" })).toThrow(/LOG_FORMAT/);
+  });
+
+  test("cron secret: optional, at least 32 characters", () => {
+    expect(loadEnv(valid).CRON_SECRET).toBeUndefined();
+    expect(loadEnv({ ...valid, CRON_SECRET: "c".repeat(32) }).CRON_SECRET).toBe("c".repeat(32));
+    expect(() => loadEnv({ ...valid, CRON_SECRET: "short" })).toThrow(/CRON_SECRET/);
   });
 
   test("accepts a complete environment", () => {

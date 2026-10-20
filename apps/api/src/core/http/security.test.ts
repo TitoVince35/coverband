@@ -21,7 +21,7 @@ describe("security headers", () => {
   });
 
   test("are set on API responses", async () => {
-    const res = await createApp({ deps, log: false }).request("/api/health");
+    const res = await createApp({ deps }).request("/api/health");
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
     expect(res.headers.get("referrer-policy")).toBe("no-referrer");
     expect(res.headers.get("x-frame-options")).toBe("DENY");
@@ -36,7 +36,7 @@ describe("security headers", () => {
   });
 
   test("are set on errors and Better Auth responses", async () => {
-    const app = createApp({ deps, log: false });
+    const app = createApp({ deps });
     for (const path of ["/api/nope", "/api/auth/ok"]) {
       const res = await app.request(path);
       expect(res.headers.get("content-security-policy")).toContain("default-src 'self'");
@@ -45,12 +45,11 @@ describe("security headers", () => {
   });
 
   test("HSTS only over HTTPS", async () => {
-    const http = await createApp({ deps, log: false }).request("/api/health");
+    const http = await createApp({ deps }).request("/api/health");
     expect(http.headers.get("strict-transport-security")).toBeNull();
 
     const https = await createApp({
       deps: { ...deps, appUrl: "https://coverband.example" },
-      log: false,
     }).request("/api/health");
     expect(https.headers.get("strict-transport-security")).toBe(
       "max-age=31536000; includeSubDomains",
@@ -62,7 +61,6 @@ describe("request guards on /api", () => {
   const { deps } = createTestDeps();
   const app = createApp({
     deps: { ...deps, trustedOrigins: ["http://192.168.1.20:5173"] },
-    log: false,
   });
 
   function post(headers: Record<string, string>, body = "a=1") {

@@ -20,7 +20,7 @@ const databaseUrl = process.env.DATABASE_URL;
 
 describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details", () => {
   const { deps, db, sql, auth, mailer } = createTestDeps(databaseUrl);
-  const app = createApp({ deps, log: false });
+  const app = createApp({ deps });
 
   const run = crypto.randomUUID().slice(0, 8);
   const email = (name: string) => `${name}-${run}@test.localhost`;

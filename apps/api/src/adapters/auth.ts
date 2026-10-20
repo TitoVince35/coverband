@@ -11,11 +11,14 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
 import type { Db } from "../core/db/client";
 import * as schema from "../core/db/schema";
+import type { Logger } from "../core/log";
 import type { Mailer } from "./mail/mailer";
 import { passwordResetEmail } from "./mail/templates";
 
 export type AuthOptions = {
   db: Db;
+  /** Better Auth's own logs go there too. */
+  log: Logger;
   mailer: Mailer;
   secret: string;
   /** Public URL of the app, e.g. http://localhost:5173 in development. */
@@ -35,6 +38,7 @@ export type AuthOptions = {
  */
 export function createAuth({
   db,
+  log,
   mailer,
   secret,
   baseURL,
@@ -63,8 +67,12 @@ export function createAuth({
         const url = `${baseURL}/api/auth/reset-password/${encodeURIComponent(token)}?callbackURL=${encodeURIComponent("/reset-password")}`;
         const language = requestLanguage(request);
         // Awaited, so the email is sent before the container may be paused. Known emails answer a
-        // little slower than unknown ones: an accepted leak (Better Auth logs send failures).
-        await mailer.send(passwordResetEmail(user.email, language, { url }));
+        // little slower than unknown ones: an accepted leak. A failed send gets the same answer.
+        try {
+          await mailer.send(passwordResetEmail(user.email, language, { url }));
+        } catch (error) {
+          log.error("Password reset email not sent", { userId: user.id, err: error });
+        }
       },
     },
     // Profile fields, set by the onboarding wizards only (not through Better Auth endpoints).
@@ -88,7 +96,31 @@ export function createAuth({
       ipAddress: { ipAddressHeaders: [clientIpHeader] },
     },
     telemetry: { enabled: false },
+    logger: betterAuthLogger(log),
   });
+}
+
+const EMAIL = /[^\s@<>"'(),:;]+@[^\s@<>"'(),:;]+\.[a-z]{2,}/gi;
+
+/**
+ * Better Auth's logs in our format. Its messages may hold an email (its "sign-up attempt for
+ * existing email", unreachable here): they are masked. Its arguments are mostly errors.
+ */
+export function betterAuthLogger(log: Logger) {
+  return {
+    level: "debug" as const,
+    disableColors: true,
+    log(level: "debug" | "info" | "warn" | "error", message: string, ...args: unknown[]) {
+      const [first, ...rest] = args;
+      const fields =
+        first instanceof Error
+          ? { err: first, ...(rest.length > 0 && { args: rest }) }
+          : args.length > 0
+            ? { args }
+            : {};
+      log[level](`Better Auth: ${message.replace(EMAIL, "[email]")}`, fields);
+    },
+  };
 }
 
 /** Lifetime of a password reset link, in seconds. */

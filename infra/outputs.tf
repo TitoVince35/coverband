@@ -37,3 +37,9 @@ output "deploy_database_url" {
   value     = local.deploy_database_url
   sensitive = true
 }
+
+output "cron_secret" {
+  description = "Secret of the app's cron job routes (/api/internal), to run a job by hand."
+  value       = random_password.cron_secret.result
+  sensitive   = true
+}

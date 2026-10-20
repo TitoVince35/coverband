@@ -2,9 +2,10 @@ import { ADMIN_ROLE } from "@coverband/shared";
 import { createMiddleware } from "hono/factory";
 import type { Auth, SessionData, SessionUser } from "../../adapters/auth";
 import { apiError } from "../errors";
+import type { LogEnv } from "./request-log";
 
 export type SessionEnv = {
-  Variables: {
+  Variables: LogEnv["Variables"] & {
     user: SessionUser | null;
     session: SessionData["session"] | null;
   };
@@ -12,18 +13,22 @@ export type SessionEnv = {
 
 /** After requireUser or requireAdmin: the user is logged in. */
 export type UserEnv = {
-  Variables: {
+  Variables: LogEnv["Variables"] & {
     user: SessionUser;
     session: SessionData["session"];
   };
 };
 
-/** Loads the session from the request cookies into `c.var.user` / `c.var.session` (null if none). */
+/**
+ * Loads the session from the request cookies into `c.var.user` / `c.var.session` (null if none);
+ * the request's logger then carries the user's ID.
+ */
 export function loadSession(auth: Auth) {
   return createMiddleware<SessionEnv>(async (c, next) => {
     const data = await auth.api.getSession({ headers: c.req.raw.headers });
     c.set("user", data?.user ?? null);
     c.set("session", data?.session ?? null);
+    if (data) c.set("log", c.var.log.child({ userId: data.user.id }));
     await next();
   });
 }

@@ -18,7 +18,7 @@ const databaseUrl = process.env.DATABASE_URL;
 
 describe.skipIf(!databaseUrl)("admin API", () => {
   const { deps, db, sql, auth, mailer } = createTestDeps(databaseUrl);
-  const app = createApp({ deps, log: false });
+  const app = createApp({ deps });
 
   const run = crypto.randomUUID().slice(0, 8);
   const adminEmail = `admin-${run}@test.localhost`;

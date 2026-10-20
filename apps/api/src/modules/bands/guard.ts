@@ -31,6 +31,7 @@ export function requireMember(db: Db) {
     }
     c.set("band", row.band);
     c.set("membership", { role: row.role });
+    c.set("log", c.var.log.child({ bandId: row.band.id }));
     await next();
   });
 }

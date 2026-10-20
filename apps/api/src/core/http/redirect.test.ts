@@ -10,7 +10,6 @@ describe("redirected hosts", () => {
       appUrl: "https://beta.coverband.example",
       redirectHosts: ["coverband.example"],
     },
-    log: false,
   });
 
   test("a listed host is sent to the app URL, path and query kept", async () => {
