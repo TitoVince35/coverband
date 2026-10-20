@@ -7,6 +7,16 @@
     "close": "Fermer",
     "appVersion": "{{appName}} {{version}} ({{build}})"
   },
+  "install": {
+    "title": "Installer {{appName}}",
+    "why": "Sur votre écran d'accueil, en plein écran, et lisible sans connexion pendant le concert.",
+    "button": "Installer l'application",
+    "dismiss": "Ne plus afficher",
+    "ios": {
+      "share": "Dans Safari, touchez Partager",
+      "add": "puis Sur l'écran d'accueil."
+    }
+  },
   "home": {
     "title": "Bienvenue sur {{appName}}",
     "greeting": "Bonjour {{name}}",

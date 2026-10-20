@@ -34,4 +34,6 @@ React + Vite + TanStack Router/Query. Cross-cutting rules are in the root `CLAUD
 
 `vite.config.ts` imports `APP_NAME` from `@coverband/shared` (manifest, `%APP_NAME%` in `index.html`): the `dev`, `build` and `preview` scripts use `--configLoader runner` so Vite can load the shared package's TypeScript.
 
-Configured in `vite.config.ts` (vite-plugin-pwa, auto-update). Icons in `public/` are generated from `public/logo.svg` with `bunx pwa-assets-generator --preset minimal-2023 public/logo.svg`.
+Configured in `vite.config.ts` (vite-plugin-pwa, auto-update).
+
+- **Install card** (#166, `InstallCard` on the home page, `src/lib/install.ts`): shown while the app isn't running installed (`display-mode: standalone`, or iOS's `navigator.standalone`) and until dismissed (`localStorage` `coverband-install-dismissed`). Chrome and Android: an Install button opening the browser's prompt (`beforeinstallprompt`, caught from the start by `listenForInstall()` in `main.tsx`, since it fires once and early); iPhone and iPad: the Share › Add to Home Screen steps; elsewhere, nothing. The rules are `installMode` and `isIos` (tested); the e2e test uses an iPhone user agent, as Chrome never prompts under automation. Icons in `public/` are generated from `public/logo.svg` with `bunx pwa-assets-generator --preset minimal-2023 public/logo.svg`.
