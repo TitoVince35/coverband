@@ -2,15 +2,18 @@
 
 This is a reminder of the briefs to be created.
 
-- [ ] Tech : Security - brute force, standard protections (helmet?)
+- [X] Tech : Security - brute force, standard protections (helmet?)
 - [X] Tech : Logging - logs hosting, what to log
-- [ ] Functional : user profile
-- [ ] Functional : The instruments - i18n, icons, auto-complete
+- [X] Functional : user profile
+- [X] Functional : The instruments - i18n, icons, auto-complete
 - [ ] Functional : The venues
-- [ ] Functional : The tunes - data, creation (from links, from form)
+- [X] Functional : The tunes - data, creation (from links, from form)
 - [ ] Functional : The setlists
-- [ ] UI : User homepage, Band homepage
+- [X] UI : User homepage, Band homepage
 - [ ] Feature : internal chat ?
 - [ ] UI : admin console (hompage, features)
-- [ ] Feature : Activity - events logs (Johnny added a media to "Born to be wild")
+- [X] Feature : Activity - events logs (Johnny added a media to "Born to be wild")
 - [ ] Tech : Push notifications for the events
+- [ ] Tech : IP whitelist for beta
+- [ ] Tech : PWA !
+- [ ] Tech : build tag in a footer
