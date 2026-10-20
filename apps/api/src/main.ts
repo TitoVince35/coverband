@@ -39,6 +39,7 @@ const app = createApp({
     }),
     appUrl: env.BETTER_AUTH_URL,
     trustedOrigins: env.TRUSTED_ORIGINS,
+    redirectHosts: env.REDIRECT_HOSTS,
     buildInfo: { version: rootPackage.version, build: env.BUILD_SHA },
     ...(env.BETA_ACCESS_CODE && {
       access: {

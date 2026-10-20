@@ -29,6 +29,8 @@ resource "scaleway_container" "app" {
 
   environment_variables = {
     BETTER_AUTH_URL = local.app_url
+    # The bare domain is redirected to the app URL by the app itself (#156).
+    REDIRECT_HOSTS = var.domain
     # Scaleway's proxy overwrites X-Real-IP with the caller's IP; X-Forwarded-For keeps what the client sends.
     CLIENT_IP_HEADER = "x-real-ip"
     ADMIN_EMAIL      = var.admin_email
@@ -73,4 +75,20 @@ resource "scaleway_container_domain" "app" {
   container_id = scaleway_container.app.id
   hostname     = local.app_hostname
   depends_on   = [scaleway_domain_record.app]
+}
+
+# The bare domain (https://<domain>), redirected to the app by the app itself (REDIRECT_HOSTS):
+# Scaleway has no web redirect. A CNAME can't sit at the zone root, but Scaleway's ALIAS can.
+resource "scaleway_domain_record" "apex" {
+  dns_zone = var.domain
+  name     = ""
+  type     = "ALIAS"
+  data     = "${trimprefix(scaleway_container.app.public_endpoint, "https://")}."
+  ttl      = 3600
+}
+
+resource "scaleway_container_domain" "apex" {
+  container_id = scaleway_container.app.id
+  hostname     = var.domain
+  depends_on   = [scaleway_domain_record.apex]
 }

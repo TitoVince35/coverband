@@ -82,6 +82,7 @@ tofu apply
 - **The image is not managed here** (`ignore_changes`): the deploy workflow sets it. To roll back, run the Deploy workflow on an older commit, or set an older `<sha>` tag in the console. Migrations are not rolled back.
 - **A new environment variable:** add it to `apps/api/src/env.ts`, `.env.example` and `container.tf` (`secret_environment_variables` for anything secret), then `tofu apply` before merging the code that needs it.
 - **Cold starts:** the container scales to zero (1 to 3 s for the first request after a quiet period). `min_scale = 1` keeps one instance running, for about €13 a month.
+- **The bare domain** (`https://<domain>`) redirects to the app URL: an `ALIAS` record to the container, a second custom domain, and the app's `REDIRECT_HOSTS` (`container.tf`).
 - **Beta access code:** set `beta_access_code` in `terraform.tfvars`, then `tofu apply` (the container restarts with it). Visitors without it see a code screen; invitation and password reset links let people in without it. Changing it asks every device again (logged-in users included); removing it (empty) opens the app, for the launch. Share it outside the app (a message to the band), never in the repository.
 - **API keys expire after a year** (the organization's rule): `tofu output api_keys_expire_at` gives the date, keep a reminder a month before. To rotate both:
 
