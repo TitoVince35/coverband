@@ -35,6 +35,18 @@ const envSchema = z
           .filter(Boolean),
       )
       .pipe(z.array(z.url({ protocol: /^https?$/ }))),
+    // Other hostnames of the container, redirected to BETTER_AUTH_URL (comma-separated): the bare
+    // domain in production (#156).
+    REDIRECT_HOSTS: z
+      .string()
+      .default("")
+      .transform((value) =>
+        value
+          .split(",")
+          .map((host) => host.trim().toLowerCase())
+          .filter(Boolean),
+      )
+      .pipe(z.array(z.hostname())),
     // Request header holding the client IP, for login rate limits. In production, x-real-ip:
     // Scaleway's proxy overwrites it, while a client can set its own X-Forwarded-For.
     CLIENT_IP_HEADER: z

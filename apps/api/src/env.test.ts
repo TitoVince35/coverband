@@ -74,6 +74,18 @@ describe("TRUSTED_ORIGINS", () => {
   });
 });
 
+describe("REDIRECT_HOSTS", () => {
+  test("a comma-separated list of hostnames, lowercased, empty by default", () => {
+    expect(loadEnv(valid).REDIRECT_HOSTS).toEqual([]);
+    expect(
+      loadEnv({ ...valid, REDIRECT_HOSTS: "Coverband.fr, www.coverband.fr," }).REDIRECT_HOSTS,
+    ).toEqual(["coverband.fr", "www.coverband.fr"]);
+    expect(() => loadEnv({ ...valid, REDIRECT_HOSTS: "https://coverband.fr" })).toThrow(
+      /REDIRECT_HOSTS/,
+    );
+  });
+});
+
 describe("BUILD_SHA", () => {
   test("the commit of the image, dev by default", () => {
     expect(loadEnv(valid).BUILD_SHA).toBe("dev");
