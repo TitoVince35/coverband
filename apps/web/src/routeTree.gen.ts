@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as AccessRouteImport } from './routes/access'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -26,6 +27,11 @@ import { Route as AppBBandSlugSongsArchivedRouteImport } from './routes/_app/b.$
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccessRoute = AccessRouteImport.update({
+  id: '/access',
+  path: '/access',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -97,6 +103,7 @@ const AppBBandSlugSongsArchivedRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/access': typeof AccessRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
 }
 export interface FileRoutesByTo {
+  '/access': typeof AccessRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -127,6 +135,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/access': typeof AccessRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/access'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/songs/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/access'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_app'
+    | '/access'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
@@ -191,6 +203,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  AccessRoute: typeof AccessRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/access': {
+      id: '/access'
+      path: '/access'
+      fullPath: '/access'
+      preLoaderRoute: typeof AccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -338,6 +358,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  AccessRoute: AccessRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,

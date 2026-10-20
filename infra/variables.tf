@@ -36,6 +36,13 @@ variable "admin_email" {
   type        = string
 }
 
+variable "beta_access_code" {
+  description = "Shared code keeping the beta private, asked once per device (README.md). Empty: no gate."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "budget_eur" {
   description = "Monthly budget in euros; alerts at 50%, 90% and 100%."
   type        = number

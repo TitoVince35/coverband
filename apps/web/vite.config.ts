@@ -5,8 +5,15 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import rootPackage from "../../package.json" with { type: "json" };
 
 export default defineConfig({
+  // The running release, read through src/lib/build-info.ts. BUILD_SHA comes from the deploy
+  // workflow's Docker build.
+  define: {
+    __APP_VERSION__: JSON.stringify(rootPackage.version),
+    __APP_BUILD__: JSON.stringify(process.env.BUILD_SHA || "dev"),
+  },
   plugins: [
     // Must come before the React plugin.
     tanstackRouter({ target: "react", autoCodeSplitting: true }),

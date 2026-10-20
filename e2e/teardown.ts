@@ -13,6 +13,8 @@ export default async function teardown() {
     await sql`delete from activity where actor_id in (${users})`;
     await sql`delete from rate_limits
       where key like ${"coverband:%"} and split_part(key, ':', 3) in (select id::text from (${users}) u)`;
+    // Access code attempts, per made-up client IP (access.e2e.ts).
+    await sql`delete from rate_limits where key like ${"coverband:access-codes:e2e-%"}`;
     await sql`delete from bands where name like ${"E2E %"}`;
     await sql`delete from invitations where email like ${"%@e2e.localhost"}`;
     await sql`delete from users where email like ${"%@e2e.localhost"}`;

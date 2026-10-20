@@ -24,6 +24,8 @@ export const ERROR_CODES = [
   "song_in_use",
   "too_many_links",
   "lyrics_unavailable",
+  "access_required",
+  "access_code_invalid",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

@@ -35,6 +35,8 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   song_in_use: 409,
   too_many_links: 409,
   lyrics_unavailable: 503,
+  access_required: 403,
+  access_code_invalid: 403,
 };
 
 /**

@@ -1,18 +1,29 @@
 import { APP_NAME } from "@coverband/shared";
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, Link, Outlet, redirect } from "@tanstack/react-router";
 import { DevLinks } from "@/components/dev-links";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserMenu } from "@/components/user-menu";
+import { accessQuery } from "@/lib/access";
+import { isOpenPage } from "@/lib/open-pages";
 
 export type RouterContext = {
   queryClient: QueryClient;
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({
+  // The beta access code (#148): without it, every page but the open ones shows the code screen.
+  beforeLoad: async ({ context, location }) => {
+    if (isOpenPage(location.pathname)) return;
+    const access = await context.queryClient.ensureQueryData(accessQuery).catch(() => null);
+    // Unreachable API (offline): let the page load and show its own error.
+    if (access && !access.granted) {
+      throw redirect({ to: "/access", search: { redirect: location.href } });
+    }
+  },
   component: RootLayout,
 });
 
