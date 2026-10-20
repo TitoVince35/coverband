@@ -20,6 +20,7 @@ export const ERROR_CODES = [
   "already_member",
   "too_many_requests",
   "invalid_image",
+  "image_too_large",
   "song_duplicate",
   "song_in_use",
   "too_many_links",

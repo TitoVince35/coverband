@@ -1,4 +1,4 @@
-import { type BandRole, type Instrument, slugify } from "@coverband/shared";
+import { type BandLogo, type BandRole, type Instrument, slugify } from "@coverband/shared";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "../../core/activity/record";
@@ -7,6 +7,7 @@ import { isUniqueViolation } from "../../core/db/pg-errors";
 import { bandMembers, bands, users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
 import { instrumentsByBand, writeInstruments } from "../instruments/service";
+import { logoOf } from "./logo";
 
 export type Band = typeof bands.$inferSelect;
 
@@ -19,14 +20,18 @@ export async function bandsOf(db: Db, userId: string) {
       genre: bands.genre,
       role: bandMembers.role,
       bandId: bands.id,
+      logoKey: bands.logoKey,
+      logoThumbnailKey: bands.logoThumbnailKey,
+      logoBackground: bands.logoBackground,
     })
     .from(bandMembers)
     .innerJoin(bands, eq(bands.id, bandMembers.bandId))
     .where(eq(bandMembers.userId, userId))
     .orderBy(asc(bands.name));
   const instruments = await instrumentsByBand(db, userId);
-  return rows.map(({ bandId, ...band }) => ({
+  return rows.map(({ bandId, logoKey, logoThumbnailKey, logoBackground, ...band }) => ({
     ...band,
+    logo: logoOf({ id: bandId, slug: band.slug, logoKey, logoThumbnailKey, logoBackground }),
     instruments: instruments.get(bandId) ?? [],
   }));
 }
@@ -196,13 +201,13 @@ export function updateBandGenre(
   id: string,
   genre: string | null,
   actorId: string,
-): Promise<{ name: string; slug: string; genre: string | null }> {
+): Promise<{ name: string; slug: string; genre: string | null; logo: BandLogo | null }> {
   return db.transaction(async (tx) => {
     const [band] = await tx
       .update(bands)
       .set({ genre: genre?.trim() || null })
       .where(eq(bands.id, id))
-      .returning({ name: bands.name, slug: bands.slug, genre: bands.genre });
+      .returning();
     if (!band) throw new Error("Band update returned nothing");
     await recordActivity(tx, {
       action: "band.genre_changed",
@@ -211,6 +216,6 @@ export function updateBandGenre(
       target: { type: "band", id },
       data: { genre: band.genre },
     });
-    return band;
+    return { name: band.name, slug: band.slug, genre: band.genre, logo: logoOf(band) };
   });
 }

@@ -45,6 +45,25 @@
       "genreHint": "Optional.",
       "saved": "Band updated",
       "nameForever": "A band name is forever: it can't be changed."
+    },
+    "logo": {
+      "title": "Logo",
+      "none": "No logo yet: the band's initials show instead.",
+      "choose": "Choose a logo",
+      "change": "Change the logo",
+      "save": "Save the logo",
+      "saved": "Logo saved",
+      "remove": "Remove the logo",
+      "removing": "Removing…",
+      "removed": "Logo removed",
+      "preview": "Preview of the new logo",
+      "current": "The band's logo",
+      "background": "Background",
+      "backgrounds": {
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "hint": "PNG, WebP or JPEG. A large, sharp image prints better on setlists; a transparent background suits both backgrounds."
     }
   },
   "lineup": {
@@ -423,6 +442,7 @@
     "already_member": "This person is already a member of the band.",
     "too_many_requests": "Too many requests. Try again later.",
     "invalid_image": "This file isn't a usable image. Choose a photo (JPEG, PNG, WebP…).",
+    "image_too_large": "This image is too large, even once reduced. Choose a smaller file.",
     "song_duplicate": "This song is already in your repertoire.",
     "song_in_use": "This song is used, in a setlist for example: archive it instead.",
     "too_many_links": "This song already has as many links as it can.",
@@ -446,6 +466,8 @@
     "memberJoined": "{{name}} joined the band",
     "genreChanged": "{{name}} changed the genre to {{genre}}",
     "genreRemoved": "{{name}} removed the genre",
+    "logoChanged": "{{name}} changed the band's logo",
+    "logoRemoved": "{{name}} removed the band's logo",
     "invitationSent": "{{name}} invited a musician",
     "invitationResent": "{{name}} sent an invitation again",
     "invitationRevoked": "{{name}} cancelled an invitation",

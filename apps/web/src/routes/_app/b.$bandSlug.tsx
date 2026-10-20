@@ -5,7 +5,6 @@ import { BandSwitcher } from "@/components/band/band-switcher";
 import { EditBandDialog } from "@/components/band/edit-band-dialog";
 import { bandQuery } from "@/lib/bands";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
-import { useKeepBandsOffline } from "@/lib/offline-bands";
 
 // Layout of every band page: band name (with the switcher), leader tools and tabs.
 export const Route = createFileRoute("/_app/b/$bandSlug")({
@@ -20,8 +19,6 @@ function BandLayout() {
   const { t } = useTranslation();
   const { bandSlug } = Route.useParams();
   const query = useQuery(bandQuery(bandSlug));
-  // Opened from a link: this band ready for offline use too (#165).
-  useKeepBandsOffline([bandSlug]);
 
   if (query.isPending) {
     return null;

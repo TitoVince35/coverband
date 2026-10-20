@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { type Browser, expect, type Page, test } from "@playwright/test";
+import { type Browser, expect, type Locator, type Page, test } from "@playwright/test";
 import { ADMIN, bandName, email, invitationLink, login, PASSWORD } from "./support";
 
 // One story, in order: each step builds on the previous one.
@@ -167,6 +167,87 @@ test("the band's home page shows its latest activity, newest first", async () =>
   await expect(entries.first()).toContainText("Today");
   // Never an email.
   await expect(journal).not.toContainText("@");
+});
+
+test("the band leader adds the band's logo: on the band page and in the list, then removed", async () => {
+  await leader.goto("/");
+  // No logo yet: the band's initials ("E2E Rockers …").
+  const bandLink = leader.getByRole("link", { name: band }).first();
+  await expect(bandLink.getByText("ER", { exact: true })).toBeVisible();
+  await bandLink.click();
+  await leader.getByRole("button", { name: "Edit band" }).click();
+  const dialog = leader.getByRole("dialog");
+  await expect(dialog.getByText("No logo yet")).toBeVisible();
+
+  // A horizontal logo with a transparent background: fitted, never cropped.
+  await dialog
+    .locator('input[type="file"]')
+    .setInputFiles(fileURLToPath(new URL("./fixtures/logo.png", import.meta.url)));
+  // Shown, not only there: the preview is a blob: image, which the security policy must allow.
+  const preview = dialog.getByRole("img", { name: "Preview of the new logo" });
+  await expect.poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
+  await dialog.getByRole("radio", { name: "Dark" }).check();
+  await dialog.getByRole("button", { name: "Save the logo" }).click();
+  await expect(leader.getByText("Logo saved")).toBeVisible();
+
+  const current = dialog.getByRole("img", { name: "The band's logo" });
+  await expect(current).toBeVisible();
+  // Served by the API, the whole image: 900 × 300 is under the 2,000 px limit.
+  await expect.poll(() => current.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
+  await expect(dialog.getByRole("radio", { name: "Dark" })).toBeChecked();
+  await leader.keyboard.press("Escape");
+
+  // On the band's home page, the full logo; in the band list, its thumbnail.
+  const logo = leader.locator('main img[src*="/logo?v="]');
+  await expect.poll(() => logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
+  await leader.goto("/");
+  const thumbnail = bandLink.locator('img[src*="/logo/thumbnail?v="]');
+  await expect
+    .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(256);
+  await expect(bandLink.getByText("ER", { exact: true })).toBeHidden();
+
+  // Saved on the device (#178): offline, the list and the band page show it from there.
+  await leader.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  await expect.poll(() => savedLogos(leader)).toBe(1);
+  // The band list with its logo is saved too (a delayed write).
+  await expect.poll(() => savedCopy(leader)).toContain("/logo/thumbnail?v=");
+  await leader.context().setOffline(true);
+  await leader.reload();
+  await expect(leader.getByText("You're offline")).toBeVisible();
+  const fromDevice = (scope: Locator) => scope.locator('img[src^="blob:"]');
+  await expect
+    .poll(() => fromDevice(bandLink).evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(900);
+  await bandLink.click();
+  await expect
+    .poll(() =>
+      fromDevice(leader.locator("main")).evaluate((img: HTMLImageElement) => img.naturalWidth),
+    )
+    .toBe(900);
+  await leader.context().setOffline(false);
+  await leader.goto("/");
+  await expect(leader.getByText("You're offline")).toBeHidden();
+
+  await bandLink.click();
+  await leader.getByRole("button", { name: "Edit band" }).click();
+  await dialog.getByRole("button", { name: "Remove the logo" }).click();
+  await expect(leader.getByText("Logo removed")).toBeVisible();
+  await expect(dialog.getByText("No logo yet")).toBeVisible();
+  await leader.keyboard.press("Escape");
+  await expect(logo).toHaveCount(0);
+
+  await leader.getByRole("button", { name: "Latest activity" }).click();
+  const journal = leader.getByRole("list", { name: "Latest activity" });
+  await expect(journal.getByRole("listitem").first()).toContainText(
+    "Captain Lea removed the band's logo",
+  );
+  await expect(journal).toContainText("Captain Lea changed the band's logo");
+  await leader.getByRole("button", { name: "Latest activity" }).click();
+
+  await leader.goto("/");
+  await expect(bandLink.getByText("ER", { exact: true })).toBeVisible();
+  await bandLink.click();
 });
 
 test("members build the repertoire: add, the duplicate warning, edit", async () => {
@@ -399,6 +480,48 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(songs).toHaveCount(2);
 });
 
+/** How many band logos the app saved on the device for offline use (#178). */
+function savedLogos(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        const open = indexedDB.open("coverband");
+        // Never create the app's database before the app does.
+        open.onupgradeneeded = () => open.transaction?.abort();
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains("logos")) return resolve(0);
+          const count = db.transaction("logos").objectStore("logos").count();
+          count.onsuccess = () => resolve(count.result);
+          count.onerror = () => resolve(0);
+        };
+        open.onerror = () => resolve(0);
+      }),
+  );
+}
+
+/** The data the app saved on the device for offline use (#165), as JSON, or "" before any. */
+function savedCopy(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<string>((resolve) => {
+        const open = indexedDB.open("coverband");
+        // Never create the app's database before the app does.
+        open.onupgradeneeded = () => open.transaction?.abort();
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains("query-cache")) return resolve("");
+          const get = db.transaction("query-cache").objectStore("query-cache").get("client");
+          get.onsuccess = () => resolve(JSON.stringify(get.result ?? ""));
+          get.onerror = () => resolve("");
+        };
+        open.onerror = () => resolve("");
+      }),
+  );
+}
+
+const lyricsLine = "And the violence caused such silence";
+
 test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async ({ browser }) => {
   // A device that never opened the song: the home page saves every band for offline use.
   const context = await browser.newContext();
@@ -407,27 +530,7 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await expect(page.getByRole("link", { name: new RegExp(band) })).toBeVisible();
   // The service worker serves the app itself without a connection.
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
-  const lyricsLine = "And the violence caused such silence";
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          new Promise<string>((resolve) => {
-            const open = indexedDB.open("coverband");
-            // Never create the app's database before the app does.
-            open.onupgradeneeded = () => open.transaction?.abort();
-            open.onsuccess = () => {
-              const db = open.result;
-              if (!db.objectStoreNames.contains("query-cache")) return resolve("");
-              const get = db.transaction("query-cache").objectStore("query-cache").get("client");
-              get.onsuccess = () => resolve(JSON.stringify(get.result ?? ""));
-              get.onerror = () => resolve("");
-            };
-            open.onerror = () => resolve("");
-          }),
-      ),
-    )
-    .toContain(lyricsLine);
+  await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
 
   await context.setOffline(true);
   await page.reload();
@@ -452,12 +555,34 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await context.close();
 });
 
+test("logging out and in again saves everything again (#174)", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await login(page, leaderEmail, PASSWORD);
+  await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
+
+  await page.getByRole("button", { name: "Account" }).click();
+  await page.getByRole("menuitem", { name: "Log out" }).click();
+  await expect(page).toHaveURL(/\/login/);
+  await expect.poll(() => savedCopy(page)).not.toContain(lyricsLine);
+
+  // At once, without reloading the app (logging out doesn't): the repertoire is loaded again.
+  await page.getByLabel("Email").fill(leaderEmail);
+  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page.getByRole("link", { name: new RegExp(band) })).toBeVisible();
+  await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
+  await context.close();
+});
+
 test("the band leader uploads an avatar, then removes it", async () => {
   await leader.goto("/account");
   await leader
     .locator('input[type="file"]')
     .setInputFiles(fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url)));
-  await expect(leader.getByRole("img", { name: "Preview of your new avatar" })).toBeVisible();
+  // Shown, not only there: the preview is a blob: image, which the security policy must allow.
+  const preview = leader.getByRole("img", { name: "Preview of your new avatar" });
+  await expect.poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(512);
   await leader.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Avatar updated.")).toBeVisible();
 

@@ -9,6 +9,7 @@ import { MAX_SONG_DURATION } from "./duration";
 import { MAX_INSTRUMENTS } from "./instruments";
 import { MUSICAL_KEYS } from "./keys";
 import { LANGUAGES, type Language } from "./languages";
+import { LOGO_BACKGROUNDS } from "./logos";
 import { MEDIA_LIMITS, parseMediaUrl } from "./media";
 import { LYRICS_SOURCES, MAX_ENERGY, SONG_MAX_LENGTH, SONG_STATUSES, SONG_TEMPO } from "./songs";
 
@@ -65,6 +66,18 @@ export const bandNameQuery = z.object({ name: text(FIELD_MAX_LENGTH.bandName) })
 /** A band's changes: only the genre, a band name is forever (it is also the band's URL). */
 export const bandBody = z.object({
   genre: z.string().trim().max(FIELD_MAX_LENGTH.genre).nullable(),
+});
+
+/** The background a band's logo is shown on. */
+export const logoBackgroundBody = z.object({ background: z.enum(LOGO_BACKGROUNDS) });
+
+/**
+ * A band's new logo (multipart form): the logo and its thumbnail, prepared by the browser, and
+ * its background. The API checks the files' formats and sizes itself.
+ */
+export const logoUploadBody = logoBackgroundBody.extend({
+  logo: z.instanceof(File),
+  thumbnail: z.instanceof(File),
 });
 
 /** A member's own instruments in a band. */
