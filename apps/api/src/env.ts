@@ -74,6 +74,8 @@ const envSchema = z
     MAIL_FROM: z.string().min(3),
     // Shared code keeping the beta private (#148): asked once per device. Empty: no gate.
     BETA_ACCESS_CODE: z.string().trim().default(""),
+    // Shared with the Scaleway cron triggers calling /api/internal (#45). Unset: no such routes.
+    CRON_SECRET: z.string().min(32).optional(),
     // Commit the image was built from (set by the deploy workflow's Docker build), for /api/health.
     BUILD_SHA: z.string().min(1).default("dev"),
     // Where song lyrics are searched (#130). The end-to-end tests point it at a fake.

@@ -51,6 +51,7 @@ resource "scaleway_container" "app" {
     SMTP_PASSWORD        = scaleway_iam_api_key.app.secret_key
     S3_ACCESS_KEY_ID     = scaleway_iam_api_key.app.access_key
     S3_SECRET_ACCESS_KEY = scaleway_iam_api_key.app.secret_key
+    CRON_SECRET          = random_password.cron_secret.result
   }, var.beta_access_code == "" ? {} : { BETA_ACCESS_CODE = var.beta_access_code })
 
   lifecycle {
