@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { AppError, apiError, appErrorResponse } from "./core/errors";
 import { accessGate, accessRoutes } from "./core/http/access";
 import { healthRoutes } from "./core/http/health";
+import { internalRoutes } from "./core/http/internal";
 import { redirectHosts } from "./core/http/redirect";
 import { requestLog } from "./core/http/request-log";
 import { noIndex, requestGuards, securityHeaders } from "./core/http/security";
@@ -86,6 +87,10 @@ export function createApp({ deps, webDistDir }: AppOptions) {
   // Better Auth endpoints (login, logout, session...), called by the web app's auth client.
   app.on(["GET", "POST"], "/api/auth/*", (c) => deps.auth.handler(c.req.raw));
   app.route("/api", createApi(deps));
+  // Cron jobs (Scaleway triggers), outside the typed API: the web app never calls them.
+  if (deps.cronSecret) {
+    app.route("/api/internal", internalRoutes({ db: deps.db, cronSecret: deps.cronSecret }));
+  }
   // Unknown API routes stay JSON 404s, never the web app shell.
   app.all("/api/*", (c) => apiError(c, 404, "Not found"));
 

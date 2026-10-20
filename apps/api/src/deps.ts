@@ -26,6 +26,8 @@ export type AppDeps = {
   buildInfo: BuildInfo;
   /** Other hostnames of the container, redirected to appUrl (the bare domain). */
   redirectHosts?: string[];
+  /** Secret of the cron jobs' routes (/api/internal); absent: no such routes. */
+  cronSecret?: string;
   /** The beta access code; absent: no gate. */
   access?: AccessConfig;
 };

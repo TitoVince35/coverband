@@ -14,6 +14,7 @@ Day to day, nothing happens here: every push to `main` whose CI passes is deploy
 | `iam.tf` | `coverband-app` (data, files, SMTP) and `coverband-deploy` (registry, container, schema changes) |
 | `container.tf` | Container, its environment and secrets, the `app.<domain>` custom domain |
 | `budget.tf` | Monthly budget, alerts at 50%, 90% and 100% |
+| `cron.tf` | Nightly jobs calling the app's `/api/internal` routes with `CRON_SECRET`: activity purge (rows older than a year) |
 | `cockpit.tf` | Container logs kept 30 days (Scaleway's own logs data source, imported) |
 
 ## First setup
@@ -93,4 +94,5 @@ tofu apply
   ```
 
   The container gets its new key from the apply (it redeploys with the new secrets); the deploy workflow gets its own from `github-secrets.sh`. A leaked key is rotated the same way.
+- **Cron jobs** (`cron.tf`): container triggers call the app's `/api/internal/*` routes with the generated `CRON_SECRET` (also a secret variable of the container). To run one by hand: `curl -X POST -H "Authorization: Bearer $(tofu output -raw cron_secret)" -H "Content-Type: application/json" -d '{}' "$(tofu output -raw app_url)/api/internal/purge-activity"`.
 - **Logs:** Cockpit, which Scaleway opens for every project (Observability > Cockpit, the Serverless Containers dashboards). The app writes one JSON line per entry (`apps/api/CLAUDE.md`, "Logs"): filter on `level`, `requestId` (the `X-Request-Id` of a response), `userId` or `bandId`. They are kept 30 days (`cockpit.tf`, #44): OpenTofu imports the "Scaleway Logs" data source that Scaleway creates with the project, and sets its retention. Ingestion is free; retention past 7 days costs €0.002 per GB per day. The source can't be deleted, so `prevent_destroy` guards it; to stop managing it, `tofu state rm scaleway_cockpit_source.logs` and remove the file.

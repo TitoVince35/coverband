@@ -38,6 +38,12 @@ describe("loadEnv", () => {
     expect(() => loadEnv({ ...valid, LOG_FORMAT: "text" })).toThrow(/LOG_FORMAT/);
   });
 
+  test("cron secret: optional, at least 32 characters", () => {
+    expect(loadEnv(valid).CRON_SECRET).toBeUndefined();
+    expect(loadEnv({ ...valid, CRON_SECRET: "c".repeat(32) }).CRON_SECRET).toBe("c".repeat(32));
+    expect(() => loadEnv({ ...valid, CRON_SECRET: "short" })).toThrow(/CRON_SECRET/);
+  });
+
   test("accepts a complete environment", () => {
     const env = loadEnv(valid);
     expect(env.DATABASE_URL).toBe("postgres://u:p@localhost:5432/db");

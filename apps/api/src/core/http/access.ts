@@ -28,11 +28,13 @@ export const ACCESS_CODES: RateLimitRule = { name: "access-codes", max: 10, wind
 
 /**
  * API paths open without the code: the deploy check, the code check itself, the session check
- * (without a session it only answers null, and the web app asks it on every page), and the routes
- * behind email links, whose token is the proof: invitations and password reset.
+ * (without a session it only answers null, and the web app asks it on every page), the routes
+ * behind email links, whose token is the proof (invitations and password reset), and the cron
+ * jobs, which check their own secret.
  */
 const OPEN_PATHS = [
   /^\/api\/health$/,
+  /^\/api\/internal\//,
   /^\/api\/access$/,
   /^\/api\/auth\/get-session$/,
   /^\/api\/invitations\//,
