@@ -3,6 +3,8 @@
 > 🕒 Brief posted on Tuesday 2026/10/20 20:46
 >
 > 🕒 Brief settled on Tuesday 2026/10/20 20:53
+>
+> 🕒 Issues completed on Tuesday 2026/10/20 21:38
 
 A band has a logo.
 It may be uploaded by the band leader, from the lineup page.
