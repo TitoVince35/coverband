@@ -24,7 +24,7 @@ export default defineConfig({
     { name: "app-name", transformIndexHtml: (html) => html.replaceAll("%APP_NAME%", APP_NAME) },
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "logo.svg", "apple-touch-icon-180x180.png"],
+      includeAssets: ["favicon.ico", "logo.svg", "favicon.svg", "apple-touch-icon-180x180.png"],
       manifest: {
         name: APP_NAME,
         short_name: APP_NAME,

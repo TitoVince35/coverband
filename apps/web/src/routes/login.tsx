@@ -67,6 +67,7 @@ function LoginPage() {
 
   return (
     <div className="mx-auto mt-4 max-w-sm space-y-4">
+      <img src="/logo.svg" alt="" className="mx-auto size-24" />
       <Card>
         <CardHeader>
           <CardTitle className="font-heading text-xl">{t("login.title")}</CardTitle>
