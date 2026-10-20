@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { adminClient, inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { SESSION_KEY } from "@/lib/query-client";
+import { appSession, type Session } from "@/lib/session";
 
 // Better Auth endpoints live under /api/auth on the same origin (Vite proxies /api in development).
 export const authClient = createAuthClient({
@@ -20,9 +21,9 @@ export const authClient = createAuthClient({
   ],
 });
 
-export type Session = typeof authClient.$Infer.Session;
+export type { Session } from "@/lib/session";
 
-/** Current session, or null when logged out. Route guards read it with ensureQueryData. */
+/** Current session, or null when logged out. Route guards read it (`guardData`). */
 export const sessionQuery = queryOptions({
   queryKey: SESSION_KEY,
   queryFn: async (): Promise<Session | null> => {
@@ -30,7 +31,7 @@ export const sessionQuery = queryOptions({
     if (error) {
       throw new Error(error.message ?? "Could not load the session");
     }
-    return data;
+    return data && appSession(data);
   },
 });
 

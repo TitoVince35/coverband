@@ -552,6 +552,24 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     expect((await call(`/bands/${otherSlug}/songs/${song.id}`, "zoe")).status).toBe(404);
   });
 
+  test("the whole repertoire, as each song's page shows it, for offline use (#165)", async () => {
+    const res = await call(`/bands/${slug}/songs/details`, "max");
+    expect(res.status).toBe(200);
+    const { songs } = (await res.json()) as {
+      songs: (Song & { archivedAt: string | null; media: unknown[] })[];
+    };
+    const list = (await (await call(`/bands/${slug}/songs`, "max")).json()) as { songs: Song[] };
+    // The current songs only, in the repertoire's order.
+    expect(songs.map((song) => song.id)).toEqual(list.songs.map((song) => song.id));
+    expect(songs.every((song) => song.archivedAt === null)).toBe(true);
+    for (const song of songs) {
+      const page = await songOf(await call(`/bands/${slug}/songs/${song.id}`, "max"));
+      expect(song).toEqual(page as typeof song);
+    }
+    expect(songs.some((song) => song.media.length > 0)).toBe(true);
+    expect((await call(`/bands/${slug}/songs/details`, "zoe")).status).toBe(404);
+  });
+
   test("only valid songs", async () => {
     const invalid = [
       { title: "", artist: "Someone" },

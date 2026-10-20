@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 import { storedText as stored, updateSong } from "@/lib/songs";
 
 /**
@@ -34,6 +35,8 @@ export function SongNotes({
   notes: string | null;
 }) {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(notes ?? "");
   // The saved notes the draft started from: when they change (saved here or by someone else),
@@ -85,7 +88,7 @@ export function SongNotes({
             </p>
           )}
           <div className="flex justify-end">
-            <Button type="submit" disabled={!changed || save.isPending}>
+            <Button type="submit" disabled={!online || !changed || save.isPending}>
               {save.isPending ? t("common.saving") : t("common.save")}
             </Button>
           </div>

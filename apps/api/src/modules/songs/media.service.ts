@@ -34,6 +34,18 @@ export function mediaOf(db: Db, bandId: string, songId: string) {
     .orderBy(asc(songMedia.createdAt), asc(songMedia.id));
 }
 
+/** Every link of a band's songs, by song, each song's oldest first (#165). */
+export async function mediaOfBand(db: Db, bandId: string) {
+  const rows = await db
+    .select({ ...columns, songId: songMedia.songId })
+    .from(songMedia)
+    .where(eq(songMedia.bandId, bandId))
+    .orderBy(asc(songMedia.createdAt), asc(songMedia.id));
+  const bySong = new Map<string, (typeof rows)[number][]>();
+  for (const row of rows) bySong.set(row.songId, [...(bySong.get(row.songId) ?? []), row]);
+  return (songId: string) => (bySong.get(songId) ?? []).map(({ songId: _, ...media }) => media);
+}
+
 /** Locks the band's song (null when there's none): link changes to one song wait for each other. */
 async function lockSong(tx: Tx, member: Member, songId: string) {
   const [song] = await tx

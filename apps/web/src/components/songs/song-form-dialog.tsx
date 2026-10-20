@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 import { addSong, type Song, type SongFields, songsQuery, updateSong } from "@/lib/songs";
 
 type Props = {
@@ -56,6 +57,8 @@ type Details = Pick<SongFields, (typeof durations)[number] | "key" | "bandKey" |
  */
 export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props) {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const repertoire = useQuery(songsQuery(bandSlug));
   // Each style once, however it was typed (the first spelling wins).
@@ -167,12 +170,16 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
       {tooltip ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            <DialogTrigger asChild disabled={!online}>
+              {trigger}
+            </DialogTrigger>
           </TooltipTrigger>
           <TooltipContent side="left">{tooltip}</TooltipContent>
         </Tooltip>
       ) : (
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogTrigger asChild disabled={!online}>
+          {trigger}
+        </DialogTrigger>
       )}
       {/* Taller than a phone's screen: it scrolls. */}
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">

@@ -3,12 +3,14 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet, redirect } from "@tanstack/react-router";
 import { DevLinks } from "@/components/dev-links";
 import { LanguageToggle } from "@/components/language-toggle";
+import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserMenu } from "@/components/user-menu";
 import { accessQuery } from "@/lib/access";
 import { isOpenPage } from "@/lib/open-pages";
+import { guardData } from "@/lib/query-client";
 
 export type RouterContext = {
   queryClient: QueryClient;
@@ -18,7 +20,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   // The beta access code (#148): without it, every page but the open ones shows the code screen.
   beforeLoad: async ({ context, location }) => {
     if (isOpenPage(location.pathname)) return;
-    const access = await context.queryClient.ensureQueryData(accessQuery).catch(() => null);
+    const access = await guardData(context.queryClient, accessQuery).catch(() => null);
     // Unreachable API (offline): let the page load and show its own error.
     if (access && !access.granted) {
       throw redirect({ to: "/access", search: { redirect: location.href } });
@@ -46,6 +48,7 @@ function RootLayout() {
             </div>
           </div>
         </header>
+        <OfflineBanner />
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           <Outlet />
         </main>

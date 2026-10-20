@@ -2,10 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { InstallCard } from "@/components/install-card";
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { myBandsQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
+import { useKeepBandsOffline } from "@/lib/offline-bands";
 
 export const Route = createFileRoute("/_app/")({
   component: HomePage,
@@ -15,6 +17,8 @@ function HomePage() {
   const { t } = useTranslation();
   const { user } = Route.useRouteContext();
   const bands = useQuery(myBandsQuery);
+  // Every band ready for offline use (#165).
+  useKeepBandsOffline(bands.data?.map((band) => band.slug) ?? []);
 
   return (
     <section className="space-y-6">
@@ -59,6 +63,7 @@ function HomePage() {
           )}
         </CardContent>
       </Card>
+      <InstallCard />
     </section>
   );
 }

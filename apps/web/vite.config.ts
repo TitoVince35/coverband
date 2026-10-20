@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { APP_NAME } from "@coverband/shared";
 import tailwindcss from "@tailwindcss/vite";
@@ -59,7 +60,17 @@ export default defineConfig({
   server: {
     // `bun run dev:lan` opens the dev server to the local network (phones); localhost only otherwise.
     host: process.env.DEV_LAN ? true : "localhost",
+    // HTTPS with the local mkcert certificate, set by `bun run dev` / `dev:lan` when mkcert is
+    // installed (apps/api/src/dev/tls.ts): service workers and the wake lock need it on a phone.
+    ...(process.env.DEV_TLS_CERT_FILE &&
+      process.env.DEV_TLS_KEY_FILE && {
+        https: {
+          cert: readFileSync(process.env.DEV_TLS_CERT_FILE),
+          key: readFileSync(process.env.DEV_TLS_KEY_FILE),
+        },
+      }),
     // The API runs separately in development (`bun run dev:api`).
-    proxy: { "/api": "http://localhost:3000" },
+    // xfwd: the API sees the browser's IP in X-Forwarded-For (Better Auth's rate limits).
+    proxy: { "/api": { target: "http://localhost:3000", xfwd: true } },
   },
 });

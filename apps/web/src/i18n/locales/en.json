@@ -7,6 +7,19 @@
     "close": "Close",
     "appVersion": "{{appName}} {{version}} ({{build}})"
   },
+  "install": {
+    "title": "Install {{appName}}",
+    "why": "On your home screen, full screen, and readable without a connection at the gig.",
+    "button": "Install the app",
+    "dismiss": "Don't show again",
+    "ios": {
+      "share": "In Safari, tap Share",
+      "add": "then Add to Home Screen."
+    }
+  },
+  "offline": {
+    "banner": "You're offline: showing saved data. Changes are turned off until the connection is back."
+  },
   "home": {
     "title": "Welcome to {{appName}}",
     "greeting": "Hello {{name}}",
