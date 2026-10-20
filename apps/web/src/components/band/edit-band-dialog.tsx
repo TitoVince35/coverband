@@ -1,9 +1,10 @@
-import { FIELD_MAX_LENGTH } from "@coverband/shared";
+import { type BandLogo, FIELD_MAX_LENGTH } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { BandLogoField } from "@/components/band/band-logo-field";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,9 +21,12 @@ import { api } from "@/lib/api";
 import { ensureOk, errorMessage } from "@/lib/errors";
 import { useOnline } from "@/lib/online";
 
-type Band = { name: string; slug: string; genre: string | null };
+type Band = { name: string; slug: string; genre: string | null; logo: BandLogo | null };
 
-/** Band leader only: edit the band's genre. The name is forever (it is also the band's URL). */
+/**
+ * Band leader only: edit the band's genre and logo. The name is forever (it is also the band's
+ * URL).
+ */
 export function EditBandDialog({ band }: { band: Band }) {
   const { t } = useTranslation();
   // Offline, the app is read-only (#165).
@@ -99,6 +103,10 @@ export function EditBandDialog({ band }: { band: Band }) {
             </Button>
           </DialogFooter>
         </form>
+        {/* Saved on its own: the genre's Save doesn't send it. */}
+        <div className="border-t pt-4">
+          <BandLogoField bandSlug={band.slug} logo={band.logo} />
+        </div>
       </DialogContent>
     </Dialog>
   );
