@@ -7,3 +7,8 @@ export const APP_VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__
 
 /** Commit the app was built from, or "dev" outside the deploy workflow. */
 export const APP_BUILD = typeof __APP_BUILD__ === "string" ? __APP_BUILD__ : "dev";
+
+/** A commit as Git shows it in short (7 characters); "dev" stays as it is. */
+export function shortBuild(build: string): string {
+  return build.slice(0, 7);
+}

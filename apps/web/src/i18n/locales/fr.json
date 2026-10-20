@@ -4,7 +4,8 @@
     "cancel": "Annuler",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
-    "close": "Fermer"
+    "close": "Fermer",
+    "appVersion": "{{appName}} {{version}} ({{build}})"
   },
   "home": {
     "title": "Bienvenue sur {{appName}}",
