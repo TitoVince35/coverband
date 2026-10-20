@@ -53,6 +53,8 @@ const envSchema = z
     SMTP_USER: z.string().min(1).optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(3),
+    // Commit the image was built from (set by the deploy workflow's Docker build), for /api/health.
+    BUILD_SHA: z.string().min(1).default("dev"),
     // Where song lyrics are searched (#130). The end-to-end tests point it at a fake.
     LRCLIB_URL: z.url({ protocol: /^https?$/ }).default("https://lrclib.net"),
     ...s3Schema.shape,

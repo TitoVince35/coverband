@@ -23,7 +23,15 @@ export function createTestDeps(databaseUrl = "postgres://unused@localhost:1/unus
     baseURL: "http://localhost:3000",
     rateLimit: false,
   });
-  const deps: AppDeps = { auth, db, mailer, storage, lyrics, appUrl: "http://localhost:3000" };
+  const deps: AppDeps = {
+    auth,
+    db,
+    mailer,
+    storage,
+    lyrics,
+    appUrl: "http://localhost:3000",
+    buildInfo: { version: "0.0.0-test", build: "test" },
+  };
   return { deps, db, sql, auth, mailer, storage, lyrics };
 }
 

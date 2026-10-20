@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { AppError, apiError, appErrorResponse } from "./core/errors";
-import { health } from "./core/http/health";
+import { healthRoutes } from "./core/http/health";
 import { requestGuards, securityHeaders } from "./core/http/security";
 import { loadSession, type SessionEnv } from "./core/http/session";
 import type { AppDeps } from "./deps";
@@ -35,7 +35,7 @@ function createApi(deps: AppDeps) {
   return (
     new Hono<SessionEnv>()
       .use(loadSession(deps.auth))
-      .route("/health", health)
+      .route("/health", healthRoutes(deps.buildInfo))
       .route("/admin", adminRoutes(deps))
       .route("/admin/invitations", leaderInvitationRoutes(deps))
       // Invitation links, public: the token is the proof (onboarding).
