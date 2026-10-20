@@ -353,6 +353,7 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
       name: `${bandSlug} name`,
       slug: bandSlug,
       genre: "Funk",
+      logo: null,
     });
 
     // A name in the body is ignored: band names are forever.
@@ -364,6 +365,7 @@ describe.skipIf(!databaseUrl)("bands: lineup, musician invitations, band details
       name: `${bandSlug} name`,
       slug: bandSlug,
       genre: null,
+      logo: null,
     });
     const empty = await call(`/bands/${bandSlug}`, "leader", { method: "PATCH", body: {} });
     expect(empty.status).toBe(400);

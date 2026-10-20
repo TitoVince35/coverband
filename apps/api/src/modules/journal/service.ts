@@ -15,6 +15,8 @@ export type JournalDetails = {
   song?: string | null;
   status?: string | null;
   genre?: string | null;
+  /** A logo change: removed, or anything else (added, replaced, another background). */
+  logo?: "changed" | "removed";
 };
 
 /** An event of the journal, as a source sees it. */

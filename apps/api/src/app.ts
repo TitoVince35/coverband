@@ -14,6 +14,7 @@ import { staticCacheHeaders } from "./core/http/static-cache";
 import type { AppDeps } from "./deps";
 import { adminRoutes } from "./modules/admin/routes";
 import { bandJournalSource } from "./modules/bands/journal";
+import { LOGO_UPLOAD_MAX_SIZE } from "./modules/bands/logo";
 import { bandRoutes } from "./modules/bands/routes";
 import { instrumentRoutes } from "./modules/instruments/routes";
 import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
@@ -81,7 +82,13 @@ export function createApp({ deps, webDistDir }: AppOptions) {
     return apiError(c, 500, "Internal server error");
   });
 
-  app.use("/api/*", ...requestGuards([deps.appUrl, ...(deps.trustedOrigins ?? [])]));
+  app.use(
+    "/api/*",
+    ...requestGuards(
+      [deps.appUrl, ...(deps.trustedOrigins ?? [])],
+      [{ method: "PUT", path: /^\/api\/bands\/[^/]+\/logo$/, maxSize: LOGO_UPLOAD_MAX_SIZE }],
+    ),
+  );
   // The beta access code, before Better Auth and any session lookup.
   app.use("/api/*", accessGate(deps.access));
 

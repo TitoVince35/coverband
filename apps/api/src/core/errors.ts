@@ -31,6 +31,7 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   already_member: 409,
   too_many_requests: 429,
   invalid_image: 400,
+  image_too_large: 413,
   song_duplicate: 409,
   song_in_use: 409,
   too_many_links: 409,

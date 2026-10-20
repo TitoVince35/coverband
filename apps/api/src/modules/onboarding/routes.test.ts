@@ -137,6 +137,7 @@ describe.skipIf(!databaseUrl)("leader onboarding", () => {
           slug: bandSlug,
           genre: "Rock",
           role: "leader",
+          logo: null,
           // Typed "Guitar": stored as the known instrument.
           instruments: [{ code: "guitar" }],
         },

@@ -1,4 +1,4 @@
-import { BAND_ROLES } from "@coverband/shared";
+import { BAND_ROLES, LOGO_BACKGROUNDS } from "@coverband/shared";
 import { sql } from "drizzle-orm";
 import {
   index,
@@ -13,6 +13,7 @@ import {
 import { users } from "../../adapters/auth-schema";
 
 export const bandRole = pgEnum("band_role", BAND_ROLES);
+export const logoBackground = pgEnum("logo_background", LOGO_BACKGROUNDS);
 
 export const bands = pgTable(
   "bands",
@@ -22,6 +23,10 @@ export const bands = pgTable(
     // URL name (/b/:slug), derived from the name with slugify.
     slug: text().notNull().unique(),
     genre: text(),
+    // Storage keys of the logo and its thumbnail (bands/{id}/logo/{uuid}.{ext}), both or neither.
+    logoKey: text(),
+    logoThumbnailKey: text(),
+    logoBackground: logoBackground().default("light").notNull(),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp({ withTimezone: true })
       .defaultNow()

@@ -12,6 +12,7 @@ const SENTENCES = {
   "band.created": "journal.bandCreated",
   "member.joined": "journal.memberJoined",
   "band.genre_changed": "journal.genreChanged",
+  "band.logo_changed": "journal.logoChanged",
   "invitation.sent": "journal.invitationSent",
   "invitation.resent": "journal.invitationResent",
   "invitation.revoked": "journal.invitationRevoked",
@@ -66,12 +67,16 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
             const sentence =
               entry.action === "band.genre_changed" && !("genre" in entry && entry.genre)
                 ? t("journal.genreRemoved", { name })
-                : t(SENTENCES[entry.action], {
-                    name,
-                    genre: "genre" in entry ? entry.genre : "",
-                    song,
-                    status: statusWord(entry),
-                  });
+                : entry.action === "band.logo_changed" &&
+                    "logo" in entry &&
+                    entry.logo === "removed"
+                  ? t("journal.logoRemoved", { name })
+                  : t(SENTENCES[entry.action], {
+                      name,
+                      genre: "genre" in entry ? entry.genre : "",
+                      song,
+                      status: statusWord(entry),
+                    });
             return (
               <li key={entry.id}>
                 <time dateTime={entry.createdAt} className="text-muted-foreground tabular-nums">
