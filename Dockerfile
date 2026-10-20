@@ -3,6 +3,8 @@
 # `docker build -t coverband .`. Migrations are not run here: the deploy job runs them first.
 
 FROM oven/bun:1.4.3 AS build
+# Commit the image is built from (the deploy workflow passes it), shown by the web app and /api/health.
+ARG BUILD_SHA=dev
 WORKDIR /app
 COPY package.json bun.lock ./
 COPY apps/api/package.json apps/api/
@@ -11,7 +13,7 @@ COPY packages/shared/package.json packages/shared/
 COPY e2e/package.json e2e/
 RUN bun install --frozen-lockfile
 COPY . .
-RUN bun run build
+RUN BUILD_SHA=$BUILD_SHA bun run build
 
 # Only the API's runtime dependencies: no Vite, Playwright or drizzle-kit.
 FROM oven/bun:1.4.3-slim
@@ -28,7 +30,8 @@ COPY apps/api/src apps/api/src
 COPY apps/api/tsconfig.json apps/api/
 COPY tsconfig.base.json ./
 COPY --from=build /app/apps/web/dist apps/web/dist
-ENV WEB_DIST_DIR=/app/apps/web/dist
+ARG BUILD_SHA=dev
+ENV WEB_DIST_DIR=/app/apps/web/dist BUILD_SHA=$BUILD_SHA
 USER bun
 # Scaleway Serverless Containers set PORT to the container's port (3000, see infra/).
 EXPOSE 3000

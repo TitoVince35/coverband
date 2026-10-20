@@ -74,6 +74,13 @@ describe("TRUSTED_ORIGINS", () => {
   });
 });
 
+describe("BUILD_SHA", () => {
+  test("the commit of the image, dev by default", () => {
+    expect(loadEnv(valid).BUILD_SHA).toBe("dev");
+    expect(loadEnv({ ...valid, BUILD_SHA: "0012ca8" }).BUILD_SHA).toBe("0012ca8");
+  });
+});
+
 describe("CLIENT_IP_HEADER", () => {
   test("a header name, lowercased, x-forwarded-for by default", () => {
     expect(loadEnv(valid).CLIENT_IP_HEADER).toBe("x-forwarded-for");

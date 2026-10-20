@@ -11,10 +11,10 @@ const { deps } = createTestDeps();
 describe("API", () => {
   const app = createApp({ deps, log: false });
 
-  test("GET /api/health returns ok", async () => {
+  test("GET /api/health returns ok, with the version and build", async () => {
     const res = await app.request("/api/health");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ status: "ok" });
+    expect(await res.json()).toEqual({ status: "ok", version: "0.0.0-test", build: "test" });
   });
 
   test("unknown API routes return a JSON 404", async () => {
