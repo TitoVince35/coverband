@@ -399,6 +399,59 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(songs).toHaveCount(2);
 });
 
+test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async ({ browser }) => {
+  // A device that never opened the song: the home page saves every band for offline use.
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await login(page, leaderEmail, PASSWORD);
+  await expect(page.getByRole("link", { name: new RegExp(band) })).toBeVisible();
+  // The service worker serves the app itself without a connection.
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  const lyricsLine = "And the violence caused such silence";
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<string>((resolve) => {
+            const open = indexedDB.open("coverband");
+            // Never create the app's database before the app does.
+            open.onupgradeneeded = () => open.transaction?.abort();
+            open.onsuccess = () => {
+              const db = open.result;
+              if (!db.objectStoreNames.contains("query-cache")) return resolve("");
+              const get = db.transaction("query-cache").objectStore("query-cache").get("client");
+              get.onsuccess = () => resolve(JSON.stringify(get.result ?? ""));
+              get.onerror = () => resolve("");
+            };
+            open.onerror = () => resolve("");
+          }),
+      ),
+    )
+    .toContain(lyricsLine);
+
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByText("You're offline")).toBeVisible();
+  await page.getByRole("link", { name: new RegExp(band) }).click();
+  await page.getByRole("link", { name: "Repertoire" }).click();
+  await page
+    .getByRole("list", { name: "Repertoire" })
+    .getByRole("listitem")
+    .filter({ hasText: "Zombie" })
+    .click();
+  await page.getByText("Lyrics", { exact: true }).click();
+  await expect(page.getByText(lyricsLine)).toBeVisible();
+  // Read-only: no change can start.
+  const edit = page.getByRole("button", { name: "Edit the song" });
+  await expect(edit).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Archive" })).toBeDisabled();
+
+  await context.setOffline(false);
+  await expect(page.getByText("You're offline")).toBeHidden();
+  await expect(edit).toBeEnabled();
+  await context.close();
+});
+
 test("the band leader uploads an avatar, then removes it", async () => {
   await leader.goto("/account");
   await leader
