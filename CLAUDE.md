@@ -23,6 +23,7 @@ bun install          # install all workspaces
 bun run check        # lint + typecheck + tests (run before every commit)
 bun run dev          # API (http://localhost:3000) + web app (https://localhost:5173, proxies /api) + Drizzle Studio
 bun run dev:lan      # same, reachable from a phone on the local network: prints a QR code (LAN IP override: DEV_HOST)
+                     # (no service worker in dev: test installing and offline use with serve:lan)
 bun run dev:api      # API only, watch mode
 bun run dev:web      # web app only (Vite, plain http)
 bun run build        # build the web app into apps/web/dist
@@ -45,11 +46,14 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 
 ## Local HTTPS
 
-`dev`, `dev:lan`, `serve` and `serve:lan` serve HTTPS with a certificate from [mkcert](https://github.com/FiloSottile/mkcert) (#163): service workers (offline, install) and the screen wake lock need it on a phone. Without mkcert, they fall back to plain http with a warning. `dev:api`, `dev:web`, the end-to-end tests and CI stay on http.
+`dev`, `dev:lan`, `serve` and `serve:lan` serve HTTPS with a certificate from [mkcert](https://github.com/FiloSottile/mkcert) (#163): service workers (offline, install) and the screen wake lock need it on a phone. **Installing the app and offline use need the built app (`serve`, `serve:lan`):** the dev server (`dev`, `dev:lan`) has no service worker, on purpose (it would serve stale code while you edit). Without mkcert, they fall back to plain http with a warning. `dev:api`, `dev:web`, the end-to-end tests and CI stay on http.
 
 - **Once per computer:** `sudo apt install mkcert` (or `brew install mkcert`), then `mkcert -install` (a local certificate authority your browsers trust).
 - The scripts issue the certificate into `.certs/` (git-ignored) for `localhost` and, in the LAN modes, the LAN IP. It is issued again when the IP changes or mkcert's authority does (`apps/api/src/dev/tls.ts`).
-- **Once per phone:** `dev:lan` and `serve:lan` print a second QR code, served over plain http on port 3080, that downloads mkcert's root certificate. Android: Settings › Security › Install a certificate › CA certificate. iPhone: install the downloaded profile (Settings › General › VPN & Device Management), then turn it on under General › About › Certificate Trust Settings.
+- **Once per phone:** `dev:lan` and `serve:lan` print a second QR code, served over plain http on port 3080, that downloads mkcert's root certificate (`coverband-dev-ca.crt`).
+  - **Android** (11 and later: tapping the file doesn't install it): in Settings, search "certificate", choose **CA certificate** (not "VPN & app user" nor "Wi-Fi"), "Install anyway", then pick the file in Downloads. The menus differ by brand: Pixel, Security & privacy › More security & privacy › Encryption & credentials › Install a certificate; Samsung, Security and privacy › More security settings › Install from device storage. A screen lock is required. Check it under Trusted credentials › User ("mkcert …"); if Chrome still warns, close it and open it again.
+  - **iPhone:** install the downloaded profile (Settings › General › VPN & Device Management), then turn it on under General › About › Certificate Trust Settings.
+  - An app installed from the LAN is tied to `https://<LAN IP>:<port>`: it stops opening when the IP changes or the certificate is removed. Uninstall it when done.
 - **`rootCA-key.pem` (in `mkcert -CAROOT`) never leaves your computer:** a phone trusting this authority accepts any certificate signed with it. Remove the certificate from the phone when you no longer need it.
 - Vite serves HTTPS in `dev` and passes `/api` on to the API over local http; in `serve`, the API serves HTTPS itself (`TLS_CERT_FILE`, `TLS_KEY_FILE`). No HSTS on `localhost` or an IP address (`wantsHsts`): it would force HTTPS on every localhost port. Mailpit stays on http.
 

@@ -86,7 +86,9 @@ export function announce(appUrl: string, rootCertUrl?: string) {
   if (rootCertUrl) {
     console.log(`\n${renderUnicodeCompact(rootCertUrl, { border: 1 })}\n`);
     console.log(`First time on a phone? Install this root certificate: ${rootCertUrl}`);
-    console.log("  Android: Settings › Security › Install a certificate › CA certificate.");
+    console.log(
+      '  Android: in Settings, search "certificate", choose CA certificate, then the downloaded file.',
+    );
     console.log(
       "  iPhone: install the downloaded profile (Settings › General › VPN & Device Management),",
     );
@@ -143,6 +145,9 @@ if (import.meta.main) {
   const tls = localTls([host]);
   const webUrl = appUrl(host, WEB_PORT, tls);
   announce(webUrl, tls && serveRootCertificate(host));
+  console.log(
+    "The dev server has no service worker: test installing and offline use with serve:lan.\n",
+  );
   // Vite listens on every interface (see vite.config.ts) and serves HTTPS with the certificate.
   await runApp(["bun", "run", "--parallel", "--filter", "./apps/*", "dev"], {
     appUrl: webUrl,
