@@ -34,6 +34,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - **Cron jobs** (#45, `src/core/http/internal.ts`): the server can't schedule anything itself, so Scaleway cron triggers (`infra/cron.tf`) call `POST /api/internal/*` with `Authorization: Bearer <CRON_SECRET>` (401 otherwise) and a JSON body (without a content type, `hono/csrf` takes the call for a form post). Mounted only when `CRON_SECRET` is set; outside the typed API, and open past the beta access gate. A new job: a route there plus a trigger in `infra/cron.tf`.
 - Search engines are kept out (#149): `X-Robots-Tag: noindex, nofollow` on every response (`noIndex`, `src/core/http/security.ts`) and `apps/web/public/robots.txt` disallowing everything.
 - Other hostnames of the container (`REDIRECT_HOSTS`: the bare domain in production, #156) get a 301 to the app URL, path and query kept (`redirectHosts`, `src/core/http/redirect.ts`).
+- The built web app's cache headers (#164, `staticCacheHeaders`, `src/core/http/static-cache.ts`): `/assets/*` (hashed names) cached for a year, `immutable`; the rest (`index.html`, `sw.js`, the manifest...) `no-cache`. A missing `/assets/` file is a 404, never the app shell.
 - **No CORS, on purpose.** The API serves the web app on the same origin in production, and Vite proxies `/api` in development. CORS would only loosen the browser's cross-origin rules: never add it.
 
 ## Logs

@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "./app";
 import { createApiClient } from "./client";
+import { IMMUTABLE } from "./core/http/static-cache";
 import { createTestDeps } from "./test-deps";
 
 const { deps } = createTestDeps();
@@ -40,6 +41,8 @@ describe("web app serving", () => {
     dist = await mkdtemp(join(tmpdir(), "coverband-dist-"));
     await writeFile(join(dist, "index.html"), "<!doctype html><title>CoverBand</title>");
     await writeFile(join(dist, "app.js"), "console.log('app')");
+    await mkdir(join(dist, "assets"));
+    await writeFile(join(dist, "assets", "index-AbC123.js"), "console.log('hashed')");
   });
 
   afterAll(() => rm(dist, { recursive: true, force: true }));
@@ -54,6 +57,20 @@ describe("web app serving", () => {
     const res = await createApp({ deps, webDistDir: dist }).request("/b/my-band/setlists");
     expect(res.status).toBe(200);
     expect(await res.text()).toContain("<title>CoverBand</title>");
+  });
+
+  test("hashed assets are cached for good, everything else is checked on every load (#164)", async () => {
+    const app = createApp({ deps, webDistDir: dist });
+    const header = async (path: string) => (await app.request(path)).headers.get("cache-control");
+    expect(await header("/assets/index-AbC123.js")).toBe(IMMUTABLE);
+    for (const path of ["/", "/app.js", "/b/my-band"]) {
+      expect(await header(path)).toBe("no-cache");
+    }
+    // An old build's file: a 404, not the app shell cached for a year.
+    const missing = await app.request("/assets/index-Old999.js");
+    expect(missing.status).toBe(404);
+    expect(missing.headers.get("cache-control")).toBe("no-cache");
+    expect(await header("/api/health")).toBeNull();
   });
 
   test("keeps JSON 404s under /api", async () => {
