@@ -15,3 +15,6 @@ test-results/
 
 # Personal Claude Code settings
 .claude/settings.local.json
+
+# Local HTTPS certificate (mkcert, issued by the dev scripts)
+.certs/

@@ -21,14 +21,14 @@ App-specific conventions: `apps/api/CLAUDE.md` and `apps/web/CLAUDE.md`. Task wo
 ```sh
 bun install          # install all workspaces
 bun run check        # lint + typecheck + tests (run before every commit)
-bun run dev          # API (http://localhost:3000) + web app (http://localhost:5173, proxies /api) + Drizzle Studio
+bun run dev          # API (http://localhost:3000) + web app (https://localhost:5173, proxies /api) + Drizzle Studio
 bun run dev:lan      # same, reachable from a phone on the local network: prints a QR code (LAN IP override: DEV_HOST)
 bun run dev:api      # API only, watch mode
-bun run dev:web      # web app only (Vite)
+bun run dev:web      # web app only (Vite, plain http)
 bun run build        # build the web app into apps/web/dist
-bun run serve        # production-like: the API serves apps/web/dist on :3000 (open http://localhost:3000)
+bun run serve        # production-like: the API serves apps/web/dist on :3000 (open https://localhost:3000)
 bun run serve:lan    # same, reachable from a phone on the local network: builds, then prints a QR code
-                     # (plain http on the LAN: no service worker nor screen wake lock there)
+                     # dev, dev:lan, serve and serve:lan use HTTPS when mkcert is installed (see Local HTTPS)
 bun run format       # apply Biome formatting and safe fixes
 bun test             # tests only (DB integration tests are skipped when DATABASE_URL is unset)
 bun run e2e          # end-to-end tests (Playwright): builds and serves the app on :3100, needs db:up
@@ -42,6 +42,16 @@ bun run db:studio    # browse the database
 bun run mail:test you@example.com fr   # send a test email (lands in Mailpit locally)
 bun run db:down      # stop Postgres (add -v to docker compose down to wipe data)
 ```
+
+## Local HTTPS
+
+`dev`, `dev:lan`, `serve` and `serve:lan` serve HTTPS with a certificate from [mkcert](https://github.com/FiloSottile/mkcert) (#163): service workers (offline, install) and the screen wake lock need it on a phone. Without mkcert, they fall back to plain http with a warning. `dev:api`, `dev:web`, the end-to-end tests and CI stay on http.
+
+- **Once per computer:** `sudo apt install mkcert` (or `brew install mkcert`), then `mkcert -install` (a local certificate authority your browsers trust).
+- The scripts issue the certificate into `.certs/` (git-ignored) for `localhost` and, in the LAN modes, the LAN IP. It is issued again when the IP changes or mkcert's authority does (`apps/api/src/dev/tls.ts`).
+- **Once per phone:** `dev:lan` and `serve:lan` print a second QR code, served over plain http on port 3080, that downloads mkcert's root certificate. Android: Settings › Security › Install a certificate › CA certificate. iPhone: install the downloaded profile (Settings › General › VPN & Device Management), then turn it on under General › About › Certificate Trust Settings.
+- **`rootCA-key.pem` (in `mkcert -CAROOT`) never leaves your computer:** a phone trusting this authority accepts any certificate signed with it. Remove the certificate from the phone when you no longer need it.
+- Vite serves HTTPS in `dev` and passes `/api` on to the API over local http; in `serve`, the API serves HTTPS itself (`TLS_CERT_FILE`, `TLS_KEY_FILE`). No HSTS on `localhost` or an IP address (`wantsHsts`): it would force HTTPS on every localhost port. Mailpit stays on http.
 
 ## Deployment
 

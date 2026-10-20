@@ -38,6 +38,13 @@ describe("loadEnv", () => {
     expect(() => loadEnv({ ...valid, LOG_FORMAT: "text" })).toThrow(/LOG_FORMAT/);
   });
 
+  test("local TLS: both files or neither", () => {
+    expect(loadEnv(valid).TLS_CERT_FILE).toBeUndefined();
+    const tls = { TLS_CERT_FILE: ".certs/local.pem", TLS_KEY_FILE: ".certs/local-key.pem" };
+    expect(loadEnv({ ...valid, ...tls }).TLS_KEY_FILE).toBe(".certs/local-key.pem");
+    expect(() => loadEnv({ ...valid, TLS_CERT_FILE: tls.TLS_CERT_FILE })).toThrow(/TLS_KEY_FILE/);
+  });
+
   test("cron secret: optional, at least 32 characters", () => {
     expect(loadEnv(valid).CRON_SECRET).toBeUndefined();
     expect(loadEnv({ ...valid, CRON_SECRET: "c".repeat(32) }).CRON_SECRET).toBe("c".repeat(32));
