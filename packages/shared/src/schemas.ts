@@ -33,6 +33,9 @@ export const instrumentInput = z.union([
 const instrumentList = z.array(instrumentInput).max(MAX_INSTRUMENTS);
 
 /** An invitation: the email, and the language of the email sent. */
+/** The beta access code (#148). */
+export const accessCodeBody = z.object({ code: z.string().min(1).max(200) });
+
 export const invitationBody = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email()),
   language: z.enum(Object.keys(LANGUAGES) as [Language, ...Language[]]),

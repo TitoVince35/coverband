@@ -4,7 +4,8 @@
     "cancel": "Annuler",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
-    "close": "Fermer"
+    "close": "Fermer",
+    "appVersion": "{{appName}} {{version}} ({{build}})"
   },
   "home": {
     "title": "Bienvenue sur {{appName}}",
@@ -225,6 +226,15 @@
     "invitationOnly": "Pas encore de compte ? {{appName}} fonctionne uniquement sur invitation : demandez à votre band leader.",
     "forgotPassword": "Mot de passe oublié ?"
   },
+  "access": {
+    "title": "Bêta privée",
+    "description": "{{appName}} n'est pas encore ouvert à tous. Saisissez le code d'accès qu'on vous a donné : cet appareil s'en souviendra.",
+    "code": "Code d'accès",
+    "submit": "Continuer",
+    "submitting": "Vérification…",
+    "tooManyAttempts": "Trop de tentatives. Attendez quelques minutes et réessayez.",
+    "invited": "Vous avez reçu une invitation ? Le lien de l'e-mail vous fait entrer sans code."
+  },
   "forgotPassword": {
     "title": "Mot de passe oublié ?",
     "description": "Saisissez l'e-mail de votre compte : nous vous enverrons un lien pour choisir un nouveau mot de passe.",
@@ -403,7 +413,9 @@
     "song_duplicate": "Ce morceau est déjà dans votre répertoire.",
     "song_in_use": "Ce morceau est utilisé, dans une setlist par exemple : archivez-le plutôt.",
     "too_many_links": "Ce morceau a déjà le nombre maximum de liens.",
-    "lyrics_unavailable": "Le service de paroles ne répond pas pour l'instant. Réessayez plus tard, ou saisissez-les."
+    "lyrics_unavailable": "Le service de paroles ne répond pas pour l'instant. Réessayez plus tard, ou saisissez-les.",
+    "access_required": "Saisissez le code d'accès pour continuer.",
+    "access_code_invalid": "Ce n'est pas le code d'accès."
   },
   "instruments": {
     "picker": {

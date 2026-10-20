@@ -11,7 +11,7 @@ Board: https://github.com/users/TitoVince35/projects/1. Columns: Backlog → Tod
 
 - **`dev`** is the default branch: feature PRs target it, and quick changes (no issue) are committed straight to it.
 - **`main`** is production: every push to it is deployed to Scaleway (`.github/workflows/deploy.yml`). A ruleset protects it: changes only through a PR whose CI jobs pass (the three of `ci.yml`, by job name: renaming a job means updating the ruleset), merged with a merge commit (no squash, so `main` and `dev` keep the same history), no force push, no deletion, nobody bypasses it.
-- **Release:** a PR from `dev` to `main` (title `Release YYYY/MM/DD`, the body lists the merged PRs), opened when Vince asks. Merging it deploys.
+- **Release:** a PR from `dev` to `main` (title `Release YYYY/MM/DD`, the body lists the merged PRs), opened when Vince asks. It bumps the version in the root `package.json` (semantic versioning, `0.x` during the beta: a new feature bumps the minor, fixes only the patch), in a commit on `dev` before the PR. Merging it deploys, and the deploy workflow tags the commit `v<version>` (a version not bumped is deployed but not tagged).
 - **Urgent fix on production:** a branch from `main`, a PR to `main`, then merge `main` back into `dev`.
 
 For each task (issue `#NN`):

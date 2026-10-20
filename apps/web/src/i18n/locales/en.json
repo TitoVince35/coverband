@@ -4,7 +4,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving…",
-    "close": "Close"
+    "close": "Close",
+    "appVersion": "{{appName}} {{version}} ({{build}})"
   },
   "home": {
     "title": "Welcome to {{appName}}",
@@ -225,6 +226,15 @@
     "invitationOnly": "No account yet? {{appName}} is by invitation only: ask your band leader.",
     "forgotPassword": "Forgot password?"
   },
+  "access": {
+    "title": "Private beta",
+    "description": "{{appName}} isn't open to everyone yet. Enter the access code you were given: this device will remember it.",
+    "code": "Access code",
+    "submit": "Continue",
+    "submitting": "Checking…",
+    "tooManyAttempts": "Too many attempts. Wait a few minutes and try again.",
+    "invited": "Invited? The link in your invitation email lets you in without a code."
+  },
   "forgotPassword": {
     "title": "Forgot your password?",
     "description": "Enter your account's email: we'll send you a link to choose a new password.",
@@ -403,7 +413,9 @@
     "song_duplicate": "This song is already in your repertoire.",
     "song_in_use": "This song is used, in a setlist for example: archive it instead.",
     "too_many_links": "This song already has as many links as it can.",
-    "lyrics_unavailable": "The lyrics service isn't answering right now. Try again later, or type them in."
+    "lyrics_unavailable": "The lyrics service isn't answering right now. Try again later, or type them in.",
+    "access_required": "Enter the access code to continue.",
+    "access_code_invalid": "This isn't the access code."
   },
   "instruments": {
     "picker": {

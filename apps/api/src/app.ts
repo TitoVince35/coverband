@@ -4,7 +4,8 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { AppError, apiError, appErrorResponse } from "./core/errors";
-import { health } from "./core/http/health";
+import { accessGate, accessRoutes } from "./core/http/access";
+import { healthRoutes } from "./core/http/health";
 import { noIndex, requestGuards, securityHeaders } from "./core/http/security";
 import { loadSession, type SessionEnv } from "./core/http/session";
 import type { AppDeps } from "./deps";
@@ -35,7 +36,8 @@ function createApi(deps: AppDeps) {
   return (
     new Hono<SessionEnv>()
       .use(loadSession(deps.auth))
-      .route("/health", health)
+      .route("/health", healthRoutes(deps.buildInfo))
+      .route("/access", accessRoutes(deps.db, deps.access))
       .route("/admin", adminRoutes(deps))
       .route("/admin/invitations", leaderInvitationRoutes(deps))
       // Invitation links, public: the token is the proof (onboarding).
@@ -79,6 +81,8 @@ export function createApp({ deps, webDistDir, log = true }: AppOptions) {
   });
 
   app.use("/api/*", ...requestGuards([deps.appUrl, ...(deps.trustedOrigins ?? [])]));
+  // The beta access code, before Better Auth and any session lookup.
+  app.use("/api/*", accessGate(deps.access));
 
   // Better Auth endpoints (login, logout, session...), called by the web app's auth client.
   app.on(["GET", "POST"], "/api/auth/*", (c) => deps.auth.handler(c.req.raw));

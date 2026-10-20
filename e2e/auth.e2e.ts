@@ -10,6 +10,12 @@ test("a wrong password is refused with a clear message", async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
+test("the login page shows the version of the app", async ({ page }) => {
+  await page.goto("/login");
+  // Served by the e2e build, without BUILD_SHA: the build is "dev".
+  await expect(page.getByText(/ \d+\.\d+\.\d+ \(dev\)$/)).toBeVisible();
+});
+
 test("logging in and out", async ({ page }) => {
   await login(page, ADMIN, PASSWORD);
   await page.getByRole("button", { name: "Account" }).click();
