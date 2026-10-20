@@ -5,7 +5,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 ## Layout
 
 - `src/modules/<feature>/`: one folder per feature (admin, bands, members, instruments, invitations, onboarding, profile, journal, songs). `routes.ts` (Hono sub-app), `service.ts` (the feature's rules and queries, its transactions and activity), `schema.ts` (its Drizzle tables, when it has some), tests next to them.
-- `src/core/`: what every feature uses, knowing none of them: `errors.ts`, `db/` (client, migrations runner, `schema.ts` re-exporting every table for Drizzle), `http/` (session guards, validation, rate limiter, security, health), `activity/` (recording events).
+- `src/core/`: what every feature uses, knowing none of them: `errors.ts`, `log.ts`, `db/` (client, migrations runner, `schema.ts` re-exporting every table for Drizzle), `http/` (request logs, session guards, validation, rate limiter, security, health), `activity/` (recording events).
 - `src/adapters/`: the outside world behind small interfaces: `auth.ts` (Better Auth, with its tables in `auth-schema.ts`), `storage.ts`, `mail/`, `lyrics.ts`.
 - `src/app.ts` is the composition root: it mounts every module's sub-app (a band's features under `/bands/:bandSlug/...`). `src/main.ts` builds the real dependencies and starts the server.
 - Rules, checked by `src/architecture.test.ts` (so by `bun run check`): routes call their module's service and never query the database; only routes and guards import Hono; a module uses another one only through its `service.ts` (or the bands `guard.ts`), and only its own tables plus the auth adapter's (`users`...) and core's (`activity`); `core/` uses no feature; no import cycle between modules. When a module needs another one's data, add a function to that module's service rather than an exception to the check.
@@ -14,7 +14,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 ## Routes
 
 - REST under `/api` (resource URLs, HTTP verbs, status codes, JSON). No OpenAPI for now.
-- One Hono sub-app per resource, in its module's `routes.ts`, built by a function taking `AppDeps` (`src/deps.ts`: auth, db, mailer, storage, lyrics, appUrl) and mounted in `src/app.ts` with **chained calls** so `AppType` keeps every route. The web app calls it through the typed client from `@coverband/api/client` (Hono calls this "RPC"; see `briefs/claude/003_rest-vs-rpc.md`).
+- One Hono sub-app per resource, in its module's `routes.ts`, built by a function taking `AppDeps` (`src/deps.ts`: auth, db, log, mailer, storage, lyrics, appUrl) and mounted in `src/app.ts` with **chained calls** so `AppType` keeps every route. The web app calls it through the typed client from `@coverband/api/client` (Hono calls this "RPC"; see `briefs/claude/003_rest-vs-rpc.md`).
 - Routes don't query the database (no `drizzle-orm` or `db/schema` import): they validate, call their module's service and shape the response.
 - Validate input with `zValidator(..., validationHook)` (`src/core/http/validation.ts`: invalid input becomes a 400 `bad_request`). Request bodies are Zod schemas in `@coverband/shared/schemas` (shared with the web app; a separate entry so Zod stays out of the web bundle until it uses one); route params and queries stay in the routes.
 - Send errors with `apiError()` (`src/core/errors.ts`). It keeps the status as a literal type, so `ensureOk(res)` in the web app narrows typed-client responses to their success body.
@@ -34,6 +34,15 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 - Search engines are kept out (#149): `X-Robots-Tag: noindex, nofollow` on every response (`noIndex`, `src/core/http/security.ts`) and `apps/web/public/robots.txt` disallowing everything.
 - Other hostnames of the container (`REDIRECT_HOSTS`: the bare domain in production, #156) get a 301 to the app URL, path and query kept (`redirectHosts`, `src/core/http/redirect.ts`).
 - **No CORS, on purpose.** The API serves the web app on the same origin in production, and Vite proxies `/api` in development. CORS would only loosen the browser's cross-origin rules: never add it.
+
+## Logs
+
+- Technical logs only (#42): functional events go to the activity table. One line per entry on stdout, which Scaleway sends to Cockpit: JSON (`time`, `level`, `msg` + fields) in production, a readable line with `LOG_FORMAT=pretty`. `LOG_LEVEL`: `debug`, `info` (default), `warn`, `error`. Our own logger, no dependency (`src/core/log.ts`).
+- In a request, log through `c.var.log`: it carries `requestId` (also sent as `X-Request-Id`, always ours), then `userId` (set by `loadSession`) and `bandId` (set by `requireMember`). A service that logs gets it from its route (`{ ...deps, log: c.var.log }`); `deps.log` is for outside requests (startup).
+- `requestLog` (`src/core/http/request-log.ts`, first middleware) logs each request once answered, **by route pattern, never the raw path** (tokens are in invitation URLs): `error` for unhandled errors (the 500s of `onError`, with the stack), `warn` for other 5xx and requests slower than `SLOW_REQUEST_MS` (1 s), `debug` for the rest. 4xx are normal answers: not logged, except our 429s (`warn` with the rule, `rateLimitUser`).
+- Also logged: startup and the default admin (`info`, `src/main.ts`), migrations (`info`), a password reset email that fails (`error`, the answer stays the same), an old avatar left in the bucket (`warn`). A failed invitation email is a 500, logged by `requestLog`. Better Auth logs through ours (`betterAuthLogger`, emails masked in its messages).
+- **Never log emails, names, tokens or passwords:** IDs only. Errors go in an `err` field (serialized with their stack).
+- Tests: `createTestDeps()` gives a silent logger; `createMemoryLogger()` keeps the entries to check them. A test app built without `createApp` that uses `loadSession` needs `requestLog(silentLogger)` first.
 
 ## Database
 

@@ -12,7 +12,7 @@ type Entry = { action: string; createdAt: string; actorName: string | null; genr
 
 describe.skipIf(!databaseUrl)("band journal", () => {
   const { deps, db, sql, auth } = createTestDeps(databaseUrl);
-  const app = createApp({ deps, log: false });
+  const app = createApp({ deps });
 
   const run = crypto.randomUUID().slice(0, 8);
   const email = (name: string) => `${name}-${run}@test.localhost`;

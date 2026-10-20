@@ -5,6 +5,7 @@ import { createMemoryMailer } from "./adapters/mail/mailer";
 import { createMemoryStorage } from "./adapters/storage";
 import { createDb, type Db } from "./core/db/client";
 import { activity } from "./core/db/schema";
+import { silentLogger } from "./core/log";
 import type { AppDeps } from "./deps";
 
 /**
@@ -18,6 +19,7 @@ export function createTestDeps(databaseUrl = "postgres://unused@localhost:1/unus
   const lyrics = createMemoryLyricsProvider();
   const auth = createAuth({
     db,
+    log: silentLogger,
     mailer,
     secret: "test-secret-test-secret-test-secret",
     baseURL: "http://localhost:3000",
@@ -26,6 +28,7 @@ export function createTestDeps(databaseUrl = "postgres://unused@localhost:1/unus
   const deps: AppDeps = {
     auth,
     db,
+    log: silentLogger,
     mailer,
     storage,
     lyrics,

@@ -6,7 +6,7 @@ import { AppError } from "../../core/errors";
 import type { AppDeps } from "../../deps";
 import { shareABand } from "../bands/service";
 
-type Deps = Pick<AppDeps, "db" | "storage">;
+type Deps = Pick<AppDeps, "db" | "storage" | "log">;
 
 /** Accepted formats, recognised by their first bytes (never by the declared content type). */
 export function imageType(bytes: Uint8Array): { type: string; extension: string } | null {
@@ -40,7 +40,7 @@ export class InvalidImageError extends AppError {
  * Replaces the user's avatar. The file gets a new key (so its URL changes and caches stay valid);
  * the previous file is deleted once the user points to the new one.
  */
-export async function setAvatar({ db, storage }: Deps, userId: string, bytes: Uint8Array) {
+export async function setAvatar({ db, storage, log }: Deps, userId: string, bytes: Uint8Array) {
   const format = imageType(bytes);
   if (!format) throw new InvalidImageError();
   const key = `users/${userId}/avatar/${crypto.randomUUID()}.${format.extension}`;
@@ -68,12 +68,12 @@ export async function setAvatar({ db, storage }: Deps, userId: string, bytes: Ui
     await storage.delete(key);
     throw error;
   }
-  await deleteQuietly({ db, storage }, previous);
+  await deleteQuietly({ db, storage, log }, previous);
   return avatarUrl(userId, key);
 }
 
 /** Removes the user's avatar: the default one shows again. Nothing to do without one. */
-export async function removeAvatar({ db, storage }: Deps, userId: string) {
+export async function removeAvatar({ db, storage, log }: Deps, userId: string) {
   const previous = await db.transaction(async (tx) => {
     const [user] = await tx
       .select({ image: users.image })
@@ -91,16 +91,16 @@ export async function removeAvatar({ db, storage }: Deps, userId: string) {
     });
     return ownAvatarKey(userId, user.image);
   });
-  await deleteQuietly({ db, storage }, previous);
+  await deleteQuietly({ db, storage, log }, previous);
 }
 
 /** The user no longer points to it: a failed delete only leaves an orphan file behind. */
-async function deleteQuietly({ storage }: Deps, key: string | null) {
+async function deleteQuietly({ storage, log }: Deps, key: string | null) {
   if (!key) return;
   try {
     await storage.delete(key);
   } catch (error) {
-    console.error(`Could not delete ${key}`, error);
+    log.warn("Old avatar not deleted", { key, err: error });
   }
 }
 

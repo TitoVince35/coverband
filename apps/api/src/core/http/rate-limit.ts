@@ -37,11 +37,15 @@ export async function hit(db: Db, rule: RateLimitRule, subject: string, now = Da
   return Math.max(1, Math.ceil((row.start + rule.windowMs - now) / 1000));
 }
 
-/** Limits a logged-in user's requests (place after requireUser or an equivalent guard): 429 when over. */
+/**
+ * Limits a logged-in user's requests (place after requireUser or an equivalent guard): 429 when
+ * over, logged as a warning with the rule (the request's logger carries the user).
+ */
 export function rateLimitUser(db: Db, rule: RateLimitRule) {
   return createMiddleware<SessionEnv>(async (c, next) => {
     const retryAfter = await hit(db, rule, c.var.user?.id ?? "anonymous");
     if (retryAfter > 0) {
+      c.var.log.warn("Rate limited", { rule: rule.name });
       c.header("Retry-After", String(retryAfter));
       return apiError(c, 429, "Too many requests, try again later");
     }

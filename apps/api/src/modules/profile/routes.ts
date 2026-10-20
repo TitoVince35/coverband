@@ -23,10 +23,12 @@ export function meRoutes(deps: AppDeps) {
       // 100 KB body limit.
       .put("/avatar", async (c) => {
         const bytes = new Uint8Array(await c.req.arrayBuffer());
-        return c.json({ avatarUrl: await setAvatar(deps, c.var.user.id, bytes) });
+        return c.json({
+          avatarUrl: await setAvatar({ ...deps, log: c.var.log }, c.var.user.id, bytes),
+        });
       })
       .delete("/avatar", async (c) => {
-        await removeAvatar(deps, c.var.user.id);
+        await removeAvatar({ ...deps, log: c.var.log }, c.var.user.id);
         return c.body(null, 204);
       })
   );
