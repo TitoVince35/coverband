@@ -10,6 +10,7 @@ import { redirectHosts } from "./core/http/redirect";
 import { requestLog } from "./core/http/request-log";
 import { noIndex, requestGuards, securityHeaders } from "./core/http/security";
 import { loadSession, type SessionEnv } from "./core/http/session";
+import { staticCacheHeaders } from "./core/http/static-cache";
 import type { AppDeps } from "./deps";
 import { adminRoutes } from "./modules/admin/routes";
 import { bandJournalSource } from "./modules/bands/journal";
@@ -96,7 +97,11 @@ export function createApp({ deps, webDistDir }: AppOptions) {
 
   if (webDistDir) {
     const root = resolve(webDistDir);
+    app.use("*", staticCacheHeaders);
     app.use("*", serveStatic({ root }));
+    // A missing build file (an old build's, after a deploy) is a 404, never the app shell: the
+    // web app then reloads onto the new build (#164).
+    app.get("/assets/*", (c) => c.text("Not found", 404));
     // Client-side routing: any other GET that accepts HTML gets the app shell.
     app.get("*", serveStatic({ root, path: "index.html" }));
   }
