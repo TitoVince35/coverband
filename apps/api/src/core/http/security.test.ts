@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createApp } from "../../app";
 import { createTestDeps } from "../../test-deps";
-import { MAX_BODY_SIZE, THEME_SCRIPT_HASH } from "./security";
+import { MAX_BODY_SIZE, THEME_SCRIPT_HASH, wantsHsts } from "./security";
 
 const INDEX_HTML = new URL("../../../../web/index.html", import.meta.url);
 
@@ -41,6 +41,20 @@ describe("security headers", () => {
       const res = await app.request(path);
       expect(res.headers.get("content-security-policy")).toContain("default-src 'self'");
       expect(res.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    }
+  });
+
+  test("HSTS only for a real domain over HTTPS, never localhost or an IP (#163)", () => {
+    expect(wantsHsts("https://beta.coverband.fr")).toBe(true);
+    for (const url of [
+      "http://beta.coverband.fr",
+      "https://localhost:5173",
+      "https://app.localhost",
+      "https://192.168.1.20:3000",
+      "https://127.0.0.1:3000",
+      "https://[::1]:3000",
+    ]) {
+      expect(wantsHsts(url)).toBe(false);
     }
   });
 
