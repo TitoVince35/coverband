@@ -1,5 +1,6 @@
 import { bodyLimit } from "hono/body-limit";
 import { csrf } from "hono/csrf";
+import { createMiddleware } from "hono/factory";
 import { secureHeaders } from "hono/secure-headers";
 import { apiError } from "../errors";
 
@@ -38,6 +39,15 @@ export function securityHeaders({ https }: { https: boolean }) {
     },
   });
 }
+
+/**
+ * Keeps search engines out (#149) while the app is private: no page or API answer is indexed.
+ * With `robots.txt` (apps/web/public), which asks crawlers not to visit at all.
+ */
+export const noIndex = createMiddleware(async (c, next) => {
+  await next();
+  c.header("X-Robots-Tag", "noindex, nofollow");
+});
 
 /** Largest request body accepted on /api. Files will go straight to Object Storage. */
 export const MAX_BODY_SIZE = 100 * 1024;

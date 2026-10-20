@@ -27,6 +27,7 @@ describe("security headers", () => {
     expect(res.headers.get("x-frame-options")).toBe("DENY");
     expect(res.headers.get("permissions-policy")).toBe("camera=(), microphone=(), geolocation=()");
     expect(res.headers.get("x-powered-by")).toBeNull();
+    expect(res.headers.get("x-robots-tag")).toBe("noindex, nofollow");
     const csp = res.headers.get("content-security-policy") ?? "";
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain(`script-src 'self' ${THEME_SCRIPT_HASH}`);
@@ -39,6 +40,7 @@ describe("security headers", () => {
     for (const path of ["/api/nope", "/api/auth/ok"]) {
       const res = await app.request(path);
       expect(res.headers.get("content-security-policy")).toContain("default-src 'self'");
+      expect(res.headers.get("x-robots-tag")).toBe("noindex, nofollow");
     }
   });
 

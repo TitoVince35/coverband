@@ -5,7 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { AppError, apiError, appErrorResponse } from "./core/errors";
 import { health } from "./core/http/health";
-import { requestGuards, securityHeaders } from "./core/http/security";
+import { noIndex, requestGuards, securityHeaders } from "./core/http/security";
 import { loadSession, type SessionEnv } from "./core/http/session";
 import type { AppDeps } from "./deps";
 import { adminRoutes } from "./modules/admin/routes";
@@ -64,6 +64,7 @@ export function createApp({ deps, webDistDir, log = true }: AppOptions) {
     app.use(logger());
   }
   app.use(securityHeaders({ https: deps.appUrl.startsWith("https:") }));
+  app.use(noIndex);
 
   // Expected refusals thrown by the domain become their JSON error; anything else is a 500.
   app.onError((err, c) => {
