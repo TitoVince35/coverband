@@ -180,7 +180,9 @@ test("the band leader adds the band's logo, on a dark background, then removes i
   await dialog
     .locator('input[type="file"]')
     .setInputFiles(fileURLToPath(new URL("./fixtures/logo.png", import.meta.url)));
-  await expect(dialog.getByRole("img", { name: "Preview of the new logo" })).toBeVisible();
+  // Shown, not only there: the preview is a blob: image, which the security policy must allow.
+  const preview = dialog.getByRole("img", { name: "Preview of the new logo" });
+  await expect.poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
   await dialog.getByRole("radio", { name: "Dark" }).check();
   await dialog.getByRole("button", { name: "Save the logo" }).click();
   await expect(leader.getByText("Logo saved")).toBeVisible();
@@ -493,7 +495,9 @@ test("the band leader uploads an avatar, then removes it", async () => {
   await leader
     .locator('input[type="file"]')
     .setInputFiles(fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url)));
-  await expect(leader.getByRole("img", { name: "Preview of your new avatar" })).toBeVisible();
+  // Shown, not only there: the preview is a blob: image, which the security policy must allow.
+  const preview = leader.getByRole("img", { name: "Preview of your new avatar" });
+  await expect.poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(512);
   await leader.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Avatar updated.")).toBeVisible();
 
