@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { BandLogo } from "@/components/band/band-logo";
 import { InstallCard } from "@/components/install-card";
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +47,7 @@ function HomePage() {
                     params={{ bandSlug: band.slug }}
                     className="flex items-center gap-3 rounded-lg px-2 py-3 hover:bg-muted"
                   >
+                    <BandLogo band={band} size="small" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{band.name}</div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">

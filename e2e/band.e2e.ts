@@ -169,9 +169,12 @@ test("the band's home page shows its latest activity, newest first", async () =>
   await expect(journal).not.toContainText("@");
 });
 
-test("the band leader adds the band's logo, on a dark background, then removes it", async () => {
+test("the band leader adds the band's logo: on the band page and in the list, then removed", async () => {
   await leader.goto("/");
-  await leader.getByRole("link", { name: band }).first().click();
+  // No logo yet: the band's initials ("E2E Rockers …").
+  const bandLink = leader.getByRole("link", { name: band }).first();
+  await expect(bandLink.getByText("ER", { exact: true })).toBeVisible();
+  await bandLink.click();
   await leader.getByRole("button", { name: "Edit band" }).click();
   const dialog = leader.getByRole("dialog");
   await expect(dialog.getByText("No logo yet")).toBeVisible();
@@ -190,11 +193,25 @@ test("the band leader adds the band's logo, on a dark background, then removes i
   // Served by the API, the whole image: 900 × 300 is under the 2,000 px limit.
   await expect.poll(() => current.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
   await expect(dialog.getByRole("radio", { name: "Dark" })).toBeChecked();
+  await leader.keyboard.press("Escape");
 
+  // On the band's home page, the full logo; in the band list, its thumbnail.
+  const logo = leader.locator('main img[src*="/logo?v="]');
+  await expect.poll(() => logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
+  await leader.goto("/");
+  const thumbnail = bandLink.locator('img[src*="/logo/thumbnail?v="]');
+  await expect
+    .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(256);
+  await expect(bandLink.getByText("ER", { exact: true })).toBeHidden();
+
+  await bandLink.click();
+  await leader.getByRole("button", { name: "Edit band" }).click();
   await dialog.getByRole("button", { name: "Remove the logo" }).click();
   await expect(leader.getByText("Logo removed")).toBeVisible();
   await expect(dialog.getByText("No logo yet")).toBeVisible();
   await leader.keyboard.press("Escape");
+  await expect(logo).toHaveCount(0);
 
   await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });
@@ -203,6 +220,10 @@ test("the band leader adds the band's logo, on a dark background, then removes i
   );
   await expect(journal).toContainText("Captain Lea changed the band's logo");
   await leader.getByRole("button", { name: "Latest activity" }).click();
+
+  await leader.goto("/");
+  await expect(bandLink.getByText("ER", { exact: true })).toBeVisible();
+  await bandLink.click();
 });
 
 test("members build the repertoire: add, the duplicate warning, edit", async () => {

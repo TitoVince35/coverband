@@ -2,10 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BandJournal } from "@/components/band/band-journal";
+import { BandLogo } from "@/components/band/band-logo";
 import { bandQuery } from "@/lib/bands";
 
-// Band home page: the welcome, the band's journal (#84), then what's coming (setlists and gigs
-// come later).
+// Band home page: the band's logo (or initials, #177), the welcome, the band's journal (#84), then
+// what's coming (setlists and gigs come later).
 export const Route = createFileRoute("/_app/b/$bandSlug/")({
   component: BandHome,
 });
@@ -20,6 +21,7 @@ function BandHome() {
 
   return (
     <section className="space-y-4">
+      <BandLogo band={data.band} size="large" />
       <h2 className="font-heading font-semibold text-lg">
         {t("band.welcome", { band: data.band.name })}
       </h2>
