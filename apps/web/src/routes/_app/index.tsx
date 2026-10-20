@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { InstallCard } from "@/components/install-card";
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { myBandsQuery } from "@/lib/bands";
@@ -62,6 +63,7 @@ function HomePage() {
           )}
         </CardContent>
       </Card>
+      <InstallCard />
     </section>
   );
 }

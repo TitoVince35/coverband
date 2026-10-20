@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "./components/theme-provider";
 import { startAppUpdates } from "./lib/app-updates";
+import { listenForInstall } from "./lib/install";
 import { startOfflineCache } from "./lib/offline-cache";
 import { createQueryClient } from "./lib/query-client";
 import { routeTree } from "./routeTree.gen";
@@ -12,6 +13,9 @@ import "./index.css";
 
 // A stale build reloads by itself (#164); the dev server has no service worker.
 if (import.meta.env.PROD) startAppUpdates();
+
+// Chrome's install prompt comes once, early: listen before anything renders (#166).
+listenForInstall();
 
 const queryClient = createQueryClient();
 
