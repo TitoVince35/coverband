@@ -33,6 +33,8 @@ describe("security headers", () => {
     expect(csp).toContain(`script-src 'self' ${THEME_SCRIPT_HASH}`);
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
+    // Previews before upload and offline logos are blob: URLs the app makes itself.
+    expect(csp).toContain("img-src 'self' data: blob:");
   });
 
   test("are set on errors and Better Auth responses", async () => {
