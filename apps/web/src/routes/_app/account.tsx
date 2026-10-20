@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { AuthRequestError, authClient, ensureAuthOk, sessionQuery } from "@/lib/auth";
 import { ensureOk, errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 
 // The logged-in user's account: profile (#58), avatar (#60), then password (#24).
 export const Route = createFileRoute("/_app/account")({
@@ -53,6 +54,8 @@ function AccountPage() {
 
 function ProfileCard() {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const { user } = Route.useRouteContext();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -122,7 +125,7 @@ function ProfileCard() {
           )}
         </CardContent>
         <CardFooter className="mt-6 flex-col items-stretch">
-          <Button type="submit" disabled={update.isPending}>
+          <Button type="submit" disabled={!online || update.isPending}>
             {update.isPending ? t("account.profile.submitting") : t("account.profile.submit")}
           </Button>
         </CardFooter>
@@ -133,6 +136,8 @@ function ProfileCard() {
 
 function ChangePasswordCard() {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const [mismatch, setMismatch] = useState(false);
 
@@ -199,7 +204,7 @@ function ChangePasswordCard() {
           )}
         </CardContent>
         <CardFooter className="mt-6 flex-col items-stretch">
-          <Button type="submit" disabled={change.isPending}>
+          <Button type="submit" disabled={!online || change.isPending}>
             {change.isPending
               ? t("account.changePassword.submitting")
               : t("account.changePassword.submit")}

@@ -3,6 +3,7 @@ import { focusManager, onlineManager, QueryObserver } from "@tanstack/react-quer
 import {
   clearUserData,
   createQueryClient,
+  guardData,
   removeUserQueries,
   SESSION_KEY,
   STALE_TIME,
@@ -86,5 +87,55 @@ describe("switching users", () => {
     clearUserData(client);
     expect(client.getQueryData(SESSION_KEY)).toBeNull();
     expect(client.getQueryData(["bands"])).toBeUndefined();
+  });
+});
+
+describe("guardData", () => {
+  const saved = { user: "lea" };
+  const options = (queryFn: () => Promise<unknown>) => ({ queryKey: ["session"], queryFn });
+
+  afterEach(() => onlineManager.setOnline(true));
+
+  test("online: the server's answer", async () => {
+    const client = createQueryClient();
+    client.setQueryData(["session"], saved, { updatedAt: 0 });
+    expect(
+      await guardData(
+        client,
+        options(async () => ({ user: "max" })),
+      ),
+    ).toEqual({ user: "max" });
+  });
+
+  test("offline: the saved copy, without asking the server (#165)", async () => {
+    onlineManager.setOnline(false);
+    const client = createQueryClient();
+    client.setQueryData(["session"], saved);
+    let asked = false;
+    const result = await guardData(
+      client,
+      options(async () => {
+        asked = true;
+        return null;
+      }),
+    );
+    expect(result).toEqual(saved);
+    expect(asked).toBe(false);
+    expect(
+      await guardData(
+        createQueryClient(),
+        options(async () => null),
+      ),
+    ).toBeUndefined();
+  });
+
+  test("a server that can't be reached: the saved copy, or the error without one", async () => {
+    const client = createQueryClient();
+    client.setQueryData(["session"], saved, { updatedAt: 0 });
+    const unreachable = options(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    expect(await guardData(client, unreachable)).toEqual(saved);
+    expect(guardData(createQueryClient(), unreachable)).rejects.toThrow("Failed to fetch");
   });
 });

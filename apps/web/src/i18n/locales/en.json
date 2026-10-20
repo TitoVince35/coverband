@@ -7,6 +7,9 @@
     "close": "Close",
     "appVersion": "{{appName}} {{version}} ({{build}})"
   },
+  "offline": {
+    "banner": "You're offline: showing saved data. Changes are turned off until the connection is back."
+  },
   "home": {
     "title": "Welcome to {{appName}}",
     "greeting": "Hello {{name}}",

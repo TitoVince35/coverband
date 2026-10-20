@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 import { deleteSong, setSongArchived } from "@/lib/songs";
 
 type Props = {
@@ -28,6 +29,8 @@ type Props = {
 /** Archive or restore a song (any member); delete it for good (band leaders, #91). */
 export function SongActions({ bandSlug, song, isLeader }: Props) {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const archived = song.archivedAt !== null;
@@ -61,7 +64,7 @@ export function SongActions({ bandSlug, song, isLeader }: Props) {
         {!archived && (
           <Button
             variant="outline"
-            disabled={archive.isPending}
+            disabled={!online || archive.isPending}
             onClick={() => archive.mutate(true)}
           >
             <Archive />
@@ -70,7 +73,7 @@ export function SongActions({ bandSlug, song, isLeader }: Props) {
         )}
         {isLeader && (
           <AlertDialog>
-            <AlertDialogTrigger asChild>
+            <AlertDialogTrigger asChild disabled={!online}>
               <Button variant="ghost" className="text-destructive">
                 <Trash2 />
                 {t("songs.delete.button")}
@@ -106,6 +109,8 @@ export function SongActions({ bandSlug, song, isLeader }: Props) {
 /** Shown on an archived song: it's out of the repertoire, and a tap brings it back. */
 export function ArchivedBanner({ bandSlug, songId }: { bandSlug: string; songId: string }) {
   const { t } = useTranslation();
+  // Offline, the app is read-only (#165).
+  const online = useOnline();
   const queryClient = useQueryClient();
   const restore = useMutation({
     mutationFn: () => setSongArchived(bandSlug, songId, false),
@@ -120,7 +125,7 @@ export function ArchivedBanner({ bandSlug, songId }: { bandSlug: string; songId:
       <p role="status" className="flex-1">
         {t("songs.archive.banner")}
       </p>
-      <Button size="sm" disabled={restore.isPending} onClick={() => restore.mutate()}>
+      <Button size="sm" disabled={!online || restore.isPending} onClick={() => restore.mutate()}>
         <ArchiveRestore />
         {t("songs.archive.restore")}
       </Button>

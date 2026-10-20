@@ -84,16 +84,19 @@ function withLyricsSource<C extends SongChanges>(
 
 /** A band's repertoire by title: its current songs, or its archived ones. */
 export function listSongs(db: Db, bandId: string, { archived = false } = {}) {
-  return db
-    .select(columns)
-    .from(songs)
-    .where(
-      and(
-        eq(songs.bandId, bandId),
-        archived ? isNotNull(songs.archivedAt) : isNull(songs.archivedAt),
-      ),
-    )
-    .orderBy(asc(sql`lower(${songs.title})`), asc(sql`lower(${songs.artist})`));
+  return (
+    db
+      .select(columns)
+      .from(songs)
+      .where(
+        and(
+          eq(songs.bandId, bandId),
+          archived ? isNotNull(songs.archivedAt) : isNull(songs.archivedAt),
+        ),
+      )
+      // The id last: confirmed duplicates keep one order.
+      .orderBy(asc(sql`lower(${songs.title})`), asc(sql`lower(${songs.artist})`), asc(songs.id))
+  );
 }
 
 /** One song of a band, with who added it (their current display name; null once deleted). */
@@ -104,6 +107,22 @@ export async function getSong(db: Db, bandId: string, id: string) {
     .leftJoin(users, eq(users.id, songs.createdById))
     .where(and(eq(songs.bandId, bandId), eq(songs.id, id)));
   return song ?? null;
+}
+
+/**
+ * The whole repertoire as each song's page shows it (#165): lyrics and who added it, by title.
+ * The web app keeps it for offline use. Its links come from `mediaOfBand`.
+ */
+export function songDetails(db: Db, bandId: string) {
+  return (
+    db
+      .select({ ...detailColumns, addedBy: users.name })
+      .from(songs)
+      .leftJoin(users, eq(users.id, songs.createdById))
+      .where(and(eq(songs.bandId, bandId), isNull(songs.archivedAt)))
+      // The id last: confirmed duplicates keep one order.
+      .orderBy(asc(sql`lower(${songs.title})`), asc(sql`lower(${songs.artist})`), asc(songs.id))
+  );
 }
 
 type Member = { bandId: string; userId: string };

@@ -7,6 +7,9 @@
     "close": "Fermer",
     "appVersion": "{{appName}} {{version}} ({{build}})"
   },
+  "offline": {
+    "banner": "Vous êtes hors ligne : affichage des données enregistrées. Les modifications reviennent avec la connexion."
+  },
   "home": {
     "title": "Bienvenue sur {{appName}}",
     "greeting": "Bonjour {{name}}",
