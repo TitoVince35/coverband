@@ -42,14 +42,14 @@ resource "scaleway_container" "app" {
     S3_BUCKET        = scaleway_object_bucket.files.name
   }
 
-  secret_environment_variables = {
+  secret_environment_variables = merge({
     DATABASE_URL         = local.database_url
     BETTER_AUTH_SECRET   = random_password.auth_secret.result
     ADMIN_PASSWORD       = random_password.admin.result
     SMTP_PASSWORD        = scaleway_iam_api_key.app.secret_key
     S3_ACCESS_KEY_ID     = scaleway_iam_api_key.app.access_key
     S3_SECRET_ACCESS_KEY = scaleway_iam_api_key.app.secret_key
-  }
+  }, var.beta_access_code == "" ? {} : { BETA_ACCESS_CODE = var.beta_access_code })
 
   lifecycle {
     ignore_changes = [image]

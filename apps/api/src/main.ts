@@ -40,6 +40,14 @@ const app = createApp({
     appUrl: env.BETTER_AUTH_URL,
     trustedOrigins: env.TRUSTED_ORIGINS,
     buildInfo: { version: rootPackage.version, build: env.BUILD_SHA },
+    ...(env.BETA_ACCESS_CODE && {
+      access: {
+        code: env.BETA_ACCESS_CODE,
+        secret: env.BETTER_AUTH_SECRET,
+        clientIpHeader: env.CLIENT_IP_HEADER,
+        https: env.BETTER_AUTH_URL.startsWith("https:"),
+      },
+    }),
   },
   webDistDir: env.WEB_DIST_DIR,
 });
