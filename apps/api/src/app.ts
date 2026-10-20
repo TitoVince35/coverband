@@ -8,7 +8,7 @@ import { healthRoutes } from "./core/http/health";
 import { internalRoutes } from "./core/http/internal";
 import { redirectHosts } from "./core/http/redirect";
 import { requestLog } from "./core/http/request-log";
-import { noIndex, requestGuards, securityHeaders } from "./core/http/security";
+import { noIndex, requestGuards, securityHeaders, wantsHsts } from "./core/http/security";
 import { loadSession, type SessionEnv } from "./core/http/session";
 import type { AppDeps } from "./deps";
 import { adminRoutes } from "./modules/admin/routes";
@@ -64,7 +64,7 @@ export function createApp({ deps, webDistDir }: AppOptions) {
 
   // First, so it times and logs everything below; it also logs the 500s of onError.
   app.use(requestLog(deps.log));
-  app.use(securityHeaders({ https: deps.appUrl.startsWith("https:") }));
+  app.use(securityHeaders({ hsts: wantsHsts(deps.appUrl) }));
   app.use(noIndex);
   app.use(redirectHosts(deps.redirectHosts ?? [], deps.appUrl));
 

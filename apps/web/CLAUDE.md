@@ -34,4 +34,4 @@ React + Vite + TanStack Router/Query. Cross-cutting rules are in the root `CLAUD
 
 `vite.config.ts` imports `APP_NAME` from `@coverband/shared` (manifest, `%APP_NAME%` in `index.html`): the `dev`, `build` and `preview` scripts use `--configLoader runner` so Vite can load the shared package's TypeScript.
 
-Configured in `vite.config.ts` (vite-plugin-pwa, auto-update). Icons in `public/` are generated from `public/logo.svg` with `bunx pwa-assets-generator --preset minimal-2023 public/logo.svg`.
+Configured in `vite.config.ts` (vite-plugin-pwa, auto-update). The service worker only runs in the built app (`bun run serve`, `serve:lan`), over HTTPS or on localhost: see Local HTTPS in the root `CLAUDE.md` to test on a phone. Icons in `public/` are generated from `public/logo.svg` with `bunx pwa-assets-generator --preset minimal-2023 public/logo.svg`.
