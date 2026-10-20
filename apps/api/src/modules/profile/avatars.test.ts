@@ -2,28 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { eq, like } from "drizzle-orm";
 import { createApp } from "../../app";
 import { activity, bandMembers, bands, users } from "../../core/db/schema";
-import { activityOf, createTestDeps } from "../../test-deps";
-import { imageType, ownAvatarKey } from "./avatars";
-
-/** Smallest bytes the API recognises as each format (it only checks the signature). */
-const WEBP = new Uint8Array([
-  ...new TextEncoder().encode("RIFF"),
-  0,
-  0,
-  0,
-  0,
-  ...new TextEncoder().encode("WEBPVP8 "),
-]);
-const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]);
-const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0, 0]);
-
-test("imageType recognises WebP and JPEG by their first bytes only", () => {
-  expect(imageType(WEBP)?.type).toBe("image/webp");
-  expect(imageType(JPEG)?.type).toBe("image/jpeg");
-  expect(imageType(PNG)).toBeNull();
-  expect(imageType(new TextEncoder().encode("<svg onload=alert(1)>"))).toBeNull();
-  expect(imageType(new Uint8Array())).toBeNull();
-});
+import { activityOf, createTestDeps, JPEG, PNG, WEBP } from "../../test-deps";
+import { ownAvatarKey } from "./avatars";
 
 test("ownAvatarKey only accepts keys the server writes for that user", () => {
   const uuid = crypto.randomUUID();

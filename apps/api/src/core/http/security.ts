@@ -60,22 +60,30 @@ export const noIndex = createMiddleware(async (c, next) => {
   c.header("X-Robots-Tag", "noindex, nofollow");
 });
 
-/** Largest request body accepted on /api. Files will go straight to Object Storage. */
+/** Largest request body accepted on /api, but on the routes given a larger one. */
 export const MAX_BODY_SIZE = 100 * 1024;
+
+/** A route accepting a larger body than MAX_BODY_SIZE (a file upload). */
+export type LargerBody = { method: string; path: RegExp; maxSize: number };
 
 /**
  * Guards for /api: a body size limit, and CSRF protection refusing form-style requests
  * (form, multipart, text/plain) sent from other sites. JSON requests from other sites are already
  * blocked by the browser, since the API has no CORS.
  * `allowedOrigins`: the app URL and TRUSTED_ORIGINS (`bun run dev:lan`).
+ * `largerBodies`: the upload routes, each with its own limit.
  */
-export function requestGuards(allowedOrigins: string[]) {
+export function requestGuards(allowedOrigins: string[], largerBodies: readonly LargerBody[] = []) {
   const origins = allowedOrigins.map((url) => new URL(url).origin);
-  return [
-    bodyLimit({
-      maxSize: MAX_BODY_SIZE,
-      onError: (c) => apiError(c, 413, "Request body too large"),
-    }),
-    csrf({ origin: origins }),
-  ] as const;
+  const limit = (maxSize: number) =>
+    bodyLimit({ maxSize, onError: (c) => apiError(c, 413, "Request body too large") });
+  const standard = limit(MAX_BODY_SIZE);
+  const larger = largerBodies.map((route) => ({ ...route, guard: limit(route.maxSize) }));
+  const sizeLimit = createMiddleware((c, next) => {
+    const route = larger.find(
+      ({ method, path }) => method === c.req.method && path.test(c.req.path),
+    );
+    return (route?.guard ?? standard)(c, next);
+  });
+  return [sizeLimit, csrf({ origin: origins })] as const;
 }
