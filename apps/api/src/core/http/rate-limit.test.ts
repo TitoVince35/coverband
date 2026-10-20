@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import type { SessionUser } from "../../adapters/auth";
 import { createTestDeps } from "../../test-deps";
 import { rateLimits } from "../db/schema";
+import { createMemoryLogger } from "../log";
 import { hit, type RateLimitRule, rateLimitUser } from "./rate-limit";
 import type { SessionEnv } from "./session";
 
@@ -34,9 +35,12 @@ describe.skipIf(!databaseUrl)("rate limit", () => {
   });
 
   test("answers 429 too_many_requests with Retry-After, per user", async () => {
+    const { log, entries } = createMemoryLogger();
     const app = new Hono<SessionEnv>()
       .use(async (c, next) => {
-        c.set("user", { id: c.req.header("x-user") ?? "" } as SessionUser);
+        const id = c.req.header("x-user") ?? "";
+        c.set("user", { id } as SessionUser);
+        c.set("log", log.child({ userId: id }));
         await next();
       })
       .post("/send", rateLimitUser(db, { ...rule, name: `test-${run}-route` }), (c) =>
@@ -55,5 +59,8 @@ describe.skipIf(!databaseUrl)("rate limit", () => {
       error: { code: "too_many_requests", message: "Too many requests, try again later" },
     });
     expect((await send("u2")).status).toBe(200);
+    expect(entries).toMatchObject([
+      { level: "warn", msg: "Rate limited", rule: `test-${run}-route`, userId: "u1" },
+    ]);
   });
 });

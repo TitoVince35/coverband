@@ -5,16 +5,18 @@ import { Hono } from "hono";
 import { createApp } from "../app";
 import { ensureAdmin } from "../bootstrap";
 import { users, verifications } from "../core/db/schema";
+import { requestLog } from "../core/http/request-log";
 import { loadSession, requireAdmin, requireUser, type SessionEnv } from "../core/http/session";
+import { createMemoryLogger, silentLogger } from "../core/log";
 import { createTestDeps } from "../test-deps";
-import { requestLanguage } from "./auth";
+import { betterAuthLogger, createAuth, requestLanguage } from "./auth";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;
 
 describe.skipIf(!databaseUrl)("authentication", () => {
   const { deps, db, sql, auth, mailer } = createTestDeps(databaseUrl);
-  const app = createApp({ deps, log: false });
+  const app = createApp({ deps });
 
   // Unique emails so tests never collide with development data; deleted afterwards.
   const run = crypto.randomUUID().slice(0, 8);
@@ -35,6 +37,7 @@ describe.skipIf(!databaseUrl)("authentication", () => {
 
   // A small app behind the guards, the way real routes will use them.
   const guarded = new Hono<SessionEnv>()
+    .use(requestLog(silentLogger))
     .use(loadSession(auth))
     .get("/user", requireUser, (c) => c.json({ email: c.var.user?.email }))
     .get("/admin", requireAdmin, (c) => c.json({ ok: true }));
@@ -155,6 +158,34 @@ describe.skipIf(!databaseUrl)("authentication", () => {
       expect(mailer.sent.at(-1)?.to).toBe(resetEmail);
     });
 
+    test("a failed send gets the same answer, and is logged without the email", async () => {
+      const { log, entries } = createMemoryLogger();
+      const failing = createAuth({
+        db,
+        log,
+        mailer: {
+          send: async () => {
+            throw new Error("SMTP down");
+          },
+        },
+        secret: "test-secret-test-secret-test-secret",
+        baseURL: "http://localhost:3000",
+        rateLimit: false,
+      });
+      const res = await failing.api.requestPasswordReset({ body: { email: resetEmail } });
+      expect(res.status).toBe(true);
+      const [user] = await db.select().from(users).where(eq(users.email, resetEmail));
+      expect(entries).toMatchObject([
+        {
+          level: "error",
+          msg: "Password reset email not sent",
+          userId: user?.id,
+          err: { message: "SMTP down" },
+        },
+      ]);
+      expect(JSON.stringify(entries)).not.toContain(resetEmail);
+    });
+
     test("the email is in the language sent by the web app", async () => {
       await post("/request-password-reset", { email: resetEmail }, { "accept-language": "fr" });
       expect(mailer.sent.at(-1)?.subject).toBe(`Réinitialisez votre mot de passe ${APP_NAME}`);
@@ -224,6 +255,25 @@ describe.skipIf(!databaseUrl)("authentication", () => {
       expect((await guarded.request("/user", { headers: { cookie: renewed } })).status).toBe(200);
       expect((await login(resetEmail, password)).status).toBe(200);
     });
+  });
+});
+
+describe("betterAuthLogger", () => {
+  test("Better Auth's logs in our format, emails masked", () => {
+    const { log, entries } = createMemoryLogger();
+    const logger = betterAuthLogger(log);
+    logger.log("info", "Sign-up attempt for existing email: Jane.Doe+band@example.com");
+    logger.log("error", "Failed to run background task:", new Error("boom"));
+    logger.log("warn", "Invalid id token", { provider: "x" });
+    expect(entries).toMatchObject([
+      { level: "info", msg: "Better Auth: Sign-up attempt for existing email: [email]" },
+      {
+        level: "error",
+        msg: "Better Auth: Failed to run background task:",
+        err: { message: "boom" },
+      },
+      { level: "warn", msg: "Better Auth: Invalid id token", args: [{ provider: "x" }] },
+    ]);
   });
 });
 

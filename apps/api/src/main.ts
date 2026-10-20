@@ -7,14 +7,17 @@ import { createS3Storage } from "./adapters/storage";
 import { createApp } from "./app";
 import { ensureAdmin } from "./bootstrap";
 import { createDb } from "./core/db/client";
-import { loadEnv, s3Config, smtpConfig } from "./env";
+import { createLogger } from "./core/log";
+import { loadEnv, logConfig, s3Config, smtpConfig } from "./env";
 
 const env = loadEnv();
+const log = createLogger(logConfig(env));
 const { db } = createDb(env.DATABASE_URL);
 const mailer = createSmtpMailer(smtpConfig(env));
 const storage = createS3Storage(s3Config(env));
 const auth = createAuth({
   db,
+  log,
   mailer,
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
@@ -24,13 +27,14 @@ const auth = createAuth({
 
 if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
   const result = await ensureAdmin(auth, { email: env.ADMIN_EMAIL, password: env.ADMIN_PASSWORD });
-  console.log(`Default admin ${env.ADMIN_EMAIL}: ${result}`);
+  log.info(result === "created" ? "Default admin created" : "Default admin exists");
 }
 
 const app = createApp({
   deps: {
     auth,
     db,
+    log,
     mailer,
     storage,
     lyrics: createLrclibProvider({
@@ -53,11 +57,10 @@ const app = createApp({
   webDistDir: env.WEB_DIST_DIR,
 });
 
-console.log(
-  `${APP_NAME} ${rootPackage.version} (${env.BUILD_SHA}) API listening on http://localhost:${env.PORT}`,
-);
+// Started here rather than by a default export, which makes Bun print its own non-JSON line.
+const server = Bun.serve({ port: env.PORT, fetch: app.fetch });
 
-export default {
-  port: env.PORT,
-  fetch: app.fetch,
-};
+log.info(`${APP_NAME} API listening on http://localhost:${server.port}`, {
+  version: rootPackage.version,
+  build: env.BUILD_SHA,
+});

@@ -2,6 +2,7 @@ import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@coverband/shared";
 import { z } from "zod";
 import type { SmtpConfig } from "./adapters/mail/mailer";
 import type { S3Config } from "./adapters/storage";
+import { LOG_FORMATS, LOG_LEVELS, type LoggerOptions } from "./core/log";
 
 const databaseUrl = z.url({ protocol: /^postgres(ql)?$/ });
 
@@ -12,6 +13,12 @@ const s3Schema = z.object({
   S3_BUCKET: z.string().min(1),
   S3_ACCESS_KEY_ID: z.string().min(1),
   S3_SECRET_ACCESS_KEY: z.string().min(1),
+});
+
+// Technical logs on stdout (#42): JSON for Scaleway Cockpit, `pretty` in development.
+const logSchema = z.object({
+  LOG_LEVEL: z.enum(LOG_LEVELS).default("info"),
+  LOG_FORMAT: z.enum(LOG_FORMATS).default("json"),
 });
 
 const envSchema = z
@@ -72,6 +79,7 @@ const envSchema = z
     // Where song lyrics are searched (#130). The end-to-end tests point it at a fake.
     LRCLIB_URL: z.url({ protocol: /^https?$/ }).default("https://lrclib.net"),
     ...s3Schema.shape,
+    ...logSchema.shape,
   })
   .refine((env) => (env.ADMIN_EMAIL === undefined) === (env.ADMIN_PASSWORD === undefined), {
     message: "Set both ADMIN_EMAIL and ADMIN_PASSWORD, or neither",
@@ -89,6 +97,10 @@ export function smtpConfig(env: Env): SmtpConfig {
     password: env.SMTP_PASSWORD,
     from: env.MAIL_FROM,
   };
+}
+
+export function logConfig(env: z.infer<typeof logSchema>): LoggerOptions {
+  return { level: env.LOG_LEVEL, format: env.LOG_FORMAT };
 }
 
 export function s3Config(env: z.infer<typeof s3Schema>): S3Config {
@@ -119,6 +131,11 @@ export function loadEnv(source: Source = process.env): Env {
 /** Only the database URL, for tools that don't run the app (migrations, drizzle-kit). */
 export function loadDatabaseEnv(source: Source = process.env) {
   return parse(z.object({ DATABASE_URL: databaseUrl }), source);
+}
+
+/** Only the log settings, for tools that don't run the app (migrations). */
+export function loadLogEnv(source: Source = process.env) {
+  return parse(logSchema, source);
 }
 
 /** Only the object storage variables, for its integration test. */

@@ -2,11 +2,11 @@ import { resolve } from "node:path";
 import { serveStatic } from "@hono/bun";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { logger } from "hono/logger";
 import { AppError, apiError, appErrorResponse } from "./core/errors";
 import { accessGate, accessRoutes } from "./core/http/access";
 import { healthRoutes } from "./core/http/health";
 import { redirectHosts } from "./core/http/redirect";
+import { requestLog } from "./core/http/request-log";
 import { noIndex, requestGuards, securityHeaders } from "./core/http/security";
 import { loadSession, type SessionEnv } from "./core/http/session";
 import type { AppDeps } from "./deps";
@@ -27,8 +27,6 @@ export type AppOptions = {
   deps: AppDeps;
   /** Directory of the built web app; when set, it is served with an SPA fallback. */
   webDistDir?: string | undefined;
-  /** Request logging, off in tests. */
-  log?: boolean;
 };
 
 // REST API, mounted under /api. Chained so that AppType carries every route for the typed client.
@@ -60,17 +58,17 @@ function createApi(deps: AppDeps) {
 
 export type AppType = ReturnType<typeof createApi>;
 
-export function createApp({ deps, webDistDir, log = true }: AppOptions) {
+export function createApp({ deps, webDistDir }: AppOptions) {
   const app = new Hono();
 
-  if (log) {
-    app.use(logger());
-  }
+  // First, so it times and logs everything below; it also logs the 500s of onError.
+  app.use(requestLog(deps.log));
   app.use(securityHeaders({ https: deps.appUrl.startsWith("https:") }));
   app.use(noIndex);
   app.use(redirectHosts(deps.redirectHosts ?? [], deps.appUrl));
 
-  // Expected refusals thrown by the domain become their JSON error; anything else is a 500.
+  // Expected refusals thrown by the domain become their JSON error; anything else is a 500
+  // (logged with its stack by requestLog).
   app.onError((err, c) => {
     if (err instanceof AppError) {
       return appErrorResponse(c, err);
@@ -78,7 +76,6 @@ export function createApp({ deps, webDistDir, log = true }: AppOptions) {
     if (err instanceof HTTPException) {
       return apiError(c, err.status, err.message || "Request refused");
     }
-    console.error(err);
     return apiError(c, 500, "Internal server error");
   });
 

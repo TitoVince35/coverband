@@ -16,7 +16,7 @@ const validCookie = `${ACCESS_COOKIE}=${accessToken(config)}`;
 
 describe("access gate", () => {
   const { deps } = createTestDeps();
-  const app = createApp({ deps: { ...deps, access: config }, log: false });
+  const app = createApp({ deps: { ...deps, access: config } });
 
   test("without the code, the API answers 403 access_required", async () => {
     const res = await app.request("/api/bands");
@@ -51,14 +51,13 @@ describe("access gate", () => {
   test("changing the code shuts out the devices that had the old one", async () => {
     const changed = createApp({
       deps: { ...deps, access: { ...config, code: "new" } },
-      log: false,
     });
     const res = await changed.request("/api/bands", { headers: { cookie: validCookie } });
     expect(res.status).toBe(403);
   });
 
   test("without a code configured, there is no gate", async () => {
-    const open = createApp({ deps, log: false });
+    const open = createApp({ deps });
     expect((await open.request("/api/bands")).status).toBe(401);
     expect(await (await open.request("/api/access")).json()).toEqual({
       required: false,
@@ -107,7 +106,7 @@ const databaseUrl = process.env.DATABASE_URL;
 
 describe.skipIf(!databaseUrl)("POST /api/access", () => {
   const { deps, db, sql } = createTestDeps(databaseUrl);
-  const app = createApp({ deps: { ...deps, access: config }, log: false });
+  const app = createApp({ deps: { ...deps, access: config } });
   // A made-up client IP per run, so the wrong-code counter starts at zero.
   const ip = `test-${crypto.randomUUID().slice(0, 8)}`;
   const post = (code: string, from = ip) =>

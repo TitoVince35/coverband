@@ -5,11 +5,14 @@ import type { Storage } from "./adapters/storage";
 import type { Db } from "./core/db/client";
 import type { AccessConfig } from "./core/http/access";
 import type { BuildInfo } from "./core/http/health";
+import type { Logger } from "./core/log";
 
 /** Services the API routes use. Tests can pass a database that is never connected to. */
 export type AppDeps = {
   auth: Auth;
   db: Db;
+  /** Technical logs; in a request, use its own logger (`c.var.log`), which carries its context. */
+  log: Logger;
   mailer: Mailer;
   /** Object storage for files (avatars). */
   storage: Storage;
