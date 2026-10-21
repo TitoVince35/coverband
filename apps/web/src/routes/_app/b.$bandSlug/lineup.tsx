@@ -5,6 +5,7 @@ import { EditInstrumentsDialog } from "@/components/instruments/edit-instruments
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { InvitationsList } from "@/components/invitations/invitations-list";
 import { InviteDialog } from "@/components/invitations/invite-dialog";
+import { ListSkeleton } from "@/components/loading";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
@@ -46,7 +47,7 @@ function LineupPage() {
       <Card>
         <CardContent>
           {members.isPending ? (
-            <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
+            <ListSkeleton withIcon />
           ) : members.isError ? (
             <p role="alert" className="text-destructive text-sm">
               {errorMessage(t, members.error)}

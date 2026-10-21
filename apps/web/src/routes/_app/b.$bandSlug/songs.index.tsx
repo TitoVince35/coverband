@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Archive, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ListSkeleton } from "@/components/loading";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
 import { EnergyPeppers, SongStatusBadge } from "@/components/songs/song-status";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,7 @@ function RepertoirePage() {
         />
       </div>
       {songs.isPending ? (
-        <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
+        <ListSkeleton rows={5} />
       ) : songs.isError ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, songs.error)}

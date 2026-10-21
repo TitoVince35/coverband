@@ -10,6 +10,7 @@ import { createQueryClient } from "./lib/query-client";
 import { routeTree } from "./routeTree.gen";
 import "./i18n";
 import "./index.css";
+import { LOADING_DELAY_MS, PageSpinner } from "./components/loading";
 
 // A stale build reloads by itself (#164); the dev server has no service worker.
 if (import.meta.env.PROD) startAppUpdates();
@@ -23,6 +24,9 @@ const router = createRouter({
   routeTree,
   context: { queryClient },
   defaultPreload: "intent",
+  // While a page's guards wait (the session, the access check: #190), after a short delay.
+  defaultPendingComponent: PageSpinner,
+  defaultPendingMs: LOADING_DELAY_MS,
 });
 
 declare module "@tanstack/react-router" {
