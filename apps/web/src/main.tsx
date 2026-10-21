@@ -3,10 +3,11 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "./components/theme-provider";
+import { accessQuery } from "./lib/access";
 import { startAppUpdates } from "./lib/app-updates";
 import { listenForInstall } from "./lib/install";
 import { startOfflineCache } from "./lib/offline-cache";
-import { createQueryClient } from "./lib/query-client";
+import { createQueryClient, SESSION_KEY, watchGuardData } from "./lib/query-client";
 import { installSlowNetwork } from "./lib/slow-network";
 import { routeTree } from "./routeTree.gen";
 import "./i18n";
@@ -32,6 +33,9 @@ const router = createRouter({
   defaultPendingComponent: PageSpinner,
   defaultPendingMs: LOADING_DELAY_MS,
 });
+
+// A guard's background check found another answer (#211): the guards run again, and redirect.
+watchGuardData(queryClient, [SESSION_KEY, accessQuery.queryKey], () => void router.invalidate());
 
 declare module "@tanstack/react-router" {
   interface Register {

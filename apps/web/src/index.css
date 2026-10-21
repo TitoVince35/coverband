@@ -137,3 +137,13 @@
     @apply font-heading;
   }
 }
+
+/* The navigation's progress bar (#211, NavigationProgress): a third of the width sweeping across. */
+@keyframes navigation-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}

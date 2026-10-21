@@ -7,6 +7,7 @@ import {
   removeUserQueries,
   SESSION_KEY,
   STALE_TIME,
+  watchGuardData,
 } from "./query-client";
 
 /** Watches a query like a mounted component does, counting fetches. */
@@ -137,5 +138,36 @@ describe("guardData", () => {
     });
     expect(await guardData(client, unreachable)).toEqual(saved);
     expect(guardData(createQueryClient(), unreachable)).rejects.toThrow("Failed to fetch");
+  });
+
+  test("stale data from the server since the app started: at once, checked again behind (#211)", async () => {
+    const client = createQueryClient();
+    client.setQueryData(["session"], saved);
+    setSystemTime(new Date(Date.now() + STALE_TIME + 1000));
+    const changes: number[] = [];
+    watchGuardData(client, [["session"]], () => changes.push(1));
+    let answer: (value: unknown) => void = () => {};
+    const sleeping = options(() => new Promise((resolve) => (answer = resolve)));
+    // The server hasn't answered yet: the guard doesn't wait for it.
+    expect(await guardData(client, sleeping)).toEqual(saved);
+    // It answers: logged out elsewhere, so the guards run again.
+    answer(null);
+    await Bun.sleep(1);
+    expect(client.getQueryData(["session"])).toBeNull();
+    expect(changes).toHaveLength(1);
+    setSystemTime();
+  });
+
+  test("watchGuardData: the same answer or a first one runs nothing again", async () => {
+    const client = createQueryClient();
+    const changes: number[] = [];
+    watchGuardData(client, [["session"], ["access"]], () => changes.push(1));
+    client.setQueryData(["access"], { granted: true });
+    client.setQueryData(["access"], { granted: true });
+    client.setQueryData(["bands"], [1]);
+    client.setQueryData(["bands"], [2]);
+    expect(changes).toHaveLength(0);
+    client.setQueryData(["access"], { granted: false });
+    expect(changes).toHaveLength(1);
   });
 });
