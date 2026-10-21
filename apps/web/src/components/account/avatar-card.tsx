@@ -129,7 +129,11 @@ export function AvatarCard({
       <CardFooter className="mt-6 flex-col items-stretch gap-2">
         {picked ? (
           <>
-            <Button onClick={() => save.mutate(picked.blob)} disabled={!online || busy}>
+            <Button
+              onClick={() => save.mutate(picked.blob)}
+              disabled={!online || busy}
+              pending={save.isPending}
+            >
               {save.isPending ? t("account.avatar.saving") : t("account.avatar.save")}
             </Button>
             <Button
@@ -158,7 +162,12 @@ export function AvatarCard({
               </label>
             </Button>
             {current && (
-              <Button variant="outline" onClick={() => remove.mutate()} disabled={!online || busy}>
+              <Button
+                variant="outline"
+                onClick={() => remove.mutate()}
+                disabled={!online || busy}
+                pending={remove.isPending}
+              >
                 {remove.isPending ? t("account.avatar.removing") : t("account.avatar.remove")}
               </Button>
             )}

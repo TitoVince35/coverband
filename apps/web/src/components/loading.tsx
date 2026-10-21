@@ -111,3 +111,25 @@ export function SongSkeleton() {
     </Loading>
   );
 }
+
+/** The online search of a new song (#208): Deezer's box, then video rows with their thumbnails. */
+export function AutofillSkeleton() {
+  return (
+    <Loading className="space-y-4">
+      <Skeleton className="h-16 w-full rounded-lg" />
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-1/2" />
+        {Array.from({ length: 3 }, (_, row) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: placeholders never move
+          <div key={row} className="flex items-center gap-3 p-2">
+            <Skeleton className="aspect-video w-24 shrink-0 rounded" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </Loading>
+  );
+}

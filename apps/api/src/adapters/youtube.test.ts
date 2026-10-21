@@ -67,7 +67,7 @@ describe("createYoutubeSearch", () => {
     const fetch = async (url: URL) => {
       asked.push(url);
       if (url.pathname.startsWith("/vi/")) {
-        return new Response("jpeg bytes", { headers: { "content-type": "image/jpeg" } });
+        return new Response("jpeg bytes", { status, headers: { "content-type": "image/jpeg" } });
       }
       return Response.json(answers[url.pathname] ?? {}, { status });
     };
@@ -137,5 +137,8 @@ describe("createYoutubeSearch", () => {
     expect(image?.type).toBe("image/jpeg");
     expect(asked.at(-1)?.href).toBe("https://img.test/vi/6Ejga4kJUts/mqdefault.jpg");
     expect(await search.thumbnail("../../secret")).toBeNull();
+    // None is null; YouTube failing throws (the route logs it, a 502).
+    expect(await fakeYoutube({}, 404).search.thumbnail("6Ejga4kJUts")).toBeNull();
+    expect(fakeYoutube({}, 503).search.thumbnail("6Ejga4kJUts")).rejects.toThrow("503");
   });
 });

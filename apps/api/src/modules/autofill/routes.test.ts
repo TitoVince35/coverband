@@ -92,11 +92,24 @@ describe.skipIf(!databaseUrl)("autofill", () => {
     };
     const res = await search("max", { title: " Zombie ", artist: "The Cranberries" });
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ track: catalog.track, videos: [] });
+    expect(await res.json()).toEqual({ track: catalog.track, videos: [], failed: [] });
     expect(catalog.searches.at(-1)).toEqual(zombie);
 
     catalog.track = null;
-    expect(await (await search("lea", zombie)).json()).toEqual({ track: null, videos: [] });
+    expect(await (await search("lea", zombie)).json()).toEqual({
+      track: null,
+      videos: [],
+      failed: [],
+    });
+
+    // Deezer down: an error the member is told about, never "nothing found" (#208).
+    catalog.down = true;
+    expect(await (await search("lea", zombie)).json()).toEqual({
+      track: null,
+      videos: [],
+      failed: ["deezer"],
+    });
+    catalog.down = false;
   });
 
   test("YouTube's best videos, their thumbnails through the API; none when it fails", async () => {
@@ -138,20 +151,22 @@ describe.skipIf(!databaseUrl)("autofill", () => {
     expect((await thumbnailOf("max", "not-an-id")).status).toBe(404);
     expect((await thumbnailOf("zoe", "Topic000001")).status).toBe(404);
 
-    // YouTube down (a quota exceeded, a bad key): Deezer's details still come.
+    // YouTube down (a quota exceeded, a bad key): Deezer's details still come, and the error.
     videos.down = true;
     catalog.track = { ...zombieTrack };
     expect(await (await search("max", zombie)).json()).toEqual({
       track: zombieTrack,
       videos: null,
+      failed: ["youtube"],
     });
+    expect((await thumbnailOf("max", "Topic000001")).status).toBe(502);
     videos.down = false;
     videos.videos = [];
   });
 
   test(`${AUTOFILL_SEARCHES.max} searches a day per band, whoever searches`, async () => {
-    // The band has searched 4 times already (above; the refused ones don't count).
-    for (let i = 4; i < AUTOFILL_SEARCHES.max; i++) {
+    // The band has searched 5 times already (above; the refused ones don't count).
+    for (let i = 5; i < AUTOFILL_SEARCHES.max; i++) {
       expect((await search(i % 2 ? "lea" : "max", zombie)).status).toBe(200);
     }
     const over = await search("lea", zombie);
@@ -192,7 +207,7 @@ describe.skipIf(!databaseUrl)("autofill without a YouTube key", () => {
       `/api/bands/autofill-nokey-${run}/autofill?title=Zombie&artist=The%20Cranberries`,
       { headers: { cookie } },
     );
-    expect(await res.json()).toEqual({ track: null, videos: null });
+    expect(await res.json()).toEqual({ track: null, videos: null, failed: [] });
     const thumbnail = await app.request(
       `/api/bands/autofill-nokey-${run}/autofill/thumbnails/Topic000001`,
       { headers: { cookie } },

@@ -56,7 +56,7 @@ variable "alert_email" {
 }
 
 variable "youtube_api_key" {
-  description = "YouTube Data API v3 key for \"I feel lucky\" (README.md). Empty: no videos are proposed."
+  description = "YouTube Data API v3 key for \"Search and add\" (README.md). Empty: no videos are proposed."
   type        = string
   default     = ""
   sensitive   = true

@@ -194,6 +194,7 @@
       "add": "Add",
       "adding": "Adding…",
       "addAnyway": "Add anyway",
+      "saveOnly": "Save only",
       "saveAnyway": "Save anyway"
     },
     "lyrics": {
@@ -241,7 +242,7 @@
       }
     },
     "lucky": {
-      "button": "I feel lucky",
+      "button": "Search and add",
       "searching": "Searching…",
       "deezer": "Found on Deezer",
       "videos": "Choose a YouTube video",
@@ -249,8 +250,13 @@
       "nothing": "Nothing found online: the song will be added as typed.",
       "noYoutube": "No YouTube videos for now.",
       "hint": "Adding the song fills in its original duration, its style and its first links.",
-      "quota": "Your band has used its 15 searches for today. Try again tomorrow, or add the song as typed.",
-      "linksFailed": "The song is added, but its links couldn't be: add them from its page."
+      "quota": "Your band has used its 15 searches for today. Try again tomorrow, or add the song as typed with Save only.",
+      "linksFailed": "The song is added, but its links couldn't be: add them from its page.",
+      "failed": {
+        "deezer": "Deezer had an error: some details may be missing.",
+        "youtube": "YouTube had an error: no videos this time."
+      },
+      "thumbnailFailed": "Thumbnail not available (error)"
     }
   },
   "login": {

@@ -113,13 +113,20 @@ export function InvitationsList({
                       variant="outline"
                       size="sm"
                       disabled={!online || resend.isPending}
+                      pending={resend.isPending && resend.variables.id === invitation.id}
                       onClick={() => resend.mutate({ id: invitation.id, email: invitation.email })}
                     >
                       {t("invitations.resend")}
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild disabled={!online}>
-                        <Button variant="ghost" size="sm" className="text-destructive">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          // The confirmation closes at once: the row shows it running.
+                          pending={revoke.isPending && revoke.variables === invitation.id}
+                        >
                           {t("invitations.revoke")}
                         </Button>
                       </AlertDialogTrigger>

@@ -71,7 +71,11 @@ describe("LRCLIB", () => {
     expect(busy.urls).toHaveLength(3);
 
     const down = lrclib(503, 503, 503);
-    expect(down.provider.search(song)).rejects.toMatchObject({ code: "lyrics_unavailable" });
+    // The cause is kept, for the log (#208).
+    expect(down.provider.search(song)).rejects.toMatchObject({
+      code: "lyrics_unavailable",
+      cause: expect.objectContaining({ message: "LRCLIB answered 503" }),
+    });
   });
 
   test("a refusal that isn't about load is not asked again", async () => {

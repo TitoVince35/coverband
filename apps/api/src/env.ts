@@ -86,7 +86,7 @@ const envSchema = z
     LRCLIB_URL: z.url({ protocol: /^https?$/ }).default("https://lrclib.net"),
     // Where a new song's details are looked up (#199). The end-to-end tests point it at a fake.
     DEEZER_URL: z.url({ protocol: /^https?$/ }).default("https://api.deezer.com"),
-    // YouTube Data API v3 (#200), server only. Unset: "I feel lucky" proposes no videos.
+    // YouTube Data API v3 (#200), server only. Unset: "Search and add" proposes no videos.
     YOUTUBE_API_KEY: z.string().min(1).optional(),
     // The end-to-end tests point them at a fake.
     YOUTUBE_API_URL: z

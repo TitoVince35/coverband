@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
+import { Loader2 } from "lucide-react";
 import { Slot } from "radix-ui";
 import type * as React from "react";
 
@@ -43,10 +44,15 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  pending = false,
+  disabled,
+  children,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    /** Its action is running (#208): a spinner instead of its icon, and disabled meanwhile. */
+    pending?: boolean;
   }) {
   const Comp = asChild ? Slot.Root : "button";
 
@@ -55,9 +61,23 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        pending && "[&>svg:not([data-spinner])]:hidden",
+      )}
+      disabled={disabled || pending}
+      aria-busy={pending || undefined}
       {...props}
-    />
+    >
+      {pending && !asChild ? (
+        <>
+          <Loader2 data-spinner className="animate-spin" aria-hidden="true" />
+          {children}
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
   );
 }
 

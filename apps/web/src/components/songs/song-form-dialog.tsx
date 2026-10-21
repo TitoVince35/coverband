@@ -14,6 +14,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, type ReactNode, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { AutofillSkeleton } from "@/components/loading";
 import { KeySelect } from "@/components/songs/key-select";
 import { AutofillResults } from "@/components/songs/song-autofill";
 import { Button } from "@/components/ui/button";
@@ -52,12 +53,15 @@ type Duplicate = { title: string; artist: string };
 const durations = ["standardDuration", "ownDuration"] as const;
 
 type Main = Pick<SongFields, "title" | "artist">;
+/** Saving: the fields, and whether "Save only" was chosen (adding without what was found). */
+type Saved = Partial<Main & Details> & { confirmDuplicate: boolean; saveOnly?: boolean };
 type Details = Pick<SongFields, (typeof durations)[number] | "key" | "bandKey" | "tempo" | "style">;
 
 /**
  * Adds a song to the repertoire (its title and artist only, then its page opens: #188), or edits
  * one block of it: its title and artist, or its details (#120). A song with the same title and
- * artist as another one of the repertoire is a warning: saving again confirms it (#88).
+ * artist as another one of the repertoire is a warning: saving again confirms it (#88). Adding
+ * searches the song online first ("Search and add", #201, #208), or not ("Save only").
  */
 export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props) {
   const { t } = useTranslation();
@@ -83,7 +87,9 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
   // Shown once; saving again with the same title and artist confirms it.
   const [duplicate, setDuplicate] = useState<Duplicate | null>(null);
   const form = useRef<HTMLFormElement>(null);
-  // "I feel lucky" (#201): what was found for this title and artist, and the chosen video.
+  // "Save only" submits the form too: the submission skips the search.
+  const saveOnly = useRef(false);
+  // The online search (#201): what was found for this title and artist, and the chosen video.
   const [lucky, setLucky] = useState<{ key: string; result: Autofill } | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
 
@@ -96,8 +102,9 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
   });
 
   /** Adds the song, then its first links from the search; a link that fails doesn't undo it. */
-  async function addWithChoices(fields: Main & { confirmDuplicate: boolean }) {
-    const choices = lucky?.key === songKey(fields) ? autofillChoices(lucky.result, chosen) : null;
+  async function addWithChoices({ saveOnly, ...fields }: Main & Saved) {
+    const choices =
+      !saveOnly && lucky?.key === songKey(fields) ? autofillChoices(lucky.result, chosen) : null;
     const added = await addSong(bandSlug, {
       ...fields,
       ...(choices && { standardDuration: choices.standardDuration, style: choices.style }),
@@ -116,11 +123,11 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
   }
 
   const save = useMutation({
-    mutationFn: (fields: Partial<Main & Details> & { confirmDuplicate: boolean }) =>
+    mutationFn: (fields: Saved) =>
       song
         ? updateSong(bandSlug, song.id, fields)
-        : // Adding: the form has the title and the artist, and maybe what "I feel lucky" found.
-          addWithChoices(fields as Main & { confirmDuplicate: boolean }),
+        : // Adding: the form has the title and the artist, and maybe what the search found.
+          addWithChoices(fields as Main & Saved),
     onSuccess: async (saved) => {
       toast.success(song ? t("songs.saved") : t("songs.added"));
       onOpenChange(false);
@@ -157,17 +164,16 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
     }
   }
 
-  /** "I feel lucky": the typed title and artist looked up online. */
-  function onLucky() {
-    const current = form.current;
-    if (!current?.reportValidity()) return;
-    const fields = new FormData(current);
-    const text = (name: string) => String(fields.get(name) ?? "").trim();
-    search.mutate({ title: text("title"), artist: text("artist") });
+  /** "Save only": the form's checks, then adding the song as typed. */
+  function onSaveOnly() {
+    saveOnly.current = true;
+    form.current?.requestSubmit();
   }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const only = saveOnly.current;
+    saveOnly.current = false;
     const form = new FormData(event.currentTarget);
     const text = (name: string) => String(form.get(name) ?? "").trim();
     const parsed = Object.fromEntries(
@@ -200,25 +206,43 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
         return;
       }
     }
+    // "Search and add": the search first, then adding with what it found.
+    if (!song && !only && lucky?.key !== songKey(main)) {
+      search.mutate(main);
+      return;
+    }
     // Only the fields shown: the others stay as they are.
     save.mutate({
       ...(withMain && main),
       ...(withDetails && details),
       confirmDuplicate: duplicate !== null,
+      ...(!song && { saveOnly: only }),
     });
   }
 
-  const submitLabel = save.isPending
-    ? song
+  const busy = save.isPending || search.isPending;
+  // Adding: "Save only" is the secondary button, the primary one searches, then adds.
+  const savingOnly = save.isPending && save.variables.saveOnly === true;
+  const submitLabel = song
+    ? save.isPending
       ? t("common.saving")
-      : t("songs.form.adding")
-    : duplicate
-      ? song
+      : duplicate
         ? t("songs.form.saveAnyway")
-        : t("songs.form.addAnyway")
-      : song
-        ? t("common.save")
-        : t("songs.form.add");
+        : t("common.save")
+    : search.isPending
+      ? t("songs.lucky.searching")
+      : save.isPending && !savingOnly
+        ? t("songs.form.adding")
+        : !lucky
+          ? t("songs.lucky.button")
+          : duplicate
+            ? t("songs.form.addAnyway")
+            : t("songs.form.add");
+  const saveOnlyLabel = savingOnly
+    ? t("songs.form.adding")
+    : duplicate
+      ? t("songs.form.saveAnyway")
+      : t("songs.form.saveOnly");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -348,6 +372,7 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
               </div>
             </>
           )}
+          {!song && search.isPending && <AutofillSkeleton />}
           {!song && lucky && (
             <AutofillResults result={lucky.result} chosen={chosen} onChoose={setChosen} />
           )}
@@ -376,13 +401,18 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
               <Button
                 type="button"
                 variant="outline"
-                onClick={onLucky}
-                disabled={search.isPending || save.isPending}
+                onClick={onSaveOnly}
+                disabled={busy}
+                pending={savingOnly}
               >
-                {search.isPending ? t("songs.lucky.searching") : t("songs.lucky.button")}
+                {saveOnlyLabel}
               </Button>
             )}
-            <Button type="submit" disabled={save.isPending || search.isPending}>
+            <Button
+              type="submit"
+              disabled={busy}
+              pending={search.isPending || (save.isPending && !savingOnly)}
+            >
               {submitLabel}
             </Button>
           </DialogFooter>

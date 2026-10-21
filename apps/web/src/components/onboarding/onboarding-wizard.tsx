@@ -354,7 +354,7 @@ function StepForm({
     >
       <CardContent className="space-y-4">{children}</CardContent>
       <CardFooter className="mt-6 flex-row-reverse justify-between gap-2">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" pending={pending}>
           {submitLabel ?? (pending ? t("invite.checking") : t("invite.next"))}
         </Button>
         {onBack && (

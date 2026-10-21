@@ -21,7 +21,7 @@ function fakeDeezer(answers: Record<string, unknown>, status = 200) {
   return { asked, catalog: createDeezerCatalog({ baseUrl: "https://deezer.test", fetch }) };
 }
 
-test("findTrack: the same title first, with its album's genre", async () => {
+test("findTrack: the same title first; its album's genre", async () => {
   const { asked, catalog } = fakeDeezer({
     "/search": {
       data: [zombie(3, "Zombie", "Bad Wolves"), zombie(1, "Zombie (Live)"), zombie(2, "Zombie")],
@@ -34,32 +34,40 @@ test("findTrack: the same title first, with its album's genre", async () => {
     artist: "The Cranberries",
     album: "No Need to Argue",
     duration: 306,
-    genre: "Rock",
+    albumId: 77,
   });
   expect(asked[0]?.searchParams.get("q")).toBe("the cranberries zombie");
+  expect(await catalog.albumGenre(77)).toBe("Rock");
 });
 
-test("findTrack: the same artist when no title matches; no genre is still a match", async () => {
+test("findTrack: the same artist when no title matches; an album without genre", async () => {
   const { catalog } = fakeDeezer({
     "/search": { data: [zombie(3, "Zombie", "Bad Wolves"), zombie(1, "Zombie (Live)")] },
+    "/album/77": { genres: { data: [] } },
   });
   expect(await catalog.findTrack({ title: "Zombie", artist: "The Cranberries" })).toMatchObject({
     title: "Zombie (Live)",
-    genre: null,
   });
+  expect(await catalog.albumGenre(77)).toBeNull();
 });
 
-test("findTrack: nothing found, Deezer refusing or down is no match, never an error", async () => {
+test("nothing found is null; Deezer refusing, down or answering something else throws", async () => {
   expect(await fakeDeezer({ "/search": { data: [] } }).catalog.findTrack(song)).toBeNull();
-  expect(await fakeDeezer({}).catalog.findTrack(song)).toBeNull();
-  expect(await fakeDeezer({ "/search": { data: [] } }, 503).catalog.findTrack(song)).toBeNull();
+  expect(fakeDeezer({}).catalog.findTrack(song)).rejects.toThrow("refused");
+  expect(fakeDeezer({}).catalog.albumGenre(77)).rejects.toThrow("refused");
+  expect(fakeDeezer({ "/search": { data: [] } }, 503).catalog.findTrack(song)).rejects.toThrow(
+    "503",
+  );
+  expect(fakeDeezer({ "/search": { tracks: [] } }).catalog.findTrack(song)).rejects.toThrow(
+    "something else",
+  );
   const down = createDeezerCatalog({
     baseUrl: "https://deezer.test",
     fetch: async () => {
       throw new Error("ECONNREFUSED");
     },
   });
-  expect(await down.findTrack(song)).toBeNull();
+  expect(down.findTrack(song)).rejects.toThrow("ECONNREFUSED");
 });
 
 const song = { title: "Zombie", artist: "The Cranberries" };

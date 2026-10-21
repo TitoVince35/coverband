@@ -23,10 +23,14 @@ export type LyricsProvider = {
   search(query: LyricsQuery): Promise<LyricsEntry[]>;
 };
 
-/** The lyrics service doesn't answer (down, slow, refusing): the member types them in. */
+/**
+ * The lyrics service doesn't answer (down, slow, refusing): the member types them in. Its cause
+ * is logged by the app's `onError` (#208), never sent to the member.
+ */
 export class LyricsUnavailableError extends AppError {
-  constructor() {
+  constructor(cause?: unknown) {
     super("lyrics_unavailable", "The lyrics service is not available right now");
+    this.cause = cause;
   }
 }
 
@@ -114,8 +118,8 @@ export function createLrclibProvider({
                 : entry.plainLyrics,
           };
         });
-      } catch {
-        throw new LyricsUnavailableError();
+      } catch (error) {
+        throw new LyricsUnavailableError(error);
       }
     },
   };
@@ -134,7 +138,7 @@ export function createMemoryLyricsProvider(entries: LyricsEntry[] = []) {
     down: false,
     async search(query) {
       searches.push(query);
-      if (provider.down) throw new LyricsUnavailableError();
+      if (provider.down) throw new LyricsUnavailableError(new Error("LRCLIB is down"));
       return provider.entries;
     },
   };

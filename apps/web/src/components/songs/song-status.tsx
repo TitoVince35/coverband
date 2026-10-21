@@ -1,4 +1,5 @@
 import { MAX_ENERGY, SONG_STATUSES, type SongStatus } from "@coverband/shared";
+import { Loader2 } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +79,7 @@ export function StatusPicker({
           {t(`songs.status.${status}`)}
         </label>
       ))}
+      {busy && <Saving />}
     </fieldset>
   );
 }
@@ -117,6 +119,17 @@ export function EnergyPicker({
           ? t("songs.energy.value", { count: value, max: MAX_ENERGY })
           : t("songs.energy.none")}
       </span>
+      {busy && <Saving />}
     </div>
+  );
+}
+
+/** A picker's change being saved (#208). */
+function Saving() {
+  return (
+    <Loader2
+      aria-hidden="true"
+      className="mx-1.5 size-4 animate-spin self-center text-muted-foreground"
+    />
   );
 }

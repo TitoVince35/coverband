@@ -8,7 +8,7 @@ export const FAKE_LRCLIB_PORT = 3101;
 /** A second server of the same build, with a beta access code (`access.e2e.ts`). */
 export const GATED_PORT = 3102;
 export const GATED_ACCESS_CODE = "e2e access code";
-/** The fake music services "I feel lucky" searches (`fake-music.ts`: Deezer and YouTube). */
+/** The fake music services "Search and add" searches (`fake-music.ts`: Deezer and YouTube). */
 export const FAKE_MUSIC_PORT = 3103;
 const fakeMusic = `http://localhost:${FAKE_MUSIC_PORT}`;
 const ci = Boolean(process.env.CI);
@@ -83,7 +83,7 @@ export default defineConfig({
       reuseExistingServer: !ci,
       env: { PORT: String(FAKE_LRCLIB_PORT) },
     },
-    // Nor do "I feel lucky" searches reach the real Deezer and YouTube.
+    // Nor do "Search and add" searches reach the real Deezer and YouTube.
     {
       command: "bun fake-music.ts",
       url: `${fakeMusic}/health`,

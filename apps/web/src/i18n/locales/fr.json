@@ -194,6 +194,7 @@
       "add": "Ajouter",
       "adding": "Ajout…",
       "addAnyway": "Ajouter quand même",
+      "saveOnly": "Enregistrer seulement",
       "saveAnyway": "Enregistrer quand même"
     },
     "lyrics": {
@@ -241,7 +242,7 @@
       }
     },
     "lucky": {
-      "button": "J'ai de la chance",
+      "button": "Chercher et ajouter",
       "searching": "Recherche…",
       "deezer": "Trouvée sur Deezer",
       "videos": "Choisissez une vidéo YouTube",
@@ -249,8 +250,13 @@
       "nothing": "Rien trouvé en ligne : la chanson sera ajoutée telle quelle.",
       "noYoutube": "Pas de vidéos YouTube pour le moment.",
       "hint": "L'ajout remplit sa durée d'origine, son style et ses premiers liens.",
-      "quota": "Votre groupe a utilisé ses 15 recherches du jour. Réessayez demain, ou ajoutez la chanson telle quelle.",
-      "linksFailed": "La chanson est ajoutée, mais pas ses liens : ajoutez-les depuis sa page."
+      "quota": "Votre groupe a utilisé ses 15 recherches du jour. Réessayez demain, ou ajoutez la chanson telle quelle avec « Enregistrer seulement ».",
+      "linksFailed": "La chanson est ajoutée, mais pas ses liens : ajoutez-les depuis sa page.",
+      "failed": {
+        "deezer": "Deezer a rencontré une erreur : des détails peuvent manquer.",
+        "youtube": "YouTube a rencontré une erreur : pas de vidéos cette fois."
+      },
+      "thumbnailFailed": "Miniature indisponible (erreur)"
     }
   },
   "login": {

@@ -125,7 +125,7 @@ function ProfileCard() {
           )}
         </CardContent>
         <CardFooter className="mt-6 flex-col items-stretch">
-          <Button type="submit" disabled={!online || update.isPending}>
+          <Button type="submit" disabled={!online} pending={update.isPending}>
             {update.isPending ? t("account.profile.submitting") : t("account.profile.submit")}
           </Button>
         </CardFooter>
@@ -204,7 +204,7 @@ function ChangePasswordCard() {
           )}
         </CardContent>
         <CardFooter className="mt-6 flex-col items-stretch">
-          <Button type="submit" disabled={!online || change.isPending}>
+          <Button type="submit" disabled={!online} pending={change.isPending}>
             {change.isPending
               ? t("account.changePassword.submitting")
               : t("account.changePassword.submit")}
