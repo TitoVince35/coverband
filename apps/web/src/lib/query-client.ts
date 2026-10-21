@@ -29,10 +29,17 @@ export function createQueryClient() {
   });
 }
 
+/** When this page's app started: data updated since then came from the server, not the saved copy. */
+const APP_STARTED_AT = Date.now();
+
 /**
  * What a route guard reads (the session, the access code): online, the server's answer, reused
  * while fresh; offline, or when the server can't be reached (a venue's Wi-Fi), the saved copy
  * (#165), or undefined without one. Never a fetch waiting for the connection: a blank page.
+ *
+ * Stale data the server gave since the app started is answered at once and checked again in the
+ * background (#211): guards run on every navigation, and waiting for a sleeping database would
+ * freeze the page shown. `watchGuardData` runs the guards again when the answer changes.
  */
 export async function guardData<T, K extends QueryKey>(
   queryClient: QueryClient,
@@ -40,6 +47,12 @@ export async function guardData<T, K extends QueryKey>(
 ): Promise<T | undefined> {
   const saved = () => queryClient.getQueryData<T>(options.queryKey);
   if (!onlineManager.isOnline()) return saved();
+  const state = queryClient.getQueryState<T>(options.queryKey);
+  if (state?.data !== undefined && state.dataUpdatedAt >= APP_STARTED_AT) {
+    // Fresh, nothing is fetched; stale, the answer comes later (an unreachable server keeps it).
+    void queryClient.fetchQuery({ ...options, retry: false }).catch(() => {});
+    return state.data;
+  }
   try {
     return await queryClient.fetchQuery({ ...options, retry: false });
   } catch (error) {
@@ -47,6 +60,27 @@ export async function guardData<T, K extends QueryKey>(
     if (data === undefined) throw error;
     return data;
   }
+}
+
+/**
+ * Calls `onChange` when the data of one of these queries changes (a background check of
+ * `guardData` found the user logged out, or a new access code): the router runs its guards again.
+ */
+export function watchGuardData(
+  queryClient: QueryClient,
+  keys: readonly QueryKey[],
+  onChange: () => void,
+) {
+  const last = new Map(keys.map((key) => [JSON.stringify(key), queryClient.getQueryData(key)]));
+  return queryClient.getQueryCache().subscribe((event) => {
+    const key = JSON.stringify(event.query.queryKey);
+    if (event.type !== "updated" || !last.has(key)) return;
+    const data = event.query.state.data;
+    const before = last.get(key);
+    last.set(key, data);
+    // Same answer, same object (structural sharing); a first answer: the guards are waiting for it.
+    if (before !== undefined && before !== data) onChange();
+  });
 }
 
 /** Query key of the current session (`sessionQuery` in `@/lib/auth`). */

@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet, redirect } from "@tanstack/react-router";
 import { DevLinks } from "@/components/dev-links";
 import { LanguageToggle } from "@/components/language-toggle";
+import { NavigationProgress } from "@/components/loading";
 import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
@@ -47,6 +48,7 @@ function RootLayout() {
               <UserMenu />
             </div>
           </div>
+          <NavigationProgress />
         </header>
         <OfflineBanner />
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">

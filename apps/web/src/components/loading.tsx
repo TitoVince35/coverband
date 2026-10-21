@@ -1,3 +1,4 @@
+import { useRouterState } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -51,6 +52,27 @@ export function PageSpinner() {
     <Loading className="flex justify-center py-16" delayed={false}>
       <Loader2 className="size-8 animate-spin text-muted-foreground" />
     </Loading>
+  );
+}
+
+/**
+ * A thin bar under the header while a navigation waits (#211), whatever for (a page's code, a
+ * guard): the page shown never just freezes. After LOADING_DELAY_MS, like the rest.
+ */
+export function NavigationProgress() {
+  const { t } = useTranslation();
+  const pending = useRouterState({ select: (state) => state.status === "pending" });
+  if (!pending) return null;
+  return (
+    <Delayed>
+      <div
+        role="progressbar"
+        aria-label={t("common.loading")}
+        className="absolute inset-x-0 bottom-0 h-0.5 overflow-hidden"
+      >
+        <div className="h-full w-1/3 animate-[navigation-progress_1s_ease-in-out_infinite] bg-primary motion-reduce:w-full motion-reduce:animate-pulse" />
+      </div>
+    </Delayed>
   );
 }
 

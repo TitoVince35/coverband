@@ -3,6 +3,8 @@
 > 🕒 Brief posted on Wednesday 2026/10/21 20:02
 >
 > 🕒 Brief settled on Wednesday 2026/10/21 20:02
+>
+> 🕒 Issues completed on Wednesday 2026/10/21 23:13
 
 Drafted by Claude from [019_overall_feedback](019_overall_feedback.md), settled by Vince.
 
@@ -29,3 +31,4 @@ I'd like to pre-fill some details of a new song from YouTube and Deezer.
 - [#200 Autofill: YouTube search, ranking and thumbnails](https://github.com/TitoVince35/coverband/issues/200)
 - [#201 Autofill: "I feel lucky" in the new song dialog](https://github.com/TitoVince35/coverband/issues/201)
 - [#202 Autofill: the YouTube API key in production](https://github.com/TitoVince35/coverband/issues/202)
+- [#208 Waiting animations on every fetch and mutation; Search and add](https://github.com/TitoVince35/coverband/issues/208)
