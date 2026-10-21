@@ -108,7 +108,12 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
       <div className="flex flex-wrap gap-2">
         {picked ? (
           <>
-            <Button type="button" onClick={() => save.mutate(picked)} disabled={!online || busy}>
+            <Button
+              type="button"
+              onClick={() => save.mutate(picked)}
+              disabled={!online || busy}
+              pending={save.isPending}
+            >
               {save.isPending ? t("common.saving") : t("band.logo.save")}
             </Button>
             <Button
@@ -143,6 +148,7 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
                 variant="outline"
                 onClick={() => remove.mutate()}
                 disabled={!online || busy}
+                pending={remove.isPending}
               >
                 {remove.isPending ? t("band.logo.removing") : t("band.logo.remove")}
               </Button>

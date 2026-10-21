@@ -263,13 +263,14 @@ function MediaDialog({
                 variant="ghost"
                 className="text-destructive"
                 disabled={busy}
+                pending={remove.isPending}
                 onClick={() => remove.mutate()}
               >
                 <Trash2 />
                 {t("songs.media.remove")}
               </Button>
             )}
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy} pending={save.isPending}>
               {save.isPending ? t("common.saving") : t("common.save")}
             </Button>
           </DialogFooter>

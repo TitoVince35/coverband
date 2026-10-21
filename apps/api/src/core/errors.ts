@@ -46,6 +46,9 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
  * status from ERROR_STATUS.
  */
 export class AppError extends Error {
+  /** An external service that failed (#208): logged as an error, never sent. */
+  declare cause?: unknown;
+
   constructor(
     readonly code: ErrorCode,
     message: string,

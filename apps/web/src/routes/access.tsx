@@ -82,7 +82,7 @@ function AccessPage() {
             )}
           </CardContent>
           <CardFooter className="mt-6 flex-col items-stretch gap-4">
-            <Button type="submit" disabled={submit.isPending}>
+            <Button type="submit" pending={submit.isPending}>
               {submit.isPending ? t("access.submitting") : t("access.submit")}
             </Button>
             <p className="text-muted-foreground text-xs">{t("access.invited")}</p>

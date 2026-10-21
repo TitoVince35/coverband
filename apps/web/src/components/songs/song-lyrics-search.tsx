@@ -180,7 +180,7 @@ function SearchContent({
                 <ChevronLeft />
                 {t("songs.lyrics.search.back")}
               </Button>
-              <Button disabled={use.isPending} onClick={() => use.mutate(chosen)}>
+              <Button pending={use.isPending} onClick={() => use.mutate(chosen)}>
                 {use.isPending ? t("common.saving") : t("songs.lyrics.search.use")}
               </Button>
             </div>

@@ -15,7 +15,7 @@ export type Video = {
 export type VideoSearch = {
   /** Videos for the song, YouTube's order; throws when YouTube refuses or doesn't answer. */
   search(song: { title: string; artist: string }): Promise<Video[]>;
-  /** A video's thumbnail (its image file), or null when there is none. */
+  /** A video's thumbnail (its image file), or null when there is none; throws when YouTube fails. */
   thumbnail(videoId: string): Promise<{ body: ReadableStream; type: string } | null>;
 };
 
@@ -130,7 +130,8 @@ export function createYoutubeSearch({
       const res = await fetch(under(thumbnailsUrl, `vi/${videoId}/mqdefault.jpg`), {
         signal: AbortSignal.timeout(timeoutMs),
       });
-      if (!res.ok || !res.body) return null;
+      if (res.status === 404) return null;
+      if (!res.ok || !res.body) throw new Error(`YouTube's images answered ${res.status}`);
       return { body: res.body, type: res.headers.get("content-type") ?? "image/jpeg" };
     },
   };
@@ -188,7 +189,7 @@ export function videoScore(video: Video, song: { title: string; artist: string }
   return score;
 }
 
-/** How many videos "I feel lucky" proposes. */
+/** How many videos "Search and add" proposes. */
 export const VIDEO_PROPOSALS = 5;
 
 /** The best videos for the song, best first (YouTube's order between equals). */
@@ -203,6 +204,7 @@ export function rankVideos(videos: readonly Video[], song: { title: string; arti
 /** Tests: answers with the given videos for every search, and remembers the searches. */
 export function createMemoryVideoSearch(videos: Video[] = []) {
   const searches: { title: string; artist: string }[] = [];
+  /** `down` fails the searches and the thumbnails. */
   const search: VideoSearch & { videos: Video[]; searches: typeof searches; down: boolean } = {
     videos,
     searches,
@@ -214,6 +216,7 @@ export function createMemoryVideoSearch(videos: Video[] = []) {
     },
     async thumbnail(videoId) {
       if (!VIDEO_ID.test(videoId)) return null;
+      if (search.down) throw new Error("YouTube is down");
       return { body: new Blob([`thumbnail ${videoId}`]).stream(), type: "image/jpeg" };
     },
   };

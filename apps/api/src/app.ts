@@ -7,7 +7,7 @@ import { accessGate, accessRoutes } from "./core/http/access";
 import { healthRoutes } from "./core/http/health";
 import { internalRoutes } from "./core/http/internal";
 import { redirectHosts } from "./core/http/redirect";
-import { requestLog } from "./core/http/request-log";
+import { type LogEnv, requestLog } from "./core/http/request-log";
 import { noIndex, requestGuards, securityHeaders, wantsHsts } from "./core/http/security";
 import { loadSession, type SessionEnv } from "./core/http/session";
 import { staticCacheHeaders } from "./core/http/static-cache";
@@ -64,7 +64,7 @@ function createApi(deps: AppDeps) {
 export type AppType = ReturnType<typeof createApi>;
 
 export function createApp({ deps, webDistDir }: AppOptions) {
-  const app = new Hono();
+  const app = new Hono<LogEnv>();
 
   // First, so it times and logs everything below; it also logs the 500s of onError.
   app.use(requestLog(deps.log));
@@ -76,6 +76,10 @@ export function createApp({ deps, webDistDir }: AppOptions) {
   // (logged with its stack by requestLog).
   app.onError((err, c) => {
     if (err instanceof AppError) {
+      // A refusal caused by an external service that failed (LRCLIB down): its cause is logged.
+      if (err.cause !== undefined) {
+        c.var.log.error(`${err.code}: ${err.message}`, { err: err.cause });
+      }
       return appErrorResponse(c, err);
     }
     if (err instanceof HTTPException) {

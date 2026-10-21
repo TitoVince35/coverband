@@ -86,7 +86,7 @@ function ForgotPasswordPage() {
             )}
           </CardContent>
           <CardFooter className="mt-6 flex-col items-stretch gap-2">
-            <Button type="submit" disabled={request.isPending}>
+            <Button type="submit" pending={request.isPending}>
               {request.isPending ? t("forgotPassword.submitting") : t("forgotPassword.submit")}
             </Button>
             <Button asChild variant="ghost">

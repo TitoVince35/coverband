@@ -13,11 +13,19 @@ export type VideoProposal = {
   thumbnailUrl: string;
 };
 
+/** The services a search asks; one that fails is said (#208): the member knows it's an error. */
+export type AutofillSource = "deezer" | "youtube";
+
 /**
- * What "I feel lucky" proposes for a new song: Deezer's track (#199), and YouTube's best videos
- * (#200), or null when YouTube isn't configured or doesn't answer.
+ * What "Search and add" proposes for a new song: Deezer's track (#199), and YouTube's best videos
+ * (#200), or null when YouTube isn't configured or fails; `failed` lists the services that failed
+ * (logged, the member sees which, never their message).
  */
-export type Autofill = { track: CatalogTrack | null; videos: VideoProposal[] | null };
+export type Autofill = {
+  track: CatalogTrack | null;
+  videos: VideoProposal[] | null;
+  failed: AutofillSource[];
+};
 
 /** Looks a new song up by its title and artist. Nothing is saved: the member chooses. */
 export async function autofill(
@@ -26,6 +34,32 @@ export async function autofill(
   band: { slug: string },
   song: { title: string; artist: string },
 ): Promise<Autofill> {
+  const failed: AutofillSource[] = [];
+
+  const findTrack = async (): Promise<CatalogTrack | null> => {
+    let found: Awaited<ReturnType<typeof catalog.findTrack>>;
+    try {
+      found = await catalog.findTrack(song);
+    } catch (error) {
+      log.error("Deezer search failed", { err: error });
+      failed.push("deezer");
+      return null;
+    }
+    if (!found) return null;
+    const { albumId, ...track } = found;
+    let genre: string | null = null;
+    if (albumId !== null) {
+      try {
+        genre = await catalog.albumGenre(albumId);
+      } catch (error) {
+        // The track is still a match, without its genre.
+        log.error("Deezer album failed", { err: error, albumId });
+        failed.push("deezer");
+      }
+    }
+    return { ...track, genre };
+  };
+
   const searchVideos = async () => {
     if (!videos) return null;
     try {
@@ -39,10 +73,12 @@ export async function autofill(
       }));
     } catch (error) {
       // A quota exceeded or a bad key: the member still gets Deezer's details.
-      log.warn("YouTube search failed", { err: error });
+      log.error("YouTube search failed", { err: error });
+      failed.push("youtube");
       return null;
     }
   };
-  const [track, proposals] = await Promise.all([catalog.findTrack(song), searchVideos()]);
-  return { track, videos: proposals };
+
+  const [track, proposals] = await Promise.all([findTrack(), searchVideos()]);
+  return { track, videos: proposals, failed };
 }

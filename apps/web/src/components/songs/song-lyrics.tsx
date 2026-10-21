@@ -254,7 +254,12 @@ function EditorContent({
             </Button>
             <WebSearchButton song={song} />
           </div>
-          <Button type="submit" form="lyrics-form" disabled={!changed || tooLong || save.isPending}>
+          <Button
+            type="submit"
+            form="lyrics-form"
+            disabled={!changed || tooLong}
+            pending={save.isPending}
+          >
             {save.isPending ? t("common.saving") : t("common.save")}
           </Button>
         </div>

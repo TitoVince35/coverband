@@ -6,6 +6,6 @@ admin_email     = "you@example.com"
 mail_from       = "Coverband Beta <noreply@coverband.fr>"
 # app_subdomain = "app"
 # beta_access_code = "..."   # empty or unset: no gate
-# youtube_api_key  = "..."   # empty or unset: "I feel lucky" proposes no videos
+# youtube_api_key  = "..."   # empty or unset: "Search and add" proposes no videos
 # budget_eur    = 20
 # alert_email   = "you@example.com"

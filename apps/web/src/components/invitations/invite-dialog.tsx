@@ -135,7 +135,7 @@ export function InviteDialog({
             </p>
           )}
           <DialogFooter>
-            <Button type="submit" disabled={invite.isPending}>
+            <Button type="submit" pending={invite.isPending}>
               {invite.isPending ? t("invitations.sending") : t("invitations.submit")}
             </Button>
           </DialogFooter>

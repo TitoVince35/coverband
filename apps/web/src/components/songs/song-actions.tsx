@@ -64,7 +64,8 @@ export function SongActions({ bandSlug, song, isLeader }: Props) {
         {!archived && (
           <Button
             variant="outline"
-            disabled={!online || archive.isPending}
+            disabled={!online}
+            pending={archive.isPending}
             onClick={() => archive.mutate(true)}
           >
             <Archive />
@@ -74,7 +75,12 @@ export function SongActions({ bandSlug, song, isLeader }: Props) {
         {isLeader && (
           <AlertDialog>
             <AlertDialogTrigger asChild disabled={!online}>
-              <Button variant="ghost" className="text-destructive">
+              <Button
+                variant="ghost"
+                className="text-destructive"
+                // The confirmation closes at once: the button shows it running.
+                pending={remove.isPending}
+              >
                 <Trash2 />
                 {t("songs.delete.button")}
               </Button>
@@ -125,7 +131,12 @@ export function ArchivedBanner({ bandSlug, songId }: { bandSlug: string; songId:
       <p role="status" className="flex-1">
         {t("songs.archive.banner")}
       </p>
-      <Button size="sm" disabled={!online || restore.isPending} onClick={() => restore.mutate()}>
+      <Button
+        size="sm"
+        disabled={!online}
+        pending={restore.isPending}
+        onClick={() => restore.mutate()}
+      >
         <ArchiveRestore />
         {t("songs.archive.restore")}
       </Button>
