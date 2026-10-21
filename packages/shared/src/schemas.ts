@@ -115,6 +115,9 @@ const confirm = { confirmDuplicate: z.boolean().optional() };
 /** A new song: title, artist and durations; the details are optional. */
 export const addSongBody = songFields
   .partial({
+    // Adding asks for the title and artist only (#188): the rest is filled in on the song's page.
+    standardDuration: true,
+    ownDuration: true,
     key: true,
     bandKey: true,
     tempo: true,
