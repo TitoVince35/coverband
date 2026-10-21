@@ -415,7 +415,10 @@
     "tools": "Outils de développement",
     "openMailpit": "Ouvrir Mailpit (e-mails envoyés en local)",
     "openDatabase": "Ouvrir Drizzle Studio (base de données)",
-    "openStorage": "Ouvrir Garage (stockage d'objets)"
+    "openStorage": "Ouvrir Garage (stockage d'objets)",
+    "slowNetwork": "Réseau lent",
+    "slowNetworkOn": "Réseau lent : activé (chaque requête à l'API attend 2 s)",
+    "slowNetworkOff": "Réseau lent : désactivé"
   },
   "language": {
     "change": "Changer de langue"

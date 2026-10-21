@@ -7,6 +7,7 @@ import { startAppUpdates } from "./lib/app-updates";
 import { listenForInstall } from "./lib/install";
 import { startOfflineCache } from "./lib/offline-cache";
 import { createQueryClient } from "./lib/query-client";
+import { installSlowNetwork } from "./lib/slow-network";
 import { routeTree } from "./routeTree.gen";
 import "./i18n";
 import "./index.css";
@@ -14,6 +15,9 @@ import { LOADING_DELAY_MS, PageSpinner } from "./components/loading";
 
 // A stale build reloads by itself (#164); the dev server has no service worker.
 if (import.meta.env.PROD) startAppUpdates();
+
+// Development only: the slow network switch of the dev tools (#197).
+if (import.meta.env.DEV) installSlowNetwork();
 
 // Chrome's install prompt comes once, early: listen before anything renders (#166).
 listenForInstall();

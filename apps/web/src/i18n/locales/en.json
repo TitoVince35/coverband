@@ -415,7 +415,10 @@
     "tools": "Development tools",
     "openMailpit": "Open Mailpit (emails sent locally)",
     "openDatabase": "Open Drizzle Studio (database)",
-    "openStorage": "Open Garage (object storage)"
+    "openStorage": "Open Garage (object storage)",
+    "slowNetwork": "Slow network",
+    "slowNetworkOn": "Slow network: on (every API request waits 2 s)",
+    "slowNetworkOff": "Slow network: off"
   },
   "language": {
     "change": "Change language"
