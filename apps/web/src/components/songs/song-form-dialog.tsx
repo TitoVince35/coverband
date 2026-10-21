@@ -102,10 +102,16 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
       ...fields,
       ...(choices && { standardDuration: choices.standardDuration, style: choices.style }),
     });
-    const links = await Promise.allSettled(
-      (choices?.links ?? []).map((link) => addMedia(bandSlug, added.id, link)),
-    );
-    if (links.some((link) => link.status === "rejected")) toast.error(t("songs.lucky.linksFailed"));
+    // One after the other: links are listed oldest first, the chosen video first.
+    let failed = false;
+    for (const link of choices?.links ?? []) {
+      try {
+        await addMedia(bandSlug, added.id, link);
+      } catch {
+        failed = true;
+      }
+    }
+    if (failed) toast.error(t("songs.lucky.linksFailed"));
     return added;
   }
 
