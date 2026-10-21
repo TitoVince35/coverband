@@ -55,7 +55,8 @@ export type SongFields = {
 /** Adds a song; throws `song_duplicate` for a song already in the repertoire, unless confirmed. */
 export async function addSong(
   bandSlug: string,
-  json: Pick<SongFields, "title" | "artist"> & { confirmDuplicate?: boolean },
+  json: Pick<SongFields, "title" | "artist"> &
+    Partial<Pick<SongFields, "standardDuration" | "style">> & { confirmDuplicate?: boolean },
 ) {
   const res = await api.bands[":bandSlug"].songs.$post({ param: { bandSlug }, json });
   return (await (await ensureOk(res)).json()).song;

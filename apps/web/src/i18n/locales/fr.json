@@ -239,6 +239,18 @@
         "query": "\"{{title}}\" {{artist}} paroles",
         "textQuery": "{{text}} paroles"
       }
+    },
+    "lucky": {
+      "button": "J'ai de la chance",
+      "searching": "Recherche…",
+      "deezer": "Trouvée sur Deezer",
+      "videos": "Choisissez une vidéo YouTube",
+      "noVideo": "Aucune vidéo",
+      "nothing": "Rien trouvé en ligne : la chanson sera ajoutée telle quelle.",
+      "noYoutube": "Pas de vidéos YouTube pour le moment.",
+      "hint": "L'ajout remplit sa durée d'origine, son style et ses premiers liens.",
+      "quota": "Votre groupe a utilisé ses 15 recherches du jour. Réessayez demain, ou ajoutez la chanson telle quelle.",
+      "linksFailed": "La chanson est ajoutée, mais pas ses liens : ajoutez-les depuis sa page."
     }
   },
   "login": {
