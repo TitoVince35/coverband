@@ -1,6 +1,7 @@
 import { ADMIN_ROLE } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { ListSkeleton } from "@/components/loading";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { adminUsersQuery } from "@/lib/admin";
@@ -18,7 +19,7 @@ export function UsersList() {
       </CardHeader>
       <CardContent>
         {users.isPending ? (
-          <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
+          <ListSkeleton />
         ) : users.isError ? (
           <p role="alert" className="text-destructive text-sm">
             {errorMessage(t, users.error)}

@@ -1,4 +1,4 @@
-import { bandBody, logoBackgroundBody, logoUploadBody } from "@coverband/shared/schemas";
+import { bandBody, logoUploadBody } from "@coverband/shared/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { apiError } from "../../core/errors";
@@ -7,7 +7,7 @@ import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import { instrumentsOf } from "../instruments/service";
 import { type BandEnv, requireLeader, requireMember } from "./guard";
-import { logoOf, readLogo, removeLogo, setLogo, setLogoBackground } from "./logo";
+import { logoOf, readLogo, removeLogo, setLogo } from "./logo";
 import { bandsOf, updateBandGenre } from "./service";
 
 /**
@@ -52,26 +52,13 @@ export function bandRoutes(deps: AppDeps) {
         requireLeader,
         zValidator("form", logoUploadBody, validationHook),
         async (c) => {
-          const { logo, thumbnail, background } = c.req.valid("form");
+          const { logo, thumbnail } = c.req.valid("form");
           const bytes = async (file: File) => new Uint8Array(await file.arrayBuffer());
           return c.json({
             logo: await setLogo({ ...deps, log: c.var.log }, c.var.band, c.var.user.id, {
               logo: await bytes(logo),
               thumbnail: await bytes(thumbnail),
-              background,
             }),
-          });
-        },
-      )
-      .patch(
-        "/:bandSlug/logo",
-        member,
-        requireLeader,
-        zValidator("json", logoBackgroundBody, validationHook),
-        async (c) => {
-          const { background } = c.req.valid("json");
-          return c.json({
-            logo: await setLogoBackground(deps, c.var.band, c.var.user.id, background),
           });
         },
       )

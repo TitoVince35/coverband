@@ -8,6 +8,9 @@ export const FAKE_LRCLIB_PORT = 3101;
 /** A second server of the same build, with a beta access code (`access.e2e.ts`). */
 export const GATED_PORT = 3102;
 export const GATED_ACCESS_CODE = "e2e access code";
+/** The fake music services "Search and add" searches (`fake-music.ts`: Deezer and YouTube). */
+export const FAKE_MUSIC_PORT = 3103;
+const fakeMusic = `http://localhost:${FAKE_MUSIC_PORT}`;
 const ci = Boolean(process.env.CI);
 
 export default defineConfig({
@@ -40,7 +43,7 @@ export default defineConfig({
       command: "bun run build && bun apps/api/src/main.ts",
       cwd: "..",
       url: `${baseURL}/api/health`,
-      // Never reused: a server started otherwise would search the real LRCLIB.
+      // Never reused: a server started otherwise would search the real LRCLIB and Deezer.
       reuseExistingServer: false,
       timeout: 180_000,
       env: {
@@ -48,6 +51,10 @@ export default defineConfig({
         BETTER_AUTH_URL: baseURL,
         WEB_DIST_DIR: "apps/web/dist",
         LRCLIB_URL: `http://localhost:${FAKE_LRCLIB_PORT}`,
+        DEEZER_URL: `${fakeMusic}/deezer`,
+        YOUTUBE_API_KEY: "e2e-youtube-key",
+        YOUTUBE_API_URL: `${fakeMusic}/youtube/v3`,
+        YOUTUBE_THUMBNAILS_URL: `${fakeMusic}/ytimg`,
       },
     },
     // The same build behind the beta access code. Started with the first one, whose build is
@@ -63,6 +70,10 @@ export default defineConfig({
         WEB_DIST_DIR: "apps/web/dist",
         BETA_ACCESS_CODE: GATED_ACCESS_CODE,
         LRCLIB_URL: `http://localhost:${FAKE_LRCLIB_PORT}`,
+        DEEZER_URL: `${fakeMusic}/deezer`,
+        YOUTUBE_API_KEY: "e2e-youtube-key",
+        YOUTUBE_API_URL: `${fakeMusic}/youtube/v3`,
+        YOUTUBE_THUMBNAILS_URL: `${fakeMusic}/ytimg`,
       },
     },
     // Lyrics searches never reach the real LRCLIB.
@@ -71,6 +82,13 @@ export default defineConfig({
       url: `http://localhost:${FAKE_LRCLIB_PORT}/health`,
       reuseExistingServer: !ci,
       env: { PORT: String(FAKE_LRCLIB_PORT) },
+    },
+    // Nor do "Search and add" searches reach the real Deezer and YouTube.
+    {
+      command: "bun fake-music.ts",
+      url: `${fakeMusic}/health`,
+      reuseExistingServer: !ci,
+      env: { PORT: String(FAKE_MUSIC_PORT) },
     },
   ],
 });

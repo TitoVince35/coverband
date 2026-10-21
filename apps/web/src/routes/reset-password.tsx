@@ -92,7 +92,7 @@ function ResetPasswordPage() {
             )}
           </CardContent>
           <CardFooter className="mt-6 flex-col items-stretch">
-            <Button type="submit" disabled={reset.isPending}>
+            <Button type="submit" pending={reset.isPending}>
               {reset.isPending ? t("resetPassword.submitting") : t("resetPassword.submit")}
             </Button>
           </CardFooter>

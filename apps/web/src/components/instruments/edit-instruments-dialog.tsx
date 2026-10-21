@@ -94,7 +94,7 @@ export function EditInstrumentsDialog({
         <DialogFooter>
           <Button
             onClick={() => save.mutate({ instruments: withAdded(list, typed) })}
-            disabled={save.isPending}
+            pending={save.isPending}
           >
             {save.isPending ? t("common.saving") : t("common.save")}
           </Button>

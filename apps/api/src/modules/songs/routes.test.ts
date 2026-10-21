@@ -104,9 +104,16 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
       ownDuration: 250,
     });
     expect((await add("lea", { title: "abba medley", artist: "ABBA" })).status).toBe(201);
+    // The title and the artist are enough (#188): the web app asks for them only.
+    const quick = await call(`/bands/${slug}/songs`, "lea", {
+      method: "POST",
+      body: { title: "Quick add", artist: "Nobody" },
+    });
+    expect(quick.status).toBe(201);
+    expect(await songOf(quick)).toMatchObject({ standardDuration: null, ownDuration: null });
 
     const list = (await (await call(`/bands/${slug}/songs`, "lea")).json()) as { songs: Song[] };
-    expect(list.songs.map((s) => s.title)).toEqual(["abba medley", "Creep"]);
+    expect(list.songs.map((s) => s.title)).toEqual(["abba medley", "Creep", "Quick add"]);
 
     const one = await songOf(await call(`/bands/${slug}/songs/${creep.id}`, "lea"));
     expect(one).toMatchObject({ title: "Creep", addedBy: "max name" });

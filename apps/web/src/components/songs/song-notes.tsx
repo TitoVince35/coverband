@@ -88,7 +88,7 @@ export function SongNotes({
             </p>
           )}
           <div className="flex justify-end">
-            <Button type="submit" disabled={!online || !changed || save.isPending}>
+            <Button type="submit" disabled={!online || !changed} pending={save.isPending}>
               {save.isPending ? t("common.saving") : t("common.save")}
             </Button>
           </div>

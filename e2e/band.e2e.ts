@@ -169,6 +169,21 @@ test("the band's home page shows its latest activity, newest first", async () =>
   await expect(journal).not.toContainText("@");
 });
 
+test("while data loads, a skeleton shows, never a blank page (#190)", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  // A slow connection: the band list takes a while.
+  await page.route("**/api/bands", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  await login(page, leaderEmail, PASSWORD);
+  await expect(page.getByRole("status", { name: "Loading…" })).toBeVisible();
+  await expect(page.getByRole("link", { name: new RegExp(band) })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Loading…" })).toHaveCount(0);
+  await context.close();
+});
+
 test("the band leader adds the band's logo: on the band page and in the list, then removed", async () => {
   await leader.goto("/");
   // No logo yet: the band's initials ("E2E Rockers …").
@@ -178,6 +193,7 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await leader.getByRole("button", { name: "Edit band" }).click();
   const dialog = leader.getByRole("dialog");
   await expect(dialog.getByText("No logo yet")).toBeVisible();
+  await expect(leader.locator("main img")).toHaveCount(0);
 
   // A horizontal logo with a transparent background: fitted, never cropped.
   await dialog
@@ -186,7 +202,8 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   // Shown, not only there: the preview is a blob: image, which the security policy must allow.
   const preview = dialog.getByRole("img", { name: "Preview of the new logo" });
   await expect.poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
-  await dialog.getByRole("radio", { name: "Dark" }).check();
+  // Shown as it is: no background to choose (#189).
+  await expect(dialog.getByRole("radio")).toHaveCount(0);
   await dialog.getByRole("button", { name: "Save the logo" }).click();
   await expect(leader.getByText("Logo saved")).toBeVisible();
 
@@ -194,12 +211,18 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(current).toBeVisible();
   // Served by the API, the whole image: 900 × 300 is under the 2,000 px limit.
   await expect.poll(() => current.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
-  await expect(dialog.getByRole("radio", { name: "Dark" })).toBeChecked();
   await leader.keyboard.press("Escape");
 
-  // On the band's home page, the full logo; in the band list, its thumbnail.
+  // On the band's home page, the full logo, at most a third of the screen's height; next to the
+  // band's name, its thumbnail; in the band list, its thumbnail too.
   const logo = leader.locator('main img[src*="/logo?v="]');
   await expect.poll(() => logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
+  const height = await logo.evaluate((img) => img.getBoundingClientRect().height / innerHeight);
+  expect(height).toBeLessThanOrEqual(1 / 3 + 0.01);
+  const headerLogo = leader.locator('main img[src*="/logo/thumbnail?v="]');
+  await expect
+    .poll(() => headerLogo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(256);
   await leader.goto("/");
   const thumbnail = bandLink.locator('img[src*="/logo/thumbnail?v="]');
   await expect
@@ -215,7 +238,7 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await leader.context().setOffline(true);
   await leader.reload();
   await expect(leader.getByText("You're offline")).toBeVisible();
-  const fromDevice = (scope: Locator) => scope.locator('img[src^="blob:"]');
+  const fromDevice = (scope: Locator) => scope.locator('img[src^="blob:"]').first();
   await expect
     .poll(() => fromDevice(bandLink).evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBe(900);
@@ -235,7 +258,9 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(leader.getByText("Logo removed")).toBeVisible();
   await expect(dialog.getByText("No logo yet")).toBeVisible();
   await leader.keyboard.press("Escape");
+  // Without a logo, nothing on the band's pages (the initials are for the band list).
   await expect(logo).toHaveCount(0);
+  await expect(headerLogo).toHaveCount(0);
 
   await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });
@@ -253,39 +278,75 @@ test("the band leader adds the band's logo: on the band page and in the list, th
 test("members build the repertoire: add, the duplicate warning, edit", async () => {
   await leader.getByRole("link", { name: "Repertoire" }).click();
   await expect(leader.getByText("No songs yet")).toBeVisible();
-  const add = async (title: string, artist: string, own?: string) => {
+  const add = async (title: string, artist: string) => {
     await leader.getByRole("button", { name: "Add a song" }).click();
     const dialog = leader.getByRole("dialog");
     await dialog.getByLabel("Title", { exact: true }).fill(title);
     await dialog.getByLabel("Artist", { exact: true }).fill(artist);
-    if (own) await dialog.getByLabel("Our duration").fill(own);
-    await dialog.getByRole("button", { name: "Add", exact: true }).click();
+    await dialog.getByRole("button", { name: "Save only" }).click();
     return dialog;
   };
-  await add("Creep", "Radiohead", "4:10");
-  await expect(leader.getByRole("dialog")).toHaveCount(0);
   const songs = leader.getByRole("list", { name: "Repertoire" }).getByRole("listitem");
+  const backToRepertoire = () => leader.getByRole("link", { name: "Repertoire" }).first().click();
+
+  // The title and the artist only, then the new song's page, to fill in the rest.
+  await leader.getByRole("button", { name: "Add a song" }).click();
+  await expect(leader.getByRole("dialog").getByLabel("Artist", { exact: true })).toBeVisible();
+  await expect(leader.getByRole("dialog").getByLabel("Tempo (BPM)")).toHaveCount(0);
+  await leader.keyboard.press("Escape");
+  await add("Creep", "Radiohead");
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
+  await expect(leader.getByRole("heading", { name: "Creep" })).toBeVisible();
+  await backToRepertoire();
   await expect(songs).toHaveCount(1);
-  await expect(songs.first()).toContainText("4:10");
 
   // The same song, typed differently: a warning, then added if confirmed.
   const dialog = await add("creep", "RADIOHEAD");
   await expect(dialog.getByText("Already in your repertoire: Creep – Radiohead.")).toBeVisible();
-  await dialog.getByRole("button", { name: "Add anyway" }).click();
+  await dialog.getByRole("button", { name: "Save anyway" }).click();
+  await expect(leader.getByRole("heading", { name: "creep" })).toBeVisible();
+  await backToRepertoire();
   await expect(songs).toHaveCount(2);
 
-  // Every field but the notes.
+  // "Search and add": Deezer's details and YouTube's videos (both fakes), the album track first.
   await leader.getByRole("button", { name: "Add a song" }).click();
-  await expect(leader.getByRole("dialog").getByLabel("Tempo (BPM)")).toBeVisible();
-  await expect(leader.getByRole("dialog").getByLabel("Notes")).toHaveCount(0);
-  await leader.keyboard.press("Escape");
-  await add("Zombie", "The Cranberries");
+  const lucky = leader.getByRole("dialog");
+  await lucky.getByLabel("Title", { exact: true }).fill("Zombie");
+  await lucky.getByLabel("Artist", { exact: true }).fill("The Cranberries");
+  await lucky.getByRole("button", { name: "Search and add" }).click();
+  await expect(lucky.getByText("Found on Deezer")).toBeVisible();
+  await expect(lucky.getByText("No Need to Argue · 5:07 · Rock")).toBeVisible();
+  const proposals = lucky.getByRole("group", { name: "Choose a YouTube video" });
+  // Three videos and "No video"; the album track of the "Topic" channel first, and chosen.
+  await expect(proposals.getByRole("radio")).toHaveCount(4);
+  await expect(proposals.locator("label").first()).toContainText("The Cranberries - Topic");
+  await expect(proposals.getByRole("radio").first()).toBeChecked();
+  await expect(proposals.locator("label").nth(2)).toContainText("Live at Woodstock");
+  // The thumbnails come through the API, drawn.
+  const thumbnail = proposals.locator('img[src*="/autofill/thumbnails/"]').first();
+  await expect
+    .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(320);
+  await lucky.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
+  // Its first links: the chosen video and the Deezer track.
+  const firstLinks = leader.getByRole("list", { name: "Links" }).locator(":scope > li");
+  await expect(firstLinks).toHaveCount(2);
+  await expect(firstLinks.first()).toContainText("YouTube");
+  await expect(firstLinks.last()).toContainText("Deezer");
+  await backToRepertoire();
   await expect(songs).toHaveCount(3);
   await leader.getByRole("searchbox").fill("cranberries");
   await expect(songs).toHaveCount(1);
   await songs.first().click();
 
   await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
+  // Details: an accordion, closed at first.
+  await expect(leader.getByRole("button", { name: "Edit the details" })).toBeHidden();
+  await leader.getByRole("button", { name: "Details", exact: true }).click();
+  // Filled in from Deezer: its duration and genre.
+  await expect(leader.getByText("5:07")).toBeVisible();
+  await expect(leader.getByText("Rock", { exact: true })).toBeVisible();
   await leader.getByRole("button", { name: "Edit the details" }).click();
   const edit = leader.getByRole("dialog");
   await expect(edit.getByLabel("Title", { exact: true })).toHaveCount(0);
@@ -300,7 +361,7 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   for (const text of ["5:06", "E minor", "84 BPM", "Alternative rock"]) {
     await expect(leader.getByText(text)).toBeVisible();
   }
-  // Details: an accordion, open at first.
+  // Closed again, then open.
   await leader.getByRole("button", { name: "Details", exact: true }).click();
   await expect(leader.getByText("84 BPM")).toBeHidden();
   await expect(leader.getByRole("button", { name: "Edit the details" })).toBeHidden();
@@ -398,12 +459,13 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await link.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Link added")).toBeVisible();
   const links = leader.getByRole("list", { name: "Links" }).locator(":scope > li");
-  await expect(links).toHaveCount(1);
-  await expect(links.first()).toContainText("Drum cover");
-  await expect(links.first()).toContainText("YouTube");
-  await expect(links.first()).toContainText("Drums");
-  await expect(links.first()).toContainText("Cowbell");
-  await expect(links.first().getByRole("link")).toHaveAttribute("target", "_blank");
+  // After the two from "Search and add", oldest first.
+  await expect(links).toHaveCount(3);
+  await expect(links.last()).toContainText("Drum cover");
+  await expect(links.last()).toContainText("YouTube");
+  await expect(links.last()).toContainText("Drums");
+  await expect(links.last()).toContainText("Cowbell");
+  await expect(links.last().getByRole("link")).toHaveAttribute("target", "_blank");
 
   // Status and energy: one tap each, saved at once.
   await expect(leader.getByRole("radio", { name: "Proposed" })).toBeChecked();
@@ -435,7 +497,7 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea updated song “Zombie”",
   );
-  await expect(journal).toContainText("Captain Lea added song “Zombie”");
+  // (Its 10 latest events: "added song" is older, behind the links "Search and add" added.)
   await expect(journal).toContainText("Captain Lea updated the lyrics of song “Zombie”");
   await expect(journal).toContainText("Captain Lea marked song “Zombie” as learning");
 

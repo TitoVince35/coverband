@@ -14,6 +14,6 @@ This is a reminder of the briefs to be created.
 - [ ] UI : admin console (hompage, features)
 - [X] Feature : Activity - events logs (Johnny added a media to "Born to be wild")
 - [ ] Tech : Push notifications for the events
-- [ ] Tech : IP whitelist for beta
+- [X] Tech : IP whitelist for beta -> code
 - [ ] Tech : PWA !
-- [ ] Tech : build tag in a footer
+- [X] Tech : build tag in a footer

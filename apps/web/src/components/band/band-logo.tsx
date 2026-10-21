@@ -1,12 +1,11 @@
 import type { BandLogo as Logo } from "@coverband/shared";
 import { useEffect, useState } from "react";
-import { LogoPlate } from "@/components/band/logo-plate";
 import { bandInitials } from "@/lib/initials";
 import { savedLogo } from "@/lib/offline-logos";
 import { useOnline } from "@/lib/online";
 import { cn } from "@/lib/utils";
 
-type Size = "small" | "large";
+type Size = "small" | "header" | "large";
 
 /**
  * Where the logo's image comes from (#178): the server online; the copy saved on the device
@@ -15,7 +14,7 @@ type Size = "small" | "large";
  */
 function useLogoSource(bandSlug: string, logo: Logo | null, size: Size) {
   const online = useOnline();
-  const serverUrl = logo ? (size === "small" ? logo.thumbnailUrl : logo.url) : null;
+  const serverUrl = logo ? (size === "large" ? logo.url : logo.thumbnailUrl) : null;
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const fromDevice = logo !== null && (!online || failedUrl === serverUrl);
   const logoUrl = logo?.url;
@@ -43,10 +42,22 @@ function useLogoSource(bandSlug: string, logo: Logo | null, size: Size) {
   };
 }
 
+/** Where each size shows: the band list's square, the header's small square, the home page. */
+const BOX: Record<Size, string> = {
+  small: "size-12 shrink-0",
+  // As tall as the band's name and genre (two lines), as wide as the logo needs, up to a point.
+  header: "h-14 w-auto max-w-[40%] shrink-0",
+  large: "w-full",
+};
+
 /**
- * A band's logo on its background (#177), or its initials when it has none, or none is
- * available offline. `small`: the thumbnail, in a square (the band list); `large`: the full logo,
- * as wide as it needs (the band's home page). Decorative: the band's name is always next to it.
+ * A band's logo as it is, with no background (#189): the band leader uploads a logo that reads on
+ * the app's dark background. `small`: the thumbnail, in a square (the band list), the band's
+ * initials without a logo; `header`: the thumbnail on the right of the band's name, as tall as the name and genre, nothing
+ * without one;
+ * `large`: the whole logo, as wide as the page and at most a third of the screen's height (the
+ * band's home page), nothing without one. Shown from the device offline (#178). Decorative: the
+ * band's name is always next to it.
  */
 export function BandLogo({
   band,
@@ -58,28 +69,32 @@ export function BandLogo({
   className?: string;
 }) {
   const { src, onError } = useLogoSource(band.slug, band.logo, size);
-  const box = size === "small" ? "size-12 shrink-0 p-1" : "h-32 w-full max-w-sm p-4";
   if (band.logo && src) {
     return (
-      <LogoPlate
+      <img
         src={src}
-        background={band.logo.background}
         alt=""
-        className={cn(box, className)}
         onError={onError}
+        className={cn(
+          "object-contain",
+          BOX[size],
+          size === "large" && "mx-auto max-h-[33svh]",
+          className,
+        )}
       />
     );
   }
+  if (size !== "small") return null;
   if (band.logo && src === undefined) {
-    // Reading the saved copy: an empty plate of the same size, without flashing the initials.
-    return <div aria-hidden="true" className={cn(box, className)} />;
+    // Reading the saved copy: an empty square of the same size, without flashing the initials.
+    return <div aria-hidden="true" className={cn(BOX.small, className)} />;
   }
   return (
     <div
       aria-hidden="true"
       className={cn(
-        "flex items-center justify-center rounded-md bg-primary font-heading font-semibold text-primary-foreground",
-        size === "small" ? "size-12 shrink-0 text-base" : "size-32 text-4xl",
+        "flex items-center justify-center rounded-md bg-primary font-heading font-semibold text-base text-primary-foreground",
+        BOX.small,
         className,
       )}
     >

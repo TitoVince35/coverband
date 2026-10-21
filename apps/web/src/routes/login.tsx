@@ -105,7 +105,7 @@ function LoginPage() {
             )}
           </CardContent>
           <CardFooter className="mt-6 flex-col items-stretch gap-4">
-            <Button type="submit" disabled={login.isPending}>
+            <Button type="submit" pending={login.isPending}>
               {login.isPending ? t("login.submitting") : t("login.submit")}
             </Button>
             <p className="text-muted-foreground text-xs">{t("login.invitationOnly")}</p>

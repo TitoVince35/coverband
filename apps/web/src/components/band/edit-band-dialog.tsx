@@ -98,7 +98,7 @@ export function EditBandDialog({ band }: { band: Band }) {
             </p>
           )}
           <DialogFooter>
-            <Button type="submit" disabled={save.isPending}>
+            <Button type="submit" pending={save.isPending}>
               {save.isPending ? t("common.saving") : t("common.save")}
             </Button>
           </DialogFooter>

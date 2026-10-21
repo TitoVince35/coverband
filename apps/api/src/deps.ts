@@ -1,7 +1,9 @@
 import type { Auth } from "./adapters/auth";
+import type { MusicCatalog } from "./adapters/deezer";
 import type { LyricsProvider } from "./adapters/lyrics";
 import type { Mailer } from "./adapters/mail/mailer";
 import type { Storage } from "./adapters/storage";
+import type { VideoSearch } from "./adapters/youtube";
 import type { Db } from "./core/db/client";
 import type { AccessConfig } from "./core/http/access";
 import type { BuildInfo } from "./core/http/health";
@@ -18,6 +20,10 @@ export type AppDeps = {
   storage: Storage;
   /** Where song lyrics are searched online (LRCLIB). */
   lyrics: LyricsProvider;
+  /** Where a new song's details are looked up (Deezer, #199). */
+  catalog: MusicCatalog;
+  /** Where a new song's videos are searched (YouTube, #200); absent without an API key. */
+  videos?: VideoSearch;
   /** Public URL of the web app, for links in emails. */
   appUrl: string;
   /** Other origins the web app may be loaded from (`bun run dev:lan`). */

@@ -58,12 +58,7 @@
       "removed": "Logo removed",
       "preview": "Preview of the new logo",
       "current": "The band's logo",
-      "background": "Background",
-      "backgrounds": {
-        "light": "Light",
-        "dark": "Dark"
-      },
-      "hint": "PNG, WebP or JPEG. A large, sharp image prints better on setlists; a transparent background suits both backgrounds."
+      "hint": "PNG, WebP or JPEG. It shows as it is, with no background: choose a logo that reads on a dark background (a transparent one with light colours, or one with its own background). A large, sharp image prints better on setlists."
     }
   },
   "lineup": {
@@ -199,6 +194,7 @@
       "add": "Add",
       "adding": "Adding…",
       "addAnyway": "Add anyway",
+      "saveOnly": "Save only",
       "saveAnyway": "Save anyway"
     },
     "lyrics": {
@@ -244,6 +240,23 @@
         "query": "\"{{title}}\" {{artist}} lyrics",
         "textQuery": "{{text}} lyrics"
       }
+    },
+    "lucky": {
+      "button": "Search and add",
+      "searching": "Searching…",
+      "deezer": "Found on Deezer",
+      "videos": "Choose a YouTube video",
+      "noVideo": "No video",
+      "nothing": "Nothing found online: the song will be added as typed.",
+      "noYoutube": "No YouTube videos for now.",
+      "hint": "Adding the song fills in its original duration, its style and its first links.",
+      "quota": "Your band has used its 15 searches for today. Try again tomorrow, or add the song as typed with Save only.",
+      "linksFailed": "The song is added, but its links couldn't be: add them from its page.",
+      "failed": {
+        "deezer": "Deezer had an error: some details may be missing.",
+        "youtube": "YouTube had an error: no videos this time."
+      },
+      "thumbnailFailed": "Thumbnail not available (error)"
     }
   },
   "login": {
@@ -420,7 +433,10 @@
     "tools": "Development tools",
     "openMailpit": "Open Mailpit (emails sent locally)",
     "openDatabase": "Open Drizzle Studio (database)",
-    "openStorage": "Open Garage (object storage)"
+    "openStorage": "Open Garage (object storage)",
+    "slowNetwork": "Slow network",
+    "slowNetworkOn": "Slow network: on (every API request waits 2 s)",
+    "slowNetworkOff": "Slow network: off"
   },
   "language": {
     "change": "Change language"

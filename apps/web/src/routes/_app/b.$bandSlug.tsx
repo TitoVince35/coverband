@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BandLogo } from "@/components/band/band-logo";
 import { BandSwitcher } from "@/components/band/band-switcher";
 import { EditBandDialog } from "@/components/band/edit-band-dialog";
+import { BandSkeleton } from "@/components/loading";
 import { bandQuery } from "@/lib/bands";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
 
@@ -21,7 +23,7 @@ function BandLayout() {
   const query = useQuery(bandQuery(bandSlug));
 
   if (query.isPending) {
-    return null;
+    return <BandSkeleton />;
   }
   if (query.isError) {
     const notFound = query.error instanceof ApiRequestError && query.error.code === "not_found";
@@ -40,6 +42,8 @@ function BandLayout() {
           <BandSwitcher current={band} />
           {band.genre && <p className="text-muted-foreground">{band.genre}</p>}
         </div>
+        {/* The small logo on the right, as tall as the name and genre; nothing without one. */}
+        <BandLogo band={band} size="header" />
         {membership.role === "leader" && <EditBandDialog band={band} />}
       </div>
       <nav className="flex gap-4 border-b">

@@ -84,6 +84,15 @@ const envSchema = z
     BUILD_SHA: z.string().min(1).default("dev"),
     // Where song lyrics are searched (#130). The end-to-end tests point it at a fake.
     LRCLIB_URL: z.url({ protocol: /^https?$/ }).default("https://lrclib.net"),
+    // Where a new song's details are looked up (#199). The end-to-end tests point it at a fake.
+    DEEZER_URL: z.url({ protocol: /^https?$/ }).default("https://api.deezer.com"),
+    // YouTube Data API v3 (#200), server only. Unset: "Search and add" proposes no videos.
+    YOUTUBE_API_KEY: z.string().min(1).optional(),
+    // The end-to-end tests point them at a fake.
+    YOUTUBE_API_URL: z
+      .url({ protocol: /^https?$/ })
+      .default("https://www.googleapis.com/youtube/v3"),
+    YOUTUBE_THUMBNAILS_URL: z.url({ protocol: /^https?$/ }).default("https://i.ytimg.com"),
     ...s3Schema.shape,
     ...logSchema.shape,
   })
