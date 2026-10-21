@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { BandLogo } from "@/components/band/band-logo";
 import { BandSwitcher } from "@/components/band/band-switcher";
 import { EditBandDialog } from "@/components/band/edit-band-dialog";
 import { BandSkeleton } from "@/components/loading";
@@ -38,7 +39,11 @@ function BandLayout() {
     <div className="space-y-6">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <BandSwitcher current={band} />
+          {/* The small logo next to the name, nothing without one (#189). */}
+          <div className="flex min-w-0 items-center gap-2">
+            <BandLogo band={band} size="header" />
+            <BandSwitcher current={band} />
+          </div>
           {band.genre && <p className="text-muted-foreground">{band.genre}</p>}
         </div>
         {membership.role === "leader" && <EditBandDialog band={band} />}

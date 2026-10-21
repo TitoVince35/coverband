@@ -28,6 +28,10 @@ export const INSTRUMENTS = [
   "flute",
   "clarinet",
   "harmonica",
+  "synthesizer",
+  "drum_machine",
+  "sampler",
+  "turntables",
 ] as const;
 
 export type InstrumentCode = (typeof INSTRUMENTS)[number];
@@ -92,8 +96,8 @@ export const INSTRUMENT_NAMES: Record<InstrumentCode, Record<Language, readonly 
     fr: ["Chant", "voix", "chanteur", "chanteuse", "chœurs"],
   },
   keyboards: {
-    en: ["Keyboards", "keyboard", "keys", "synth", "synthesizer", "organ", "keyboardist"],
-    fr: ["Claviers", "clavier", "synthé", "synthétiseur", "orgue", "claviériste"],
+    en: ["Keyboards", "keyboard", "keys", "organ", "keyboardist"],
+    fr: ["Claviers", "clavier", "orgue", "claviériste"],
   },
   accordion: { en: ["Accordion", "accordionist"], fr: ["Accordéon", "accordéoniste"] },
   violin: { en: ["Violin", "fiddle", "violinist"], fr: ["Violon", "violoniste"] },
@@ -118,6 +122,22 @@ export const INSTRUMENT_NAMES: Record<InstrumentCode, Record<Language, readonly 
   flute: { en: ["Flute", "flutist", "flautist"], fr: ["Flûte", "flûte traversière", "flûtiste"] },
   clarinet: { en: ["Clarinet", "clarinetist"], fr: ["Clarinette", "clarinettiste"] },
   harmonica: { en: ["Harmonica"], fr: ["Harmonica"] },
+  synthesizer: {
+    en: ["Synthesizer", "synth", "synths", "modular synth"],
+    fr: ["Synthétiseur", "synthé", "synthés", "synthétiseurs"],
+  },
+  drum_machine: {
+    en: ["Drum machine", "drum machines", "beat machine", "rhythm machine", "808"],
+    fr: ["Boîte à rythmes", "boite a rythme", "boîtes à rythmes"],
+  },
+  sampler: {
+    en: ["Sampler / MPC", "sampler", "MPC", "samples", "groovebox"],
+    fr: ["Sampleur / MPC", "sampleur", "échantillonneur"],
+  },
+  turntables: {
+    en: ["Turntables", "turntable", "turntablist", "DJ", "decks"],
+    fr: ["Platines", "platine", "platiniste", "DJ"],
+  },
 };
 
 /** Lowercase, no accents, no punctuation, single spaces: « Chœurs ! » → "choeurs". */
@@ -167,8 +187,8 @@ export function instrumentLabel(instrument: Instrument, language: Language): str
 
 /**
  * Known instruments for a picker: all of them for an empty query, else those with a name (any
- * language, synonyms included) containing it. Labels starting with the query come first, then
- * alphabetical order in the given language.
+ * language, synonyms included) containing it. Labels starting with the query come first, then other
+ * names starting with it, then alphabetical order in the given language.
  */
 export function searchInstruments(query: string, language: Language): InstrumentCode[] {
   const label = (code: InstrumentCode) => INSTRUMENT_NAMES[code][language][0] ?? "";
@@ -180,7 +200,12 @@ export function searchInstruments(query: string, language: Language): Instrument
   if (!wanted) return [];
   const names = (code: InstrumentCode) =>
     Object.values(INSTRUMENT_NAMES[code]).flat().map(normalizeName);
-  const rank = (code: InstrumentCode) => (normalizeName(label(code)).startsWith(wanted) ? 0 : 1);
+  // The label starting with the query first, then any name starting with it ("chant" is
+  // Vocals, not Sampler for « échantillonneur »), then names only containing it.
+  const rank = (code: InstrumentCode) => {
+    if (normalizeName(label(code)).startsWith(wanted)) return 0;
+    return names(code).some((name) => name.startsWith(wanted)) ? 1 : 2;
+  };
   return INSTRUMENTS.filter((code) => names(code).some((name) => name.includes(wanted))).sort(
     (a, b) => rank(a) - rank(b) || alphabetical(a, b),
   );

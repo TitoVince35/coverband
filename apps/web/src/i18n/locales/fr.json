@@ -58,12 +58,7 @@
       "removed": "Logo retiré",
       "preview": "Aperçu du nouveau logo",
       "current": "Le logo du groupe",
-      "background": "Fond",
-      "backgrounds": {
-        "light": "Clair",
-        "dark": "Sombre"
-      },
-      "hint": "PNG, WebP ou JPEG. Une image grande et nette s'imprime mieux sur les setlists ; un fond transparent va avec les deux fonds."
+      "hint": "PNG, WebP ou JPEG. Il s'affiche tel quel, sans fond : choisissez un logo lisible sur un fond sombre (transparent aux couleurs claires, ou avec son propre fond). Une image grande et nette s'imprime mieux sur les setlists."
     }
   },
   "lineup": {

@@ -1,5 +1,15 @@
 import type { Instrument, InstrumentCode } from "@coverband/shared";
-import { Drum, Guitar, KeyboardMusic, type LucideIcon, MicVocal, Music, Piano } from "lucide-react";
+import {
+  AudioWaveform,
+  Disc3,
+  Drum,
+  Guitar,
+  KeyboardMusic,
+  type LucideIcon,
+  MicVocal,
+  Music,
+  Piano,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -10,10 +20,32 @@ const LUCIDE: Partial<Record<InstrumentCode, LucideIcon>> = {
   vocals: MicVocal,
   keyboards: KeyboardMusic,
   piano: Piano,
+  synthesizer: AudioWaveform,
+  turntables: Disc3,
 };
 
 /** The others, drawn in Lucide's style: 24 × 24, 2 px round strokes, `currentColor`. */
 const DRAWN: Partial<Record<InstrumentCode, ReactNode>> = {
+  // A display, two knobs and a row of step buttons, like a TR-808.
+  drum_machine: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M5 9h5" />
+      <circle cx="15" cy="9" r="1" />
+      <circle cx="19" cy="9" r="1" />
+      <path d="M5 15h1M9 15h1M14 15h1M18 15h1" />
+    </>
+  ),
+  // Four square pads, like an MPC.
+  sampler: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <rect x="6.5" y="6.5" width="4" height="4" rx="0.5" />
+      <rect x="13.5" y="6.5" width="4" height="4" rx="0.5" />
+      <rect x="6.5" y="13.5" width="4" height="4" rx="0.5" />
+      <rect x="13.5" y="13.5" width="4" height="4" rx="0.5" />
+    </>
+  ),
   bass_guitar: (
     <>
       <path d="M14.6 9.4 9.5 14.5" />

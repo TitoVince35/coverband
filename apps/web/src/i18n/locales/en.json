@@ -58,12 +58,7 @@
       "removed": "Logo removed",
       "preview": "Preview of the new logo",
       "current": "The band's logo",
-      "background": "Background",
-      "backgrounds": {
-        "light": "Light",
-        "dark": "Dark"
-      },
-      "hint": "PNG, WebP or JPEG. A large, sharp image prints better on setlists; a transparent background suits both backgrounds."
+      "hint": "PNG, WebP or JPEG. It shows as it is, with no background: choose a logo that reads on a dark background (a transparent one with light colours, or one with its own background). A large, sharp image prints better on setlists."
     }
   },
   "lineup": {

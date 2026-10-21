@@ -10,6 +10,7 @@ import {
   songKey,
 } from "@coverband/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -51,15 +52,16 @@ type Main = Pick<SongFields, "title" | "artist">;
 type Details = Pick<SongFields, (typeof durations)[number] | "key" | "bandKey" | "tempo" | "style">;
 
 /**
- * Adds a song to the repertoire (every field but the notes), or edits one block of it: its title
- * and artist, or its details (#120). A song with the same title and artist as another one of the
- * repertoire is a warning: saving again confirms it (#88).
+ * Adds a song to the repertoire (its title and artist only, then its page opens: #188), or edits
+ * one block of it: its title and artist, or its details (#120). A song with the same title and
+ * artist as another one of the repertoire is a warning: saving again confirms it (#88).
  */
 export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props) {
   const { t } = useTranslation();
   // Offline, the app is read-only (#165).
   const online = useOnline();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const repertoire = useQuery(songsQuery(bandSlug));
   // Each style once, however it was typed (the first spelling wins).
   const styles = [
@@ -70,7 +72,7 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
     ).values(),
   ].sort((a, b) => a.localeCompare(b));
   const withMain = !song || part === "main";
-  const withDetails = !song || part === "details";
+  const withDetails = song !== undefined && part === "details";
   const [open, setOpen] = useState(false);
   const [invalid, setInvalid] = useState<(typeof durations)[number][]>([]);
   // The durations are readable but over the limit.
@@ -82,13 +84,20 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
     mutationFn: (fields: Partial<Main & Details> & { confirmDuplicate: boolean }) =>
       song
         ? updateSong(bandSlug, song.id, fields)
-        : // Adding: the form has every field.
-          addSong(bandSlug, fields as Main & Details & { confirmDuplicate: boolean }),
-    onSuccess: async () => {
+        : // Adding: the form has the title and the artist.
+          addSong(bandSlug, fields as Main & { confirmDuplicate: boolean }),
+    onSuccess: async (saved) => {
       toast.success(song ? t("songs.saved") : t("songs.added"));
       onOpenChange(false);
       // The repertoire, this song and the journal.
       await queryClient.invalidateQueries({ queryKey: ["bands", bandSlug] });
+      // A new song: its page, to fill in the rest.
+      if (!song) {
+        await navigate({
+          to: "/b/$bandSlug/songs/$songId",
+          params: { bandSlug, songId: saved.id },
+        });
+      }
     },
     onError: (error, fields) => {
       // Someone added the same song meanwhile: the same warning.
