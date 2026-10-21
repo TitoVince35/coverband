@@ -11,10 +11,11 @@ import {
 } from "@coverband/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type FormEvent, type ReactNode, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { KeySelect } from "@/components/songs/key-select";
+import { AutofillResults } from "@/components/songs/song-autofill";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,9 +28,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { type Autofill, autofillChoices } from "@/lib/autofill";
+import { searchAutofill } from "@/lib/autofill-search";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
 import { useOnline } from "@/lib/online";
-import { addSong, type Song, type SongFields, songsQuery, updateSong } from "@/lib/songs";
+import { addMedia, addSong, type Song, type SongFields, songsQuery, updateSong } from "@/lib/songs";
 
 type Props = {
   bandSlug: string;
@@ -79,13 +82,45 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
   const [tooLong, setTooLong] = useState(false);
   // Shown once; saving again with the same title and artist confirms it.
   const [duplicate, setDuplicate] = useState<Duplicate | null>(null);
+  const form = useRef<HTMLFormElement>(null);
+  // "I feel lucky" (#201): what was found for this title and artist, and the chosen video.
+  const [lucky, setLucky] = useState<{ key: string; result: Autofill } | null>(null);
+  const [chosen, setChosen] = useState<string | null>(null);
+
+  const search = useMutation({
+    mutationFn: (main: Main) => searchAutofill(bandSlug, main),
+    onSuccess: (result, main) => {
+      setLucky({ key: songKey(main), result });
+      setChosen(result.videos?.[0]?.id ?? null);
+    },
+  });
+
+  /** Adds the song, then its first links from the search; a link that fails doesn't undo it. */
+  async function addWithChoices(fields: Main & { confirmDuplicate: boolean }) {
+    const choices = lucky?.key === songKey(fields) ? autofillChoices(lucky.result, chosen) : null;
+    const added = await addSong(bandSlug, {
+      ...fields,
+      ...(choices && { standardDuration: choices.standardDuration, style: choices.style }),
+    });
+    // One after the other: links are listed oldest first, the chosen video first.
+    let failed = false;
+    for (const link of choices?.links ?? []) {
+      try {
+        await addMedia(bandSlug, added.id, link);
+      } catch {
+        failed = true;
+      }
+    }
+    if (failed) toast.error(t("songs.lucky.linksFailed"));
+    return added;
+  }
 
   const save = useMutation({
     mutationFn: (fields: Partial<Main & Details> & { confirmDuplicate: boolean }) =>
       song
         ? updateSong(bandSlug, song.id, fields)
-        : // Adding: the form has the title and the artist.
-          addSong(bandSlug, fields as Main & { confirmDuplicate: boolean }),
+        : // Adding: the form has the title and the artist, and maybe what "I feel lucky" found.
+          addWithChoices(fields as Main & { confirmDuplicate: boolean }),
     onSuccess: async (saved) => {
       toast.success(song ? t("songs.saved") : t("songs.added"));
       onOpenChange(false);
@@ -114,10 +149,21 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
     setOpen(next);
     if (!next) {
       save.reset();
+      search.reset();
       setInvalid([]);
       setTooLong(false);
       setDuplicate(null);
+      setLucky(null);
     }
+  }
+
+  /** "I feel lucky": the typed title and artist looked up online. */
+  function onLucky() {
+    const current = form.current;
+    if (!current?.reportValidity()) return;
+    const fields = new FormData(current);
+    const text = (name: string) => String(fields.get(name) ?? "").trim();
+    search.mutate({ title: text("title"), artist: text("artist") });
   }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -192,7 +238,7 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
       )}
       {/* Taller than a phone's screen: it scrolls. */}
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form ref={form} onSubmit={onSubmit} className="space-y-4">
           <DialogHeader>
             <DialogTitle className="font-heading">
               {!song
@@ -214,7 +260,12 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
                   autoComplete="off"
                   required
                   // A different song: the warning no longer applies.
-                  onChange={() => setDuplicate(null)}
+                  onChange={() => {
+                    setDuplicate(null);
+                    // Another song: what was found no longer applies.
+                    setLucky(null);
+                    search.reset();
+                  }}
                 />
               </div>
             ))}
@@ -297,6 +348,16 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
               </div>
             </>
           )}
+          {!song && lucky && (
+            <AutofillResults result={lucky.result} chosen={chosen} onChoose={setChosen} />
+          )}
+          {search.isError && (
+            <p role="alert" className="text-destructive text-sm">
+              {search.error instanceof ApiRequestError && search.error.code === "too_many_requests"
+                ? t("songs.lucky.quota")
+                : errorMessage(t, search.error)}
+            </p>
+          )}
           {duplicate && (
             <div role="alert" className="space-y-1 rounded-lg bg-amber-500/15 p-3 text-sm">
               <p className="font-medium">{t("songs.form.duplicate", duplicate)}</p>
@@ -311,7 +372,17 @@ export function SongFormDialog({ bandSlug, song, part, trigger, tooltip }: Props
             </p>
           )}
           <DialogFooter>
-            <Button type="submit" disabled={save.isPending}>
+            {!song && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onLucky}
+                disabled={search.isPending || save.isPending}
+              >
+                {search.isPending ? t("songs.lucky.searching") : t("songs.lucky.button")}
+              </Button>
+            )}
+            <Button type="submit" disabled={save.isPending || search.isPending}>
               {submitLabel}
             </Button>
           </DialogFooter>

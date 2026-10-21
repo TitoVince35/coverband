@@ -308,8 +308,32 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await backToRepertoire();
   await expect(songs).toHaveCount(2);
 
-  await add("Zombie", "The Cranberries");
+  // "I feel lucky": Deezer's details and YouTube's videos (both fakes), the album track first.
+  await leader.getByRole("button", { name: "Add a song" }).click();
+  const lucky = leader.getByRole("dialog");
+  await lucky.getByLabel("Title", { exact: true }).fill("Zombie");
+  await lucky.getByLabel("Artist", { exact: true }).fill("The Cranberries");
+  await lucky.getByRole("button", { name: "I feel lucky" }).click();
+  await expect(lucky.getByText("Found on Deezer")).toBeVisible();
+  await expect(lucky.getByText("No Need to Argue · 5:07 · Rock")).toBeVisible();
+  const proposals = lucky.getByRole("group", { name: "Choose a YouTube video" });
+  // Three videos and "No video"; the album track of the "Topic" channel first, and chosen.
+  await expect(proposals.getByRole("radio")).toHaveCount(4);
+  await expect(proposals.locator("label").first()).toContainText("The Cranberries - Topic");
+  await expect(proposals.getByRole("radio").first()).toBeChecked();
+  await expect(proposals.locator("label").nth(2)).toContainText("Live at Woodstock");
+  // The thumbnails come through the API, drawn.
+  const thumbnail = proposals.locator('img[src*="/autofill/thumbnails/"]').first();
+  await expect
+    .poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(320);
+  await lucky.getByRole("button", { name: "Add", exact: true }).click();
   await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
+  // Its first links: the chosen video and the Deezer track.
+  const firstLinks = leader.getByRole("list", { name: "Links" }).locator(":scope > li");
+  await expect(firstLinks).toHaveCount(2);
+  await expect(firstLinks.first()).toContainText("YouTube");
+  await expect(firstLinks.last()).toContainText("Deezer");
   await backToRepertoire();
   await expect(songs).toHaveCount(3);
   await leader.getByRole("searchbox").fill("cranberries");
@@ -320,6 +344,9 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   // Details: an accordion, closed at first.
   await expect(leader.getByRole("button", { name: "Edit the details" })).toBeHidden();
   await leader.getByRole("button", { name: "Details", exact: true }).click();
+  // Filled in from Deezer: its duration and genre.
+  await expect(leader.getByText("5:07")).toBeVisible();
+  await expect(leader.getByText("Rock", { exact: true })).toBeVisible();
   await leader.getByRole("button", { name: "Edit the details" }).click();
   const edit = leader.getByRole("dialog");
   await expect(edit.getByLabel("Title", { exact: true })).toHaveCount(0);
@@ -432,12 +459,13 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await link.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Link added")).toBeVisible();
   const links = leader.getByRole("list", { name: "Links" }).locator(":scope > li");
-  await expect(links).toHaveCount(1);
-  await expect(links.first()).toContainText("Drum cover");
-  await expect(links.first()).toContainText("YouTube");
-  await expect(links.first()).toContainText("Drums");
-  await expect(links.first()).toContainText("Cowbell");
-  await expect(links.first().getByRole("link")).toHaveAttribute("target", "_blank");
+  // After the two from "I feel lucky", oldest first.
+  await expect(links).toHaveCount(3);
+  await expect(links.last()).toContainText("Drum cover");
+  await expect(links.last()).toContainText("YouTube");
+  await expect(links.last()).toContainText("Drums");
+  await expect(links.last()).toContainText("Cowbell");
+  await expect(links.last().getByRole("link")).toHaveAttribute("target", "_blank");
 
   // Status and energy: one tap each, saved at once.
   await expect(leader.getByRole("radio", { name: "Proposed" })).toBeChecked();
@@ -469,7 +497,7 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea updated song “Zombie”",
   );
-  await expect(journal).toContainText("Captain Lea added song “Zombie”");
+  // (Its 10 latest events: "added song" is older, behind the links "I feel lucky" added.)
   await expect(journal).toContainText("Captain Lea updated the lyrics of song “Zombie”");
   await expect(journal).toContainText("Captain Lea marked song “Zombie” as learning");
 

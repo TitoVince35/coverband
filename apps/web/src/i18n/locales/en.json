@@ -239,6 +239,18 @@
         "query": "\"{{title}}\" {{artist}} lyrics",
         "textQuery": "{{text}} lyrics"
       }
+    },
+    "lucky": {
+      "button": "I feel lucky",
+      "searching": "Searching…",
+      "deezer": "Found on Deezer",
+      "videos": "Choose a YouTube video",
+      "noVideo": "No video",
+      "nothing": "Nothing found online: the song will be added as typed.",
+      "noYoutube": "No YouTube videos for now.",
+      "hint": "Adding the song fills in its original duration, its style and its first links.",
+      "quota": "Your band has used its 15 searches for today. Try again tomorrow, or add the song as typed.",
+      "linksFailed": "The song is added, but its links couldn't be: add them from its page."
     }
   },
   "login": {
