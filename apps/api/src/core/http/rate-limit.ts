@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
 import type { Db } from "../db/client";
 import { rateLimits } from "../db/schema";
@@ -38,12 +39,16 @@ export async function hit(db: Db, rule: RateLimitRule, subject: string, now = Da
 }
 
 /**
- * Limits a logged-in user's requests (place after requireUser or an equivalent guard): 429 when
- * over, logged as a warning with the rule (the request's logger carries the user).
+ * Limits requests by a subject the route knows (a band, #199), after the guard that sets it: 429
+ * when over, logged as a warning with the rule.
  */
-export function rateLimitUser(db: Db, rule: RateLimitRule) {
-  return createMiddleware<SessionEnv>(async (c, next) => {
-    const retryAfter = await hit(db, rule, c.var.user?.id ?? "anonymous");
+export function rateLimitBy<E extends SessionEnv>(
+  db: Db,
+  rule: RateLimitRule,
+  subject: (c: Context<E>) => string,
+) {
+  return createMiddleware<E>(async (c, next) => {
+    const retryAfter = await hit(db, rule, subject(c));
     if (retryAfter > 0) {
       c.var.log.warn("Rate limited", { rule: rule.name });
       c.header("Retry-After", String(retryAfter));
@@ -51,4 +56,12 @@ export function rateLimitUser(db: Db, rule: RateLimitRule) {
     }
     await next();
   });
+}
+
+/**
+ * Limits a logged-in user's requests (place after requireUser or an equivalent guard): 429 when
+ * over, logged as a warning with the rule (the request's logger carries the user).
+ */
+export function rateLimitUser(db: Db, rule: RateLimitRule) {
+  return rateLimitBy<SessionEnv>(db, rule, (c) => c.var.user?.id ?? "anonymous");
 }

@@ -1,6 +1,7 @@
 import { APP_NAME } from "@coverband/shared";
 import rootPackage from "../../../package.json" with { type: "json" };
 import { createAuth } from "./adapters/auth";
+import { createDeezerCatalog } from "./adapters/deezer";
 import { createLrclibProvider } from "./adapters/lyrics";
 import { createSmtpMailer } from "./adapters/mail/mailer";
 import { createS3Storage } from "./adapters/storage";
@@ -41,6 +42,7 @@ const app = createApp({
       userAgent: `${APP_NAME} (${env.BETTER_AUTH_URL})`,
       baseUrl: env.LRCLIB_URL,
     }),
+    catalog: createDeezerCatalog({ baseUrl: env.DEEZER_URL }),
     appUrl: env.BETTER_AUTH_URL,
     trustedOrigins: env.TRUSTED_ORIGINS,
     redirectHosts: env.REDIRECT_HOSTS,

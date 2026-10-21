@@ -1,4 +1,5 @@
 import type { Auth } from "./adapters/auth";
+import type { MusicCatalog } from "./adapters/deezer";
 import type { LyricsProvider } from "./adapters/lyrics";
 import type { Mailer } from "./adapters/mail/mailer";
 import type { Storage } from "./adapters/storage";
@@ -18,6 +19,8 @@ export type AppDeps = {
   storage: Storage;
   /** Where song lyrics are searched online (LRCLIB). */
   lyrics: LyricsProvider;
+  /** Where a new song's details are looked up (Deezer, #199). */
+  catalog: MusicCatalog;
   /** Public URL of the web app, for links in emails. */
   appUrl: string;
   /** Other origins the web app may be loaded from (`bun run dev:lan`). */
