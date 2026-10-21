@@ -5,6 +5,7 @@ import { createDeezerCatalog } from "./adapters/deezer";
 import { createLrclibProvider } from "./adapters/lyrics";
 import { createSmtpMailer } from "./adapters/mail/mailer";
 import { createS3Storage } from "./adapters/storage";
+import { createYoutubeSearch } from "./adapters/youtube";
 import { createApp } from "./app";
 import { ensureAdmin } from "./bootstrap";
 import { createDb } from "./core/db/client";
@@ -43,6 +44,13 @@ const app = createApp({
       baseUrl: env.LRCLIB_URL,
     }),
     catalog: createDeezerCatalog({ baseUrl: env.DEEZER_URL }),
+    ...(env.YOUTUBE_API_KEY && {
+      videos: createYoutubeSearch({
+        apiKey: env.YOUTUBE_API_KEY,
+        baseUrl: env.YOUTUBE_API_URL,
+        thumbnailsUrl: env.YOUTUBE_THUMBNAILS_URL,
+      }),
+    }),
     appUrl: env.BETTER_AUTH_URL,
     trustedOrigins: env.TRUSTED_ORIGINS,
     redirectHosts: env.REDIRECT_HOSTS,
