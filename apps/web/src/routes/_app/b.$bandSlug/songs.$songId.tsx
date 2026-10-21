@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CollapsibleCard } from "@/components/collapsible-card";
+import { SongSkeleton } from "@/components/loading";
 import { ArchivedBanner, SongActions } from "@/components/songs/song-actions";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
 import { SongLyrics } from "@/components/songs/song-lyrics";
@@ -49,7 +50,7 @@ function SongPage() {
   );
 
   if (song.isPending) {
-    return <p className="text-muted-foreground text-sm">{t("common.loading")}</p>;
+    return <SongSkeleton />;
   }
   if (song.isError) {
     const notFound = song.error instanceof ApiRequestError && song.error.code === "not_found";

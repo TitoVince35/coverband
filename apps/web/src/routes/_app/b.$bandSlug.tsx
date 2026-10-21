@@ -3,6 +3,7 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BandSwitcher } from "@/components/band/band-switcher";
 import { EditBandDialog } from "@/components/band/edit-band-dialog";
+import { BandSkeleton } from "@/components/loading";
 import { bandQuery } from "@/lib/bands";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
 
@@ -21,7 +22,7 @@ function BandLayout() {
   const query = useQuery(bandQuery(bandSlug));
 
   if (query.isPending) {
-    return null;
+    return <BandSkeleton />;
   }
   if (query.isError) {
     const notFound = query.error instanceof ApiRequestError && query.error.code === "not_found";

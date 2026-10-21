@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ListSkeleton } from "@/components/loading";
 import { Card, CardContent } from "@/components/ui/card";
 import { errorMessage } from "@/lib/errors";
 import { archivedSongsQuery } from "@/lib/songs";
@@ -28,7 +29,7 @@ function ArchivedSongsPage() {
       </Link>
       <h2 className="font-heading font-semibold text-lg">{t("songs.archive.list")}</h2>
       {songs.isPending ? (
-        <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
+        <ListSkeleton />
       ) : songs.isError ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, songs.error)}

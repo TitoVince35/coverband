@@ -2,6 +2,7 @@ import { type ActivityAction, SONG_STATUSES, type SongStatus } from "@coverband/
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { CollapsibleCard } from "@/components/collapsible-card";
+import { ListSkeleton } from "@/components/loading";
 import { useLanguage } from "@/i18n/use-language";
 import { bandJournalQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
@@ -47,7 +48,7 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
     // Closed at first: the journal is a tap away on the band's page.
     <CollapsibleCard title={t("journal.title")} defaultOpen={false}>
       {journal.isPending ? (
-        <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
+        <ListSkeleton rows={3} />
       ) : journal.isError ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, journal.error)}

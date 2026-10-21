@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { BandLogo } from "@/components/band/band-logo";
 import { InstallCard } from "@/components/install-card";
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
+import { ListSkeleton } from "@/components/loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { myBandsQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
@@ -29,7 +30,9 @@ function HomePage() {
           <CardTitle className="font-heading text-lg">{t("home.yourBands")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {bands.isPending ? null : bands.isError ? (
+          {bands.isPending ? (
+            <ListSkeleton rows={2} withIcon />
+          ) : bands.isError ? (
             <p role="alert" className="text-destructive text-sm">
               {errorMessage(t, bands.error)}
             </p>

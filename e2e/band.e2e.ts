@@ -169,6 +169,21 @@ test("the band's home page shows its latest activity, newest first", async () =>
   await expect(journal).not.toContainText("@");
 });
 
+test("while data loads, a skeleton shows, never a blank page (#190)", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  // A slow connection: the band list takes a while.
+  await page.route("**/api/bands", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  await login(page, leaderEmail, PASSWORD);
+  await expect(page.getByRole("status", { name: "Loading…" })).toBeVisible();
+  await expect(page.getByRole("link", { name: new RegExp(band) })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Loading…" })).toHaveCount(0);
+  await context.close();
+});
+
 test("the band leader adds the band's logo: on the band page and in the list, then removed", async () => {
   await leader.goto("/");
   // No logo yet: the band's initials ("E2E Rockers …").

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { ListSkeleton } from "@/components/loading";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,7 +76,7 @@ export function InvitationsList({
       </CardHeader>
       <CardContent>
         {invitations.isPending ? (
-          <p className="text-muted-foreground text-sm">{t("common.loading")}</p>
+          <ListSkeleton rows={2} />
         ) : invitations.isError ? (
           <p role="alert" className="text-destructive text-sm">
             {errorMessage(t, invitations.error)}
