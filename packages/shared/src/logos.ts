@@ -1,4 +1,7 @@
-/** Background a band logo is shown on, chosen by the band leader (#175). */
+/**
+ * Backgrounds a band logo used to be shown on (#175). No longer used (#189): only the database
+ * column still has them, until it is dropped (#191).
+ */
 export const LOGO_BACKGROUNDS = ["light", "dark"] as const;
 export type LogoBackground = (typeof LOGO_BACKGROUNDS)[number];
 
@@ -12,8 +15,8 @@ export const LOGO_THUMBNAIL_SIZE = 256;
 export const LOGO_MAX_BYTES = 3_000_000;
 export const LOGO_THUMBNAIL_MAX_BYTES = 200_000;
 
-/** A band's logo as the API returns it: versioned URLs (cached for good) and its background. */
-export type BandLogo = { url: string; thumbnailUrl: string; background: LogoBackground };
+/** A band's logo as the API returns it: versioned URLs, cached for good. */
+export type BandLogo = { url: string; thumbnailUrl: string };
 
 /** The version in a storage key: the file name without its extension. */
 const versionOf = (key: string) => key.split("/").pop()?.split(".")[0] ?? "";
@@ -22,13 +25,11 @@ const versionOf = (key: string) => key.split("/").pop()?.split(".")[0] ?? "";
 export function bandLogo(
   bandSlug: string,
   keys: { logo: string | null; thumbnail: string | null },
-  background: LogoBackground,
 ): BandLogo | null {
   if (!keys.logo || !keys.thumbnail) return null;
   const base = `/api/bands/${bandSlug}/logo`;
   return {
     url: `${base}?v=${versionOf(keys.logo)}`,
     thumbnailUrl: `${base}/thumbnail?v=${versionOf(keys.thumbnail)}`,
-    background,
   };
 }

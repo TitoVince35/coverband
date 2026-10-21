@@ -74,12 +74,12 @@ describe.skipIf(!databaseUrl)("band logo", () => {
   function upload(
     who: string,
     files: { logo: Uint8Array; thumbnail: Uint8Array },
-    background = "light",
+    extra: Record<string, string> = {},
   ) {
     const form = new FormData();
     form.append("logo", new File([files.logo], "logo"));
     form.append("thumbnail", new File([files.thumbnail], "thumbnail"));
-    form.append("background", background);
+    for (const [name, value] of Object.entries(extra)) form.append(name, value);
     return app.request(`/api/bands/${bandSlug}/logo`, {
       method: "PUT",
       headers: { cookie: cookies[who] ?? "", origin: "http://localhost:3000" },
@@ -130,8 +130,6 @@ describe.skipIf(!databaseUrl)("band logo", () => {
     const invalid = await upload("leader", { logo: svg, thumbnail: WEBP });
     expect(invalid.status).toBe(400);
     expect(await errorCode(invalid)).toBe("invalid_image");
-    const badBackground = await upload("leader", files, "purple");
-    expect(badBackground.status).toBe(400);
     expect(await currentKeys()).toEqual({ logo: null, thumbnail: null });
   });
 
@@ -154,10 +152,11 @@ describe.skipIf(!databaseUrl)("band logo", () => {
   });
 
   test("members see it, with URLs that change with the files", async () => {
-    const res = await upload("leader", { logo: PNG, thumbnail: WEBP }, "dark");
+    // An app still on 0.4 sends a background: ignored, there is none any more (#189).
+    const res = await upload("leader", { logo: PNG, thumbnail: WEBP }, { background: "dark" });
     expect(res.status).toBe(200);
     const { logo } = (await res.json()) as { logo: BandLogo };
-    expect(logo.background).toBe("dark");
+    expect(logo).not.toHaveProperty("background");
     expect(logo.url).toMatch(new RegExp(`^/api/bands/${bandSlug}/logo\\?v=[0-9a-f-]{36}$`));
 
     const band = await call(`/bands/${bandSlug}`, "bassist");
@@ -194,21 +193,7 @@ describe.skipIf(!databaseUrl)("band logo", () => {
     expect(await storage.get(after.logo ?? "")).not.toBeNull();
   });
 
-  test("the band leader changes its background", async () => {
-    const res = await call(`/bands/${bandSlug}/logo`, "leader", {
-      method: "PATCH",
-      json: { background: "light" },
-    });
-    expect(res.status).toBe(200);
-    expect(((await res.json()) as { logo: BandLogo }).logo.background).toBe("light");
-    const musician = await call(`/bands/${bandSlug}/logo`, "bassist", {
-      method: "PATCH",
-      json: { background: "dark" },
-    });
-    expect(musician.status).toBe(403);
-  });
-
-  test("removing it deletes its files; then there is no background to change", async () => {
+  test("removing it deletes its files; there is no background to change", async () => {
     const keys = await currentKeys();
     expect((await call(`/bands/${bandSlug}/logo`, "bassist", { method: "DELETE" })).status).toBe(
       403,
@@ -227,6 +212,7 @@ describe.skipIf(!databaseUrl)("band logo", () => {
       method: "PATCH",
       json: { background: "dark" },
     });
+    // The background route is gone.
     expect(background.status).toBe(404);
   });
 
@@ -236,7 +222,6 @@ describe.skipIf(!databaseUrl)("band logo", () => {
       "added",
       "replaced",
       "replaced",
-      "background",
       "removed",
     ]);
     const res = await call(`/bands/${bandSlug}/activity`, "bassist");
@@ -245,7 +230,6 @@ describe.skipIf(!databaseUrl)("band logo", () => {
     };
     expect(journal.filter((e) => e.action === "band.logo_changed").map((e) => e.logo)).toEqual([
       "removed",
-      "changed",
       "changed",
       "changed",
       "changed",

@@ -178,6 +178,7 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await leader.getByRole("button", { name: "Edit band" }).click();
   const dialog = leader.getByRole("dialog");
   await expect(dialog.getByText("No logo yet")).toBeVisible();
+  await expect(leader.locator("main img")).toHaveCount(0);
 
   // A horizontal logo with a transparent background: fitted, never cropped.
   await dialog
@@ -186,7 +187,8 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   // Shown, not only there: the preview is a blob: image, which the security policy must allow.
   const preview = dialog.getByRole("img", { name: "Preview of the new logo" });
   await expect.poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
-  await dialog.getByRole("radio", { name: "Dark" }).check();
+  // Shown as it is: no background to choose (#189).
+  await expect(dialog.getByRole("radio")).toHaveCount(0);
   await dialog.getByRole("button", { name: "Save the logo" }).click();
   await expect(leader.getByText("Logo saved")).toBeVisible();
 
@@ -194,12 +196,18 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(current).toBeVisible();
   // Served by the API, the whole image: 900 × 300 is under the 2,000 px limit.
   await expect.poll(() => current.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
-  await expect(dialog.getByRole("radio", { name: "Dark" })).toBeChecked();
   await leader.keyboard.press("Escape");
 
-  // On the band's home page, the full logo; in the band list, its thumbnail.
+  // On the band's home page, the full logo, at most a third of the screen's height; next to the
+  // band's name, its thumbnail; in the band list, its thumbnail too.
   const logo = leader.locator('main img[src*="/logo?v="]');
   await expect.poll(() => logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
+  const height = await logo.evaluate((img) => img.getBoundingClientRect().height / innerHeight);
+  expect(height).toBeLessThanOrEqual(1 / 3 + 0.01);
+  const headerLogo = leader.locator('main img[src*="/logo/thumbnail?v="]');
+  await expect
+    .poll(() => headerLogo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(256);
   await leader.goto("/");
   const thumbnail = bandLink.locator('img[src*="/logo/thumbnail?v="]');
   await expect
@@ -215,7 +223,7 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await leader.context().setOffline(true);
   await leader.reload();
   await expect(leader.getByText("You're offline")).toBeVisible();
-  const fromDevice = (scope: Locator) => scope.locator('img[src^="blob:"]');
+  const fromDevice = (scope: Locator) => scope.locator('img[src^="blob:"]').first();
   await expect
     .poll(() => fromDevice(bandLink).evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBe(900);
@@ -235,7 +243,9 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(leader.getByText("Logo removed")).toBeVisible();
   await expect(dialog.getByText("No logo yet")).toBeVisible();
   await leader.keyboard.press("Escape");
+  // Without a logo, nothing on the band's pages (the initials are for the band list).
   await expect(logo).toHaveCount(0);
+  await expect(headerLogo).toHaveCount(0);
 
   await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });

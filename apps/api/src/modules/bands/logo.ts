@@ -3,13 +3,11 @@ import {
   bandLogo,
   LOGO_MAX_BYTES,
   LOGO_THUMBNAIL_MAX_BYTES,
-  type LogoBackground,
 } from "@coverband/shared";
 import { eq } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
 import type { Tx } from "../../core/db/client";
 import { bands } from "../../core/db/schema";
-import { AppError } from "../../core/errors";
 import { ImageTooLargeError, InvalidImageError, imageType } from "../../core/images";
 import type { AppDeps } from "../../deps";
 import type { Band } from "./service";
@@ -34,18 +32,14 @@ export function ownLogoKey(bandId: string, key: string | null | undefined): stri
   return key && pattern.test(key) ? key : null;
 }
 
-type LogoColumns = Pick<Band, "id" | "slug" | "logoKey" | "logoThumbnailKey" | "logoBackground">;
+type LogoColumns = Pick<Band, "id" | "slug" | "logoKey" | "logoThumbnailKey">;
 
-/** The band's logo as the API returns it (versioned URLs and background), or null. */
+/** The band's logo as the API returns it (versioned URLs), or null. */
 export function logoOf(band: LogoColumns): BandLogo | null {
-  return bandLogo(
-    band.slug,
-    {
-      logo: ownLogoKey(band.id, band.logoKey),
-      thumbnail: ownLogoKey(band.id, band.logoThumbnailKey),
-    },
-    band.logoBackground,
-  );
+  return bandLogo(band.slug, {
+    logo: ownLogoKey(band.id, band.logoKey),
+    thumbnail: ownLogoKey(band.id, band.logoThumbnailKey),
+  });
 }
 
 /** Locks the band's row and returns its current logo keys. */
@@ -78,7 +72,7 @@ export async function setLogo(
   { db, storage, log }: Deps,
   band: Pick<Band, "id" | "slug">,
   actorId: string,
-  upload: { logo: Uint8Array; thumbnail: Uint8Array; background: LogoBackground },
+  upload: { logo: Uint8Array; thumbnail: Uint8Array },
 ): Promise<BandLogo> {
   const logo = checkImage(upload.logo, LOGO_MAX_BYTES);
   const thumbnail = checkImage(upload.thumbnail, LOGO_THUMBNAIL_MAX_BYTES);
@@ -95,18 +89,14 @@ export async function setLogo(
       const current = await lockLogo(tx, band.id);
       await tx
         .update(bands)
-        .set({
-          logoKey: keys.logo,
-          logoThumbnailKey: keys.thumbnail,
-          logoBackground: upload.background,
-        })
+        .set({ logoKey: keys.logo, logoThumbnailKey: keys.thumbnail })
         .where(eq(bands.id, band.id));
       await recordActivity(tx, {
         action: "band.logo_changed",
         bandId: band.id,
         actorId,
         target: { type: "band", id: band.id },
-        data: { change: current.logo ? "replaced" : "added", background: upload.background },
+        data: { change: current.logo ? "replaced" : "added" },
       });
       return current;
     });
@@ -115,35 +105,7 @@ export async function setLogo(
     throw error;
   }
   await deleteQuietly({ db, storage, log }, previous);
-  return bandLogo(band.slug, keys, upload.background) as BandLogo;
-}
-
-export class NoLogoError extends AppError {
-  constructor() {
-    super("not_found", "The band has no logo");
-  }
-}
-
-/** Changes the background the band's logo is shown on. */
-export function setLogoBackground(
-  { db }: Deps,
-  band: Pick<Band, "id" | "slug">,
-  actorId: string,
-  background: LogoBackground,
-): Promise<BandLogo> {
-  return db.transaction(async (tx) => {
-    const keys = await lockLogo(tx, band.id);
-    if (!keys.logo || !keys.thumbnail) throw new NoLogoError();
-    await tx.update(bands).set({ logoBackground: background }).where(eq(bands.id, band.id));
-    await recordActivity(tx, {
-      action: "band.logo_changed",
-      bandId: band.id,
-      actorId,
-      target: { type: "band", id: band.id },
-      data: { change: "background", background },
-    });
-    return bandLogo(band.slug, keys, background) as BandLogo;
-  });
+  return bandLogo(band.slug, keys) as BandLogo;
 }
 
 /** Removes the band's logo: its initials show again. Nothing to do without one. */

@@ -1,22 +1,20 @@
-import { type BandLogo, LOGO_BACKGROUNDS, type LogoBackground } from "@coverband/shared";
+import type { BandLogo } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type ChangeEvent, useEffect, useId, useState } from "react";
+import { type ChangeEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { LogoPlate } from "@/components/band/logo-plate";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { ensureOk, errorMessage } from "@/lib/errors";
 import { LogoTooLargeError, prepareLogo } from "@/lib/logo";
 import { useOnline } from "@/lib/online";
-import { cn } from "@/lib/utils";
 
 type Picked = { logo: Blob; thumbnail: Blob; url: string };
 
 /**
  * The band's logo, in the band leader's edit dialog (#176): pick an image (fitted, never cropped,
- * and its thumbnail made in the browser), see it on a light or dark background, save it; change
- * the background of the current one, or remove it (the band's initials show again).
+ * and its thumbnail made in the browser), see it as the app shows it (no background, #189), save
+ * it, or remove it.
  */
 export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: BandLogo | null }) {
   const { t } = useTranslation();
@@ -24,7 +22,6 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
   const online = useOnline();
   const queryClient = useQueryClient();
   const [picked, setPicked] = useState<Picked | null>(null);
-  const [background, setBackground] = useState<LogoBackground>(logo?.background ?? "light");
   const [pickError, setPickError] = useState<string | null>(null);
 
   // Frees the preview's object URL when it is replaced or the field goes away.
@@ -45,7 +42,6 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
         form: {
           logo: new File([files.logo], "logo", { type: files.logo.type }),
           thumbnail: new File([files.thumbnail], "thumbnail", { type: files.thumbnail.type }),
-          background,
         },
       });
       return (await (await ensureOk(res)).json()).logo;
@@ -55,19 +51,6 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
       toast.success(t("band.logo.saved"));
       await refresh();
     },
-  });
-
-  const changeBackground = useMutation({
-    mutationFn: async (next: LogoBackground) => {
-      const res = await api.bands[":bandSlug"].logo.$patch({
-        param: { bandSlug },
-        json: { background: next },
-      });
-      return (await (await ensureOk(res)).json()).logo;
-    },
-    onSuccess: refresh,
-    // Back to what is saved.
-    onError: () => setBackground(logo?.background ?? "light"),
   });
 
   const remove = useMutation({
@@ -97,14 +80,8 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
     }
   }
 
-  function onBackground(next: LogoBackground) {
-    setBackground(next);
-    // A new logo is saved with its background; the current one's changes at once.
-    if (!picked && logo) changeBackground.mutate(next);
-  }
-
-  const busy = save.isPending || remove.isPending || changeBackground.isPending;
-  const failed = [save, changeBackground, remove].find((mutation) => mutation.isError);
+  const busy = save.isPending || remove.isPending;
+  const failed = [save, remove].find((mutation) => mutation.isError);
   const error = pickError ?? (failed ? errorMessage(t, failed.error) : null);
   const shown = picked?.url ?? logo?.url;
 
@@ -112,17 +89,16 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
     <div className="space-y-3">
       <p className="font-medium text-sm">{t("band.logo.title")}</p>
       {shown ? (
-        <LogoPlate
-          src={shown}
-          background={background}
-          alt={picked ? t("band.logo.preview") : t("band.logo.current")}
-          className="h-32 w-full p-4"
-        />
+        // As the app shows it: on its background, with no plate.
+        <div className="flex h-32 w-full items-center justify-center rounded-md bg-background p-4 ring-1 ring-border">
+          <img
+            src={shown}
+            alt={picked ? t("band.logo.preview") : t("band.logo.current")}
+            className="max-h-full max-w-full object-contain"
+          />
+        </div>
       ) : (
         <p className="text-muted-foreground text-sm">{t("band.logo.none")}</p>
-      )}
-      {shown && (
-        <BackgroundPicker value={background} onChange={onBackground} disabled={!online || busy} />
       )}
       {error && (
         <p role="alert" className="text-destructive text-sm">
@@ -140,7 +116,6 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
               variant="outline"
               onClick={() => {
                 setPicked(null);
-                setBackground(logo?.background ?? "light");
                 save.reset();
               }}
               disabled={busy}
@@ -177,49 +152,5 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
       </div>
       <p className="text-muted-foreground text-xs">{t("band.logo.hint")}</p>
     </div>
-  );
-}
-
-/** Light or dark background for the logo, as two radios. */
-function BackgroundPicker({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: LogoBackground;
-  onChange: (background: LogoBackground) => void;
-  disabled: boolean;
-}) {
-  const { t } = useTranslation();
-  const name = useId();
-  return (
-    <fieldset
-      disabled={disabled}
-      className="inline-flex rounded-4xl bg-muted p-1 disabled:opacity-60"
-    >
-      <legend className="sr-only">{t("band.logo.background")}</legend>
-      {LOGO_BACKGROUNDS.map((background) => (
-        <label
-          key={background}
-          className={cn(
-            "relative rounded-4xl px-3 py-1.5 font-medium text-sm transition-colors has-focus-visible:ring-2 has-focus-visible:ring-ring",
-            background === value
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <input
-            type="radio"
-            name={name}
-            value={background}
-            checked={background === value}
-            onChange={() => onChange(background)}
-            // Invisible, over the whole label: a tap lands on the radio itself.
-            className="absolute inset-0 cursor-pointer appearance-none rounded-4xl opacity-0"
-          />
-          {t(`band.logo.backgrounds.${background}`)}
-        </label>
-      ))}
-    </fieldset>
   );
 }
