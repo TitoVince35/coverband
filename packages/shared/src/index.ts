@@ -45,12 +45,10 @@ export { DEFAULT_LANGUAGE, isLanguage, LANGUAGES, type Language, pickLanguage } 
 export {
   type BandLogo,
   bandLogo,
-  LOGO_BACKGROUNDS,
   LOGO_MAX_BYTES,
   LOGO_SIZE,
   LOGO_THUMBNAIL_MAX_BYTES,
   LOGO_THUMBNAIL_SIZE,
-  type LogoBackground,
 } from "./logos";
 export {
   MEDIA_LIMITS,
