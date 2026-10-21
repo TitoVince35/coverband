@@ -91,7 +91,9 @@ describe("searching for the picker", () => {
     expect(ba.slice(0, 3)).toEqual(["banjo", "bass_guitar", "drums"]);
     expect(ba).toContain("upright_bass");
     expect(searchInstruments("bass", "en")[0]).toBe("bass_guitar");
-    expect(searchInstruments("synth", "fr")).toEqual(["keyboards"]);
+    expect(searchInstruments("synth", "fr")).toEqual(["synthesizer"]);
+    // A name starting with the query comes before one only containing it (« échantillonneur »).
+    expect(searchInstruments("chant", "en")).toEqual(["vocals", "sampler"]);
     expect(searchInstruments("zzz", "en")).toEqual([]);
     // Nothing comparable left: no match, rather than everything.
     expect(searchInstruments("Гитара", "en")).toEqual([]);
