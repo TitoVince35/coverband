@@ -253,39 +253,48 @@ test("the band leader adds the band's logo: on the band page and in the list, th
 test("members build the repertoire: add, the duplicate warning, edit", async () => {
   await leader.getByRole("link", { name: "Repertoire" }).click();
   await expect(leader.getByText("No songs yet")).toBeVisible();
-  const add = async (title: string, artist: string, own?: string) => {
+  const add = async (title: string, artist: string) => {
     await leader.getByRole("button", { name: "Add a song" }).click();
     const dialog = leader.getByRole("dialog");
     await dialog.getByLabel("Title", { exact: true }).fill(title);
     await dialog.getByLabel("Artist", { exact: true }).fill(artist);
-    if (own) await dialog.getByLabel("Our duration").fill(own);
     await dialog.getByRole("button", { name: "Add", exact: true }).click();
     return dialog;
   };
-  await add("Creep", "Radiohead", "4:10");
-  await expect(leader.getByRole("dialog")).toHaveCount(0);
   const songs = leader.getByRole("list", { name: "Repertoire" }).getByRole("listitem");
+  const backToRepertoire = () => leader.getByRole("link", { name: "Repertoire" }).first().click();
+
+  // The title and the artist only, then the new song's page, to fill in the rest.
+  await leader.getByRole("button", { name: "Add a song" }).click();
+  await expect(leader.getByRole("dialog").getByLabel("Artist", { exact: true })).toBeVisible();
+  await expect(leader.getByRole("dialog").getByLabel("Tempo (BPM)")).toHaveCount(0);
+  await leader.keyboard.press("Escape");
+  await add("Creep", "Radiohead");
+  await expect(leader.getByRole("dialog")).toHaveCount(0);
+  await expect(leader.getByRole("heading", { name: "Creep" })).toBeVisible();
+  await backToRepertoire();
   await expect(songs).toHaveCount(1);
-  await expect(songs.first()).toContainText("4:10");
 
   // The same song, typed differently: a warning, then added if confirmed.
   const dialog = await add("creep", "RADIOHEAD");
   await expect(dialog.getByText("Already in your repertoire: Creep – Radiohead.")).toBeVisible();
   await dialog.getByRole("button", { name: "Add anyway" }).click();
+  await expect(leader.getByRole("heading", { name: "creep" })).toBeVisible();
+  await backToRepertoire();
   await expect(songs).toHaveCount(2);
 
-  // Every field but the notes.
-  await leader.getByRole("button", { name: "Add a song" }).click();
-  await expect(leader.getByRole("dialog").getByLabel("Tempo (BPM)")).toBeVisible();
-  await expect(leader.getByRole("dialog").getByLabel("Notes")).toHaveCount(0);
-  await leader.keyboard.press("Escape");
   await add("Zombie", "The Cranberries");
+  await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
+  await backToRepertoire();
   await expect(songs).toHaveCount(3);
   await leader.getByRole("searchbox").fill("cranberries");
   await expect(songs).toHaveCount(1);
   await songs.first().click();
 
   await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
+  // Details: an accordion, closed at first.
+  await expect(leader.getByRole("button", { name: "Edit the details" })).toBeHidden();
+  await leader.getByRole("button", { name: "Details", exact: true }).click();
   await leader.getByRole("button", { name: "Edit the details" }).click();
   const edit = leader.getByRole("dialog");
   await expect(edit.getByLabel("Title", { exact: true })).toHaveCount(0);
@@ -300,7 +309,7 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   for (const text of ["5:06", "E minor", "84 BPM", "Alternative rock"]) {
     await expect(leader.getByText(text)).toBeVisible();
   }
-  // Details: an accordion, open at first.
+  // Closed again, then open.
   await leader.getByRole("button", { name: "Details", exact: true }).click();
   await expect(leader.getByText("84 BPM")).toBeHidden();
   await expect(leader.getByRole("button", { name: "Edit the details" })).toBeHidden();
