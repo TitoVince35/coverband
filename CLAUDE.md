@@ -80,7 +80,7 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 
 ## End-to-end tests
 
-- In `e2e/` (Playwright), files `*.e2e.ts` (so `bun test` skips them). They run against the production build served by the API on port 3100, never the dev servers, with the local Postgres, Mailpit and Garage, a fake LRCLIB (`e2e/fake-lrclib.ts`, port 3101) for lyrics searches, and fake music services (`e2e/fake-music.ts`, port 3103: Deezer) for "I feel lucky"; CI runs them after the other checks.
+- In `e2e/` (Playwright), files `*.e2e.ts` (so `bun test` skips them). They run against the production build served by the API on port 3100, never the dev servers, with the local Postgres, Mailpit and Garage, a fake LRCLIB (`e2e/fake-lrclib.ts`, port 3101) for lyrics searches, and fake music services (`e2e/fake-music.ts`, port 3103: Deezer, YouTube's API and thumbnails) for "I feel lucky"; CI runs them after the other checks.
 - A phone in Chromium (the system Chrome locally: Playwright's own doesn't install on Ubuntu 26.04 yet), English, one worker, no retries. A story whose steps build on each other is a `serial` describe. Log in with `login()`: each login comes from its own client IP, so the suite stays under the login rate limit.
 - Test data comes from the real flows: the global setup creates this run's admin, who invites; links are read from Mailpit (`invitationLink()`). Everything created is marked (`@e2e.localhost` emails, "E2E " band names) and the teardown deletes it from the database and Mailpit, leftovers of interrupted runs included. Only an avatar file can stay in the local bucket, if the avatar test fails between upload and removal.
 - Select by role and visible text, in English, like a user would.

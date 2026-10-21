@@ -1,4 +1,4 @@
-import { songKey } from "@coverband/shared";
+import { normalizeName, songKey } from "@coverband/shared";
 
 /** A song as a music catalog knows it (#199): its page, album, duration and genre. */
 export type CatalogTrack = {
@@ -73,10 +73,10 @@ export function createDeezerCatalog({
         // The same title and artist (case, accents and punctuation aside) first, then the same
         // artist, else Deezer's first.
         const wanted = songKey(song);
-        const artist = songKey({ title: "", artist: song.artist });
+        const artist = normalizeName(song.artist);
         const track =
           tracks.find((t) => songKey({ title: t.title, artist: t.artist.name }) === wanted) ??
-          tracks.find((t) => songKey({ title: "", artist: t.artist.name }) === artist) ??
+          tracks.find((t) => normalizeName(t.artist.name) === artist) ??
           tracks[0];
         if (!track) return null;
         return {
