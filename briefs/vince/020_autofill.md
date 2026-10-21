@@ -1,6 +1,10 @@
 # Song autofill
 
-Drafted by Claude from [019_overall_feedback](019_overall_feedback.md), to review.
+> 🕒 Brief posted on Wednesday 2026/10/21 20:02
+>
+> 🕒 Brief settled on Wednesday 2026/10/21 20:02
+
+Drafted by Claude from [019_overall_feedback](019_overall_feedback.md), settled by Vince.
 
 I'd like to pre-fill some details of a new song from YouTube and Deezer.
 
@@ -11,12 +15,17 @@ I'd like to pre-fill some details of a new song from YouTube and Deezer.
 - The same search also looks the song up on Deezer: its duration, album and genre (as the style), and a Deezer link.
 - The chosen YouTube video and the Deezer track become the song's first links; the duration and style fill the song's details.
 
-## Decisions already made
+## Decisions
 
 - YouTube Data API (free quota) for the video links, Deezer's public API for the details and its link. No MusicBrainz: an accurate genre isn't that important.
+- Quota: 15 searches a day per band.
+- YouTube thumbnails pass through our API: no security policy change, and phones never contact Google to show them.
+- The YouTube API key (a Google Cloud project) is kept on the server only. Vince creates it; until then, the search shows Deezer's details and link only.
 
-## Open points
+## Issues
 
-- The YouTube API key (a Google Cloud project), kept on the server only.
-- The free quota: about 100 YouTube searches a day for the whole app; a limit per user.
-- YouTube thumbnails: loaded from Google's servers (a security policy change, and each phone contacts Google), or passed through our API.
+- [#203 Song autofill Epic](https://github.com/TitoVince35/coverband/issues/203)
+- [#199 Autofill: Deezer lookup and the search route](https://github.com/TitoVince35/coverband/issues/199)
+- [#200 Autofill: YouTube search, ranking and thumbnails](https://github.com/TitoVince35/coverband/issues/200)
+- [#201 Autofill: "I feel lucky" in the new song dialog](https://github.com/TitoVince35/coverband/issues/201)
+- [#202 Autofill: the YouTube API key in production](https://github.com/TitoVince35/coverband/issues/202)
