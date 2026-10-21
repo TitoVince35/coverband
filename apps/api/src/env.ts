@@ -84,6 +84,8 @@ const envSchema = z
     BUILD_SHA: z.string().min(1).default("dev"),
     // Where song lyrics are searched (#130). The end-to-end tests point it at a fake.
     LRCLIB_URL: z.url({ protocol: /^https?$/ }).default("https://lrclib.net"),
+    // Where a new song's details are looked up (#199). The end-to-end tests point it at a fake.
+    DEEZER_URL: z.url({ protocol: /^https?$/ }).default("https://api.deezer.com"),
     ...s3Schema.shape,
     ...logSchema.shape,
   })

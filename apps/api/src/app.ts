@@ -13,6 +13,7 @@ import { loadSession, type SessionEnv } from "./core/http/session";
 import { staticCacheHeaders } from "./core/http/static-cache";
 import type { AppDeps } from "./deps";
 import { adminRoutes } from "./modules/admin/routes";
+import { autofillRoutes } from "./modules/autofill/routes";
 import { bandJournalSource } from "./modules/bands/journal";
 import { LOGO_UPLOAD_MAX_SIZE } from "./modules/bands/logo";
 import { bandRoutes } from "./modules/bands/routes";
@@ -52,6 +53,7 @@ function createApi(deps: AppDeps) {
         journalRoutes(deps, [bandJournalSource, songJournalSource]),
       )
       .route("/bands/:bandSlug/songs", songRoutes(deps))
+      .route("/bands/:bandSlug/autofill", autofillRoutes(deps))
       .route("/bands/:bandSlug/invitations", bandInvitationRoutes(deps))
       .route("/me", meRoutes(deps))
       .route("/users", userRoutes(deps))
