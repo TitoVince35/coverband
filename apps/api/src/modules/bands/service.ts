@@ -22,16 +22,15 @@ export async function bandsOf(db: Db, userId: string) {
       bandId: bands.id,
       logoKey: bands.logoKey,
       logoThumbnailKey: bands.logoThumbnailKey,
-      logoBackground: bands.logoBackground,
     })
     .from(bandMembers)
     .innerJoin(bands, eq(bands.id, bandMembers.bandId))
     .where(eq(bandMembers.userId, userId))
     .orderBy(asc(bands.name));
   const instruments = await instrumentsByBand(db, userId);
-  return rows.map(({ bandId, logoKey, logoThumbnailKey, logoBackground, ...band }) => ({
+  return rows.map(({ bandId, logoKey, logoThumbnailKey, ...band }) => ({
     ...band,
-    logo: logoOf({ id: bandId, slug: band.slug, logoKey, logoThumbnailKey, logoBackground }),
+    logo: logoOf({ id: bandId, slug: band.slug, logoKey, logoThumbnailKey }),
     instruments: instruments.get(bandId) ?? [],
   }));
 }
