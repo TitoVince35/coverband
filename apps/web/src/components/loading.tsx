@@ -21,23 +21,34 @@ export function Delayed({ children }: { children: ReactNode }) {
 }
 
 /** A loading area: busy for screen readers, which hear "Loading…" (its name) instead of the shapes. */
-function Loading({ className, children }: { className?: string; children: ReactNode }) {
+function Loading({
+  className,
+  delayed = true,
+  children,
+}: {
+  className?: string;
+  /** False when something else already waited (the router's pending delay). */
+  delayed?: boolean;
+  children: ReactNode;
+}) {
   const { t } = useTranslation();
-  return (
-    <Delayed>
-      <div role="status" aria-busy="true" aria-label={t("common.loading")}>
-        <div aria-hidden="true" className={className}>
-          {children}
-        </div>
+  const area = (
+    <div role="status" aria-busy="true" aria-label={t("common.loading")}>
+      <div aria-hidden="true" className={className}>
+        {children}
       </div>
-    </Delayed>
+    </div>
   );
+  return delayed ? <Delayed>{area}</Delayed> : area;
 }
 
-/** A spinner for a whole page (the route guards waiting, before any page shows). */
+/**
+ * A spinner for a whole page (the route guards waiting, before any page shows): the router
+ * already waits LOADING_DELAY_MS before showing it.
+ */
 export function PageSpinner() {
   return (
-    <Loading className="flex justify-center py-16">
+    <Loading className="flex justify-center py-16" delayed={false}>
       <Loader2 className="size-8 animate-spin text-muted-foreground" />
     </Loading>
   );

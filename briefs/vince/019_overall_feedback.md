@@ -43,3 +43,4 @@ Moved to its own brief: [020_autofill](020_autofill.md).
 - [#188 Song creation: title and artist only, then the song page](https://github.com/TitoVince35/coverband/issues/188)
 - [#189 Band logo: in the header, large on the band's home page, no background](https://github.com/TitoVince35/coverband/issues/189)
 - [#190 Loading: skeletons instead of blank screens](https://github.com/TitoVince35/coverband/issues/190)
+- [#197 Development: a slow network switch to test loading](https://github.com/TitoVince35/coverband/issues/197)
