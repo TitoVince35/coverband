@@ -45,14 +45,16 @@ function useLogoSource(bandSlug: string, logo: Logo | null, size: Size) {
 /** Where each size shows: the band list's square, the header's small square, the home page. */
 const BOX: Record<Size, string> = {
   small: "size-12 shrink-0",
-  header: "size-8 shrink-0",
+  // As tall as the band's name and genre (two lines), as wide as the logo needs, up to a point.
+  header: "h-14 w-auto max-w-[40%] shrink-0",
   large: "w-full",
 };
 
 /**
  * A band's logo as it is, with no background (#189): the band leader uploads a logo that reads on
  * the app's dark background. `small`: the thumbnail, in a square (the band list), the band's
- * initials without a logo; `header`: the thumbnail next to the band's name, nothing without one;
+ * initials without a logo; `header`: the thumbnail on the right of the band's name, as tall as the name and genre, nothing
+ * without one;
  * `large`: the whole logo, as wide as the page and at most a third of the screen's height (the
  * band's home page), nothing without one. Shown from the device offline (#178). Decorative: the
  * band's name is always next to it.

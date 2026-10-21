@@ -39,13 +39,11 @@ function BandLayout() {
     <div className="space-y-6">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          {/* The small logo next to the name, nothing without one (#189). */}
-          <div className="flex min-w-0 items-center gap-2">
-            <BandLogo band={band} size="header" />
-            <BandSwitcher current={band} />
-          </div>
+          <BandSwitcher current={band} />
           {band.genre && <p className="text-muted-foreground">{band.genre}</p>}
         </div>
+        {/* The small logo on the right, as tall as the name and genre; nothing without one. */}
+        <BandLogo band={band} size="header" />
         {membership.role === "leader" && <EditBandDialog band={band} />}
       </div>
       <nav className="flex gap-4 border-b">
