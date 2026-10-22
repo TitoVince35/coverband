@@ -55,6 +55,27 @@ test("the band leader creates an account and the band from the email's link", as
   await expect(leader.getByText(`Welcome to ${band}!`)).toBeVisible();
 });
 
+test("an admin views the app as the band leader, read-only, then stops", async ({ page }) => {
+  await login(page, ADMIN, PASSWORD);
+  await page.goto("/admin");
+  await page
+    .getByRole("listitem")
+    .filter({ hasText: leaderEmail })
+    .getByRole("button", { name: "View as" })
+    .click();
+  await expect(page.getByText("Viewing the app as Lea Leader: read-only.")).toBeVisible();
+  await expect(page.getByRole("link", { name: band })).toBeVisible();
+
+  await page.goto("/account");
+  await page.getByLabel("Nickname").fill("Hacked");
+  await page.getByRole("button", { name: "Update" }).click();
+  await expect(page.getByText("Read-only while viewing the app as another user.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Stop" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByText("Viewing the app as")).toBeHidden();
+});
+
 test("the band leader invites a musician, who joins the band", async ({ browser }) => {
   await leader.getByRole("link", { name: "Lineup" }).click();
   await leader.getByRole("button", { name: "Invite a musician" }).click();

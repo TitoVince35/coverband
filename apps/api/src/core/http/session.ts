@@ -28,7 +28,14 @@ export function loadSession(auth: Auth) {
     const data = await auth.api.getSession({ headers: c.req.raw.headers });
     c.set("user", data?.user ?? null);
     c.set("session", data?.session ?? null);
-    if (data) c.set("log", c.var.log.child({ userId: data.user.id }));
+    if (data) {
+      const { impersonatedBy } = data.session;
+      // An admin viewing the app as this user (#214): their ID too.
+      c.set(
+        "log",
+        c.var.log.child({ userId: data.user.id, ...(impersonatedBy && { impersonatedBy }) }),
+      );
+    }
     await next();
   });
 }

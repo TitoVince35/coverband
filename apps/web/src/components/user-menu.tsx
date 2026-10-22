@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { sessionAvatarUrl, UserAvatar } from "@/components/user-avatar";
 import { authClient, sessionQuery } from "@/lib/auth";
+import { stopImpersonating } from "@/lib/impersonation";
 import { clearUserData } from "@/lib/query-client";
 
 /** Account menu in the header; hidden when logged out. */
@@ -28,6 +29,9 @@ export function UserMenu() {
   }
 
   async function logout() {
+    // An admin viewing the app as a user (#214): back to their own session first, which the
+    // logout then ends (logging the user's session out would leave the admin's one behind).
+    if (session?.session.impersonatedBy) await stopImpersonating();
     await authClient.signOut();
     clearUserData(queryClient);
     await router.navigate({ to: "/login" });
