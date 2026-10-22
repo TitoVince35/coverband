@@ -1,10 +1,3 @@
-/**
- * Backgrounds a band logo used to be shown on (#175). No longer used (#189): only the database
- * column still has them, until it is dropped (#191).
- */
-export const LOGO_BACKGROUNDS = ["light", "dark"] as const;
-export type LogoBackground = (typeof LOGO_BACKGROUNDS)[number];
-
 /** Largest side of a band logo, in pixels: enough to print it (the browser fits it, never crops). */
 export const LOGO_SIZE = 2000;
 
