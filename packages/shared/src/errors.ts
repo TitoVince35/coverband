@@ -27,6 +27,7 @@ export const ERROR_CODES = [
   "lyrics_unavailable",
   "access_required",
   "access_code_invalid",
+  "impersonation_read_only",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

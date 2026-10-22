@@ -403,6 +403,11 @@
       "roleInBand": "{{band}} · {{role}}"
     }
   },
+  "impersonation": {
+    "viewAs": "View as",
+    "banner": "Viewing the app as {{name}}: read-only.",
+    "stop": "Stop"
+  },
   "invitations": {
     "email": "Email",
     "language": "Email language",
@@ -464,7 +469,8 @@
     "too_many_links": "This song already has as many links as it can.",
     "lyrics_unavailable": "The lyrics service isn't answering right now. Try again later, or type them in.",
     "access_required": "Enter the access code to continue.",
-    "access_code_invalid": "This isn't the access code."
+    "access_code_invalid": "This isn't the access code.",
+    "impersonation_read_only": "Read-only while viewing the app as another user."
   },
   "instruments": {
     "picker": {
