@@ -9,6 +9,7 @@ import {
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
+import { recordActivity } from "../core/activity/record";
 import type { Db } from "../core/db/client";
 import * as schema from "../core/db/schema";
 import type { Logger } from "../core/log";
@@ -88,6 +89,24 @@ export function createAuth({
     disabledPaths: ["/update-user"],
     // Global roles only ("admin" or "user"); band roles are per membership.
     plugins: [admin({ adminRoles: [ADMIN_ROLE] })],
+    databaseHooks: {
+      session: {
+        create: {
+          // An admin starting to view the app as a user (#214). Not in the session's transaction:
+          // Better Auth owns it.
+          after: async (session) => {
+            const { impersonatedBy } = session as { impersonatedBy?: string | null };
+            if (!impersonatedBy) return;
+            await recordActivity(db, {
+              action: "user.impersonated",
+              bandId: null,
+              actorId: impersonatedBy,
+              target: { type: "user", id: session.userId },
+            });
+          },
+        },
+      },
+    },
     rateLimit: { enabled: rateLimit, storage: "database" },
     advanced: {
       database: { generateId: "uuid" },

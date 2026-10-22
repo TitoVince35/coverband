@@ -403,6 +403,11 @@
       "roleInBand": "{{band}} · {{role}}"
     }
   },
+  "impersonation": {
+    "viewAs": "Voir en tant que",
+    "banner": "Vous voyez l'app en tant que {{name}} : lecture seule.",
+    "stop": "Arrêter"
+  },
   "invitations": {
     "email": "E-mail",
     "language": "Langue de l'e-mail",
@@ -464,7 +469,8 @@
     "too_many_links": "Ce morceau a déjà le nombre maximum de liens.",
     "lyrics_unavailable": "Le service de paroles ne répond pas pour l'instant. Réessayez plus tard, ou saisissez-les.",
     "access_required": "Saisissez le code d'accès pour continuer.",
-    "access_code_invalid": "Ce n'est pas le code d'accès."
+    "access_code_invalid": "Ce n'est pas le code d'accès.",
+    "impersonation_read_only": "Lecture seule tant que vous voyez l'app en tant qu'un autre compte."
   },
   "instruments": {
     "picker": {

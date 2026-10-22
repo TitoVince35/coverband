@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { AppError, apiError, appErrorResponse } from "./core/errors";
 import { accessGate, accessRoutes } from "./core/http/access";
 import { healthRoutes } from "./core/http/health";
+import { impersonationReadOnly } from "./core/http/impersonation";
 import { internalRoutes } from "./core/http/internal";
 import { redirectHosts } from "./core/http/redirect";
 import { type LogEnv, requestLog } from "./core/http/request-log";
@@ -97,6 +98,8 @@ export function createApp({ deps, webDistDir }: AppOptions) {
   );
   // The beta access code, before Better Auth and any session lookup.
   app.use("/api/*", accessGate(deps.access));
+  // An admin viewing the app as another user changes nothing (#214), Better Auth included.
+  app.use("/api/*", impersonationReadOnly(deps.auth));
 
   // Better Auth endpoints (login, logout, session...), called by the web app's auth client.
   app.on(["GET", "POST"], "/api/auth/*", (c) => deps.auth.handler(c.req.raw));

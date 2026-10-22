@@ -38,6 +38,7 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   lyrics_unavailable: 503,
   access_required: 403,
   access_code_invalid: 403,
+  impersonation_read_only: 403,
 };
 
 /**
