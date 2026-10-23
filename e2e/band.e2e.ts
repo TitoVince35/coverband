@@ -508,6 +508,12 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(songs).toHaveCount(1);
   await expect(songs.first()).toContainText("Zombie");
   await expect(songs.first().getByRole("img", { name: "Energy 3 of 3" })).toBeVisible();
+  // Reversed (#218): the same songs, the other way round.
+  await leader.getByRole("button", { name: /^All/ }).click();
+  const byTitle = await songs.allInnerTexts();
+  await leader.getByRole("button", { name: "Ascending" }).click();
+  await expect(leader.getByRole("button", { name: "Descending" })).toBeVisible();
+  expect(await songs.allInnerTexts()).toEqual(byTitle.toReversed());
 
   // The journal names the songs.
   await leader.getByRole("link", { name: "Home" }).click();

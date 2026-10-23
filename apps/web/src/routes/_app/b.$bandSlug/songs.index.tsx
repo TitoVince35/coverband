@@ -1,7 +1,7 @@
 import { formatDuration, keyShort, type SongStatus } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Archive, Plus, Search } from "lucide-react";
+import { Archive, ArrowDownWideNarrow, ArrowUpNarrowWide, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ListSkeleton } from "@/components/loading";
@@ -18,12 +18,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { errorMessage } from "@/lib/errors";
-import { type RepertoireSort, repertoireView } from "@/lib/repertoire";
+import {
+  DEFAULT_DIRECTION,
+  type RepertoireSort,
+  repertoireView,
+  type SortDirection,
+} from "@/lib/repertoire";
 import { archivedSongsQuery, playedDuration, songsQuery } from "@/lib/songs";
 import { cn } from "@/lib/utils";
 
 // The band's repertoire (#88): every song, searchable, filtered on its status and sorted by title
-// or energy (#90); any member adds songs.
+// or energy (#90), either way (#218); any member adds songs.
 /** The status filters, the songs ready to play first (the song page picks them in order). */
 const STATUS_FILTERS = ["all", "ready", "learning", "proposed"] as const satisfies readonly (
   | SongStatus
@@ -42,7 +47,8 @@ function RepertoirePage() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<SongStatus | "all">("all");
   const [sort, setSort] = useState<RepertoireSort>("title");
-  const shown = repertoireView(songs.data ?? [], { query, status, sort });
+  const [direction, setDirection] = useState<SortDirection>(DEFAULT_DIRECTION.title);
+  const shown = repertoireView(songs.data ?? [], { query, status, sort, direction });
   const count = (s: SongStatus | "all") =>
     songs.data?.filter((song) => s === "all" || song.status === s).length ?? 0;
 
@@ -104,8 +110,15 @@ function RepertoirePage() {
                 </button>
               ))}
             </fieldset>
-            <div className="flex justify-end">
-              <Select value={sort} onValueChange={(value) => setSort(value as RepertoireSort)}>
+            <div className="flex justify-end gap-1">
+              <Select
+                value={sort}
+                onValueChange={(value) => {
+                  // Each sort starts in its own direction: titles A to Z, the hottest songs first.
+                  setSort(value as RepertoireSort);
+                  setDirection(DEFAULT_DIRECTION[value as RepertoireSort]);
+                }}
+              >
                 <SelectTrigger size="sm" aria-label={t("songs.sort.label")}>
                   <SelectValue />
                 </SelectTrigger>
@@ -114,6 +127,16 @@ function RepertoirePage() {
                   <SelectItem value="energy">{t("songs.sort.energy")}</SelectItem>
                 </SelectContent>
               </Select>
+              {/* Named after the current direction; pressing it reverses the order. */}
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label={t(`songs.sort.${direction}`)}
+                title={t(`songs.sort.${direction}`)}
+                onClick={() => setDirection(direction === "asc" ? "desc" : "asc")}
+              >
+                {direction === "asc" ? <ArrowUpNarrowWide /> : <ArrowDownWideNarrow />}
+              </Button>
             </div>
           </div>
           {shown.length === 0 ? (
@@ -155,7 +178,12 @@ function RepertoirePage() {
                             <p className="min-w-0 flex-1 truncate">{song.artist}</p>
                             {(extra.length > 0 || song.energy) && (
                               <p className="flex shrink-0 items-center gap-1.5 text-xs tabular-nums">
-                                {extra.length > 0 && <span>{extra.join(" · ")}</span>}
+                                {/* As readable as the title (#218); the artist stays muted. */}
+                                {extra.length > 0 && (
+                                  <span className="font-medium text-foreground">
+                                    {extra.join(" · ")}
+                                  </span>
+                                )}
                                 <EnergyPeppers energy={song.energy} />
                               </p>
                             )}

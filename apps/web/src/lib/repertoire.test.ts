@@ -34,4 +34,12 @@ describe("repertoireView", () => {
       "Café del Mar",
     ]);
   });
+
+  test("sorts in either direction (#218): unrated songs stay last", () => {
+    const view = (sort: "title" | "energy", direction: "asc" | "desc") =>
+      titles(repertoireView(songs, { query: "", status: "all", sort, direction }));
+    expect(view("title", "desc")).toEqual(["Zombie", "Creep", "Café del Mar", "Africa"]);
+    expect(view("energy", "asc")).toEqual(["Creep", "Africa", "Zombie", "Café del Mar"]);
+    expect(view("energy", "desc")).toEqual(["Africa", "Zombie", "Creep", "Café del Mar"]);
+  });
 });

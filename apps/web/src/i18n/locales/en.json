@@ -131,7 +131,9 @@
     "sort": {
       "label": "Sort by",
       "title": "Title",
-      "energy": "Energy"
+      "energy": "Energy",
+      "asc": "Ascending",
+      "desc": "Descending"
     },
     "filter": "Show",
     "noneWithStatus": "No song is “{{status}}”.",
