@@ -131,7 +131,9 @@
     "sort": {
       "label": "Trier par",
       "title": "Titre",
-      "energy": "Énergie"
+      "energy": "Énergie",
+      "asc": "Croissant",
+      "desc": "Décroissant"
     },
     "filter": "Afficher",
     "noneWithStatus": "Aucun morceau « {{status}} ».",
