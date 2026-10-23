@@ -6,6 +6,7 @@ import { z } from "zod";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./auth";
 import { FIELD_MAX_LENGTH } from "./bands";
 import { CONTACT_MESSAGE, CONTACT_SUBJECTS } from "./contact";
+import { DOCUMENT_LIMITS } from "./documents";
 import { MAX_SONG_DURATION } from "./duration";
 import { MAX_INSTRUMENTS } from "./instruments";
 import { MUSICAL_KEYS } from "./keys";
@@ -156,3 +157,33 @@ export const contactBody = z.object({
   page: z.string().trim().startsWith("/").max(500).optional(),
   language: z.enum(Object.keys(LANGUAGES) as [Language, ...Language[]]),
 });
+
+/**
+ * A song's new document (#238), a multipart form: the file (its type is read from its bytes and
+ * name), a title, and its instruments as JSON (a form field is text).
+ */
+export const addDocumentBody = z.object({
+  file: z.instanceof(File),
+  title: z.string().trim().min(1).max(DOCUMENT_LIMITS.title),
+  instruments: z
+    .string()
+    .optional()
+    .transform((value, ctx) => {
+      if (!value) return [];
+      try {
+        return JSON.parse(value) as unknown;
+      } catch {
+        ctx.addIssue({ code: "custom", message: "Not JSON" });
+        return z.NEVER;
+      }
+    })
+    .pipe(instrumentList),
+});
+
+/** A document's title and instruments; its file never changes. */
+export const updateDocumentBody = z
+  .object({
+    title: z.string().trim().min(1).max(DOCUMENT_LIMITS.title),
+    instruments: instrumentList,
+  })
+  .partial();
