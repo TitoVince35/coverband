@@ -34,11 +34,8 @@ function BandSettingsPage() {
           <BandDetailsForm key={data.band.slug} band={data.band} />
         </CardContent>
       </Card>
-      <Card>
-        <CardContent>
-          <BandLogoField bandSlug={data.band.slug} logo={data.band.logo} />
-        </CardContent>
-      </Card>
+      {/* Out of a card: the logo shows as wide as on the band's home page. */}
+      <BandLogoField bandSlug={data.band.slug} logo={data.band.logo} />
     </section>
   );
 }

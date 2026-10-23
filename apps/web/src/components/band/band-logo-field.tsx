@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type ChangeEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { LARGE_LOGO } from "@/components/band/band-logo";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { ensureOk, errorMessage } from "@/lib/errors";
@@ -12,7 +13,7 @@ import { useOnline } from "@/lib/online";
 type Picked = { logo: Blob; thumbnail: Blob; url: string };
 
 /**
- * The band's logo, in the band leader's edit dialog (#176): pick an image (fitted, never cropped,
+ * The band's logo, on the band settings page (#176, #221): pick an image (fitted, never cropped,
  * and its thumbnail made in the browser), see it as the app shows it (no background, #189), save
  * it, or remove it.
  */
@@ -89,14 +90,12 @@ export function BandLogoField({ bandSlug, logo }: { bandSlug: string; logo: Band
     <div className="space-y-3">
       <p className="font-medium text-sm">{t("band.logo.title")}</p>
       {shown ? (
-        // As the app shows it: on its background, with no plate.
-        <div className="flex h-32 w-full items-center justify-center rounded-md bg-background p-4 ring-1 ring-border">
-          <img
-            src={shown}
-            alt={picked ? t("band.logo.preview") : t("band.logo.current")}
-            className="max-h-full max-w-full object-contain"
-          />
-        </div>
+        // As the band's home page shows it: the same size, on the page's background, no plate.
+        <img
+          src={shown}
+          alt={picked ? t("band.logo.preview") : t("band.logo.current")}
+          className={LARGE_LOGO}
+        />
       ) : (
         <p className="text-muted-foreground text-sm">{t("band.logo.none")}</p>
       )}

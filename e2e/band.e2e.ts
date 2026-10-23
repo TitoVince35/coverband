@@ -289,6 +289,7 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(current).toBeVisible();
   // Served by the API, the whole image: 900 × 300 is under the 2,000 px limit.
   await expect.poll(() => current.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
+  const inSettings = await current.boundingBox();
   await leader.getByRole("link", { name: "Home" }).click();
 
   // On the band's home page, the full logo, at most a third of the screen's height; next to the
@@ -297,6 +298,10 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect.poll(() => logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
   const height = await logo.evaluate((img) => img.getBoundingClientRect().height / innerHeight);
   expect(height).toBeLessThanOrEqual(1 / 3 + 0.01);
+  // The same size in the band settings.
+  const onHome = await logo.boundingBox();
+  expect(Math.round(inSettings?.width ?? 0)).toBe(Math.round(onHome?.width ?? -1));
+  expect(Math.round(inSettings?.height ?? 0)).toBe(Math.round(onHome?.height ?? -1));
   const headerLogo = leader.locator('main img[src*="/logo/thumbnail?v="]');
   await expect
     .poll(() => headerLogo.evaluate((img: HTMLImageElement) => img.naturalWidth))
