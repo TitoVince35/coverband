@@ -36,9 +36,10 @@
     },
     "home": "Accueil",
     "switch": "Changer de groupe",
+    "menu": "Menu du groupe",
+    "settings": "Paramètres du groupe",
     "allBands": "Tous mes groupes",
     "edit": {
-      "button": "Modifier le groupe",
       "title": "Informations du groupe",
       "name": "Nom du groupe",
       "genre": "Style",

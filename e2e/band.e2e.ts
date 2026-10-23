@@ -110,6 +110,13 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   await expect(lineup.nth(0)).toContainText("Bass guitar");
   await expect(lineup.nth(1)).toContainText("Lea Leader");
   await expect(lineup.nth(1)).toContainText("Guitar");
+  // The band settings are the band leader's (#221): disabled in the menu, and their page sends
+  // a musician back to the band's home.
+  await musician.getByRole("button", { name: "Band menu" }).click();
+  await expect(musician.getByRole("menuitem", { name: "Band settings" })).toBeDisabled();
+  await musician.keyboard.press("Escape");
+  await musician.goto(musician.url().replace(/\/lineup$/, "/settings"));
+  await expect(musician).toHaveURL(/\/b\/e2e-rockers-[^/]+$/);
   await musician.context().close();
 });
 
@@ -211,8 +218,16 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   const bandLink = leader.getByRole("link", { name: band }).first();
   await expect(bandLink.getByText("ER", { exact: true })).toBeVisible();
   await bandLink.click();
-  await leader.getByRole("button", { name: "Edit band" }).click();
-  const dialog = leader.getByRole("dialog");
+  // The band settings (#221), from the band menu: the genre, then the logo.
+  await leader.getByRole("button", { name: "Band menu" }).click();
+  await leader.getByRole("menuitem", { name: "Band settings" }).click();
+  await expect(leader.getByRole("heading", { name: "Band settings" })).toBeVisible();
+  await leader.getByLabel("Genre").fill("Grunge");
+  await leader.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(leader.getByText("Band updated")).toBeVisible();
+  // The header says it at once.
+  await expect(leader.getByText("Grunge", { exact: true })).toBeVisible();
+  const dialog = leader.locator("main");
   await expect(dialog.getByText("No logo yet")).toBeVisible();
   await expect(leader.locator("main img")).toHaveCount(0);
 
@@ -232,7 +247,7 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(current).toBeVisible();
   // Served by the API, the whole image: 900 × 300 is under the 2,000 px limit.
   await expect.poll(() => current.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
-  await leader.keyboard.press("Escape");
+  await leader.getByRole("link", { name: "Home" }).click();
 
   // On the band's home page, the full logo, at most a third of the screen's height; next to the
   // band's name, its thumbnail; in the band list, its thumbnail too.
@@ -274,11 +289,12 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(leader.getByText("You're offline")).toBeHidden();
 
   await bandLink.click();
-  await leader.getByRole("button", { name: "Edit band" }).click();
+  await leader.getByRole("button", { name: "Band menu" }).click();
+  await leader.getByRole("menuitem", { name: "Band settings" }).click();
   await dialog.getByRole("button", { name: "Remove the logo" }).click();
   await expect(leader.getByText("Logo removed")).toBeVisible();
   await expect(dialog.getByText("No logo yet")).toBeVisible();
-  await leader.keyboard.press("Escape");
+  await leader.getByRole("link", { name: "Home" }).click();
   // Without a logo, nothing on the band's pages (the initials are for the band list).
   await expect(logo).toHaveCount(0);
   await expect(headerLogo).toHaveCount(0);

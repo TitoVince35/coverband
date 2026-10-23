@@ -21,6 +21,7 @@ import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppBBandSlugRouteImport } from './routes/_app/b.$bandSlug'
 import { Route as AppBBandSlugIndexRouteImport } from './routes/_app/b.$bandSlug/index'
 import { Route as AppBBandSlugLineupRouteImport } from './routes/_app/b.$bandSlug/lineup'
+import { Route as AppBBandSlugSettingsRouteImport } from './routes/_app/b.$bandSlug/settings'
 import { Route as AppBBandSlugSongsIndexRouteImport } from './routes/_app/b.$bandSlug/songs.index'
 import { Route as AppBBandSlugSongsSongIdRouteImport } from './routes/_app/b.$bandSlug/songs.$songId'
 import { Route as AppBBandSlugSongsArchivedRouteImport } from './routes/_app/b.$bandSlug/songs.archived'
@@ -84,6 +85,11 @@ const AppBBandSlugLineupRoute = AppBBandSlugLineupRouteImport.update({
   path: '/lineup',
   getParentRoute: () => AppBBandSlugRoute,
 } as any)
+const AppBBandSlugSettingsRoute = AppBBandSlugSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
 const AppBBandSlugSongsIndexRoute = AppBBandSlugSongsIndexRouteImport.update({
   id: '/songs/',
   path: '/songs/',
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
+  '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug/': typeof AppBBandSlugIndexRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AppIndexRoute
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
+  '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug': typeof AppBBandSlugIndexRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
   '/_app/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
+  '/_app/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/_app/b/$bandSlug/': typeof AppBBandSlugIndexRoute
   '/_app/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/_app/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/b/$bandSlug'
     | '/b/$bandSlug/lineup'
+    | '/b/$bandSlug/settings'
     | '/b/$bandSlug/'
     | '/b/$bandSlug/songs/$songId'
     | '/b/$bandSlug/songs/archived'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/'
     | '/b/$bandSlug/lineup'
+    | '/b/$bandSlug/settings'
     | '/b/$bandSlug'
     | '/b/$bandSlug/songs/$songId'
     | '/b/$bandSlug/songs/archived'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/b/$bandSlug'
     | '/_app/b/$bandSlug/lineup'
+    | '/_app/b/$bandSlug/settings'
     | '/_app/b/$bandSlug/'
     | '/_app/b/$bandSlug/songs/$songId'
     | '/_app/b/$bandSlug/songs/archived'
@@ -296,6 +308,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugLineupRouteImport
       parentRoute: typeof AppBBandSlugRoute
     }
+    '/_app/b/$bandSlug/settings': {
+      id: '/_app/b/$bandSlug/settings'
+      path: '/settings'
+      fullPath: '/b/$bandSlug/settings'
+      preLoaderRoute: typeof AppBBandSlugSettingsRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
     '/_app/b/$bandSlug/songs/': {
       id: '/_app/b/$bandSlug/songs/'
       path: '/songs'
@@ -322,6 +341,7 @@ declare module '@tanstack/react-router' {
 
 interface AppBBandSlugRouteChildren {
   AppBBandSlugLineupRoute: typeof AppBBandSlugLineupRoute
+  AppBBandSlugSettingsRoute: typeof AppBBandSlugSettingsRoute
   AppBBandSlugIndexRoute: typeof AppBBandSlugIndexRoute
   AppBBandSlugSongsSongIdRoute: typeof AppBBandSlugSongsSongIdRoute
   AppBBandSlugSongsArchivedRoute: typeof AppBBandSlugSongsArchivedRoute
@@ -330,6 +350,7 @@ interface AppBBandSlugRouteChildren {
 
 const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
   AppBBandSlugLineupRoute: AppBBandSlugLineupRoute,
+  AppBBandSlugSettingsRoute: AppBBandSlugSettingsRoute,
   AppBBandSlugIndexRoute: AppBBandSlugIndexRoute,
   AppBBandSlugSongsSongIdRoute: AppBBandSlugSongsSongIdRoute,
   AppBBandSlugSongsArchivedRoute: AppBBandSlugSongsArchivedRoute,
