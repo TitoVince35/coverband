@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./auth";
 import { FIELD_MAX_LENGTH } from "./bands";
+import { CONTACT_MESSAGE, CONTACT_SUBJECTS } from "./contact";
 import { MAX_SONG_DURATION } from "./duration";
 import { MAX_INSTRUMENTS } from "./instruments";
 import { MUSICAL_KEYS } from "./keys";
@@ -144,3 +145,14 @@ export const addMediaBody = mediaFields.partial({ title: true, instruments: true
 
 /** Some of a link's fields. */
 export const updateMediaBody = mediaFields.partial();
+
+/**
+ * A message to the app's team (#234). `page`: where the user came from, sent with a bug report
+ * (the server adds the version and the browser).
+ */
+export const contactBody = z.object({
+  subject: z.enum(CONTACT_SUBJECTS),
+  message: z.string().trim().min(CONTACT_MESSAGE.min).max(CONTACT_MESSAGE.max),
+  page: z.string().trim().startsWith("/").max(500).optional(),
+  language: z.enum(Object.keys(LANGUAGES) as [Language, ...Language[]]),
+});

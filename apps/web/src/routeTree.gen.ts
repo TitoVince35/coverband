@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAccountRouteImport } from './routes/_app/account'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
+import { Route as AppContactRouteImport } from './routes/_app/contact'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppBBandSlugRouteImport } from './routes/_app/b.$bandSlug'
 import { Route as AppBBandSlugIndexRouteImport } from './routes/_app/b.$bandSlug/index'
@@ -63,6 +64,11 @@ const AppAccountRoute = AppAccountRouteImport.update({
 const AppAdminRoute = AppAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContactRoute = AppContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => AppRoute,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/account': typeof AppAccountRoute
   '/admin': typeof AppAdminRoute
+  '/contact': typeof AppContactRoute
   '/invite/$token': typeof InviteTokenRoute
   '/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/account': typeof AppAccountRoute
   '/admin': typeof AppAdminRoute
+  '/contact': typeof AppContactRoute
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AppIndexRoute
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_app/account': typeof AppAccountRoute
   '/_app/admin': typeof AppAdminRoute
+  '/_app/contact': typeof AppContactRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/account'
     | '/admin'
+    | '/contact'
     | '/invite/$token'
     | '/b/$bandSlug'
     | '/b/$bandSlug/lineup'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/account'
     | '/admin'
+    | '/contact'
     | '/invite/$token'
     | '/'
     | '/b/$bandSlug/lineup'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_app/account'
     | '/_app/admin'
+    | '/_app/contact'
     | '/invite/$token'
     | '/_app/'
     | '/_app/b/$bandSlug'
@@ -278,6 +290,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contact': {
+      id: '/_app/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof AppContactRouteImport
       parentRoute: typeof AppRoute
     }
     '/invite/$token': {
@@ -364,6 +383,7 @@ const AppBBandSlugRouteWithChildren = AppBBandSlugRoute._addFileChildren(
 interface AppRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppAdminRoute: typeof AppAdminRoute
+  AppContactRoute: typeof AppContactRoute
   AppIndexRoute: typeof AppIndexRoute
   AppBBandSlugRoute: typeof AppBBandSlugRouteWithChildren
 }
@@ -371,6 +391,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppAdminRoute: AppAdminRoute,
+  AppContactRoute: AppContactRoute,
   AppIndexRoute: AppIndexRoute,
   AppBBandSlugRoute: AppBBandSlugRouteWithChildren,
 }

@@ -34,6 +34,8 @@ export type AppDeps = {
   redirectHosts?: string[];
   /** Secret of the cron jobs' routes (/api/internal); absent: no such routes. */
   cronSecret?: string;
+  /** Where the contact form's messages go (#234); absent: no contact form. */
+  contactRecipient?: string;
   /** The beta access code; absent: no gate. */
   access?: AccessConfig;
 };
