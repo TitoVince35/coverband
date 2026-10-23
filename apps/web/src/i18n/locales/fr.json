@@ -27,7 +27,6 @@
     "noBands": "Vous ne faites encore partie d'aucun groupe. On rejoint un groupe sur invitation."
   },
   "band": {
-    "welcome": "Bienvenue dans {{band}} !",
     "notFound": "Ce groupe n'existe pas ou vous n'en faites pas partie.",
     "comingSoon": "Les setlists et les concerts arrivent bientôt.",
     "roles": {
@@ -49,6 +48,7 @@
     },
     "logo": {
       "title": "Logo",
+      "add": "Ajoutez le logo de votre groupe",
       "none": "Pas encore de logo : les initiales du groupe s'affichent à la place.",
       "choose": "Choisir un logo",
       "change": "Changer le logo",

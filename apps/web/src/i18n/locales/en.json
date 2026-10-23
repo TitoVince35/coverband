@@ -27,7 +27,6 @@
     "noBands": "You're not in a band yet. Bands are joined through an invitation."
   },
   "band": {
-    "welcome": "Welcome to {{band}}!",
     "notFound": "This band doesn't exist or you're not a member.",
     "comingSoon": "Setlists and gigs are coming soon.",
     "roles": {
@@ -49,6 +48,7 @@
     },
     "logo": {
       "title": "Logo",
+      "add": "Add your band's logo",
       "none": "No logo yet: the band's initials show instead.",
       "choose": "Choose a logo",
       "change": "Change the logo",
