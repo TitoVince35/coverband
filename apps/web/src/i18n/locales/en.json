@@ -38,6 +38,13 @@
     "menu": "Band menu",
     "settings": "Band settings",
     "allBands": "All my bands",
+    "nav": {
+      "label": "Band sections",
+      "setlists": "Setlists",
+      "gigs": "Gigs",
+      "soon": "Coming soon",
+      "soonSuffix": " (coming soon)"
+    },
     "edit": {
       "title": "Band details",
       "name": "Band name",

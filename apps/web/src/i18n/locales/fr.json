@@ -38,6 +38,13 @@
     "menu": "Menu du groupe",
     "settings": "Paramètres du groupe",
     "allBands": "Tous mes groupes",
+    "nav": {
+      "label": "Rubriques du groupe",
+      "setlists": "Setlists",
+      "gigs": "Concerts",
+      "soon": "Bientôt",
+      "soonSuffix": " (bientôt)"
+    },
     "edit": {
       "title": "Informations du groupe",
       "name": "Nom du groupe",
