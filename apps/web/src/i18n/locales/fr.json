@@ -172,7 +172,18 @@
       "remove": "Retirer",
       "added": "Lien ajouté",
       "saved": "Lien mis à jour",
-      "removed": "Lien retiré"
+      "removed": "Lien retiré",
+      "search": {
+        "open": "Chercher sur Deezer",
+        "title": "Chercher sur Deezer",
+        "description": "Choisissez un titre : son lien et son nom remplissent le formulaire.",
+        "refine": "Rechercher",
+        "again": "Chercher à nouveau",
+        "searching": "Recherche sur Deezer…",
+        "none": "Rien trouvé sur Deezer.",
+        "matches": "Titres trouvés",
+        "back": "Retour au lien"
+      }
     },
     "form": {
       "addTitle": "Ajouter un morceau",
@@ -472,7 +483,8 @@
     "lyrics_unavailable": "Le service de paroles ne répond pas pour l'instant. Réessayez plus tard, ou saisissez-les.",
     "access_required": "Saisissez le code d'accès pour continuer.",
     "access_code_invalid": "Ce n'est pas le code d'accès.",
-    "impersonation_read_only": "Lecture seule tant que vous voyez l'app en tant qu'un autre compte."
+    "impersonation_read_only": "Lecture seule tant que vous voyez l'app en tant qu'un autre compte.",
+    "deezer_unavailable": "Deezer ne répond pas pour l'instant. Réessayez plus tard, ou collez le lien."
   },
   "instruments": {
     "picker": {

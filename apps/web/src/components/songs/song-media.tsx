@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { InstrumentListEditor, withAdded } from "@/components/instruments/instrument-list-editor";
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { ProviderIcon } from "@/components/songs/provider-icon";
+import { LinkSearch } from "@/components/songs/song-link-search";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,11 +26,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { fitTitle } from "@/lib/autofill";
 import { errorMessage } from "@/lib/errors";
 import { useOnline } from "@/lib/online";
 import { addMedia, deleteMedia, updateMedia } from "@/lib/songs";
 
 type Media = { id: string; url: string; title: string | null; instruments: Instrument[] };
+
+/** What a link search looks for (#220). */
+type Song = { title: string; artist: string };
 
 /** What a link is called: its title, else the provider's name, else the site. */
 function linkName(media: Media) {
@@ -44,10 +49,12 @@ function linkName(media: Media) {
 export function SongMedia({
   bandSlug,
   songId,
+  song,
   media,
 }: {
   bandSlug: string;
   songId: string;
+  song: Song;
   media: Media[];
 }) {
   const { t } = useTranslation();
@@ -58,6 +65,7 @@ export function SongMedia({
         {media.length < MEDIA_LIMITS.perSong && (
           <CardAction>
             <MediaDialog
+              song={song}
               bandSlug={bandSlug}
               songId={songId}
               trigger={
@@ -100,6 +108,7 @@ export function SongMedia({
                     <InstrumentTags instruments={item.instruments} className="pl-8" />
                   </div>
                   <MediaDialog
+                    song={song}
                     bandSlug={bandSlug}
                     songId={songId}
                     media={item}
@@ -127,11 +136,13 @@ export function SongMedia({
 function MediaDialog({
   bandSlug,
   songId,
+  song,
   media,
   trigger,
 }: {
   bandSlug: string;
   songId: string;
+  song: Song;
   media?: Media;
   trigger: ReactNode;
 }) {
@@ -143,6 +154,10 @@ function MediaDialog({
   const [instruments, setInstruments] = useState<Instrument[]>(media?.instruments ?? []);
   const [typed, setTyped] = useState<Instrument | null>(null);
   const [badUrl, setBadUrl] = useState(false);
+  const [url, setUrl] = useState(media?.url ?? "");
+  const [title, setTitle] = useState(media?.title ?? "");
+  // A new link searched on Deezer (#220): the search shows instead of the form, which it fills.
+  const [searching, setSearching] = useState(false);
   const done = async (message: string) => {
     toast.success(message);
     setOpen(false);
@@ -166,6 +181,9 @@ function MediaDialog({
       setInstruments(media?.instruments ?? []);
       setTyped(null);
       setBadUrl(false);
+      setUrl(media?.url ?? "");
+      setTitle(media?.title ?? "");
+      setSearching(false);
       save.reset();
       remove.reset();
     }
@@ -173,15 +191,13 @@ function MediaDialog({
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const url = String(form.get("url") ?? "").trim();
-    if (!parseMediaUrl(url)) {
+    if (!parseMediaUrl(url.trim())) {
       setBadUrl(true);
       return;
     }
     save.mutate({
-      url,
-      title: String(form.get("title") ?? "").trim() || null,
+      url: url.trim(),
+      title: title.trim() || null,
       instruments: withAdded(instruments, typed),
     });
   }
@@ -195,86 +211,116 @@ function MediaDialog({
         {trigger}
       </DialogTrigger>
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
-        <form onSubmit={onSubmit} className="space-y-4">
-          <DialogHeader>
-            <DialogTitle className="font-heading">
-              {media ? t("songs.media.editTitle") : t("songs.media.addTitle")}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="media-url">{t("songs.media.url")}</Label>
-            <Input
-              id="media-url"
-              name="url"
-              type="url"
-              inputMode="url"
-              defaultValue={media?.url ?? ""}
-              maxLength={MEDIA_LIMITS.url}
-              placeholder="https://"
-              autoComplete="off"
-              required
-              aria-invalid={badUrl}
-              aria-describedby="media-url-hint"
-              onChange={() => setBadUrl(false)}
-            />
-            <p
-              id="media-url-hint"
-              role={badUrl ? "alert" : undefined}
-              className={badUrl ? "text-destructive text-xs" : "text-muted-foreground text-xs"}
-            >
-              {badUrl ? t("songs.media.urlInvalid") : t("songs.media.urlHint")}
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="media-title">{t("songs.media.linkTitle")}</Label>
-            <Input
-              id="media-title"
-              name="title"
-              defaultValue={media?.title ?? ""}
-              maxLength={MEDIA_LIMITS.title}
-              autoComplete="off"
-              aria-describedby="media-title-hint"
-            />
-            <p id="media-title-hint" className="text-muted-foreground text-xs">
-              {t("songs.media.linkTitleHint")}
-            </p>
-          </div>
-          <fieldset className="space-y-2">
-            <legend className="font-medium text-sm">{t("songs.media.instruments")}</legend>
-            <p className="text-muted-foreground text-xs">{t("songs.media.instrumentsHint")}</p>
-            <InstrumentListEditor
-              id="media-instrument"
-              list={instruments}
-              onChange={setInstruments}
-              typed={typed}
-              onType={setTyped}
-              nested
-            />
-          </fieldset>
-          {error && (
-            <p role="alert" className="text-destructive text-sm">
-              {errorMessage(t, error)}
-            </p>
-          )}
-          <DialogFooter className="gap-2">
-            {media && (
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-destructive"
-                disabled={busy}
-                pending={remove.isPending}
-                onClick={() => remove.mutate()}
+        {searching ? (
+          <LinkSearch
+            bandSlug={bandSlug}
+            song={song}
+            onBack={() => setSearching(false)}
+            onChoose={(track) => {
+              // The track's own title: it says "Live", "Remastered"... the page has the song's.
+              setUrl(track.url);
+              setTitle(fitTitle(track.title) ?? "");
+              setBadUrl(false);
+              setSearching(false);
+            }}
+          />
+        ) : (
+          <form onSubmit={onSubmit} className="space-y-4">
+            <DialogHeader>
+              <DialogTitle className="font-heading">
+                {media ? t("songs.media.editTitle") : t("songs.media.addTitle")}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="media-url">{t("songs.media.url")}</Label>
+              <Input
+                id="media-url"
+                name="url"
+                type="url"
+                inputMode="url"
+                value={url}
+                maxLength={MEDIA_LIMITS.url}
+                placeholder="https://"
+                autoComplete="off"
+                required
+                aria-invalid={badUrl}
+                aria-describedby="media-url-hint"
+                onChange={(event) => {
+                  setUrl(event.target.value);
+                  setBadUrl(false);
+                }}
+              />
+              <p
+                id="media-url-hint"
+                role={badUrl ? "alert" : undefined}
+                className={badUrl ? "text-destructive text-xs" : "text-muted-foreground text-xs"}
               >
-                <Trash2 />
-                {t("songs.media.remove")}
-              </Button>
+                {badUrl ? t("songs.media.urlInvalid") : t("songs.media.urlHint")}
+              </p>
+              {!media && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearching(true)}
+                >
+                  <ProviderIcon url="https://www.deezer.com" className="size-4" />
+                  {t("songs.media.search.open")}
+                </Button>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="media-title">{t("songs.media.linkTitle")}</Label>
+              <Input
+                id="media-title"
+                name="title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                maxLength={MEDIA_LIMITS.title}
+                autoComplete="off"
+                aria-describedby="media-title-hint"
+              />
+              <p id="media-title-hint" className="text-muted-foreground text-xs">
+                {t("songs.media.linkTitleHint")}
+              </p>
+            </div>
+            <fieldset className="space-y-2">
+              <legend className="font-medium text-sm">{t("songs.media.instruments")}</legend>
+              <p className="text-muted-foreground text-xs">{t("songs.media.instrumentsHint")}</p>
+              <InstrumentListEditor
+                id="media-instrument"
+                list={instruments}
+                onChange={setInstruments}
+                typed={typed}
+                onType={setTyped}
+                nested
+              />
+            </fieldset>
+            {error && (
+              <p role="alert" className="text-destructive text-sm">
+                {errorMessage(t, error)}
+              </p>
             )}
-            <Button type="submit" disabled={busy} pending={save.isPending}>
-              {save.isPending ? t("common.saving") : t("common.save")}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter className="gap-2">
+              {media && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="text-destructive"
+                  disabled={busy}
+                  pending={remove.isPending}
+                  onClick={() => remove.mutate()}
+                >
+                  <Trash2 />
+                  {t("songs.media.remove")}
+                </Button>
+              )}
+              <Button type="submit" disabled={busy} pending={save.isPending}>
+                {save.isPending ? t("common.saving") : t("common.save")}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

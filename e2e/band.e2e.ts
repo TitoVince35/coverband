@@ -487,6 +487,20 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(links.last()).toContainText("Cowbell");
   await expect(links.last().getByRole("link")).toHaveAttribute("target", "_blank");
 
+  // A link found on Deezer (#220): the song searched at once, the chosen track fills the form in.
+  await leader.getByRole("button", { name: "Add a link" }).click();
+  await leader.getByRole("button", { name: "Search on Deezer" }).click();
+  await expect(leader.getByRole("textbox", { name: "Search for" })).toHaveValue(
+    "Zombie The Cranberries",
+  );
+  const tracks = leader.getByRole("list", { name: "Tracks found" });
+  await tracks.getByRole("button", { name: /Zombie/ }).click();
+  await expect(link.getByLabel("Web address")).toHaveValue("https://www.deezer.com/track/2");
+  await expect(link.getByLabel("Title", { exact: true })).toHaveValue("Zombie");
+  await link.getByRole("button", { name: "Save" }).click();
+  await expect(links).toHaveCount(3);
+  await expect(links.last()).toContainText("Deezer");
+
   // Status and energy: one tap each, saved at once.
   await expect(leader.getByRole("radio", { name: "Proposed" })).toBeChecked();
   await leader.getByRole("radio", { name: "Learning" }).click();

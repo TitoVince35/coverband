@@ -4,12 +4,12 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { VideoSearch } from "../../adapters/youtube";
 import { apiError } from "../../core/errors";
-import { type RateLimitRule, rateLimitBy } from "../../core/http/rate-limit";
+import { type RateLimitRule, rateLimitBy, rateLimitUser } from "../../core/http/rate-limit";
 import type { SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import { type BandEnv, requireMember } from "../bands/guard";
-import { autofill } from "./service";
+import { autofill, searchTracks } from "./service";
 
 /** "Search and add" searches per band and day (#199): YouTube's free quota is shared by the app. */
 export const AUTOFILL_SEARCHES: RateLimitRule = {
@@ -17,6 +17,21 @@ export const AUTOFILL_SEARCHES: RateLimitRule = {
   max: 15,
   windowMs: 24 * 60 * 60 * 1000,
 };
+
+/**
+ * Link searches per member and hour (#220): Deezer is free, with no quota of ours, but limits
+ * every IP (the server's), so a member can't use it all.
+ */
+export const TRACK_SEARCHES: RateLimitRule = {
+  name: "track-searches",
+  max: 30,
+  windowMs: 60 * 60 * 1000,
+};
+
+/** A link search's free text, as the web app's field allows. */
+export const TRACK_SEARCH_MAX = 200;
+
+const trackQuery = z.object({ q: z.string().trim().min(1).max(TRACK_SEARCH_MAX) });
 
 const songQuery = z.object({
   title: z.string().trim().min(1).max(SONG_MAX_LENGTH.title),
@@ -33,6 +48,13 @@ export function autofillRoutes(deps: AppDeps) {
         zValidator("query", songQuery, validationHook),
         rateLimitBy<BandEnv & SessionEnv>(deps.db, AUTOFILL_SEARCHES, (c) => c.var.band.id),
         async (c) => c.json(await autofill(deps, c.var.log, c.var.band, c.req.valid("query"))),
+      )
+      // Deezer's tracks for free text, to add one as a song's link (#220).
+      .get(
+        "/tracks",
+        zValidator("query", trackQuery, validationHook),
+        rateLimitUser(deps.db, TRACK_SEARCHES),
+        async (c) => c.json({ tracks: await searchTracks(deps, c.req.valid("query").q) }),
       )
       // A proposed video's thumbnail, through the API: phones never contact Google (#200).
       .get("/thumbnails/:videoId", async (c) => {
