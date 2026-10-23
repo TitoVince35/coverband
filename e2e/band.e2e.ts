@@ -584,6 +584,9 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   const doc = leader.getByRole("dialog");
   await doc.getByLabel("File").setInputFiles(fixture("photo.jpg"));
   await expect(doc.getByText(/^Ready: /)).toBeVisible();
+  // A tap outside (the photo picker's, on a phone) never closes it: the file would be lost.
+  await leader.mouse.click(5, 5);
+  await expect(doc).toBeVisible();
   await expect(doc.getByLabel("Title", { exact: true })).toHaveValue("photo");
   await doc.getByLabel("Title", { exact: true }).fill("Chords");
   await doc.getByRole("button", { name: "Save" }).click();

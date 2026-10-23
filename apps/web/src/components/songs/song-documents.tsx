@@ -1,21 +1,13 @@
 import { DOCUMENT_LIMITS, type DocumentKind, type Instrument, opensInApp } from "@coverband/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  FileMusic,
-  FileText,
-  Guitar,
-  Image as ImageIcon,
-  type LucideIcon,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
-import { type ChangeEvent, type FormEvent, type ReactNode, useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { type ChangeEvent, type FormEvent, type ReactNode, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { CollapsibleCard } from "@/components/collapsible-card";
 import { InstrumentListEditor, withAdded } from "@/components/instruments/instrument-list-editor";
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
+import { DocumentIcon } from "@/components/songs/document-icon";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,13 +51,6 @@ export type SongDocument = {
   url: string;
 };
 
-const ICONS: Record<DocumentKind, LucideIcon> = {
-  photo: ImageIcon,
-  pdf: FileText,
-  guitarpro: Guitar,
-  musescore: FileMusic,
-};
-
 type Props = {
   bandSlug: string;
   songId: string;
@@ -92,14 +77,13 @@ export function SongDocuments({ bandSlug, songId, documents, userId, isLeader }:
         ) : (
           <ul className="divide-y" aria-label={t("songs.documents.title")}>
             {documents.map((document) => {
-              const Icon = ICONS[document.kind];
               const inApp = opensInApp(document.kind);
               const date = formatDate(document.createdAt, language);
               return (
                 <li key={document.id} className="flex items-start gap-2 py-3">
                   <div className="min-w-0 flex-1 space-y-2">
                     <DocumentLink document={document}>
-                      <Icon aria-hidden className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+                      <DocumentIcon kind={document.kind} className="mt-0.5" />
                       <span className="min-w-0 space-y-1">
                         <span className="block truncate font-medium">{document.title}</span>
                         <span className="block truncate text-muted-foreground text-xs">
@@ -234,6 +218,8 @@ function DocumentDialog({
   const [instruments, setInstruments] = useState<Instrument[]>(document?.instruments ?? []);
   const [typed, setTyped] = useState<Instrument | null>(null);
   const [progress, setProgress] = useState(0);
+  // Read by onOpenChange, which Radix may call between renders.
+  const busyRef = useRef(false);
 
   const done = async (message: string) => {
     toast.success(message);
@@ -258,6 +244,8 @@ function DocumentDialog({
 
   // Every opening starts from the document as it is.
   function onOpenChange(next: boolean) {
+    // Never closed while a file is prepared or sent: it would go on unseen.
+    if (!next && busyRef.current) return;
     setOpen(next);
     if (next) {
       setFile(null);
@@ -304,13 +292,21 @@ function DocumentDialog({
 
   const error = save.error ?? remove.error;
   const busy = save.isPending || remove.isPending || preparing;
+  busyRef.current = busy;
   const uploading = save.isPending && !document;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild disabled={!online}>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
+      <DialogContent
+        className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
+        // A tap outside never closes it: on a phone, the one closing the photo picker can land on
+        // the page, and the picked file would be lost (or sent unseen).
+        onInteractOutside={(event) => event.preventDefault()}
+        onEscapeKeyDown={(event) => busy && event.preventDefault()}
+        showCloseButton={!busy}
+      >
         <form onSubmit={onSubmit} className="space-y-4">
           <DialogHeader>
             <DialogTitle className="font-heading">

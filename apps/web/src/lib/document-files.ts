@@ -37,9 +37,20 @@ export function titleFrom(fileName: string) {
  * A photo shrunk as hard as reading allows (#239): within PHOTO_SIZE, then smaller sizes until it
  * fits PHOTO_MAX_BYTES; WebP, else JPEG (Safari can't encode WebP). The EXIF orientation is
  * applied; HEIC is converted where the browser reads it. Throws when it can't read the image.
+ *
+ * Never decoded at full size: a phone's photo (12 to 50 megapixels) would take hundreds of MB, and
+ * Android then kills the page, the more so just after the camera. A tiny decode gives its
+ * proportions, then it is decoded straight at PHOTO_SIZE (browsers scale while decoding).
  */
 export async function shrinkPhoto(file: File): Promise<File> {
-  const bitmap = await createImageBitmap(file);
+  const probe = await createImageBitmap(file, { resizeWidth: 64, resizeQuality: "low" });
+  const ratio = probe.height / probe.width;
+  probe.close();
+  const target =
+    ratio > 1
+      ? { resizeHeight: PHOTO_SIZE, resizeWidth: Math.max(1, Math.round(PHOTO_SIZE / ratio)) }
+      : { resizeWidth: PHOTO_SIZE, resizeHeight: Math.max(1, Math.round(PHOTO_SIZE * ratio)) };
+  const bitmap = await createImageBitmap(file, { ...target, resizeQuality: "high" });
   try {
     let smallest: Blob | null = null;
     for (const size of sizesFrom(PHOTO_SIZE)) {
