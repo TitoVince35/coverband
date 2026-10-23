@@ -3,12 +3,11 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { BandLogo } from "@/components/band/band-logo";
 import { BandSwitcher } from "@/components/band/band-switcher";
-import { EditBandDialog } from "@/components/band/edit-band-dialog";
 import { BandSkeleton } from "@/components/loading";
 import { bandQuery } from "@/lib/bands";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
 
-// Layout of every band page: band name (with the switcher), leader tools and tabs.
+// Layout of every band page: band name (opening the band menu: settings, other bands) and tabs.
 export const Route = createFileRoute("/_app/b/$bandSlug")({
   component: BandLayout,
 });
@@ -39,12 +38,11 @@ function BandLayout() {
     <div className="space-y-6">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <BandSwitcher current={band} />
+          <BandSwitcher current={band} isLeader={membership.role === "leader"} />
           {band.genre && <p className="text-muted-foreground">{band.genre}</p>}
         </div>
         {/* The small logo on the right, as tall as the name and genre; nothing without one. */}
         <BandLogo band={band} size="header" />
-        {membership.role === "leader" && <EditBandDialog band={band} />}
       </div>
       <nav className="flex gap-4 border-b">
         <Link

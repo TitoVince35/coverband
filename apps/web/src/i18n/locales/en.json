@@ -36,9 +36,10 @@
     },
     "home": "Home",
     "switch": "Switch band",
+    "menu": "Band menu",
+    "settings": "Band settings",
     "allBands": "All my bands",
     "edit": {
-      "button": "Edit band",
       "title": "Band details",
       "name": "Band name",
       "genre": "Genre",
