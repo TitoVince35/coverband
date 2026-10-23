@@ -1,4 +1,5 @@
 import {
+  DOCUMENT_KINDS,
   type Instrument,
   LYRICS_SOURCES,
   MAX_ENERGY,
@@ -95,4 +96,37 @@ export const songMedia = pgTable(
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [index().on(table.songId)],
+);
+
+export const documentKind = pgEnum("document_kind", DOCUMENT_KINDS);
+
+/**
+ * A song's documents (#238): a score, a chord grid's photo, a Guitar Pro or MuseScore file. The
+ * file is in object storage (`storageKey`, never replaced); deleting the song deletes them, and
+ * its service deletes their files.
+ */
+export const songDocuments = pgTable(
+  "song_documents",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    bandId: uuid()
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    songId: uuid()
+      .notNull()
+      .references(() => songs.id, { onDelete: "cascade" }),
+    title: text().notNull(),
+    kind: documentKind().notNull(),
+    contentType: text().notNull(),
+    extension: text().notNull(),
+    /** In bytes: a band's documents share its storage budget. */
+    size: integer().notNull(),
+    storageKey: text().notNull(),
+    // Who it's for ("Horns"): known codes or free text, cleaned with cleanInstruments.
+    instruments: jsonb().$type<Instrument[]>().default([]).notNull(),
+    // Who added it: they may delete it (as the band leader may); null once their account goes.
+    addedById: uuid().references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index().on(table.songId), index().on(table.bandId)],
 );

@@ -11,6 +11,8 @@ import type { Db } from "../../core/db/client";
 import { isForeignKeyViolation } from "../../core/db/pg-errors";
 import { songs, users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
+import type { AppDeps } from "../../deps";
+import { deleteQuietly, documentKeys } from "./documents.service";
 
 export type SongFields = {
   title: string;
@@ -281,9 +283,16 @@ export class SongInUseError extends AppError {
  * foreign key that refuses the deletion: that refusal becomes SongInUseError. Returns false when
  * the band has no such song.
  */
-export async function deleteSong(db: Db, member: Member, id: string) {
+export async function deleteSong(
+  { db, storage, log }: Pick<AppDeps, "db" | "storage" | "log">,
+  member: Member,
+  id: string,
+) {
+  let keys: string[] = [];
   try {
-    return await db.transaction(async (tx) => {
+    const deleted = await db.transaction(async (tx) => {
+      // Its documents go with it (cascade): their files once it's gone (#238).
+      keys = await documentKeys(tx, member.bandId, id);
       const deleted = await tx
         .delete(songs)
         .where(and(eq(songs.bandId, member.bandId), eq(songs.id, id)))
@@ -297,6 +306,10 @@ export async function deleteSong(db: Db, member: Member, id: string) {
       });
       return true;
     });
+    if (deleted) {
+      for (const key of keys) await deleteQuietly({ storage, log }, key);
+    }
+    return deleted;
   } catch (error) {
     throw isForeignKeyViolation(error) ? new SongInUseError() : error;
   }

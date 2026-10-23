@@ -492,7 +492,11 @@
     "access_required": "Enter the access code to continue.",
     "access_code_invalid": "This isn't the access code.",
     "impersonation_read_only": "Read-only while viewing the app as another user.",
-    "deezer_unavailable": "Deezer isn't answering right now. Try again later, or paste the link."
+    "deezer_unavailable": "Deezer isn't answering right now. Try again later, or paste the link.",
+    "document_invalid": "Only photos (JPEG, PNG, WebP), PDFs, Guitar Pro and MuseScore files.",
+    "document_too_large": "This document is larger than 4 MB.",
+    "too_many_documents": "A song has at most 20 documents: remove one first.",
+    "band_storage_full": "Your band's documents have reached their storage limit: remove some first."
   },
   "instruments": {
     "picker": {

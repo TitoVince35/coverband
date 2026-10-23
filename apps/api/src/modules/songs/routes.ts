@@ -13,6 +13,7 @@ import type { SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import { type BandEnv, requireLeader, requireMember } from "../bands/guard";
+import { documentsOf, documentsOfBand } from "./documents.service";
 import { searchLyrics } from "./lyrics.service";
 import { addMedia, deleteMedia, mediaOf, mediaOfBand, updateMedia } from "./media.service";
 import {
@@ -61,17 +62,28 @@ export function songRoutes(deps: AppDeps) {
       })
       // The whole repertoire as each song's page shows it (lyrics, links), for offline use (#165).
       .get("/details", async (c) => {
-        const [details, mediaOf] = await Promise.all([
+        const [details, mediaOf, documentsOf] = await Promise.all([
           songDetails(db, c.var.band.id),
           mediaOfBand(db, c.var.band.id),
+          documentsOfBand(db, c.var.band),
         ]);
-        return c.json({ songs: details.map((song) => ({ ...song, media: mediaOf(song.id) })) });
+        return c.json({
+          songs: details.map((song) => ({
+            ...song,
+            media: mediaOf(song.id),
+            documents: documentsOf(song.id),
+          })),
+        });
       })
       .get("/:songId", zValidator("param", songParam, validationHook), async (c) => {
         const { songId } = c.req.valid("param");
         const song = await getSong(db, c.var.band.id, songId);
         if (!song) return apiError(c, 404, "Song not found");
-        return c.json({ song: { ...song, media: await mediaOf(db, c.var.band.id, songId) } });
+        const [media, documents] = await Promise.all([
+          mediaOf(db, c.var.band.id, songId),
+          documentsOf(db, c.var.band, songId),
+        ]);
+        return c.json({ song: { ...song, media, documents } });
       })
       .patch(
         "/:songId",
@@ -113,7 +125,11 @@ export function songRoutes(deps: AppDeps) {
         requireLeader,
         zValidator("param", songParam, validationHook),
         async (c) => {
-          const deleted = await deleteSong(db, who(c), c.req.valid("param").songId);
+          const deleted = await deleteSong(
+            { ...deps, log: c.var.log },
+            who(c),
+            c.req.valid("param").songId,
+          );
           return deleted ? c.body(null, 204) : apiError(c, 404, "Song not found");
         },
       )
