@@ -52,7 +52,10 @@ test("the band leader creates an account and the band from the email's link", as
 
   await leader.getByRole("button", { name: "Create my band" }).click();
   await expect(leader).toHaveURL(/\/b\/e2e-rockers-/);
-  await expect(leader.getByText(`Welcome to ${band}!`)).toBeVisible();
+  await expect(leader.getByRole("heading", { name: band })).toBeVisible();
+  // No welcome message (#222); no logo yet: the band leader's way to add one.
+  await expect(leader.getByText("Welcome to")).toBeHidden();
+  await expect(leader.getByRole("link", { name: "Add your band's logo" })).toBeVisible();
 });
 
 test("an admin views the app as the band leader, read-only, then stops", async ({ page }) => {
@@ -99,7 +102,9 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   await musician.getByRole("button", { name: "Next" }).click();
   await expect(musician.getByText("Bass guitar")).toBeVisible(); // the review step
   await musician.getByRole("button", { name: "Join the band" }).click();
-  await expect(musician.getByText(`Welcome to ${band}!`)).toBeVisible();
+  await expect(musician.getByRole("heading", { name: band })).toBeVisible();
+  // The way to add a logo is the band leader's.
+  await expect(musician.getByRole("link", { name: "Add your band's logo" })).toBeHidden();
 
   await musician.getByRole("link", { name: "Lineup" }).click();
   // The lineup's rows (each row also lists its instruments): the musician first, then the others.
@@ -295,9 +300,13 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(leader.getByText("Logo removed")).toBeVisible();
   await expect(dialog.getByText("No logo yet")).toBeVisible();
   await leader.getByRole("link", { name: "Home" }).click();
-  // Without a logo, nothing on the band's pages (the initials are for the band list).
+  // Without a logo, nothing on the band's pages (the initials are for the band list), but the
+  // band leader's way back to the settings (#222).
   await expect(logo).toHaveCount(0);
   await expect(headerLogo).toHaveCount(0);
+  await leader.getByRole("link", { name: "Add your band's logo" }).click();
+  await expect(leader.getByRole("heading", { name: "Band settings" })).toBeVisible();
+  await leader.getByRole("link", { name: "Home" }).click();
 
   await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });
