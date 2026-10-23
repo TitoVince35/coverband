@@ -12,6 +12,8 @@ export const GATED_ACCESS_CODE = "e2e access code";
 export const FAKE_MUSIC_PORT = 3103;
 const fakeMusic = `http://localhost:${FAKE_MUSIC_PORT}`;
 const ci = Boolean(process.env.CI);
+/** Where the contact form's messages go (#234). */
+export const CONTACT_RECIPIENT = "team@e2e.localhost";
 
 export default defineConfig({
   testDir: ".",
@@ -55,6 +57,8 @@ export default defineConfig({
         YOUTUBE_API_KEY: "e2e-youtube-key",
         YOUTUBE_API_URL: `${fakeMusic}/youtube/v3`,
         YOUTUBE_THUMBNAILS_URL: `${fakeMusic}/ytimg`,
+        // An e2e address: the teardown removes its emails from Mailpit (contact.e2e.ts).
+        CONTACT_FORM_RECIPIENT: CONTACT_RECIPIENT,
       },
     },
     // The same build behind the beta access code. Started with the first one, whose build is

@@ -6,6 +6,8 @@ export type Mail = {
   subject: string;
   html: string;
   text: string;
+  /** Where replies go, when not to the sender (the contact form: the user who wrote, #234). */
+  replyTo?: string;
 };
 
 export type Mailer = {

@@ -4,7 +4,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 
 ## Layout
 
-- `src/modules/<feature>/`: one folder per feature (admin, bands, members, instruments, invitations, onboarding, profile, journal, songs). `routes.ts` (Hono sub-app), `service.ts` (the feature's rules and queries, its transactions and activity), `schema.ts` (its Drizzle tables, when it has some), tests next to them.
+- `src/modules/<feature>/`: one folder per feature (admin, bands, members, instruments, invitations, onboarding, profile, journal, songs, autofill, contact). `routes.ts` (Hono sub-app), `service.ts` (the feature's rules and queries, its transactions and activity), `schema.ts` (its Drizzle tables, when it has some), tests next to them.
 - `src/core/`: what every feature uses, knowing none of them: `errors.ts`, `log.ts`, `db/` (client, migrations runner, `schema.ts` re-exporting every table for Drizzle), `http/` (request logs, session guards, validation, rate limiter, security, health), `activity/` (recording and purging events).
 - `src/adapters/`: the outside world behind small interfaces: `auth.ts` (Better Auth, with its tables in `auth-schema.ts`), `storage.ts`, `mail/`, `lyrics.ts`.
 - `src/app.ts` is the composition root: it mounts every module's sub-app (a band's features under `/bands/:bandSlug/...`). `src/main.ts` builds the real dependencies and starts the server.
@@ -109,5 +109,6 @@ A band's repertoire (`songs`, `src/modules/songs/service.ts`, routes in `src/mod
 
 - Sent over SMTP by a `Mailer` (`src/adapters/mail/mailer.ts`): Mailpit locally, Scaleway TEM in production, so the provider is only `SMTP_*` configuration.
 - One function per email in `src/adapters/mail/templates.ts` returning an `EmailContent` per language (`Record<Language, ...>`, so a missing translation fails the typecheck), rendered by `renderEmail` (`src/adapters/mail/layout.ts`: inline-styled HTML + plain text, every value escaped).
-- Send an email in the recipient's language.
+- Send an email in the recipient's language. The one exception: the contact form's email to the app's team, in English (`contactEmail`).
+- **Contact form** (#234, `src/modules/contact/`): `GET /api/contact` (logged in) says whether it's offered (`CONTACT_FORM_RECIPIENT` set, `AppDeps.contactRecipient`); `POST` (`contactBody`: a `CONTACT_SUBJECTS` code, a message of `CONTACT_MESSAGE` length; a bug report's page and the language) emails the recipient with the user's address as Reply-To (`Mail.replyTo`), the subject line from the code (nothing typed in a header), a bug report with its context (the server's version and build, the request's User-Agent, the page, the language). `CONTACT_EMAILS`: 5 a day per user. `contact.sent` (data: the subject's code) once sent; a failed send is a 500 and records nothing.
 - Tests use `createMemoryMailer()`; the Mailpit integration test runs when `MAILPIT_URL` is set (locally and in CI).

@@ -530,5 +530,23 @@
     "songRestored": "{{name}} a restauré {{song}}",
     "songDeleted": "{{name}} a supprimé {{song}}",
     "songLyricsChanged": "{{name}} a modifié {{song}} (paroles)"
+  },
+  "contact": {
+    "title": "Nous contacter",
+    "sentAs": "Envoyé à l'équipe {{appName}} en tant que {{name}} ({{email}}). Nous répondrons par e-mail.",
+    "subject": "Sujet",
+    "choose": "Choisissez un sujet",
+    "subjectMissing": "Choisissez un sujet.",
+    "subjects": {
+      "bug": "Signaler un bug",
+      "feature": "Demander une fonctionnalité",
+      "praise": "Compliments",
+      "other": "Autre"
+    },
+    "message": "Message",
+    "bugContext": "Un signalement de bug envoie aussi la version de l'app, la page d'où vous venez, votre navigateur et votre langue, pour nous aider à le reproduire.",
+    "send": "Envoyer",
+    "sending": "Envoi…",
+    "sent": "Message envoyé. Merci !"
   }
 }

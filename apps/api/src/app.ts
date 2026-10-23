@@ -18,6 +18,7 @@ import { autofillRoutes } from "./modules/autofill/routes";
 import { bandJournalSource } from "./modules/bands/journal";
 import { LOGO_UPLOAD_MAX_SIZE } from "./modules/bands/logo";
 import { bandRoutes } from "./modules/bands/routes";
+import { contactRoutes } from "./modules/contact/routes";
 import { instrumentRoutes } from "./modules/instruments/routes";
 import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
 import { journalRoutes } from "./modules/journal/routes";
@@ -59,6 +60,7 @@ function createApi(deps: AppDeps) {
       .route("/me", meRoutes(deps))
       .route("/users", userRoutes(deps))
       .route("/instruments", instrumentRoutes(deps))
+      .route("/contact", contactRoutes(deps))
   );
 }
 

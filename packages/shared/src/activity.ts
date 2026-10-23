@@ -22,6 +22,7 @@ export const ACTIVITY_ACTIONS = [
   "song.lyrics_changed",
   "band.logo_changed",
   "user.impersonated",
+  "contact.sent",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];

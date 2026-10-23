@@ -1,4 +1,4 @@
-import { APP_NAME, type Language } from "@coverband/shared";
+import { APP_NAME, type ContactSubject, type Language } from "@coverband/shared";
 import { type EmailContent, renderEmail } from "./layout";
 import type { Mail } from "./mailer";
 
@@ -123,4 +123,54 @@ export function passwordResetEmail(to: string, language: Language, { url }: { ur
     },
   };
   return build(to, language, content[language]);
+}
+
+/** The subjects as the team reads them. */
+const CONTACT_SUBJECT_NAMES: Record<ContactSubject, string> = {
+  bug: "Bug report",
+  feature: "Feature request",
+  praise: "Praise",
+  other: "Other",
+};
+
+/**
+ * A user's message to the app's team (#234), from the contact form. In English only: written to
+ * the team, not to a user (the one exception). Replies go to the user. The subject line comes
+ * from the subject's code: nothing the user typed goes into a header.
+ */
+export function contactEmail(
+  to: string,
+  {
+    subject,
+    message,
+    sender,
+    context,
+  }: {
+    subject: ContactSubject;
+    message: string;
+    sender: { name: string; email: string };
+    /** A bug report's: what the team needs to reproduce it. */
+    context?: { version: string; page: string | null; browser: string | null; language: Language };
+  },
+): Mail {
+  const name = CONTACT_SUBJECT_NAMES[subject];
+  const content: EmailContent = {
+    subject: `${APP_NAME}: ${name}`,
+    heading: name,
+    paragraphs: [
+      `From ${sender.name} (${sender.email}):`,
+      // One paragraph per line: the layout doesn't keep line breaks.
+      ...message.split(/\r?\n/).filter((line) => line.trim() !== ""),
+      ...(context
+        ? [
+            `Version: ${context.version}`,
+            `Page: ${context.page ?? "unknown"}`,
+            `Browser: ${context.browser ?? "unknown"}`,
+            `Language: ${context.language}`,
+          ]
+        : []),
+    ],
+    footer: `Sent with ${APP_NAME}'s contact form. Reply to answer ${sender.name}.`,
+  };
+  return { ...build(to, "en", content), replyTo: sender.email };
 }

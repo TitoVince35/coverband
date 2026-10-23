@@ -530,5 +530,23 @@
     "songRestored": "{{name}} restored {{song}}",
     "songDeleted": "{{name}} deleted {{song}}",
     "songLyricsChanged": "{{name}} updated the lyrics of {{song}}"
+  },
+  "contact": {
+    "title": "Contact us",
+    "sentAs": "Sent to the {{appName}} team as {{name}} ({{email}}). We'll answer by email.",
+    "subject": "Subject",
+    "choose": "Choose a subject",
+    "subjectMissing": "Choose a subject.",
+    "subjects": {
+      "bug": "Bug report",
+      "feature": "Feature request",
+      "praise": "Praise",
+      "other": "Other"
+    },
+    "message": "Message",
+    "bugContext": "A bug report also sends the app's version, the page you came from, your browser and your language, to help us reproduce it.",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Message sent. Thank you!"
   }
 }
