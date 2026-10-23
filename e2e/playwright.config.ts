@@ -31,10 +31,10 @@ export default defineConfig({
   },
   projects: [
     {
-      // Mobile-first: a phone, in Chromium. Playwright's own Chromium doesn't install on
-      // Ubuntu 26.04 yet: locally, the system Chrome.
+      // Mobile-first: a phone, in the system Chrome. Playwright's own Chromium doesn't install
+      // on Ubuntu 26.04 yet, and GitHub's runners ship Chrome: CI skips a slow apt install.
       name: "phone",
-      use: { ...devices["Pixel 7"], ...(ci ? {} : { channel: "chrome" }) },
+      use: { ...devices["Pixel 7"], channel: "chrome" },
     },
   ],
   // Production-like: the API serves the built web app (`bun run build` + `bun run serve`).

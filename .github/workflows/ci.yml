@@ -167,10 +167,7 @@ jobs:
       - name: Migrate database
         run: bun run db:migrate
 
-      - name: Install Chromium for Playwright
-        working-directory: e2e
-        run: bunx playwright install --with-deps chromium
-
+      # No browser to install: the tests use the runner's Chrome (channel "chrome").
       # Builds the web app and serves it from the API on port 3100 (see e2e/playwright.config.ts).
       - name: End-to-end tests
         run: bun run e2e
