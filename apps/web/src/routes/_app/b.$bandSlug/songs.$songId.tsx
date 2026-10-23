@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { CollapsibleCard } from "@/components/collapsible-card";
 import { SongSkeleton } from "@/components/loading";
 import { ArchivedBanner, SongActions } from "@/components/songs/song-actions";
+import { SongDocuments } from "@/components/songs/song-documents";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
 import { SongLyrics } from "@/components/songs/song-lyrics";
 import { SongMedia } from "@/components/songs/song-media";
@@ -28,6 +29,7 @@ function SongPage() {
   const { t } = useTranslation();
   const language = useLanguage();
   const { bandSlug, songId } = Route.useParams();
+  const { user } = Route.useRouteContext();
   const song = useQuery(songQuery(bandSlug, songId));
   const isLeader = useQuery(bandQuery(bandSlug)).data?.membership.role === "leader";
   const queryClient = useQueryClient();
@@ -64,7 +66,7 @@ function SongPage() {
     );
   }
 
-  const { title, artist, addedBy, createdAt, notes, media, ...fields } = song.data;
+  const { title, artist, addedBy, createdAt, notes, media, documents, ...fields } = song.data;
   // One change at a time: a tap while one is saved is ignored (the controls stay focusable).
   const save = (json: Partial<Pick<SongFields, "status" | "energy">>) => {
     if (!change.isPending) change.mutate(json);
@@ -168,6 +170,13 @@ function SongPage() {
         artist={artist}
       />
       <SongMedia bandSlug={bandSlug} songId={songId} song={{ title, artist }} media={media} />
+      <SongDocuments
+        bandSlug={bandSlug}
+        songId={songId}
+        documents={documents}
+        userId={user.id}
+        isLeader={isLeader}
+      />
       <SongNotes key={songId} bandSlug={bandSlug} songId={songId} notes={notes} />
       <p className="text-muted-foreground text-xs">
         {addedBy ? t("songs.addedBy", { name: addedBy, date }) : t("songs.addedOn", { date })}

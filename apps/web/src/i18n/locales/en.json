@@ -278,6 +278,38 @@
         "youtube": "YouTube had an error: no videos this time."
       },
       "thumbnailFailed": "Thumbnail not available (error)"
+    },
+    "documents": {
+      "title": "Documents",
+      "empty": "No documents yet: scores, chord grids, Guitar Pro or MuseScore files…",
+      "add": "Add a document",
+      "addTitle": "Add a document",
+      "editTitle": "Edit the document",
+      "edit": "Edit the document {{title}}",
+      "formats": "A photo (a chord grid on paper), a PDF, a Guitar Pro or MuseScore file.",
+      "file": "File",
+      "maxSize": "4 MB at most. Photos are made smaller first.",
+      "preparing": "Making the photo smaller…",
+      "ready": "Ready: {{size}}.",
+      "documentTitle": "Title",
+      "instruments": "Instruments",
+      "uploading": "Uploading",
+      "progress": "Uploading… {{percent}} %",
+      "kinds": {
+        "photo": "Photo",
+        "pdf": "PDF",
+        "guitarpro": "Guitar Pro",
+        "musescore": "MuseScore"
+      },
+      "addedBy": "added by {{name}}, {{date}}",
+      "addedOn": "added {{date}}",
+      "downloads": "(downloads the file)",
+      "added": "Document added",
+      "saved": "Document updated",
+      "removed": "Document removed",
+      "remove": "Delete",
+      "removeTitle": "Delete “{{title}}”?",
+      "removeDescription": "Its file is deleted for everyone in the band."
     }
   },
   "login": {
@@ -533,7 +565,9 @@
     "songArchived": "{{name}} archived {{song}}",
     "songRestored": "{{name}} restored {{song}}",
     "songDeleted": "{{name}} deleted {{song}}",
-    "songLyricsChanged": "{{name}} updated the lyrics of {{song}}"
+    "songLyricsChanged": "{{name}} updated the lyrics of {{song}}",
+    "documentAdded": "{{name}} added a document to {{song}}",
+    "documentRemoved": "{{name}} removed a document from {{song}}"
   },
   "contact": {
     "title": "Contact us",

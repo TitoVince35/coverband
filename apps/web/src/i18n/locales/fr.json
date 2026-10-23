@@ -278,6 +278,38 @@
         "youtube": "YouTube a rencontré une erreur : pas de vidéos cette fois."
       },
       "thumbnailFailed": "Miniature indisponible (erreur)"
+    },
+    "documents": {
+      "title": "Documents",
+      "empty": "Pas encore de documents : partitions, grilles d'accords, fichiers Guitar Pro ou MuseScore…",
+      "add": "Ajouter un document",
+      "addTitle": "Ajouter un document",
+      "editTitle": "Modifier le document",
+      "edit": "Modifier le document {{title}}",
+      "formats": "Une photo (une grille d'accords sur papier), un PDF, un fichier Guitar Pro ou MuseScore.",
+      "file": "Fichier",
+      "maxSize": "4 Mo au plus. Les photos sont d'abord réduites.",
+      "preparing": "Réduction de la photo…",
+      "ready": "Prêt : {{size}}.",
+      "documentTitle": "Titre",
+      "instruments": "Instruments",
+      "uploading": "Envoi",
+      "progress": "Envoi… {{percent}} %",
+      "kinds": {
+        "photo": "Photo",
+        "pdf": "PDF",
+        "guitarpro": "Guitar Pro",
+        "musescore": "MuseScore"
+      },
+      "addedBy": "ajouté par {{name}}, le {{date}}",
+      "addedOn": "ajouté le {{date}}",
+      "downloads": "(télécharge le fichier)",
+      "added": "Document ajouté",
+      "saved": "Document modifié",
+      "removed": "Document supprimé",
+      "remove": "Supprimer",
+      "removeTitle": "Supprimer « {{title}} » ?",
+      "removeDescription": "Son fichier est supprimé pour tout le groupe."
     }
   },
   "login": {
@@ -533,7 +565,9 @@
     "songArchived": "{{name}} a archivé {{song}}",
     "songRestored": "{{name}} a restauré {{song}}",
     "songDeleted": "{{name}} a supprimé {{song}}",
-    "songLyricsChanged": "{{name}} a modifié {{song}} (paroles)"
+    "songLyricsChanged": "{{name}} a modifié {{song}} (paroles)",
+    "documentAdded": "{{name}} a ajouté un document à {{song}}",
+    "documentRemoved": "{{name}} a supprimé un document de {{song}}"
   },
   "contact": {
     "title": "Nous contacter",

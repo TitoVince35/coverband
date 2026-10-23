@@ -10,12 +10,12 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { CollapsibleCard } from "@/components/collapsible-card";
 import { InstrumentListEditor, withAdded } from "@/components/instruments/instrument-list-editor";
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { ProviderIcon } from "@/components/songs/provider-icon";
 import { LinkSearch } from "@/components/songs/song-link-search";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -59,26 +59,9 @@ export function SongMedia({
 }) {
   const { t } = useTranslation();
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading text-lg">{t("songs.media.title")}</CardTitle>
-        {media.length < MEDIA_LIMITS.perSong && (
-          <CardAction>
-            <MediaDialog
-              song={song}
-              bandSlug={bandSlug}
-              songId={songId}
-              trigger={
-                <Button variant="outline" size="sm">
-                  <Plus />
-                  {t("songs.media.add")}
-                </Button>
-              }
-            />
-          </CardAction>
-        )}
-      </CardHeader>
-      <CardContent>
+    // The one block of the song page open at first (#239).
+    <CollapsibleCard title={t("songs.media.title")} defaultOpen>
+      <div className="space-y-3">
         {media.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t("songs.media.empty")}</p>
         ) : (
@@ -127,8 +110,21 @@ export function SongMedia({
             })}
           </ul>
         )}
-      </CardContent>
-    </Card>
+        {media.length < MEDIA_LIMITS.perSong && (
+          <MediaDialog
+            song={song}
+            bandSlug={bandSlug}
+            songId={songId}
+            trigger={
+              <Button variant="outline" size="sm">
+                <Plus />
+                {t("songs.media.add")}
+              </Button>
+            }
+          />
+        )}
+      </div>
+    </CollapsibleCard>
   );
 }
 
