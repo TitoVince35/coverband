@@ -29,7 +29,7 @@ More will come on this page. Member settings per band will come too, on a page o
 
 ### Menu
 
-- Keep the band's tabs on a large screen; on a phone, they become a bottom bar. Both show an icon and a label (Home, Repertoire, Lineup; Setlists and Gigs later: five items fit a phone with their labels).
+- Keep the band's tabs on a large screen; on a phone, they become a bottom bar. Both show an icon and a label: Home, Repertoire, Lineup, and already Setlists and Gigs, disabled until they exist (five items fit a phone with their labels).
 - The band settings are not a tab: they open from the band switcher's menu (disabled for musicians).
 - A sixth section would make the last item "More"; a left column on large screens can be considered then.
 - On a phone, the bar stays clear of the home indicator, the page leaves room for it, and it hides while the keyboard is open.
