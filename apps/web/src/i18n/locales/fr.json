@@ -249,7 +249,7 @@
       "noVideo": "Aucune vidéo",
       "nothing": "Rien trouvé en ligne : la chanson sera ajoutée telle quelle.",
       "noYoutube": "Pas de vidéos YouTube pour le moment.",
-      "hint": "L'ajout remplit sa durée d'origine, son style et ses premiers liens.",
+      "hint": "L'ajout remplit sa durée d'origine, son style et son premier lien.",
       "quota": "Votre groupe a utilisé ses 15 recherches du jour. Réessayez demain, ou ajoutez la chanson telle quelle avec « Enregistrer seulement ».",
       "linksFailed": "La chanson est ajoutée, mais pas ses liens : ajoutez-les depuis sa page.",
       "failed": {

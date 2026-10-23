@@ -350,11 +350,10 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
     .toBe(320);
   await lucky.getByRole("button", { name: "Add", exact: true }).click();
   await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
-  // Its first links: the chosen video and the Deezer track.
+  // Its first link: the chosen video, never the Deezer track (#219).
   const firstLinks = leader.getByRole("list", { name: "Links" }).locator(":scope > li");
-  await expect(firstLinks).toHaveCount(2);
+  await expect(firstLinks).toHaveCount(1);
   await expect(firstLinks.first()).toContainText("YouTube");
-  await expect(firstLinks.last()).toContainText("Deezer");
   await backToRepertoire();
   await expect(songs).toHaveCount(3);
   await leader.getByRole("searchbox").fill("cranberries");
@@ -480,8 +479,8 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await link.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Link added")).toBeVisible();
   const links = leader.getByRole("list", { name: "Links" }).locator(":scope > li");
-  // After the two from "Search and add", oldest first.
-  await expect(links).toHaveCount(3);
+  // After the video from "Search and add", oldest first.
+  await expect(links).toHaveCount(2);
   await expect(links.last()).toContainText("Drum cover");
   await expect(links.last()).toContainText("YouTube");
   await expect(links.last()).toContainText("Drums");
