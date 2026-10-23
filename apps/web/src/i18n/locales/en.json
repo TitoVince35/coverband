@@ -309,7 +309,9 @@
       "removed": "Document removed",
       "remove": "Delete",
       "removeTitle": "Delete “{{title}}”?",
-      "removeDescription": "Its file is deleted for everyone in the band."
+      "removeDescription": "Its file is deleted for everyone in the band.",
+      "needsNetwork": "Needs the network",
+      "notSaved": "This document isn't saved on this device yet."
     }
   },
   "login": {

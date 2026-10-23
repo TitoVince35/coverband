@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { api } from "@/lib/api";
 import { bandJournalQuery, bandQuery, membersQuery, myBandsQuery } from "@/lib/bands";
 import { ensureOk } from "@/lib/errors";
+import { keepDocumentsOffline } from "@/lib/offline-documents";
 import { keepLogoOffline } from "@/lib/offline-logos";
 import { useOnline } from "@/lib/online";
 import { songQuery, songsQuery } from "@/lib/songs";
@@ -22,6 +23,11 @@ export const songDetailsQuery = (bandSlug: string) =>
       for (const song of songs) {
         client.setQueryData(songQuery(bandSlug, song.id).queryKey, song);
       }
+      // Their photos and PDFs too (#240), each downloaded once.
+      void keepDocumentsOffline(
+        bandSlug,
+        songs.flatMap((song) => song.documents),
+      );
       return songs.length;
     },
   });
