@@ -309,7 +309,9 @@
       "removed": "Document supprimé",
       "remove": "Supprimer",
       "removeTitle": "Supprimer « {{title}} » ?",
-      "removeDescription": "Son fichier est supprimé pour tout le groupe."
+      "removeDescription": "Son fichier est supprimé pour tout le groupe.",
+      "needsNetwork": "Nécessite le réseau",
+      "notSaved": "Ce document n'est pas encore enregistré sur cet appareil."
     }
   },
   "login": {

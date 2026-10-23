@@ -621,13 +621,12 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await doc.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Document updated")).toBeVisible();
   await expect(documents.last()).toContainText("Horns part");
-  for (const title of ["Horns part", "Chords"]) {
-    await leader.getByRole("button", { name: `Edit the document ${title}` }).click();
-    await doc.getByRole("button", { name: "Delete" }).click();
-    await leader.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
-    await expect(leader.getByText("Document removed").first()).toBeVisible();
-  }
-  await expect(leader.getByText("No documents yet")).toBeVisible();
+  await leader.getByRole("button", { name: "Edit the document Horns part" }).click();
+  await doc.getByRole("button", { name: "Delete" }).click();
+  await leader.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+  await expect(leader.getByText("Document removed")).toBeVisible();
+  // The photo stays, for the offline test (which deletes it).
+  await expect(documents).toHaveCount(1);
 
   // Status and energy: one tap each, saved at once.
   await expect(leader.getByRole("radio", { name: "Proposed" })).toBeChecked();
@@ -712,24 +711,27 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
 });
 
 /** How many band logos the app saved on the device for offline use (#178). */
-function savedLogos(page: Page) {
+function savedCount(page: Page, name: "logos" | "documents") {
   return page.evaluate(
-    () =>
+    (name) =>
       new Promise<number>((resolve) => {
         const open = indexedDB.open("coverband");
         // Never create the app's database before the app does.
         open.onupgradeneeded = () => open.transaction?.abort();
         open.onsuccess = () => {
           const db = open.result;
-          if (!db.objectStoreNames.contains("logos")) return resolve(0);
-          const count = db.transaction("logos").objectStore("logos").count();
+          if (!db.objectStoreNames.contains(name)) return resolve(0);
+          const count = db.transaction(name).objectStore(name).count();
           count.onsuccess = () => resolve(count.result);
           count.onerror = () => resolve(0);
         };
         open.onerror = () => resolve(0);
       }),
+    name,
   );
 }
+
+const savedLogos = (page: Page) => savedCount(page, "logos");
 
 /** The data the app saved on the device for offline use (#165), as JSON, or "" before any. */
 function savedCopy(page: Page) {
@@ -762,6 +764,7 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   // The service worker serves the app itself without a connection.
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
   await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
+  await expect.poll(() => savedCount(page, "documents")).toBe(1);
 
   await context.setOffline(true);
   await page.reload();
@@ -779,10 +782,28 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   const edit = page.getByRole("button", { name: "Edit the song" });
   await expect(edit).toBeDisabled();
   await expect(page.getByRole("button", { name: "Archive" })).toBeDisabled();
+  // The chord grid's photo, from the device (#240).
+  await page.getByRole("button", { name: "Documents" }).click();
+  const [photo] = await Promise.all([
+    page.waitForEvent("popup"),
+    page
+      .getByRole("list", { name: "Documents" })
+      .getByRole("button", { name: /^Chords/ })
+      .click(),
+  ]);
+  await expect.poll(() => photo.url()).toMatch(/^blob:/);
+  await photo.close();
 
   await context.setOffline(false);
   await expect(page.getByText("You're offline")).toBeHidden();
   await expect(edit).toBeEnabled();
+  // Deleted: its file goes from the bucket, and from the device.
+  await page.getByRole("button", { name: "Edit the document Chords" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByText("Document removed")).toBeVisible();
+  await page.reload();
+  await expect.poll(() => savedCount(page, "documents")).toBe(0);
   await context.close();
 });
 

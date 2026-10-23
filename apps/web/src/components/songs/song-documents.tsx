@@ -44,7 +44,9 @@ import { DOCUMENT_ACCEPT, isPhoto, shrinkPhoto, titleFrom } from "@/lib/document
 import { deleteDocument, updateDocument, uploadDocument } from "@/lib/documents";
 import { ApiRequestError, errorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/format";
+import { savedDocument } from "@/lib/offline-documents";
 import { useOnline } from "@/lib/online";
+import { cn } from "@/lib/utils";
 
 export type SongDocument = {
   id: string;
@@ -81,6 +83,7 @@ type Props = {
 export function SongDocuments({ bandSlug, songId, documents, userId, isLeader }: Props) {
   const { t } = useTranslation();
   const language = useLanguage();
+  const online = useOnline();
   return (
     <CollapsibleCard title={t("songs.documents.title")} defaultOpen={false}>
       <div className="space-y-3">
@@ -95,13 +98,7 @@ export function SongDocuments({ bandSlug, songId, documents, userId, isLeader }:
               return (
                 <li key={document.id} className="flex items-start gap-2 py-3">
                   <div className="min-w-0 flex-1 space-y-2">
-                    <a
-                      href={document.url}
-                      {...(inApp
-                        ? { target: "_blank", rel: "noopener noreferrer" }
-                        : { download: true })}
-                      className="flex min-w-0 items-start gap-3 rounded-lg outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-                    >
+                    <DocumentLink document={document}>
                       <Icon aria-hidden className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
                       <span className="min-w-0 space-y-1">
                         <span className="block truncate font-medium">{document.title}</span>
@@ -112,11 +109,18 @@ export function SongDocuments({ bandSlug, songId, documents, userId, isLeader }:
                             ? t("songs.documents.addedBy", { name: document.addedBy, date })
                             : t("songs.documents.addedOn", { date })}
                         </span>
-                        <span className="sr-only">
-                          {inApp ? t("songs.media.newTab") : t("songs.documents.downloads")}
-                        </span>
+                        {online && (
+                          <span className="sr-only">
+                            {inApp ? t("songs.media.newTab") : t("songs.documents.downloads")}
+                          </span>
+                        )}
+                        {!online && !inApp && (
+                          <span className="block text-muted-foreground text-xs">
+                            {t("songs.documents.needsNetwork")}
+                          </span>
+                        )}
                       </span>
-                    </a>
+                    </DocumentLink>
                     <InstrumentTags instruments={document.instruments} className="pl-8" />
                   </div>
                   <DocumentDialog
@@ -153,6 +157,52 @@ export function SongDocuments({ bandSlug, songId, documents, userId, isLeader }:
         )}
       </div>
     </CollapsibleCard>
+  );
+}
+
+/**
+ * A document's title, opening it: online, its file (photos and PDFs in a new tab, the others
+ * downloaded); offline (#240), the photo or PDF saved on the device, and the others say they need
+ * the network.
+ */
+function DocumentLink({ document, children }: { document: SongDocument; children: ReactNode }) {
+  const { t } = useTranslation();
+  const online = useOnline();
+  const inApp = opensInApp(document.kind);
+  const className =
+    "flex min-w-0 items-start gap-3 rounded-lg text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring";
+  if (online) {
+    return (
+      <a
+        href={document.url}
+        {...(inApp ? { target: "_blank", rel: "noopener noreferrer" } : { download: true })}
+        className={className}
+      >
+        {children}
+      </a>
+    );
+  }
+  if (!inApp) {
+    return (
+      // Its "needs the network" line is in the list's text.
+      <span className={cn(className, "hover:no-underline")}>{children}</span>
+    );
+  }
+  async function openSaved() {
+    // Opened at once, while the tap still allows it; the saved copy goes in once read.
+    const tab = window.open("", "_blank");
+    const blob = await savedDocument(document.id);
+    if (blob && tab) {
+      tab.location.href = URL.createObjectURL(blob);
+      return;
+    }
+    tab?.close();
+    toast.error(t("songs.documents.notSaved"));
+  }
+  return (
+    <button type="button" onClick={() => void openSaved()} className={className}>
+      {children}
+    </button>
   );
 }
 
