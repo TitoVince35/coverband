@@ -568,6 +568,67 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(links).toHaveCount(3);
   await expect(links.last()).toContainText("Deezer");
 
+  // Documents (#239): a closed accordion after the links, the one block open at first.
+  await expect(leader.getByRole("button", { name: "Links" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  const documentsBlock = leader.getByRole("button", { name: "Documents" });
+  await expect(documentsBlock).toHaveAttribute("aria-expanded", "false");
+  await documentsBlock.click();
+  const documents = leader.getByRole("list", { name: "Documents" }).locator(":scope > li");
+  const fixture = (name: string) => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url));
+
+  // A photo of the chord grid: made smaller before it's sent.
+  await leader.getByRole("button", { name: "Add a document" }).click();
+  const doc = leader.getByRole("dialog");
+  await doc.getByLabel("File").setInputFiles(fixture("photo.jpg"));
+  await expect(doc.getByText(/^Ready: /)).toBeVisible();
+  await expect(doc.getByLabel("Title", { exact: true })).toHaveValue("photo");
+  await doc.getByLabel("Title", { exact: true }).fill("Chords");
+  await doc.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Document added")).toBeVisible();
+  await expect(documents).toHaveCount(1);
+  await expect(documents.first()).toContainText("Chords");
+  await expect(documents.first()).toContainText("Photo · added by Captain Lea");
+  const photoLink = documents.first().getByRole("link");
+  await expect(photoLink).toHaveAttribute("target", "_blank");
+  const photo = await leader.request.get((await photoLink.getAttribute("href")) ?? "");
+  expect(photo.headers()["content-type"]).toMatch(/^image\/(webp|jpeg)$/);
+  expect((await photo.body()).length).toBeLessThan(600_000);
+
+  // The horns' part as a PDF, for the trumpet: a progress bar while it's sent.
+  await leader.getByRole("button", { name: "Add a document" }).click();
+  await doc.getByLabel("File").setInputFiles(fixture("horns.pdf"));
+  await expect(doc.getByLabel("Title", { exact: true })).toHaveValue("horns");
+  await doc.getByLabel("Title", { exact: true }).fill("Horns");
+  await doc.getByLabel("Add an instrument").fill("Trumpet");
+  await doc.getByLabel("Add an instrument").press("Enter");
+  await doc.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Document added")).toBeVisible();
+  await expect(documents).toHaveCount(2);
+  await expect(documents.last()).toContainText("Horns");
+  await expect(documents.last()).toContainText("PDF");
+  await expect(documents.last()).toContainText("Trumpet");
+  const pdf = await leader.request.get(
+    (await documents.last().getByRole("link").getAttribute("href")) ?? "",
+  );
+  expect(pdf.headers()["content-type"]).toBe("application/pdf");
+
+  // Edited, then deleted (with a confirmation), by the band leader.
+  await leader.getByRole("button", { name: "Edit the document Horns" }).click();
+  await doc.getByLabel("Title", { exact: true }).fill("Horns part");
+  await doc.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Document updated")).toBeVisible();
+  await expect(documents.last()).toContainText("Horns part");
+  for (const title of ["Horns part", "Chords"]) {
+    await leader.getByRole("button", { name: `Edit the document ${title}` }).click();
+    await doc.getByRole("button", { name: "Delete" }).click();
+    await leader.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+    await expect(leader.getByText("Document removed").first()).toBeVisible();
+  }
+  await expect(leader.getByText("No documents yet")).toBeVisible();
+
   // Status and energy: one tap each, saved at once.
   await expect(leader.getByRole("radio", { name: "Proposed" })).toBeChecked();
   await leader.getByRole("radio", { name: "Learning" }).click();
@@ -604,8 +665,9 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea updated song “Zombie”",
   );
-  // (Its 10 latest events: "added song" is older, behind the links "Search and add" added.)
-  await expect(journal).toContainText("Captain Lea updated the lyrics of song “Zombie”");
+  // (Its 10 latest events: the lyrics and "added song" are older, behind the documents.)
+  await expect(journal).toContainText("Captain Lea added a document to song “Zombie”");
+  await expect(journal).toContainText("Captain Lea removed a document from song “Zombie”");
   await expect(journal).toContainText("Captain Lea marked song “Zombie” as learning");
 
   // Archive a song, find it apart, restore it; the band leader deletes the copy for good.

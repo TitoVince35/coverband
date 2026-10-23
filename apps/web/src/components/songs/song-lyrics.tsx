@@ -31,18 +31,9 @@ import { storedText, updateSong } from "@/lib/songs";
 
 type Props = { bandSlug: string; songId: string; lyrics: string | null };
 
-/** Wider than a phone: the lyrics block starts open. */
-const startsOpen = () => {
-  try {
-    return window.matchMedia("(min-width: 640px)").matches;
-  } catch {
-    return false;
-  }
-};
-
 /**
- * A song's lyrics (#129): a block closed on a phone, open on a wider screen, whose text is half a
- * screen tall and scrolls. Any member edits them in a modal.
+ * A song's lyrics (#129): a block closed at first (#239: only the links start open), whose text is
+ * half a screen tall and scrolls. Any member edits them in a modal.
  */
 export function SongLyrics({
   bandSlug,
@@ -64,7 +55,7 @@ export function SongLyrics({
   if (viewing && !lyrics) setViewing(false);
 
   return (
-    <CollapsibleCard title={t("songs.lyrics.title")} defaultOpen={startsOpen}>
+    <CollapsibleCard title={t("songs.lyrics.title")} defaultOpen={false}>
       <div className="space-y-4">
         {lyrics ? (
           <div className="space-y-2">
