@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createDeezerCatalog } from "./deezer";
+import { createDeezerCatalog, TRACK_MATCHES } from "./deezer";
 
 const zombie = (id: number, title: string, artist = "The Cranberries") => ({
   id,
@@ -49,6 +49,20 @@ test("findTrack: the same artist when no title matches; an album without genre",
     title: "Zombie (Live)",
   });
   expect(await catalog.albumGenre(77)).toBeNull();
+});
+
+test("searchTracks (#220): Deezer's tracks for free text, in its order", async () => {
+  const { asked, catalog } = fakeDeezer({
+    "/search": { data: [zombie(1, "Zombie (Live)"), zombie(2, "Zombie")] },
+  });
+  expect((await catalog.searchTracks("zombie live")).map((t) => t.title)).toEqual([
+    "Zombie (Live)",
+    "Zombie",
+  ]);
+  expect(asked[0]?.searchParams.get("q")).toBe("zombie live");
+  expect(asked[0]?.searchParams.get("limit")).toBe(String(TRACK_MATCHES));
+  expect(await fakeDeezer({ "/search": { data: [] } }).catalog.searchTracks("x")).toEqual([]);
+  expect(fakeDeezer({}).catalog.searchTracks("x")).rejects.toThrow("refused");
 });
 
 test("nothing found is null; Deezer refusing, down or answering something else throws", async () => {

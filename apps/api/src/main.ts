@@ -55,6 +55,7 @@ const app = createApp({
     trustedOrigins: env.TRUSTED_ORIGINS,
     redirectHosts: env.REDIRECT_HOSTS,
     ...(env.CRON_SECRET && { cronSecret: env.CRON_SECRET }),
+    ...(env.CONTACT_FORM_RECIPIENT && { contactRecipient: env.CONTACT_FORM_RECIPIENT }),
     buildInfo: { version: rootPackage.version, build: env.BUILD_SHA },
     ...(env.BETA_ACCESS_CODE && {
       access: {

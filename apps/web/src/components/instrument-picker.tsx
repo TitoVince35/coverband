@@ -162,7 +162,11 @@ export function InstrumentPicker({
               )}
               // Before the input's blur, so the click still lands.
               onMouseDown={(event) => event.preventDefault()}
-              onMouseEnter={() => setHighlight(index)}
+              // Only a pointer that moves: the list opening under a resting cursor (a mouse left
+              // where it last clicked) would otherwise change what Enter picks.
+              onPointerMove={(event) => {
+                if (event.movementX || event.movementY) setHighlight(index);
+              }}
               onClick={() => choose(option.instrument)}
               onKeyDown={(event) => event.key === "Enter" && choose(option.instrument)}
             >

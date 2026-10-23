@@ -167,9 +167,11 @@ jobs:
       - name: Migrate database
         run: bun run db:migrate
 
+      # Without --with-deps: the runner already has the system libraries (it ships Chrome), and
+      # their apt install from Ubuntu's mirror sometimes took 10 minutes (#230).
       - name: Install Chromium for Playwright
         working-directory: e2e
-        run: bunx playwright install --with-deps chromium
+        run: bunx playwright install chromium
 
       # Builds the web app and serves it from the API on port 3100 (see e2e/playwright.config.ts).
       - name: End-to-end tests

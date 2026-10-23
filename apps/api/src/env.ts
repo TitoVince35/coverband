@@ -72,6 +72,8 @@ const envSchema = z
     SMTP_USER: z.string().min(1).optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(3),
+    // Where the contact form's messages go (#233). Unset: no contact form.
+    CONTACT_FORM_RECIPIENT: z.email().optional(),
     // Shared code keeping the beta private (#148): asked once per device. Empty: no gate.
     BETA_ACCESS_CODE: z.string().trim().default(""),
     // Local HTTPS certificate (#163), set by `bun run serve` / `serve:lan` when mkcert is installed.

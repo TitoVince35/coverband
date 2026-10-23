@@ -19,7 +19,7 @@ const track = {
   genre: "Rock",
 };
 
-test("autofillChoices: Deezer's duration and genre, the chosen video and Deezer as links", () => {
+test("autofillChoices: Deezer's duration and genre, the chosen video as the only link", () => {
   const result: Autofill = {
     track,
     videos: [video("Zombie0Topi", 306), video("Zombie0Clip", 300, "Zombie (Official Video)")],
@@ -34,7 +34,6 @@ test("autofillChoices: Deezer's duration and genre, the chosen video and Deezer 
         title: "Zombie (Official Video)",
         instruments: [],
       },
-      { url: "https://www.deezer.com/track/2", title: null, instruments: [] },
     ],
   });
 });
@@ -45,9 +44,8 @@ test("autofillChoices: the video's duration without Deezer; no video chosen, no 
     standardDuration: 306,
     style: null,
   });
-  expect(autofillChoices({ track, videos: null, failed: [] }, null).links).toEqual([
-    { url: track.url, title: null, instruments: [] },
-  ]);
+  // Never the Deezer track (#219).
+  expect(autofillChoices({ track, videos: null, failed: [] }, null).links).toEqual([]);
   expect(autofillChoices({ track: null, videos: [], failed: [] }, null)).toEqual({
     standardDuration: null,
     style: null,

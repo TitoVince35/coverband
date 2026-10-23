@@ -5,6 +5,7 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import { clearOfflineCache } from "@/lib/offline-cache";
+import { clearSavedDocuments } from "@/lib/offline-documents";
 import { clearSavedLogos } from "@/lib/offline-logos";
 
 /**
@@ -92,8 +93,9 @@ export const SESSION_KEY = ["session"] as const;
  */
 export function removeUserQueries(queryClient: QueryClient) {
   queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== SESSION_KEY[0] });
-  // And the band logos saved for offline use (#178).
+  // And the band logos and documents saved for offline use (#178, #240).
   void clearSavedLogos();
+  void clearSavedDocuments();
 }
 
 /** After a logout (or every session revoked): no session and no cached user data. */

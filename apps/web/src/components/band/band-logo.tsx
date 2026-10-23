@@ -42,12 +42,18 @@ function useLogoSource(bandSlug: string, logo: Logo | null, size: Size) {
   };
 }
 
+/**
+ * The whole logo on the band's home page, and in its settings to show it the same (as wide as the
+ * page, at most a third of the screen's height).
+ */
+export const LARGE_LOGO = "mx-auto max-h-[33svh] w-full object-contain";
+
 /** Where each size shows: the band list's square, the header's small square, the home page. */
 const BOX: Record<Size, string> = {
   small: "size-12 shrink-0",
   // As tall as the band's name and genre (two lines), as wide as the logo needs, up to a point.
   header: "h-14 w-auto max-w-[40%] shrink-0",
-  large: "w-full",
+  large: LARGE_LOGO,
 };
 
 /**
@@ -75,12 +81,7 @@ export function BandLogo({
         src={src}
         alt=""
         onError={onError}
-        className={cn(
-          "object-contain",
-          BOX[size],
-          size === "large" && "mx-auto max-h-[33svh]",
-          className,
-        )}
+        className={cn("object-contain", BOX[size], className)}
       />
     );
   }

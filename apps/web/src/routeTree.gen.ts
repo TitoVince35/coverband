@@ -17,10 +17,12 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppAccountRouteImport } from './routes/_app/account'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
+import { Route as AppContactRouteImport } from './routes/_app/contact'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppBBandSlugRouteImport } from './routes/_app/b.$bandSlug'
 import { Route as AppBBandSlugIndexRouteImport } from './routes/_app/b.$bandSlug/index'
 import { Route as AppBBandSlugLineupRouteImport } from './routes/_app/b.$bandSlug/lineup'
+import { Route as AppBBandSlugSettingsRouteImport } from './routes/_app/b.$bandSlug/settings'
 import { Route as AppBBandSlugSongsIndexRouteImport } from './routes/_app/b.$bandSlug/songs.index'
 import { Route as AppBBandSlugSongsSongIdRouteImport } from './routes/_app/b.$bandSlug/songs.$songId'
 import { Route as AppBBandSlugSongsArchivedRouteImport } from './routes/_app/b.$bandSlug/songs.archived'
@@ -64,6 +66,11 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContactRoute = AppContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => AppRoute,
+} as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
@@ -82,6 +89,11 @@ const AppBBandSlugIndexRoute = AppBBandSlugIndexRouteImport.update({
 const AppBBandSlugLineupRoute = AppBBandSlugLineupRouteImport.update({
   id: '/lineup',
   path: '/lineup',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
+const AppBBandSlugSettingsRoute = AppBBandSlugSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppBBandSlugRoute,
 } as any)
 const AppBBandSlugSongsIndexRoute = AppBBandSlugSongsIndexRouteImport.update({
@@ -109,9 +121,11 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/account': typeof AppAccountRoute
   '/admin': typeof AppAdminRoute
+  '/contact': typeof AppContactRoute
   '/invite/$token': typeof InviteTokenRoute
   '/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
+  '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug/': typeof AppBBandSlugIndexRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
@@ -124,9 +138,11 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/account': typeof AppAccountRoute
   '/admin': typeof AppAdminRoute
+  '/contact': typeof AppContactRoute
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AppIndexRoute
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
+  '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug': typeof AppBBandSlugIndexRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
@@ -141,10 +157,12 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_app/account': typeof AppAccountRoute
   '/_app/admin': typeof AppAdminRoute
+  '/_app/contact': typeof AppContactRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
   '/_app/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
+  '/_app/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/_app/b/$bandSlug/': typeof AppBBandSlugIndexRoute
   '/_app/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/_app/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
@@ -160,9 +178,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/account'
     | '/admin'
+    | '/contact'
     | '/invite/$token'
     | '/b/$bandSlug'
     | '/b/$bandSlug/lineup'
+    | '/b/$bandSlug/settings'
     | '/b/$bandSlug/'
     | '/b/$bandSlug/songs/$songId'
     | '/b/$bandSlug/songs/archived'
@@ -175,9 +195,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/account'
     | '/admin'
+    | '/contact'
     | '/invite/$token'
     | '/'
     | '/b/$bandSlug/lineup'
+    | '/b/$bandSlug/settings'
     | '/b/$bandSlug'
     | '/b/$bandSlug/songs/$songId'
     | '/b/$bandSlug/songs/archived'
@@ -191,10 +213,12 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_app/account'
     | '/_app/admin'
+    | '/_app/contact'
     | '/invite/$token'
     | '/_app/'
     | '/_app/b/$bandSlug'
     | '/_app/b/$bandSlug/lineup'
+    | '/_app/b/$bandSlug/settings'
     | '/_app/b/$bandSlug/'
     | '/_app/b/$bandSlug/songs/$songId'
     | '/_app/b/$bandSlug/songs/archived'
@@ -268,6 +292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/contact': {
+      id: '/_app/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof AppContactRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/invite/$token': {
       id: '/invite/$token'
       path: '/invite/$token'
@@ -296,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugLineupRouteImport
       parentRoute: typeof AppBBandSlugRoute
     }
+    '/_app/b/$bandSlug/settings': {
+      id: '/_app/b/$bandSlug/settings'
+      path: '/settings'
+      fullPath: '/b/$bandSlug/settings'
+      preLoaderRoute: typeof AppBBandSlugSettingsRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
     '/_app/b/$bandSlug/songs/': {
       id: '/_app/b/$bandSlug/songs/'
       path: '/songs'
@@ -322,6 +360,7 @@ declare module '@tanstack/react-router' {
 
 interface AppBBandSlugRouteChildren {
   AppBBandSlugLineupRoute: typeof AppBBandSlugLineupRoute
+  AppBBandSlugSettingsRoute: typeof AppBBandSlugSettingsRoute
   AppBBandSlugIndexRoute: typeof AppBBandSlugIndexRoute
   AppBBandSlugSongsSongIdRoute: typeof AppBBandSlugSongsSongIdRoute
   AppBBandSlugSongsArchivedRoute: typeof AppBBandSlugSongsArchivedRoute
@@ -330,6 +369,7 @@ interface AppBBandSlugRouteChildren {
 
 const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
   AppBBandSlugLineupRoute: AppBBandSlugLineupRoute,
+  AppBBandSlugSettingsRoute: AppBBandSlugSettingsRoute,
   AppBBandSlugIndexRoute: AppBBandSlugIndexRoute,
   AppBBandSlugSongsSongIdRoute: AppBBandSlugSongsSongIdRoute,
   AppBBandSlugSongsArchivedRoute: AppBBandSlugSongsArchivedRoute,
@@ -343,6 +383,7 @@ const AppBBandSlugRouteWithChildren = AppBBandSlugRoute._addFileChildren(
 interface AppRouteChildren {
   AppAccountRoute: typeof AppAccountRoute
   AppAdminRoute: typeof AppAdminRoute
+  AppContactRoute: typeof AppContactRoute
   AppIndexRoute: typeof AppIndexRoute
   AppBBandSlugRoute: typeof AppBBandSlugRouteWithChildren
 }
@@ -350,6 +391,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAccountRoute: AppAccountRoute,
   AppAdminRoute: AppAdminRoute,
+  AppContactRoute: AppContactRoute,
   AppIndexRoute: AppIndexRoute,
   AppBBandSlugRoute: AppBBandSlugRouteWithChildren,
 }

@@ -25,7 +25,8 @@ const ICONS: Record<MediaProvider, { icon: SimpleIcon; faintOn?: "light" | "dark
   mixcloud: { icon: siMixcloud, faintOn: "dark" },
 };
 
-const FILL = {
+/** How a brand logo is filled, by the theme it is too faint on (document icons too). */
+export const BRAND_FILL = {
   light: "fill-foreground dark:fill-(--brand)",
   dark: "fill-(--brand) dark:fill-foreground",
   none: "fill-(--brand)",
@@ -42,7 +43,7 @@ export function ProviderIcon({ url, className }: { url: string; className?: stri
     <svg
       viewBox="0 0 24 24"
       aria-hidden
-      className={cn("size-5", FILL[faintOn], className)}
+      className={cn("size-5", BRAND_FILL[faintOn], className)}
       style={{ "--brand": `#${icon.hex}` } as CSSProperties}
     >
       <path d={icon.path} />

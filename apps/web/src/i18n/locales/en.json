@@ -27,7 +27,6 @@
     "noBands": "You're not in a band yet. Bands are joined through an invitation."
   },
   "band": {
-    "welcome": "Welcome to {{band}}!",
     "notFound": "This band doesn't exist or you're not a member.",
     "comingSoon": "Setlists and gigs are coming soon.",
     "roles": {
@@ -36,9 +35,17 @@
     },
     "home": "Home",
     "switch": "Switch band",
+    "menu": "Band menu",
+    "settings": "Band settings",
     "allBands": "All my bands",
+    "nav": {
+      "label": "Band sections",
+      "setlists": "Setlists",
+      "gigs": "Gigs",
+      "soon": "Coming soon",
+      "soonSuffix": " (coming soon)"
+    },
     "edit": {
-      "button": "Edit band",
       "title": "Band details",
       "name": "Band name",
       "genre": "Genre",
@@ -48,6 +55,7 @@
     },
     "logo": {
       "title": "Logo",
+      "add": "Add your band's logo",
       "none": "No logo yet: the band's initials show instead.",
       "choose": "Choose a logo",
       "change": "Change the logo",
@@ -131,7 +139,9 @@
     "sort": {
       "label": "Sort by",
       "title": "Title",
-      "energy": "Energy"
+      "energy": "Energy",
+      "asc": "Ascending",
+      "desc": "Descending"
     },
     "filter": "Show",
     "noneWithStatus": "No song is “{{status}}”.",
@@ -170,7 +180,18 @@
       "remove": "Remove",
       "added": "Link added",
       "saved": "Link updated",
-      "removed": "Link removed"
+      "removed": "Link removed",
+      "search": {
+        "open": "Search on Deezer",
+        "title": "Search on Deezer",
+        "description": "Choose a track: its link and title fill the form in.",
+        "refine": "Search for",
+        "again": "Search again",
+        "searching": "Searching Deezer…",
+        "none": "Nothing found on Deezer.",
+        "matches": "Tracks found",
+        "back": "Back to the link"
+      }
     },
     "form": {
       "addTitle": "Add a song",
@@ -249,7 +270,7 @@
       "noVideo": "No video",
       "nothing": "Nothing found online: the song will be added as typed.",
       "noYoutube": "No YouTube videos for now.",
-      "hint": "Adding the song fills in its original duration, its style and its first links.",
+      "hint": "Adding the song fills in its original duration, its style and its first link.",
       "quota": "Your band has used its 15 searches for today. Try again tomorrow, or add the song as typed with Save only.",
       "linksFailed": "The song is added, but its links couldn't be: add them from its page.",
       "failed": {
@@ -257,6 +278,40 @@
         "youtube": "YouTube had an error: no videos this time."
       },
       "thumbnailFailed": "Thumbnail not available (error)"
+    },
+    "documents": {
+      "title": "Documents",
+      "empty": "No documents yet: scores, chord grids, Guitar Pro or MuseScore files…",
+      "add": "Add a document",
+      "addTitle": "Add a document",
+      "editTitle": "Edit the document",
+      "edit": "Edit the document {{title}}",
+      "formats": "A photo (a chord grid on paper), a PDF, a Guitar Pro or MuseScore file.",
+      "file": "File",
+      "maxSize": "4 MB at most. Photos are made smaller first.",
+      "preparing": "Making the photo smaller…",
+      "ready": "Ready: {{size}}.",
+      "documentTitle": "Title",
+      "instruments": "Instruments",
+      "uploading": "Uploading",
+      "progress": "Uploading… {{percent}} %",
+      "kinds": {
+        "photo": "Photo",
+        "pdf": "PDF",
+        "guitarpro": "Guitar Pro",
+        "musescore": "MuseScore"
+      },
+      "addedBy": "added by {{name}}, {{date}}",
+      "addedOn": "added {{date}}",
+      "downloads": "(downloads the file)",
+      "added": "Document added",
+      "saved": "Document updated",
+      "removed": "Document removed",
+      "remove": "Delete",
+      "removeTitle": "Delete “{{title}}”?",
+      "removeDescription": "Its file is deleted for everyone in the band.",
+      "needsNetwork": "Needs the network",
+      "notSaved": "This document isn't saved on this device yet."
     }
   },
   "login": {
@@ -470,7 +525,12 @@
     "lyrics_unavailable": "The lyrics service isn't answering right now. Try again later, or type them in.",
     "access_required": "Enter the access code to continue.",
     "access_code_invalid": "This isn't the access code.",
-    "impersonation_read_only": "Read-only while viewing the app as another user."
+    "impersonation_read_only": "Read-only while viewing the app as another user.",
+    "deezer_unavailable": "Deezer isn't answering right now. Try again later, or paste the link.",
+    "document_invalid": "Only photos (JPEG, PNG, WebP), PDFs, Guitar Pro and MuseScore files.",
+    "document_too_large": "This document is larger than 4 MB.",
+    "too_many_documents": "A song has at most 20 documents: remove one first.",
+    "band_storage_full": "Your band's documents have reached their storage limit: remove some first."
   },
   "instruments": {
     "picker": {
@@ -507,6 +567,26 @@
     "songArchived": "{{name}} archived {{song}}",
     "songRestored": "{{name}} restored {{song}}",
     "songDeleted": "{{name}} deleted {{song}}",
-    "songLyricsChanged": "{{name}} updated the lyrics of {{song}}"
+    "songLyricsChanged": "{{name}} updated the lyrics of {{song}}",
+    "documentAdded": "{{name}} added a document to {{song}}",
+    "documentRemoved": "{{name}} removed a document from {{song}}"
+  },
+  "contact": {
+    "title": "Contact us",
+    "sentAs": "Sent to the {{appName}} team as {{name}} ({{email}}). We'll answer by email.",
+    "subject": "Subject",
+    "choose": "Choose a subject",
+    "subjectMissing": "Choose a subject.",
+    "subjects": {
+      "bug": "Bug report",
+      "feature": "Feature request",
+      "praise": "Praise",
+      "other": "Other"
+    },
+    "message": "Message",
+    "bugContext": "A bug report also sends the app's version, the page you came from, your browser and your language, to help us reproduce it.",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Message sent. Thank you!"
   }
 }

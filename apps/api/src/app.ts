@@ -18,6 +18,7 @@ import { autofillRoutes } from "./modules/autofill/routes";
 import { bandJournalSource } from "./modules/bands/journal";
 import { LOGO_UPLOAD_MAX_SIZE } from "./modules/bands/logo";
 import { bandRoutes } from "./modules/bands/routes";
+import { contactRoutes } from "./modules/contact/routes";
 import { instrumentRoutes } from "./modules/instruments/routes";
 import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
 import { journalRoutes } from "./modules/journal/routes";
@@ -25,6 +26,7 @@ import { memberRoutes } from "./modules/members/routes";
 import { onboardingRoutes } from "./modules/onboarding/routes";
 import { meRoutes } from "./modules/profile/routes";
 import { userRoutes } from "./modules/profile/user-routes";
+import { DOCUMENT_UPLOAD_MAX_SIZE, documentRoutes } from "./modules/songs/documents-routes";
 import { songJournalSource } from "./modules/songs/journal";
 import { songRoutes } from "./modules/songs/routes";
 
@@ -54,11 +56,13 @@ function createApi(deps: AppDeps) {
         journalRoutes(deps, [bandJournalSource, songJournalSource]),
       )
       .route("/bands/:bandSlug/songs", songRoutes(deps))
+      .route("/bands/:bandSlug/songs/:songId/documents", documentRoutes(deps))
       .route("/bands/:bandSlug/autofill", autofillRoutes(deps))
       .route("/bands/:bandSlug/invitations", bandInvitationRoutes(deps))
       .route("/me", meRoutes(deps))
       .route("/users", userRoutes(deps))
       .route("/instruments", instrumentRoutes(deps))
+      .route("/contact", contactRoutes(deps))
   );
 }
 
@@ -93,7 +97,14 @@ export function createApp({ deps, webDistDir }: AppOptions) {
     "/api/*",
     ...requestGuards(
       [deps.appUrl, ...(deps.trustedOrigins ?? [])],
-      [{ method: "PUT", path: /^\/api\/bands\/[^/]+\/logo$/, maxSize: LOGO_UPLOAD_MAX_SIZE }],
+      [
+        { method: "PUT", path: /^\/api\/bands\/[^/]+\/logo$/, maxSize: LOGO_UPLOAD_MAX_SIZE },
+        {
+          method: "POST",
+          path: /^\/api\/bands\/[^/]+\/songs\/[^/]+\/documents$/,
+          maxSize: DOCUMENT_UPLOAD_MAX_SIZE,
+        },
+      ],
     ),
   );
   // The beta access code, before Better Auth and any session lookup.

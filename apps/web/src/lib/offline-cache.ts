@@ -17,6 +17,8 @@ const STORE = "query-cache";
 const KEY = "client";
 /** Band logos saved for offline use (#178, `offline-logos.ts`). */
 export const LOGO_STORE = "logos";
+/** Songs' photos and PDFs (#240), by document id. */
+export const DOCUMENT_STORE = "documents";
 
 /** Which queries are saved: what the app needs to read a band offline. Never invitations (emails). */
 export function isKeptOffline(queryKey: QueryKey) {
@@ -32,12 +34,15 @@ const SAVE_DELAY_MS = 500;
 
 let database: Promise<IDBDatabase> | undefined;
 
-/** One connection for the app's life: writes stay in order. Version 2 adds the logos (#178). */
+/**
+ * One connection for the app's life: writes stay in order. Version 2 adds the logos (#178), 3 the
+ * documents (#240).
+ */
 function openStore() {
   database ??= new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 2);
+    const request = indexedDB.open(DB_NAME, 3);
     request.onupgradeneeded = () => {
-      for (const name of [STORE, LOGO_STORE]) {
+      for (const name of [STORE, LOGO_STORE, DOCUMENT_STORE]) {
         if (!request.result.objectStoreNames.contains(name)) {
           request.result.createObjectStore(name);
         }

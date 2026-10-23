@@ -85,6 +85,20 @@
       "when": 1792523339808,
       "tag": "0011_band_logo",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792679027985,
+      "tag": "0012_drop_logo_background",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792760582144,
+      "tag": "0013_song_documents",
+      "breakpoints": true
     }
   ]
 }

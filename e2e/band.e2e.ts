@@ -52,7 +52,10 @@ test("the band leader creates an account and the band from the email's link", as
 
   await leader.getByRole("button", { name: "Create my band" }).click();
   await expect(leader).toHaveURL(/\/b\/e2e-rockers-/);
-  await expect(leader.getByText(`Welcome to ${band}!`)).toBeVisible();
+  await expect(leader.getByRole("heading", { name: band })).toBeVisible();
+  // No welcome message (#222); no logo yet: the band leader's way to add one.
+  await expect(leader.getByText("Welcome to")).toBeHidden();
+  await expect(leader.getByRole("link", { name: "Add your band's logo" })).toBeVisible();
 });
 
 test("an admin views the app as the band leader, read-only, then stops", async ({ page }) => {
@@ -99,7 +102,9 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   await musician.getByRole("button", { name: "Next" }).click();
   await expect(musician.getByText("Bass guitar")).toBeVisible(); // the review step
   await musician.getByRole("button", { name: "Join the band" }).click();
-  await expect(musician.getByText(`Welcome to ${band}!`)).toBeVisible();
+  await expect(musician.getByRole("heading", { name: band })).toBeVisible();
+  // The way to add a logo is the band leader's.
+  await expect(musician.getByRole("link", { name: "Add your band's logo" })).toBeHidden();
 
   await musician.getByRole("link", { name: "Lineup" }).click();
   // The lineup's rows (each row also lists its instruments): the musician first, then the others.
@@ -110,6 +115,13 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   await expect(lineup.nth(0)).toContainText("Bass guitar");
   await expect(lineup.nth(1)).toContainText("Lea Leader");
   await expect(lineup.nth(1)).toContainText("Guitar");
+  // The band settings are the band leader's (#221): disabled in the menu, and their page sends
+  // a musician back to the band's home.
+  await musician.getByRole("button", { name: "Band menu" }).click();
+  await expect(musician.getByRole("menuitem", { name: "Band settings" })).toBeDisabled();
+  await musician.keyboard.press("Escape");
+  await musician.goto(musician.url().replace(/\/lineup$/, "/settings"));
+  await expect(musician).toHaveURL(/\/b\/e2e-rockers-[^/]+$/);
   await musician.context().close();
 });
 
@@ -126,6 +138,43 @@ test("the band leader updates their profile: the new name shows everywhere", asy
   await expect(
     leader.getByRole("list", { name: "Lineup" }).locator(":scope > li").nth(0),
   ).toContainText("Captain Lea");
+});
+
+test("the band's sections: a bottom bar on a phone, tabs on a large screen (#223)", async () => {
+  await leader.goto("/");
+  await leader.getByRole("link", { name: band }).first().click();
+  const sections = leader.getByRole("navigation", { name: "Band sections" });
+  // Five items: Setlists and Gigs there already, not links yet.
+  await expect(sections.getByRole("link")).toHaveCount(3);
+  await expect(sections.getByText("Setlists")).toBeVisible();
+  await expect(sections.getByText("Gigs")).toBeVisible();
+  // At the bottom of the screen.
+  const phone = leader.viewportSize() ?? { width: 393, height: 727 };
+  const bar = await sections.boundingBox();
+  // Where the browser puts the bottom of the screen for fixed elements.
+  const screenBottom = await leader.evaluate(() => {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position: fixed; bottom: 0; height: 1px";
+    document.body.append(probe);
+    const bottom = probe.getBoundingClientRect().bottom;
+    probe.remove();
+    return bottom;
+  });
+  expect(Math.round((bar?.y ?? 0) + (bar?.height ?? 0))).toBe(Math.round(screenBottom));
+  await sections.getByRole("link", { name: "Lineup" }).click();
+  await expect(leader).toHaveURL(/\/lineup$/);
+  // The keyboard up (the visible height halved): the bar hides, then comes back.
+  await leader.setViewportSize({ width: phone.width, height: Math.round(phone.height / 2) });
+  await expect(sections).toBeHidden();
+  await leader.setViewportSize(phone);
+  await expect(sections).toBeVisible();
+
+  // A large screen: the tabs under the band's name.
+  await leader.setViewportSize({ width: 1024, height: 768 });
+  const tabs = await sections.boundingBox();
+  expect(tabs?.y ?? 768).toBeLessThan(300);
+  await expect(sections.getByRole("link")).toHaveCount(3);
+  await leader.setViewportSize(phone);
 });
 
 test("a member edits their own instruments from the lineup", async () => {
@@ -211,8 +260,16 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   const bandLink = leader.getByRole("link", { name: band }).first();
   await expect(bandLink.getByText("ER", { exact: true })).toBeVisible();
   await bandLink.click();
-  await leader.getByRole("button", { name: "Edit band" }).click();
-  const dialog = leader.getByRole("dialog");
+  // The band settings (#221), from the band menu: the genre, then the logo.
+  await leader.getByRole("button", { name: "Band menu" }).click();
+  await leader.getByRole("menuitem", { name: "Band settings" }).click();
+  await expect(leader.getByRole("heading", { name: "Band settings" })).toBeVisible();
+  await leader.getByLabel("Genre").fill("Grunge");
+  await leader.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(leader.getByText("Band updated")).toBeVisible();
+  // The header says it at once.
+  await expect(leader.getByText("Grunge", { exact: true })).toBeVisible();
+  const dialog = leader.locator("main");
   await expect(dialog.getByText("No logo yet")).toBeVisible();
   await expect(leader.locator("main img")).toHaveCount(0);
 
@@ -232,7 +289,8 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(current).toBeVisible();
   // Served by the API, the whole image: 900 × 300 is under the 2,000 px limit.
   await expect.poll(() => current.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
-  await leader.keyboard.press("Escape");
+  const inSettings = await current.boundingBox();
+  await leader.getByRole("link", { name: "Home" }).click();
 
   // On the band's home page, the full logo, at most a third of the screen's height; next to the
   // band's name, its thumbnail; in the band list, its thumbnail too.
@@ -240,6 +298,10 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect.poll(() => logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(900);
   const height = await logo.evaluate((img) => img.getBoundingClientRect().height / innerHeight);
   expect(height).toBeLessThanOrEqual(1 / 3 + 0.01);
+  // The same size in the band settings.
+  const onHome = await logo.boundingBox();
+  expect(Math.round(inSettings?.width ?? 0)).toBe(Math.round(onHome?.width ?? -1));
+  expect(Math.round(inSettings?.height ?? 0)).toBe(Math.round(onHome?.height ?? -1));
   const headerLogo = leader.locator('main img[src*="/logo/thumbnail?v="]');
   await expect
     .poll(() => headerLogo.evaluate((img: HTMLImageElement) => img.naturalWidth))
@@ -274,14 +336,19 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(leader.getByText("You're offline")).toBeHidden();
 
   await bandLink.click();
-  await leader.getByRole("button", { name: "Edit band" }).click();
+  await leader.getByRole("button", { name: "Band menu" }).click();
+  await leader.getByRole("menuitem", { name: "Band settings" }).click();
   await dialog.getByRole("button", { name: "Remove the logo" }).click();
   await expect(leader.getByText("Logo removed")).toBeVisible();
   await expect(dialog.getByText("No logo yet")).toBeVisible();
-  await leader.keyboard.press("Escape");
-  // Without a logo, nothing on the band's pages (the initials are for the band list).
+  await leader.getByRole("link", { name: "Home" }).click();
+  // Without a logo, nothing on the band's pages (the initials are for the band list), but the
+  // band leader's way back to the settings (#222).
   await expect(logo).toHaveCount(0);
   await expect(headerLogo).toHaveCount(0);
+  await leader.getByRole("link", { name: "Add your band's logo" }).click();
+  await expect(leader.getByRole("heading", { name: "Band settings" })).toBeVisible();
+  await leader.getByRole("link", { name: "Home" }).click();
 
   await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });
@@ -350,11 +417,10 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
     .toBe(320);
   await lucky.getByRole("button", { name: "Add", exact: true }).click();
   await expect(leader.getByRole("heading", { name: "Zombie" })).toBeVisible();
-  // Its first links: the chosen video and the Deezer track.
+  // Its first link: the chosen video, never the Deezer track (#219).
   const firstLinks = leader.getByRole("list", { name: "Links" }).locator(":scope > li");
-  await expect(firstLinks).toHaveCount(2);
+  await expect(firstLinks).toHaveCount(1);
   await expect(firstLinks.first()).toContainText("YouTube");
-  await expect(firstLinks.last()).toContainText("Deezer");
   await backToRepertoire();
   await expect(songs).toHaveCount(3);
   await leader.getByRole("searchbox").fill("cranberries");
@@ -480,13 +546,90 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await link.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByText("Link added")).toBeVisible();
   const links = leader.getByRole("list", { name: "Links" }).locator(":scope > li");
-  // After the two from "Search and add", oldest first.
-  await expect(links).toHaveCount(3);
+  // After the video from "Search and add", oldest first.
+  await expect(links).toHaveCount(2);
   await expect(links.last()).toContainText("Drum cover");
   await expect(links.last()).toContainText("YouTube");
   await expect(links.last()).toContainText("Drums");
   await expect(links.last()).toContainText("Cowbell");
   await expect(links.last().getByRole("link")).toHaveAttribute("target", "_blank");
+
+  // A link found on Deezer (#220): the song searched at once, the chosen track fills the form in.
+  await leader.getByRole("button", { name: "Add a link" }).click();
+  await leader.getByRole("button", { name: "Search on Deezer" }).click();
+  await expect(leader.getByRole("textbox", { name: "Search for" })).toHaveValue(
+    "Zombie The Cranberries",
+  );
+  const tracks = leader.getByRole("list", { name: "Tracks found" });
+  await tracks.getByRole("button", { name: /Zombie/ }).click();
+  await expect(link.getByLabel("Web address")).toHaveValue("https://www.deezer.com/track/2");
+  await expect(link.getByLabel("Title", { exact: true })).toHaveValue("Zombie");
+  await link.getByRole("button", { name: "Save" }).click();
+  await expect(links).toHaveCount(3);
+  await expect(links.last()).toContainText("Deezer");
+
+  // Documents (#239): a closed accordion after the links, the one block open at first.
+  await expect(leader.getByRole("button", { name: "Links" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  const documentsBlock = leader.getByRole("button", { name: "Documents" });
+  await expect(documentsBlock).toHaveAttribute("aria-expanded", "false");
+  await documentsBlock.click();
+  const documents = leader.getByRole("list", { name: "Documents" }).locator(":scope > li");
+  const fixture = (name: string) => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url));
+
+  // A photo of the chord grid: made smaller before it's sent.
+  await leader.getByRole("button", { name: "Add a document" }).click();
+  const doc = leader.getByRole("dialog");
+  await doc.getByLabel("File").setInputFiles(fixture("photo.jpg"));
+  await expect(doc.getByText(/^Ready: /)).toBeVisible();
+  // A tap outside (the photo picker's, on a phone) never closes it: the file would be lost.
+  await leader.mouse.click(5, 5);
+  await expect(doc).toBeVisible();
+  await expect(doc.getByLabel("Title", { exact: true })).toHaveValue("photo");
+  await doc.getByLabel("Title", { exact: true }).fill("Chords");
+  await doc.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Document added")).toBeVisible();
+  await expect(documents).toHaveCount(1);
+  await expect(documents.first()).toContainText("Chords");
+  await expect(documents.first()).toContainText("Photo · added by Captain Lea");
+  const photoLink = documents.first().getByRole("link");
+  await expect(photoLink).toHaveAttribute("target", "_blank");
+  const photo = await leader.request.get((await photoLink.getAttribute("href")) ?? "");
+  expect(photo.headers()["content-type"]).toMatch(/^image\/(webp|jpeg)$/);
+  expect((await photo.body()).length).toBeLessThan(600_000);
+
+  // The horns' part as a PDF, for the trumpet: a progress bar while it's sent.
+  await leader.getByRole("button", { name: "Add a document" }).click();
+  await doc.getByLabel("File").setInputFiles(fixture("horns.pdf"));
+  await expect(doc.getByLabel("Title", { exact: true })).toHaveValue("horns");
+  await doc.getByLabel("Title", { exact: true }).fill("Horns");
+  await doc.getByLabel("Add an instrument").fill("Trumpet");
+  await doc.getByLabel("Add an instrument").press("Enter");
+  await doc.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Document added")).toBeVisible();
+  await expect(documents).toHaveCount(2);
+  await expect(documents.last()).toContainText("Horns");
+  await expect(documents.last()).toContainText("PDF");
+  await expect(documents.last()).toContainText("Trumpet");
+  const pdf = await leader.request.get(
+    (await documents.last().getByRole("link").getAttribute("href")) ?? "",
+  );
+  expect(pdf.headers()["content-type"]).toBe("application/pdf");
+
+  // Edited, then deleted (with a confirmation), by the band leader.
+  await leader.getByRole("button", { name: "Edit the document Horns" }).click();
+  await doc.getByLabel("Title", { exact: true }).fill("Horns part");
+  await doc.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Document updated")).toBeVisible();
+  await expect(documents.last()).toContainText("Horns part");
+  await leader.getByRole("button", { name: "Edit the document Horns part" }).click();
+  await doc.getByRole("button", { name: "Delete" }).click();
+  await leader.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+  await expect(leader.getByText("Document removed")).toBeVisible();
+  // The photo stays, for the offline test (which deletes it).
+  await expect(documents).toHaveCount(1);
 
   // Status and energy: one tap each, saved at once.
   await expect(leader.getByRole("radio", { name: "Proposed" })).toBeChecked();
@@ -509,6 +652,12 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(songs).toHaveCount(1);
   await expect(songs.first()).toContainText("Zombie");
   await expect(songs.first().getByRole("img", { name: "Energy 3 of 3" })).toBeVisible();
+  // Reversed (#218): the same songs, the other way round.
+  await leader.getByRole("button", { name: /^All/ }).click();
+  const byTitle = await songs.allInnerTexts();
+  await leader.getByRole("button", { name: "Ascending" }).click();
+  await expect(leader.getByRole("button", { name: "Descending" })).toBeVisible();
+  expect(await songs.allInnerTexts()).toEqual(byTitle.toReversed());
 
   // The journal names the songs.
   await leader.getByRole("link", { name: "Home" }).click();
@@ -518,8 +667,9 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea updated song “Zombie”",
   );
-  // (Its 10 latest events: "added song" is older, behind the links "Search and add" added.)
-  await expect(journal).toContainText("Captain Lea updated the lyrics of song “Zombie”");
+  // (Its 10 latest events: the lyrics and "added song" are older, behind the documents.)
+  await expect(journal).toContainText("Captain Lea added a document to song “Zombie”");
+  await expect(journal).toContainText("Captain Lea removed a document from song “Zombie”");
   await expect(journal).toContainText("Captain Lea marked song “Zombie” as learning");
 
   // Archive a song, find it apart, restore it; the band leader deletes the copy for good.
@@ -564,24 +714,27 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
 });
 
 /** How many band logos the app saved on the device for offline use (#178). */
-function savedLogos(page: Page) {
+function savedCount(page: Page, name: "logos" | "documents") {
   return page.evaluate(
-    () =>
+    (name) =>
       new Promise<number>((resolve) => {
         const open = indexedDB.open("coverband");
         // Never create the app's database before the app does.
         open.onupgradeneeded = () => open.transaction?.abort();
         open.onsuccess = () => {
           const db = open.result;
-          if (!db.objectStoreNames.contains("logos")) return resolve(0);
-          const count = db.transaction("logos").objectStore("logos").count();
+          if (!db.objectStoreNames.contains(name)) return resolve(0);
+          const count = db.transaction(name).objectStore(name).count();
           count.onsuccess = () => resolve(count.result);
           count.onerror = () => resolve(0);
         };
         open.onerror = () => resolve(0);
       }),
+    name,
   );
 }
+
+const savedLogos = (page: Page) => savedCount(page, "logos");
 
 /** The data the app saved on the device for offline use (#165), as JSON, or "" before any. */
 function savedCopy(page: Page) {
@@ -614,6 +767,7 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   // The service worker serves the app itself without a connection.
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
   await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
+  await expect.poll(() => savedCount(page, "documents")).toBe(1);
 
   await context.setOffline(true);
   await page.reload();
@@ -631,10 +785,28 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   const edit = page.getByRole("button", { name: "Edit the song" });
   await expect(edit).toBeDisabled();
   await expect(page.getByRole("button", { name: "Archive" })).toBeDisabled();
+  // The chord grid's photo, from the device (#240).
+  await page.getByRole("button", { name: "Documents" }).click();
+  const [photo] = await Promise.all([
+    page.waitForEvent("popup"),
+    page
+      .getByRole("list", { name: "Documents" })
+      .getByRole("button", { name: /^Chords/ })
+      .click(),
+  ]);
+  await expect.poll(() => photo.url()).toMatch(/^blob:/);
+  await photo.close();
 
   await context.setOffline(false);
   await expect(page.getByText("You're offline")).toBeHidden();
   await expect(edit).toBeEnabled();
+  // Deleted: its file goes from the bucket, and from the device.
+  await page.getByRole("button", { name: "Edit the document Chords" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByText("Document removed")).toBeVisible();
+  await page.reload();
+  await expect.poll(() => savedCount(page, "documents")).toBe(0);
   await context.close();
 });
 

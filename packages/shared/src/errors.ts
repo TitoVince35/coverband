@@ -28,6 +28,11 @@ export const ERROR_CODES = [
   "access_required",
   "access_code_invalid",
   "impersonation_read_only",
+  "deezer_unavailable",
+  "document_invalid",
+  "document_too_large",
+  "too_many_documents",
+  "band_storage_full",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

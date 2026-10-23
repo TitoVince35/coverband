@@ -25,6 +25,8 @@ const SENTENCES = {
   "song.restored": "journal.songRestored",
   "song.deleted": "journal.songDeleted",
   "song.lyrics_changed": "journal.songLyricsChanged",
+  "song.document_added": "journal.documentAdded",
+  "song.document_removed": "journal.documentRemoved",
 } as const satisfies Partial<Record<ActivityAction, string>>;
 
 /** The status a song was given, as a word of the sentence. */
