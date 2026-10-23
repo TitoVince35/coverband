@@ -9,3 +9,4 @@ mail_from       = "Coverband Beta <noreply@coverband.fr>"
 # youtube_api_key  = "..."   # empty or unset: "Search and add" proposes no videos
 # budget_eur    = 20
 # alert_email   = "you@example.com"
+# contact_form_recipient = "you@example.com"   # unset: admin_email

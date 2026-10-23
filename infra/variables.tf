@@ -49,6 +49,12 @@ variable "budget_eur" {
   default     = 20
 }
 
+variable "contact_form_recipient" {
+  description = "Receives the contact form's messages (#233). Defaults to admin_email."
+  type        = string
+  default     = null
+}
+
 variable "alert_email" {
   description = "Receives the budget alerts. Defaults to admin_email."
   type        = string
