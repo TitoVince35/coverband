@@ -1,4 +1,4 @@
-import type { CatalogTrack } from "../../adapters/deezer";
+import { type CatalogTrack, CatalogUnavailableError } from "../../adapters/deezer";
 import { rankVideos } from "../../adapters/youtube";
 import type { Logger } from "../../core/log";
 import type { AppDeps } from "../../deps";
@@ -81,4 +81,22 @@ export async function autofill(
 
   const [track, proposals] = await Promise.all([findTrack(), searchVideos()]);
   return { track, videos: proposals, failed };
+}
+
+/** A link found for a song (#220): a Deezer track, its genre left out. */
+export type TrackMatch = Omit<CatalogTrack, "genre">;
+
+/**
+ * Deezer's tracks for free text, to add one as a song's link (#220). Nothing is saved. Deezer
+ * failing is a 503 `deezer_unavailable`, logged with its cause.
+ */
+export async function searchTracks(
+  { catalog }: Pick<AppDeps, "catalog">,
+  text: string,
+): Promise<TrackMatch[]> {
+  try {
+    return (await catalog.searchTracks(text)).map(({ albumId: _, ...track }) => track);
+  } catch (error) {
+    throw new CatalogUnavailableError(error);
+  }
 }

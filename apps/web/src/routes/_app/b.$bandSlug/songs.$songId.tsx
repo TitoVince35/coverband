@@ -167,7 +167,7 @@ function SongPage() {
         title={title}
         artist={artist}
       />
-      <SongMedia bandSlug={bandSlug} songId={songId} media={media} />
+      <SongMedia bandSlug={bandSlug} songId={songId} song={{ title, artist }} media={media} />
       <SongNotes key={songId} bandSlug={bandSlug} songId={songId} notes={notes} />
       <p className="text-muted-foreground text-xs">
         {addedBy ? t("songs.addedBy", { name: addedBy, date }) : t("songs.addedOn", { date })}

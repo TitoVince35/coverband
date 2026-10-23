@@ -28,7 +28,7 @@ export function autofillChoices(result: Autofill, videoId: string | null) {
 }
 
 /** A link's title within its limit: cut with "…" when longer; null when empty. */
-function fitTitle(title: string) {
+export function fitTitle(title: string) {
   const trimmed = title.trim();
   if (!trimmed) return null;
   return trimmed.length <= MEDIA_LIMITS.title

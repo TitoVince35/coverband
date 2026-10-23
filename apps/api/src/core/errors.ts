@@ -39,6 +39,7 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   access_required: 403,
   access_code_invalid: 403,
   impersonation_read_only: 403,
+  deezer_unavailable: 503,
 };
 
 /**

@@ -2,8 +2,9 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { inArray, like } from "drizzle-orm";
 import { createApp } from "../../app";
 import { activity, bandMembers, bands, rateLimits, users } from "../../core/db/schema";
+import { hit } from "../../core/http/rate-limit";
 import { createTestDeps } from "../../test-deps";
-import { AUTOFILL_SEARCHES } from "./routes";
+import { AUTOFILL_SEARCHES, TRACK_SEARCHES } from "./routes";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;
@@ -68,6 +69,11 @@ describe.skipIf(!databaseUrl)("autofill", () => {
     await db
       .delete(rateLimits)
       .where(like(rateLimits.key, `coverband:${AUTOFILL_SEARCHES.name}:%`));
+    for (const id of Object.values(ids)) {
+      await db
+        .delete(rateLimits)
+        .where(like(rateLimits.key, `coverband:${TRACK_SEARCHES.name}:${id}`));
+    }
     await db.delete(activity).where(inArray(activity.actorId, Object.values(ids)));
     await db.delete(bands).where(like(bands.slug, `autofill-%${run}`));
     await db.delete(users).where(like(users.email, `%-${run}@test.localhost`));
@@ -162,6 +168,41 @@ describe.skipIf(!databaseUrl)("autofill", () => {
     expect((await thumbnailOf("max", "Topic000001")).status).toBe(502);
     videos.down = false;
     videos.videos = [];
+  });
+
+  test("a link search (#220): Deezer's tracks for free text; members only", async () => {
+    const tracks = (who: string, q: string | null, band = slug) =>
+      app.request(
+        `/api/bands/${band}/autofill/tracks${q === null ? "" : `?${new URLSearchParams({ q })}`}`,
+        { headers: { cookie: cookies[who] ?? "" } },
+      );
+    catalog.track = { ...zombieTrack };
+    const res = await tracks("max", " Zombie live ");
+    expect(res.status).toBe(200);
+    const { genre: _, ...track } = zombieTrack;
+    expect(await res.json()).toEqual({ tracks: [track] });
+    expect(catalog.texts.at(-1)).toBe("Zombie live");
+
+    expect((await tracks("zoe", "Zombie")).status).toBe(404);
+    expect((await tracks("nobody", "Zombie")).status).toBe(401);
+    expect((await tracks("max", null)).status).toBe(400);
+    expect((await tracks("max", " ")).status).toBe(400);
+
+    // Deezer down: an error, never "nothing found" (#208).
+    catalog.down = true;
+    const down = await tracks("max", "Zombie");
+    expect(down.status).toBe(503);
+    expect(((await down.json()) as { error: { code: string } }).error.code).toBe(
+      "deezer_unavailable",
+    );
+    catalog.down = false;
+    catalog.track = null;
+    expect(await (await tracks("lea", "Zombie")).json()).toEqual({ tracks: [] });
+
+    // Limited per member: Lea's bucket full, Max still searches.
+    for (let i = 0; i < TRACK_SEARCHES.max; i++) await hit(db, TRACK_SEARCHES, ids.lea ?? "");
+    expect((await tracks("lea", "Zombie")).status).toBe(429);
+    expect((await tracks("max", "Zombie")).status).toBe(200);
   });
 
   test(`${AUTOFILL_SEARCHES.max} searches a day per band, whoever searches`, async () => {

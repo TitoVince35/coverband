@@ -172,7 +172,18 @@
       "remove": "Remove",
       "added": "Link added",
       "saved": "Link updated",
-      "removed": "Link removed"
+      "removed": "Link removed",
+      "search": {
+        "open": "Search on Deezer",
+        "title": "Search on Deezer",
+        "description": "Choose a track: its link and title fill the form in.",
+        "refine": "Search for",
+        "again": "Search again",
+        "searching": "Searching Deezer…",
+        "none": "Nothing found on Deezer.",
+        "matches": "Tracks found",
+        "back": "Back to the link"
+      }
     },
     "form": {
       "addTitle": "Add a song",
@@ -472,7 +483,8 @@
     "lyrics_unavailable": "The lyrics service isn't answering right now. Try again later, or type them in.",
     "access_required": "Enter the access code to continue.",
     "access_code_invalid": "This isn't the access code.",
-    "impersonation_read_only": "Read-only while viewing the app as another user."
+    "impersonation_read_only": "Read-only while viewing the app as another user.",
+    "deezer_unavailable": "Deezer isn't answering right now. Try again later, or paste the link."
   },
   "instruments": {
     "picker": {

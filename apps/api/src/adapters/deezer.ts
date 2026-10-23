@@ -1,4 +1,5 @@
 import { normalizeName, songKey } from "@coverband/shared";
+import { AppError } from "../core/errors";
 
 /** A song as a music catalog knows it (#199): its page, album, duration and genre. */
 export type CatalogTrack = {
@@ -16,6 +17,17 @@ export type CatalogTrack = {
 /** A track as the search finds it: its album's genre is another request. */
 export type FoundTrack = Omit<CatalogTrack, "genre"> & { albumId: number | null };
 
+/** Tracks a link search proposes (#220). */
+export const TRACK_MATCHES = 5;
+
+/** Deezer failed (down, slow, refusing) during a link search: logged with its cause (#208). */
+export class CatalogUnavailableError extends AppError {
+  constructor(cause?: unknown) {
+    super("deezer_unavailable", "Deezer is not available right now");
+    this.cause = cause;
+  }
+}
+
 /**
  * Where a new song's details are looked up (#199): Deezer, or a fake in tests. Both throw when
  * the catalog fails (down, slow, refusing, another shape): the caller logs it and says so (#208).
@@ -25,6 +37,8 @@ export type MusicCatalog = {
   findTrack(song: { title: string; artist: string }): Promise<FoundTrack | null>;
   /** The album's first genre, or null when it has none. */
   albumGenre(albumId: number): Promise<string | null>;
+  /** Up to TRACK_MATCHES tracks for free text, in Deezer's order (a link search, #220). */
+  searchTracks(text: string): Promise<FoundTrack[]>;
 };
 
 type DeezerTrack = {
@@ -68,14 +82,18 @@ export function createDeezerCatalog({
     return body;
   }
 
+  async function search(text: string, limit: number) {
+    // A plain search: Deezer's advanced syntax (artist:"…" track:"…") finds nothing.
+    const { data: tracks } = (await get("search", { q: text, limit: String(limit) })) as {
+      data?: DeezerTrack[];
+    };
+    if (!Array.isArray(tracks)) throw new Error("Deezer answered something else");
+    return tracks;
+  }
+
   return {
     async findTrack(song) {
-      // A plain search: Deezer's advanced syntax (artist:"…" track:"…") finds nothing.
-      const { data: tracks } = (await get("search", {
-        q: `${song.artist} ${song.title}`,
-        limit: "10",
-      })) as { data?: DeezerTrack[] };
-      if (!Array.isArray(tracks)) throw new Error("Deezer answered something else");
+      const tracks = await search(`${song.artist} ${song.title}`, 10);
       // The same title and artist (case, accents and punctuation aside) first, then the same
       // artist, else Deezer's first.
       const wanted = songKey(song);
@@ -84,15 +102,11 @@ export function createDeezerCatalog({
         tracks.find((t) => songKey({ title: t.title, artist: t.artist.name }) === wanted) ??
         tracks.find((t) => normalizeName(t.artist.name) === artist) ??
         tracks[0];
-      if (!track) return null;
-      return {
-        url: String(track.link),
-        title: String(track.title),
-        artist: String(track.artist.name),
-        album: track.album?.title ? String(track.album.title) : null,
-        duration: typeof track.duration === "number" && track.duration > 0 ? track.duration : null,
-        albumId: typeof track.album?.id === "number" ? track.album.id : null,
-      };
+      return track ? foundTrack(track) : null;
+    },
+
+    async searchTracks(text) {
+      return (await search(text, TRACK_MATCHES)).map(foundTrack);
     },
 
     async albumGenre(albumId) {
@@ -103,19 +117,33 @@ export function createDeezerCatalog({
   };
 }
 
+function foundTrack(track: DeezerTrack): FoundTrack {
+  return {
+    url: String(track.link),
+    title: String(track.title),
+    artist: String(track.artist.name),
+    album: track.album?.title ? String(track.album.title) : null,
+    duration: typeof track.duration === "number" && track.duration > 0 ? track.duration : null,
+    albumId: typeof track.album?.id === "number" ? track.album.id : null,
+  };
+}
+
 /**
  * Tests: answers with the given track (its genre from its album) for every search, and remembers
- * the searches; `down` fails both requests.
+ * the searches (a link search's text too); `down` fails every request.
  */
 export function createMemoryCatalog(track: CatalogTrack | null = null) {
   const searches: { title: string; artist: string }[] = [];
+  const texts: string[] = [];
   const catalog: MusicCatalog & {
     track: CatalogTrack | null;
     searches: typeof searches;
+    texts: typeof texts;
     down: boolean;
   } = {
     track,
     searches,
+    texts,
     down: false,
     async findTrack(song) {
       searches.push(song);
@@ -127,6 +155,13 @@ export function createMemoryCatalog(track: CatalogTrack | null = null) {
     async albumGenre() {
       if (catalog.down) throw new Error("Deezer is down");
       return catalog.track?.genre ?? null;
+    },
+    async searchTracks(text) {
+      texts.push(text);
+      if (catalog.down) throw new Error("Deezer is down");
+      if (!catalog.track) return [];
+      const { genre: _, ...found } = catalog.track;
+      return [{ ...found, albumId: 1 }];
     },
   };
   return catalog;
