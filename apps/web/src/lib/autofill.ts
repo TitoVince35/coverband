@@ -7,9 +7,9 @@ export type AutofillVideo = NonNullable<Autofill["videos"]>[number];
 
 /**
  * What adding the song saves from the search: Deezer's duration (else the chosen video's) as the
- * original duration, Deezer's genre as the style, and the chosen video and the Deezer track as
- * its first links, the video's named by its title (#208, shortened to fit). Values over the song's
- * limits are left out.
+ * original duration, Deezer's genre as the style, and the chosen video as its first link, named
+ * by its title (#208, shortened to fit). No Deezer link: it was noise (#219). Values over the
+ * song's limits are left out.
  */
 export function autofillChoices(result: Autofill, videoId: string | null) {
   const video = result.videos?.find((v) => v.id === videoId) ?? null;
@@ -23,10 +23,7 @@ export function autofillChoices(result: Autofill, videoId: string | null) {
   return {
     standardDuration: duration !== null && duration <= MAX_SONG_DURATION ? duration : null,
     style: genre && genre.length <= SONG_MAX_LENGTH.style ? genre : null,
-    links: [
-      ...(video ? [link(video.url, video.title)] : []),
-      ...(result.track ? [link(result.track.url)] : []),
-    ],
+    links: video ? [link(video.url, video.title)] : [],
   };
 }
 
