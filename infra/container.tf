@@ -39,9 +39,11 @@ resource "scaleway_container" "app" {
     SMTP_SECURE      = "true"
     SMTP_USER        = scaleway_tem_domain.main.smtps_auth_user
     MAIL_FROM        = local.mail_from
-    S3_ENDPOINT      = "https://s3.fr-par.scw.cloud"
-    S3_REGION        = "fr-par"
-    S3_BUCKET        = scaleway_object_bucket.files.name
+    # The contact form's messages (#233).
+    CONTACT_FORM_RECIPIENT = coalesce(var.contact_form_recipient, var.admin_email)
+    S3_ENDPOINT            = "https://s3.fr-par.scw.cloud"
+    S3_REGION              = "fr-par"
+    S3_BUCKET              = scaleway_object_bucket.files.name
   }
 
   secret_environment_variables = merge(
