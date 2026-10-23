@@ -140,6 +140,43 @@ test("the band leader updates their profile: the new name shows everywhere", asy
   ).toContainText("Captain Lea");
 });
 
+test("the band's sections: a bottom bar on a phone, tabs on a large screen (#223)", async () => {
+  await leader.goto("/");
+  await leader.getByRole("link", { name: band }).first().click();
+  const sections = leader.getByRole("navigation", { name: "Band sections" });
+  // Five items: Setlists and Gigs there already, not links yet.
+  await expect(sections.getByRole("link")).toHaveCount(3);
+  await expect(sections.getByText("Setlists")).toBeVisible();
+  await expect(sections.getByText("Gigs")).toBeVisible();
+  // At the bottom of the screen.
+  const phone = leader.viewportSize() ?? { width: 393, height: 727 };
+  const bar = await sections.boundingBox();
+  // Where the browser puts the bottom of the screen for fixed elements.
+  const screenBottom = await leader.evaluate(() => {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position: fixed; bottom: 0; height: 1px";
+    document.body.append(probe);
+    const bottom = probe.getBoundingClientRect().bottom;
+    probe.remove();
+    return bottom;
+  });
+  expect(Math.round((bar?.y ?? 0) + (bar?.height ?? 0))).toBe(Math.round(screenBottom));
+  await sections.getByRole("link", { name: "Lineup" }).click();
+  await expect(leader).toHaveURL(/\/lineup$/);
+  // The keyboard up (the visible height halved): the bar hides, then comes back.
+  await leader.setViewportSize({ width: phone.width, height: Math.round(phone.height / 2) });
+  await expect(sections).toBeHidden();
+  await leader.setViewportSize(phone);
+  await expect(sections).toBeVisible();
+
+  // A large screen: the tabs under the band's name.
+  await leader.setViewportSize({ width: 1024, height: 768 });
+  const tabs = await sections.boundingBox();
+  expect(tabs?.y ?? 768).toBeLessThan(300);
+  await expect(sections.getByRole("link")).toHaveCount(3);
+  await leader.setViewportSize(phone);
+});
+
 test("a member edits their own instruments from the lineup", async () => {
   await leader.goto("/");
   await leader.getByRole("link", { name: band }).first().click();
