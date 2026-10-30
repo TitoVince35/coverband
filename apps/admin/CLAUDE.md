@@ -24,7 +24,7 @@ The administration console (#246, brief 024, study 023): React + Vite + [Shadcn 
 
 ## Users (#249)
 
-- `src/components/users.tsx`: `UserList` (the `users` resource: email, first and last names, bands with a star for those they lead, instruments across bands without duplicates, Admin and Blocked badges; searched by email or name, `q`; "Admins" and "No band" toggles, `admins` and `bandless`; sorted by email; the kit's toggles take `w-auto`, being made for a sidebar) and `UserShow` (profile, last session, bands, pending invitations, and `UserActions`).
+- `src/components/users.tsx`: `UserList` (the `users` resource: email, first and last names, bands with a star for those they lead, instruments across bands without duplicates, how many devices get push notifications, Admin and Blocked badges; searched by email or name, `q`; "Admins" and "No band" toggles, `admins` and `bandless`; sorted by email; the kit's toggles take `w-auto`, being made for a sidebar) and `UserShow` (profile, last session, bands, pending invitations, push notification devices by service, language and date, and `UserActions`).
 - **Actions:** "View the app as this user" opens the web app's `/impersonate/<id>` (the API's `impersonateUrl`: null for an admin, oneself included), which starts the read-only impersonation of #214 once confirmed; the admin needs to be logged in to the web app too (sessions are per host). "Send a password reset email" (`dataProvider.sendPasswordReset`). Block / Unblock and Delete, confirmed (`dataProvider.setUserBanned`, `dataProvider.delete`); never offered for an admin. Deleting the only band leader of a band is refused (`only_band_leader`, its message says so).
 
 ## Band leader invitations (#250)

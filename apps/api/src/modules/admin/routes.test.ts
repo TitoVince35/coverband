@@ -8,6 +8,7 @@ import {
   bands,
   invitations,
   memberInstruments,
+  pushSubscriptions,
   rateLimits,
   songDocuments,
   songs,
@@ -366,6 +367,7 @@ describe.skipIf(!databaseUrl)("admin API", () => {
       impersonateUrl?: string | null;
       pendingInvitations?: unknown[];
       lastSessionAt?: string | null;
+      pushDevices: number | { service: string; language: string }[];
     };
     const page = async (query: string) =>
       (await (await call(`/users?${query}`)).json()) as { data: User[]; total: number };
@@ -402,6 +404,35 @@ describe.skipIf(!databaseUrl)("admin API", () => {
       const self = (await (await call(`/users/${adminId}`)).json()) as { data: User };
       expect(self.data.impersonateUrl).toBeNull();
       expect((await call(`/users/${crypto.randomUUID()}`)).status).toBe(404);
+    });
+
+    test("push notifications: devices counted in the list, named by their service on the page", async () => {
+      await db.insert(pushSubscriptions).values([
+        {
+          userId: ids.lea ?? "",
+          endpoint: `https://fcm.googleapis.com/fcm/send/${run2}`,
+          p256dh: "p",
+          auth: "a",
+        },
+        {
+          userId: ids.lea ?? "",
+          endpoint: `https://web.push.apple.com/${run2}`,
+          p256dh: "p",
+          auth: "a",
+          language: "fr",
+        },
+      ]);
+      const { data } = await page(`q=${run2}&sort=email`);
+      expect(data.map((u) => u.pushDevices)).toEqual([2, 0, 0]);
+      const lea = (await (await call(`/users/${ids.lea}`)).json()) as { data: User };
+      const devices = lea.data.pushDevices as Record<string, unknown>[];
+      expect(devices.map(({ service, language }) => ({ service, language }))).toEqual([
+        { service: "Google", language: "en" },
+        { service: "Apple", language: "fr" },
+      ]);
+      // Never the endpoint: whoever has it can push to the device.
+      expect(JSON.stringify(lea.data)).not.toContain("googleapis");
+      expect(devices.every((device) => !("endpoint" in device))).toBe(true);
     });
 
     test("blocking ends the sessions and refuses logins, until unblocked", async () => {

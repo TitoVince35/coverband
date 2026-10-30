@@ -1,6 +1,6 @@
 import { ADMIN_ROLE, type Instrument, instrumentLabel } from "@coverband/shared";
 import { useMutation } from "@tanstack/react-query";
-import { Ban, CircleCheck, Eye, KeyRound, Star, Trash2 } from "lucide-react";
+import { Ban, BellRing, CircleCheck, Eye, KeyRound, Star, Trash2 } from "lucide-react";
 import { useDataProvider, useNotify, useRecordContext, useRedirect, useRefresh } from "ra-core";
 import { useState } from "react";
 import { Confirm } from "@/components/admin/confirm";
@@ -28,13 +28,18 @@ type UserRow = {
   createdAt: string;
   bands: UserBand[];
   instruments: Instrument[];
+  /** Devices with push notifications on. */
+  pushDevices: number;
 };
 
-type UserDetails = UserRow & {
+type PushDevice = { id: string; service: string; language: string; createdAt: string };
+
+type UserDetails = Omit<UserRow, "pushDevices"> & {
   nickname: string | null;
   lastSessionAt: string | null;
   pendingInvitations: { id: string; role: string; band: string | null; expiresAt: string }[];
   impersonateUrl: string | null;
+  pushDevices: PushDevice[];
 };
 
 const DATE = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
@@ -66,6 +71,18 @@ function RowBands() {
 function RowInstruments() {
   const user = useRecordContext<UserRow>();
   return <>{user ? instruments(user.instruments) : null}</>;
+}
+
+/** How many devices get push notifications, blank for none. */
+function RowPush() {
+  const user = useRecordContext<UserRow>();
+  if (!user?.pushDevices) return null;
+  return (
+    <span className="flex items-center gap-1">
+      <BellRing aria-hidden className="size-4" />
+      {user.pushDevices}
+    </span>
+  );
 }
 
 /** "Admin" and "Blocked" badges. */
@@ -112,6 +129,9 @@ export function UserList() {
         </DataTable.Col>
         <DataTable.Col label="Instruments" disableSort>
           <RowInstruments />
+        </DataTable.Col>
+        <DataTable.Col label="Push" disableSort>
+          <RowPush />
         </DataTable.Col>
         <DataTable.Col label="" disableSort>
           <RowFlags />
@@ -275,6 +295,24 @@ function UserPage() {
             </ul>
           )}
         </Section>
+        <Section title="Push notifications">
+          {user.pushDevices.length === 0 ? (
+            <p className="text-muted-foreground">Off on every device.</p>
+          ) : (
+            <ul className="space-y-2">
+              {user.pushDevices.map((device) => (
+                <li key={device.id}>
+                  {device.service}
+                  <span className="text-muted-foreground text-sm">
+                    {" "}
+                    · {device.language.toUpperCase()} · since{" "}
+                    {DATE.format(new Date(device.createdAt))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
       </div>
     </div>
   );
@@ -284,7 +322,7 @@ function UserTitle() {
   return <>{useRecordContext<UserRow>()?.name}</>;
 }
 
-/** A user's page (#249): profile, bands, invitations, and what an admin does to them. */
+/** A user's page (#249): profile, bands, invitations, push devices, and what an admin does to them. */
 export function UserShow() {
   return (
     <Show actions={false} title={<UserTitle />}>

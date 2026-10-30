@@ -37,6 +37,7 @@ import {
 } from "../invitations/service";
 import { bandJournal, type JournalSource } from "../journal/service";
 import { lineupOf } from "../members/service";
+import { pushDeviceCounts, pushDevicesOf } from "../notifications/service";
 import { ownAvatarKey } from "../profile/service";
 import { bandDocumentKeys, bandRepertoireTotals, repertoireTotals } from "../songs/service";
 
@@ -144,7 +145,8 @@ const likePattern = (text: string) => `%${text.replace(/[\\%_]/g, (c) => `\\${c}
 
 /**
  * A page of users for the admin console (#249), whatever their band: names, role, blocked or
- * not, their bands (with their role in each) and their instruments across them, without duplicates.
+ * not, their bands (with their role in each), their instruments across them, without duplicates,
+ * and how many devices have push notifications on.
  */
 export async function adminUserPage(db: Db, query: AdminUserQuery) {
   const conditions: (SQL | undefined)[] = [];
@@ -188,9 +190,10 @@ export async function adminUserPage(db: Db, query: AdminUserQuery) {
     db.select({ count: count() }).from(users).where(where),
   ]);
   const ids = rows.map((row) => row.id);
-  const [bands, instruments] = await Promise.all([
+  const [bands, instruments, pushDevices] = await Promise.all([
     membershipsOfUsers(db, ids),
     instrumentsOfUsers(db, ids),
+    pushDeviceCounts(db, ids),
   ]);
   return {
     data: rows.map((row) => ({
@@ -198,6 +201,7 @@ export async function adminUserPage(db: Db, query: AdminUserQuery) {
       banned: row.banned ?? false,
       bands: bands.get(row.id) ?? [],
       instruments: instruments.get(row.id) ?? [],
+      pushDevices: pushDevices.get(row.id) ?? 0,
     })),
     total: total?.count ?? 0,
   };
@@ -205,9 +209,9 @@ export async function adminUserPage(db: Db, query: AdminUserQuery) {
 
 /**
  * A user's admin page (#249): profile, bands with their role, instruments, last session (an
- * admin's impersonation left out), the invitations still waiting for their email, and where the
- * web app views the app as them (`impersonateUrl`: not for an admin, nor oneself). Undefined when
- * there's no such user.
+ * admin's impersonation left out), the invitations still waiting for their email, the devices with
+ * push notifications on, and where the web app views the app as them (`impersonateUrl`: not for an
+ * admin, nor oneself). Undefined when there's no such user.
  */
 export async function adminUserDetails(
   { db, appUrl }: Pick<AppDeps, "db" | "appUrl">,
@@ -230,7 +234,7 @@ export async function adminUserDetails(
     .from(users)
     .where(eq(users.id, id));
   if (!user) return undefined;
-  const [bands, instruments, [lastSession], invitations] = await Promise.all([
+  const [bands, instruments, [lastSession], invitations, pushDevices] = await Promise.all([
     membershipsOfUsers(db, [id]),
     instrumentsOfUsers(db, [id]),
     db
@@ -238,6 +242,7 @@ export async function adminUserDetails(
       .from(sessions)
       .where(and(eq(sessions.userId, id), isNull(sessions.impersonatedBy))),
     pendingInvitationsFor(db, user.email, now),
+    pushDevicesOf(db, id),
   ]);
   const pendingInvitations = await Promise.all(
     invitations.map(async ({ bandId, ...invitation }) => ({
@@ -253,6 +258,7 @@ export async function adminUserDetails(
     instruments: instruments.get(id) ?? [],
     lastSessionAt: lastSession?.at ?? null,
     pendingInvitations,
+    pushDevices,
     impersonateUrl: viewable ? `${appUrl}/impersonate/${id}` : null,
   };
 }

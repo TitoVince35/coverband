@@ -1,6 +1,11 @@
 import type { Language } from "@coverband/shared";
 import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
-import { isPushService, type PushResult, type PushSender } from "../../adapters/push";
+import {
+  isPushService,
+  type PushResult,
+  type PushSender,
+  pushServiceName,
+} from "../../adapters/push";
 import { recordActivity } from "../../core/activity/record";
 import type { Db } from "../../core/db/client";
 import {
@@ -146,6 +151,35 @@ export async function savePushSubscription(
       target: { type: "user", id: userId },
     });
   });
+}
+
+/** How many devices each of these users has push notifications on, for the admin app (#263). */
+export async function pushDeviceCounts(db: Db, userIds: string[]) {
+  if (userIds.length === 0) return new Map<string, number>();
+  const rows = await db
+    .select({ userId: pushSubscriptions.userId, devices: count() })
+    .from(pushSubscriptions)
+    .where(inArray(pushSubscriptions.userId, userIds))
+    .groupBy(pushSubscriptions.userId);
+  return new Map(rows.map((row) => [row.userId, row.devices]));
+}
+
+/**
+ * A user's devices with push notifications on, oldest first, for the admin app (#263): their push
+ * service's name, never the endpoint (whoever has it can send to the device).
+ */
+export async function pushDevicesOf(db: Db, userId: string) {
+  const rows = await db
+    .select({
+      id: pushSubscriptions.id,
+      endpoint: pushSubscriptions.endpoint,
+      language: pushSubscriptions.language,
+      createdAt: pushSubscriptions.createdAt,
+    })
+    .from(pushSubscriptions)
+    .where(eq(pushSubscriptions.userId, userId))
+    .orderBy(asc(pushSubscriptions.createdAt), asc(pushSubscriptions.id));
+  return rows.map(({ endpoint, ...row }) => ({ ...row, service: pushServiceName(endpoint) }));
 }
 
 /** Deletes one of the user's push subscriptions: the device turned them off, or logs out. */

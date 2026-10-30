@@ -54,6 +54,23 @@ export function isPushService(endpoint: string, hosts: readonly string[]) {
   return hosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
 }
 
+/** Who runs each push service, for the admin app (#263). */
+const PUSH_SERVICE_NAMES: [host: string, name: string][] = [
+  ["fcm.googleapis.com", "Google"],
+  ["updates.push.services.mozilla.com", "Mozilla"],
+  ["push.apple.com", "Apple"],
+  ["notify.windows.com", "Microsoft"],
+];
+
+/** A subscription's push service, by who runs it, else its host: never the endpoint, a secret. */
+export function pushServiceName(endpoint: string) {
+  const hostname = URL.parse(endpoint)?.hostname ?? "";
+  const known = PUSH_SERVICE_NAMES.find(
+    ([host]) => hostname === host || hostname.endsWith(`.${host}`),
+  );
+  return known?.[1] ?? hostname;
+}
+
 /** A device to push to: its subscription as the browser gave it. */
 export type PushTarget = { endpoint: string; p256dh: string; auth: string };
 

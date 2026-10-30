@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { generateKeyPairSync } from "node:crypto";
-import { isPushService, PUSH_SERVICE_HOSTS, vapidKeys, vapidSubject } from "./push";
+import {
+  isPushService,
+  PUSH_SERVICE_HOSTS,
+  pushServiceName,
+  vapidKeys,
+  vapidSubject,
+} from "./push";
 
 describe("push adapter", () => {
   test("VAPID keys from a P-256 key in PEM: raw private key, uncompressed public point", () => {
@@ -34,6 +40,14 @@ describe("push adapter", () => {
     expect(ok("https://localhost:3104/push")).toBe(false);
     expect(isPushService("https://localhost:3104/push", ["localhost"])).toBe(true);
     expect(ok("not a url")).toBe(false);
+  });
+
+  test("a push service's name: who runs it, else its host", () => {
+    expect(pushServiceName("https://fcm.googleapis.com/fcm/send/abc")).toBe("Google");
+    expect(pushServiceName("https://web.push.apple.com/QK1")).toBe("Apple");
+    expect(pushServiceName("https://wns2-par02p.notify.windows.com/w/?token=1")).toBe("Microsoft");
+    expect(pushServiceName("https://updates.push.services.mozilla.com/wpush/v2/x")).toBe("Mozilla");
+    expect(pushServiceName("https://localhost:3104/push/1")).toBe("localhost");
   });
 
   test("the subject: the app's HTTPS URL, else the emails' sender", () => {
