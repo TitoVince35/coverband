@@ -4,6 +4,7 @@ import {
   LOGO_THUMBNAIL_MAX_BYTES,
   LOGO_THUMBNAIL_SIZE,
 } from "@coverband/shared";
+import { type DecodedImage, decodeImage } from "@/lib/decode-image";
 
 /** The size of a width × height image fitted within max × max: never cropped, never upscaled. */
 export function fitWithin(width: number, height: number, max: number) {
@@ -35,11 +36,11 @@ export function encodingsFor(opaque: boolean): Encoding[] {
 }
 
 /** Whether any pixel of the image is (even partly) transparent. */
-function isOpaque(bitmap: ImageBitmap) {
+function isOpaque(image: DecodedImage) {
   // A small copy is enough to find transparent areas, and quick.
-  const { width, height } = fitWithin(bitmap.width, bitmap.height, 128);
+  const { width, height } = fitWithin(image.width, image.height, 128);
   const context = canvasOf(width, height);
-  context.drawImage(bitmap, 0, 0, width, height);
+  context.drawImage(image.source, 0, 0, width, height);
   const { data } = context.getImageData(0, 0, width, height);
   for (let alpha = 3; alpha < data.length; alpha += 4) {
     if ((data[alpha] ?? 255) < 255) return false;
@@ -57,12 +58,12 @@ function canvasOf(width: number, height: number) {
 }
 
 /** The image fitted within `max`, in the first format and size that fits under `maxBytes`. */
-async function fitted(bitmap: ImageBitmap, max: number, maxBytes: number, opaque: boolean) {
+async function fitted(image: DecodedImage, max: number, maxBytes: number, opaque: boolean) {
   for (const size of sizesFrom(max)) {
-    const { width, height } = fitWithin(bitmap.width, bitmap.height, size);
+    const { width, height } = fitWithin(image.width, image.height, size);
     const context = canvasOf(width, height);
     context.imageSmoothingQuality = "high";
-    context.drawImage(bitmap, 0, 0, width, height);
+    context.drawImage(image.source, 0, 0, width, height);
     for (const { type, quality } of encodingsFor(opaque)) {
       const blob = await encode(context.canvas, type, quality);
       // A browser that can't encode the type gives PNG: tried next anyway.
@@ -85,15 +86,16 @@ export class LogoTooLargeError extends Error {
  * image, and LogoTooLargeError when nothing fits.
  */
 export async function prepareLogo(file: File): Promise<{ logo: Blob; thumbnail: Blob }> {
-  const bitmap = await createImageBitmap(file); // applies the photo's EXIF orientation
+  // A phone's JPEG decoded already reduced (#257), still above LOGO_SIZE: never the full photo.
+  const image = await decodeImage(file, LOGO_SIZE * 1.5);
   try {
-    const opaque = isOpaque(bitmap);
+    const opaque = isOpaque(image);
     return {
-      logo: await fitted(bitmap, LOGO_SIZE, LOGO_MAX_BYTES, opaque),
-      thumbnail: await fitted(bitmap, LOGO_THUMBNAIL_SIZE, LOGO_THUMBNAIL_MAX_BYTES, opaque),
+      logo: await fitted(image, LOGO_SIZE, LOGO_MAX_BYTES, opaque),
+      thumbnail: await fitted(image, LOGO_THUMBNAIL_SIZE, LOGO_THUMBNAIL_MAX_BYTES, opaque),
     };
   } finally {
-    bitmap.close();
+    image.close();
   }
 }
 
