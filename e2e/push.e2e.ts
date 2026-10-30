@@ -69,6 +69,31 @@ test("a user turns notifications on for this device, then off; logging out forge
   await fakePushService(page);
   await login(page, ADMIN, PASSWORD);
   await page.goto("/account");
+  // TEMPORARY diagnostic (CI only shows the card missing).
+  console.log(
+    "PUSH DIAGNOSTIC",
+    JSON.stringify(
+      await page.evaluate(async () => {
+        const ready = await Promise.race([
+          navigator.serviceWorker.ready.then((r) => `ready ${r.active?.state}`),
+          new Promise((resolve) => setTimeout(() => resolve("not ready after 5 s"), 5000)),
+        ]);
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        return {
+          ua: navigator.userAgent,
+          pushManager: "PushManager" in window,
+          notification: "Notification" in window && Notification.permission,
+          ready,
+          registrations: registrations.map((r) => [
+            r.installing?.state,
+            r.waiting?.state,
+            r.active?.state,
+          ]),
+          controller: Boolean(navigator.serviceWorker.controller),
+        };
+      }),
+    ),
+  );
   await page.getByRole("button", { name: "Turn on notifications" }).click();
   await expect(page.getByText("Notifications are on for this device.")).toBeVisible();
   expect(await devicesOf(ADMIN)).toEqual([expect.stringContaining(`localhost:${FAKE_PUSH_PORT}`)]);
