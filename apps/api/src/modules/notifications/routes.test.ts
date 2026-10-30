@@ -1,10 +1,17 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { generateKeyPairSync } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
-import { PUSH_SERVICE_HOSTS, vapidKeys } from "../../adapters/push";
+import { createMemoryPushSender, PUSH_SERVICE_HOSTS, vapidKeys } from "../../adapters/push";
 import { createApp } from "../../app";
-import { activity, notifications, pushSubscriptions, users } from "../../core/db/schema";
+import {
+  activity,
+  notifications,
+  pushDeliveries,
+  pushSubscriptions,
+  users,
+} from "../../core/db/schema";
 import { activityOf, createTestDeps } from "../../test-deps";
+import { PUSH_BODY_MAX_LENGTH, pushBody } from "./service";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;
@@ -14,7 +21,12 @@ describe.skipIf(!databaseUrl)("notifications (#260)", () => {
   const pem = generateKeyPairSync("ec", { namedCurve: "prime256v1" })
     .privateKey.export({ type: "pkcs8", format: "pem" })
     .toString();
-  const push = { keys: vapidKeys(pem, "https://app.test"), serviceHosts: PUSH_SERVICE_HOSTS };
+  const memoryPush = createMemoryPushSender();
+  const push = {
+    keys: vapidKeys(pem, "https://app.test"),
+    serviceHosts: PUSH_SERVICE_HOSTS,
+    sender: memoryPush.sender,
+  };
   const app = createApp({ deps: { ...deps, push } });
   const withoutPush = createApp({ deps });
 
@@ -218,5 +230,70 @@ describe.skipIf(!databaseUrl)("notifications (#260)", () => {
       "user.push_enabled",
       "user.push_disabled",
     ]);
+  });
+
+  test("a note is pushed to every device (#262), in its language; gone devices are deleted", async () => {
+    const endpoint = (name: string) => `https://fcm.googleapis.com/fcm/send/${name}-${run}`;
+    const device = (name: string, language: string) => ({
+      endpoint: endpoint(name),
+      keys: { p256dh: "BNcRdreALRFX", auth: "tBHItJI5svbpez7K" },
+      language,
+    });
+    const ours = [endpoint("fr"), endpoint("en"), endpoint("gone"), endpoint("failing")];
+    for (const [email, body] of [
+      [userEmail, device("fr", "fr")],
+      [userEmail, device("en", "en")],
+      [laterEmail, device("gone", "en")],
+      [laterEmail, device("failing", "fr")],
+    ] as const) {
+      expect((await call("/push/subscription", email, { method: "PUT", body })).status).toBe(204);
+    }
+    memoryPush.gone.add(endpoint("gone"));
+    memoryPush.failing.add(endpoint("failing"));
+
+    const text = `New: setlists! ${"la ".repeat(100)}`;
+    const id = await send(text);
+    const pushed = memoryPush.sent.filter((push) => ours.includes(push.target.endpoint));
+    expect(pushed.map((push) => [push.target.endpoint, push.payload])).toEqual(
+      expect.arrayContaining([
+        [endpoint("fr"), { title: "L'équipe Coverband", body: pushBody(text.trim()), url: "/" }],
+        [endpoint("en"), { title: "The Coverband team", body: pushBody(text.trim()), url: "/" }],
+      ]),
+    );
+    expect(pushed).toHaveLength(2);
+    const deliveries = await db
+      .select({ endpoint: pushDeliveries.endpoint, status: pushDeliveries.status })
+      .from(pushDeliveries)
+      .where(eq(pushDeliveries.notificationId, id));
+    expect(deliveries.filter((delivery) => ours.includes(delivery.endpoint))).toEqual(
+      expect.arrayContaining([
+        { endpoint: endpoint("fr"), status: "sent" },
+        { endpoint: endpoint("en"), status: "sent" },
+        { endpoint: endpoint("gone"), status: "gone" },
+        { endpoint: endpoint("failing"), status: "failed" },
+      ]),
+    );
+    const left = await db
+      .select({ endpoint: pushSubscriptions.endpoint })
+      .from(pushSubscriptions)
+      .where(inArray(pushSubscriptions.endpoint, ours));
+    expect(left.map((row) => row.endpoint).sort()).toEqual(
+      [endpoint("en"), endpoint("failing"), endpoint("fr")].sort(),
+    );
+
+    const list = (await (await call("/admin/notifications?perPage=100", adminEmail)).json()) as {
+      data: { id: string; devicesReached: number; devicesFailed: number }[];
+    };
+    const row = list.data.find((note) => note.id === id);
+    expect(row?.devicesReached).toBeGreaterThanOrEqual(2);
+    expect(row?.devicesFailed).toBeGreaterThanOrEqual(1);
+    await db.delete(pushSubscriptions).where(inArray(pushSubscriptions.endpoint, ours));
+  });
+
+  test("a push's body is the note's start, cut at a word", () => {
+    expect(pushBody("Short note")).toBe("Short note");
+    const long = pushBody(`${"word ".repeat(60)}end`);
+    expect(long.length).toBeLessThanOrEqual(PUSH_BODY_MAX_LENGTH + 1);
+    expect(long).toEndWith("word…");
   });
 });

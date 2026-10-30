@@ -26,7 +26,13 @@ type TeamNote = {
   /** Users whose account existed when it was sent. */
   recipients: number;
   readers: number;
+  /** Devices it was pushed to (#262), and those whose push service refused it. */
+  devicesReached: number;
+  devicesFailed: number;
 };
+
+/** "3 devices", "1 device". */
+const devicesCount = (count: number) => `${count} device${count === 1 ? "" : "s"}`;
 
 /** Who the main app says a note comes from (brief 025: written as is, not the app's name). */
 const SIGNATURE = "The Coverband team";
@@ -62,10 +68,17 @@ function SendNoteButton() {
   const [previewing, setPreviewing] = useState(false);
   const [text, setText] = useState("");
   const send = useMutation({
-    mutationFn: () => dataProvider.create("notifications", { data: { text } }),
-    onSuccess: () => {
+    mutationFn: () =>
+      dataProvider.create<{
+        id: string;
+        devices: { reached: number; failed: number };
+      }>("notifications", { data: { text } }),
+    onSuccess: ({ data: { devices } }) => {
       setOpen(false);
-      notify("Note sent to every user", { type: "success" });
+      const failed = devices.failed ? `, ${devicesCount(devices.failed)} failed` : "";
+      notify(`Note sent to every user, pushed to ${devicesCount(devices.reached)}${failed}`, {
+        type: "success",
+      });
       refresh();
     },
     onError: (error: Error) => notify(error.message, { type: "error" }),
@@ -90,8 +103,8 @@ function SendNoteButton() {
               <DialogHeader>
                 <DialogTitle>Send this note to every user?</DialogTitle>
                 <DialogDescription>
-                  They'll see it the next time they open the app, until they press OK. It can't be
-                  edited or taken back.
+                  Devices with notifications on get it at once; everyone sees it the next time they
+                  open the app, until they press OK. It can't be edited or taken back.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 rounded-xl border p-4">
@@ -171,6 +184,19 @@ function Readers() {
   );
 }
 
+function Pushed() {
+  const note = useRecordContext<TeamNote>();
+  if (!note) return null;
+  return (
+    <span className="tabular-nums">
+      {devicesCount(note.devicesReached)}
+      {note.devicesFailed > 0 && (
+        <span className="text-destructive"> ({note.devicesFailed} failed)</span>
+      )}
+    </span>
+  );
+}
+
 function Excerpt() {
   const note = useRecordContext<TeamNote>();
   if (!note) return null;
@@ -195,6 +221,9 @@ export function NotificationList() {
           <Excerpt />
         </DataTable.Col>
         <DataTable.Col source="sentBy" label="Sent by" disableSort />
+        <DataTable.Col label="Pushed to" disableSort>
+          <Pushed />
+        </DataTable.Col>
         <DataTable.Col label="Read by" disableSort>
           <Readers />
         </DataTable.Col>

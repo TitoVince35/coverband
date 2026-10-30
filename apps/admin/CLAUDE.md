@@ -33,7 +33,7 @@ The administration console (#246, brief 024, study 023): React + Vite + [Shadcn 
 
 ## Notifications (#260)
 
-- `src/components/notifications.tsx`: `NotificationList` (the `notifications` resource, `/api/admin/notifications`: sent notes newest first, with "Read by" readers of recipients) and "Write a note": a text box, then a preview as the main app shows it ("The Coverband team", written as is, the text with its line breaks and links, `textParts` from `@coverband/shared`), then "Send to all" (`dataProvider.create`). No editing or deleting.
+- `src/components/notifications.tsx`: `NotificationList` (the `notifications` resource, `/api/admin/notifications`: sent notes newest first, with "Pushed to" devices, failed ones too, #262, and "Read by" readers of recipients) and "Write a note": a text box, then a preview as the main app shows it ("The Coverband team", written as is, the text with its line breaks and links, `textParts` from `@coverband/shared`), then "Send to all" (`dataProvider.create`; the toast says how many devices it was pushed to). No editing or deleting.
 
 ## The kit's code
 

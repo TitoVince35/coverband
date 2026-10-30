@@ -1,9 +1,9 @@
 import { createECDH, randomBytes } from "node:crypto";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, request, test } from "@playwright/test";
 import postgres from "postgres";
-import { FAKE_PUSH_PORT } from "./playwright.config";
+import { ADMIN_APP_URL, FAKE_PUSH_PORT } from "./playwright.config";
 import { databaseUrl } from "./setup";
-import { ADMIN, login, PASSWORD } from "./support";
+import { ADMIN, adminAppLogin, login, PASSWORD, run } from "./support";
 
 // Push notifications on a device (#261): turned on and off from the account page. The browser's
 // push service is replaced by a subscription to the fake one (Chrome's would need Google).
@@ -13,9 +13,11 @@ const p256dh = createECDH("prime256v1").generateKeys().toString("base64url");
 const auth = randomBytes(16).toString("base64url");
 
 async function fakePushService(page: Page) {
-  await page.context().grantPermissions(["notifications"]);
   await page.addInitScript(
     ({ port, p256dh, auth }) => {
+      // Playwright's Chromium (CI) keeps notifications denied whatever is granted: allowed here.
+      Object.defineProperty(Notification, "permission", { get: () => "granted" });
+      Notification.requestPermission = async () => "granted";
       let current: PushSubscription | null = null;
       PushManager.prototype.getSubscription = async () => current;
       PushManager.prototype.subscribe = async () => {
@@ -67,4 +69,45 @@ test("a user turns notifications on for this device, then off; logging out forge
   await page.getByRole("menuitem", { name: "Log out" }).click();
   await expect(page).toHaveURL(/\/login/);
   expect(await devicesOf(ADMIN)).toEqual([]);
+});
+
+test("a note from the team is pushed to the devices with notifications on (#262)", async ({
+  page,
+}) => {
+  const text = `E2E push ${run}`;
+  const sql = postgres(databaseUrl(), { prepare: false, onnotice: () => {} });
+  try {
+    await fakePushService(page);
+    await login(page, ADMIN, PASSWORD);
+    await page.goto("/account");
+    await page.getByRole("button", { name: "Turn on notifications" }).click();
+    await expect(page.getByText("Notifications are on for this device.")).toBeVisible();
+    const [endpoint] = await devicesOf(ADMIN);
+    const id = endpoint?.split("/").at(-1);
+
+    await adminAppLogin(page, ADMIN, PASSWORD);
+    await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+    await page.goto(`${ADMIN_APP_URL}/#/notifications`);
+    await page.getByRole("button", { name: "Write a note" }).click();
+    await page.getByLabel("Text").fill(text);
+    await page.getByRole("button", { name: "Preview" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Send to all" }).click();
+    await expect(page.getByText(/Note sent to every user, pushed to \d+ devices?/)).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: text })).toContainText("device");
+
+    // The fake push service got it: signed, encrypted, kept a day for an offline device.
+    const fake = await request.newContext({ ignoreHTTPSErrors: true });
+    const received = (await (
+      await fake.get(`https://localhost:${FAKE_PUSH_PORT}/received`)
+    ).json()) as { id: string; ttl: string; encoding: string; vapid: boolean }[];
+    expect(received.filter((push) => push.id === id)).toEqual([
+      { id, ttl: "86400", encoding: "aes128gcm", vapid: true },
+    ]);
+    await fake.dispose();
+  } finally {
+    // Every user would see the note, and this device would get the next ones.
+    await sql`delete from notifications where text = ${text}`;
+    await sql`delete from push_subscriptions where endpoint like ${`https://localhost:${FAKE_PUSH_PORT}/%`}`;
+    await sql.end();
+  }
 });

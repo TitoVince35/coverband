@@ -4,7 +4,7 @@ import { createAuth } from "./adapters/auth";
 import { createDeezerCatalog } from "./adapters/deezer";
 import { createLrclibProvider } from "./adapters/lyrics";
 import { createSmtpMailer } from "./adapters/mail/mailer";
-import { PUSH_SERVICE_HOSTS, vapidKeys } from "./adapters/push";
+import { createWebPushSender, PUSH_SERVICE_HOSTS, vapidKeys, vapidSubject } from "./adapters/push";
 import { createS3Storage } from "./adapters/storage";
 import { createYoutubeSearch } from "./adapters/youtube";
 import { createApp } from "./app";
@@ -34,6 +34,10 @@ if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
   log.info(result === "created" ? "Default admin created" : "Default admin exists");
 }
 
+const pushKeys =
+  env.VAPID_PRIVATE_KEY &&
+  vapidKeys(env.VAPID_PRIVATE_KEY, vapidSubject(env.BETTER_AUTH_URL, env.MAIL_FROM));
+
 const app = createApp({
   deps: {
     auth,
@@ -59,10 +63,11 @@ const app = createApp({
     redirectHosts: env.REDIRECT_HOSTS,
     ...(env.CRON_SECRET && { cronSecret: env.CRON_SECRET }),
     ...(env.CONTACT_FORM_RECIPIENT && { contactRecipient: env.CONTACT_FORM_RECIPIENT }),
-    ...(env.VAPID_PRIVATE_KEY && {
+    ...(pushKeys && {
       push: {
-        keys: vapidKeys(env.VAPID_PRIVATE_KEY, env.BETTER_AUTH_URL),
+        keys: pushKeys,
         serviceHosts: env.PUSH_SERVICE_HOSTS ?? PUSH_SERVICE_HOSTS,
+        sender: createWebPushSender(pushKeys),
       },
     }),
     buildInfo: { version: rootPackage.version, build: env.BUILD_SHA },
