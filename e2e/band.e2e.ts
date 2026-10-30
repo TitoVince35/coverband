@@ -1,7 +1,16 @@
 import { fileURLToPath } from "node:url";
 import { type Browser, expect, type Locator, type Page, test } from "@playwright/test";
 import { ADMIN_APP_URL } from "./playwright.config";
-import { ADMIN, adminAppLogin, bandName, email, invitationLink, login, PASSWORD } from "./support";
+import {
+  ADMIN,
+  adminAppLogin,
+  bandName,
+  email,
+  invitationLink,
+  login,
+  openAdminRow,
+  PASSWORD,
+} from "./support";
 
 // One story, in order: each step builds on the previous one.
 test.describe.configure({ mode: "serial" });
@@ -144,7 +153,7 @@ test("an admin finds the band in the admin app and opens its page (#247)", async
   const row = page.getByRole("row").filter({ hasText: band });
   await expect(row).toContainText("Lea Leader");
   await expect(row).toContainText("2");
-  await row.getByRole("cell", { name: band }).click();
+  await openAdminRow(page, band);
 
   await expect(page.getByRole("heading", { name: band })).toBeVisible();
   await expect(page.getByText("band leader")).toBeVisible();
