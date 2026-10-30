@@ -1,9 +1,10 @@
 import { APP_NAME } from "@coverband/shared";
-import { Guitar } from "lucide-react";
+import { Guitar, Users } from "lucide-react";
 import { Resource } from "ra-core";
 import { Admin } from "@/components/admin/admin";
 import { BandList, BandShow } from "@/components/bands";
 import { Dashboard } from "@/components/dashboard";
+import { UserList, UserShow } from "@/components/users";
 import { authProvider } from "@/lib/auth-provider";
 import { dataProvider } from "@/lib/data-provider";
 
@@ -26,6 +27,14 @@ export function App() {
         show={BandShow}
         recordRepresentation="name"
         icon={Guitar}
+      />
+      <Resource
+        name="users"
+        options={{ label: "Users" }}
+        list={UserList}
+        show={UserShow}
+        recordRepresentation="name"
+        icon={Users}
       />
     </Admin>
   );

@@ -22,6 +22,11 @@ The administration console (#246, brief 024, study 023): React + Vite + [Shadcn 
 - No avatars on the admin host (their route isn't there): the lineup shows names.
 - **Disable, enable, delete** (#248, `BandActions`, `src/components/band-actions.tsx`): disabling and enabling are confirmed (`Confirm`), through `dataProvider.setBandStatus`; deleting is only offered once disabled, in a dialog where the band's name is typed (`dataProvider.delete` with `meta: { name }`), then back to the list. The list has a Status column ("Suspended").
 
+## Users (#249)
+
+- `src/components/users.tsx`: `UserList` (the `users` resource: email, first and last names, bands with a star for those they lead, instruments across bands without duplicates, Admin and Blocked badges; searched by email or name, `q`; "Admins" and "No band" toggles, `admins` and `bandless`; sorted by email; the kit's toggles take `w-auto`, being made for a sidebar) and `UserShow` (profile, last session, bands, pending invitations, and `UserActions`).
+- **Actions:** "View the app as this user" opens the web app's `/impersonate/<id>` (the API's `impersonateUrl`: null for an admin, oneself included), which starts the read-only impersonation of #214 once confirmed; the admin needs to be logged in to the web app too (sessions are per host). "Send a password reset email" (`dataProvider.sendPasswordReset`). Block / Unblock and Delete, confirmed (`dataProvider.setUserBanned`, `dataProvider.delete`); never offered for an admin. Deleting the only band leader of a band is refused (`only_band_leader`, its message says so).
+
 ## The kit's code
 
 - `src/components/admin/`, `src/components/ui/` and `src/lib/field.type.ts` come from the kit's registry (`bunx --bun shadcn@latest add https://marmelab.com/shadcn-admin-kit/r/admin.json`, from `apps/admin`; shadcn components with `bunx --bun shadcn@latest add <name>`). They are ours to edit, as shadcn intends: CoverBand's name and logo in `login-page.tsx` and `app-sidebar.tsx`, dark theme by default (`theme-provider.tsx`), autocomplete on the login fields, sortable headers no wider than their padding (`data-table.tsx`: the last column overflowed). Biome formats them but doesn't lint them (`biome.json` overrides), and `tsconfig.json` turns off `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess` for them.

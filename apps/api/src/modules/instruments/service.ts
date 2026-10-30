@@ -54,6 +54,36 @@ export async function instrumentsOf(db: Db | Tx, bandId: string, userIds: readon
   return byUser;
 }
 
+/**
+ * Each user's instruments across all their bands, without duplicates (the admin console's users,
+ * #249): known instruments by code, free text case-insensitively, in the order first met.
+ */
+export async function instrumentsOfUsers(db: Db, userIds: readonly string[]) {
+  const byUser = new Map<string, Instrument[]>(userIds.map((id) => [id, []]));
+  if (userIds.length === 0) return byUser;
+  const rows = await db
+    .select({
+      userId: memberInstruments.userId,
+      code: memberInstruments.code,
+      label: memberInstruments.label,
+    })
+    .from(memberInstruments)
+    .where(inArray(memberInstruments.userId, [...userIds]))
+    .orderBy(asc(memberInstruments.position));
+  const seen = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const instrument = toInstrument(row);
+    const key =
+      "code" in instrument ? `code:${instrument.code}` : `label:${instrument.label.toLowerCase()}`;
+    const keys = seen.get(row.userId) ?? new Set<string>();
+    if (keys.has(key)) continue;
+    keys.add(key);
+    seen.set(row.userId, keys);
+    byUser.get(row.userId)?.push(instrument);
+  }
+  return byUser;
+}
+
 /** A user's instruments in each of their bands, by band id. */
 export async function instrumentsByBand(db: Db, userId: string) {
   const rows = await db

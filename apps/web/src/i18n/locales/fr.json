@@ -465,7 +465,12 @@
   "impersonation": {
     "viewAs": "Voir en tant que",
     "banner": "Vous voyez l'app en tant que {{name}} : lecture seule.",
-    "stop": "Arrêter"
+    "stop": "Arrêter",
+    "confirmTitle": "Voir l'app comme {{name}} ?",
+    "confirmText": "Vous verrez son app comme cette personne la voit, en lecture seule, une heure au plus. Arrêtez depuis le bandeau en haut.",
+    "confirm": "Voir l'app comme {{name}}",
+    "notAllowed": "Impossible de voir l'app comme cette personne : ni un administrateur, ni vous-même.",
+    "cancel": "Retour à l'app"
   },
   "invitations": {
     "email": "E-mail",
