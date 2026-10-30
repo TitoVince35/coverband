@@ -31,8 +31,12 @@ The administration console (#246, brief 024, study 023): React + Vite + [Shadcn 
 
 - `src/components/invitations.tsx`: `InvitationList` (the `invitations` resource, `/api/admin/invitations`, which answers in react-admin's shape: open invitations, pending or expired, newest first, no pagination): "Invite a band leader" (email and the email's language, `dataProvider.create`), and on each row "Send again" (`dataProvider.resendInvitation`) and "Revoke" (confirmed, `dataProvider.delete`).
 
+## Notifications (#260)
+
+- `src/components/notifications.tsx`: `NotificationList` (the `notifications` resource, `/api/admin/notifications`: sent notes newest first, with "Read by" readers of recipients) and "Write a note": a text box, then a preview as the main app shows it ("The Coverband team", written as is, the text with its line breaks and links, `textParts` from `@coverband/shared`), then "Send to all" (`dataProvider.create`). No editing or deleting.
+
 ## The kit's code
 
 - `src/components/admin/`, `src/components/ui/` and `src/lib/field.type.ts` come from the kit's registry (`bunx --bun shadcn@latest add https://marmelab.com/shadcn-admin-kit/r/admin.json`, from `apps/admin`; shadcn components with `bunx --bun shadcn@latest add <name>`). They are ours to edit, as shadcn intends: CoverBand's name and logo in `login-page.tsx` and `app-sidebar.tsx`, dark theme by default (`theme-provider.tsx`), autocomplete on the login fields, sortable headers no wider than their padding (`data-table.tsx`: the last column overflowed). Biome formats them but doesn't lint them (`biome.json` overrides), and `tsconfig.json` turns off `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess` for them.
 - Our own code (`src/app.tsx`, `src/lib/`, `src/components/*.tsx`) follows the usual rules. The theme tokens in `src/index.css` are the web app's: keep them in sync.
-- Routes are react-admin's (a hash router: `/#/...`). Resources: bands (#247), users (#249), band leader invitations (#250). A list route answers `{ data, total }` and takes `page`, `perPage`, `sort`, `order`, `q`, validated by `listQuery` in the API's `modules/admin/routes.ts`.
+- Routes are react-admin's (a hash router: `/#/...`). Resources: bands (#247), users (#249), band leader invitations (#250), notifications (#260). A list route answers `{ data, total }` and takes `page`, `perPage`, `sort`, `order`, `q`, validated by `listQuery` in the API's `modules/admin/routes.ts`.

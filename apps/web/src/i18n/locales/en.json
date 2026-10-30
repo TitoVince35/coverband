@@ -585,5 +585,11 @@
     "send": "Send",
     "sending": "Sending…",
     "sent": "Message sent. Thank you!"
+  },
+  "notifications": {
+    "sender": {
+      "team": "The Coverband team"
+    },
+    "ok": "OK"
   }
 }

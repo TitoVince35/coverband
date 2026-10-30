@@ -31,11 +31,13 @@ export const ACTIVITY_ACTIONS = [
   "user.banned",
   "user.unbanned",
   "user.deleted",
+  "notification.sent",
+  "notification.read",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
 
 /** What an activity is about (`target_type`). */
-export const ACTIVITY_TARGETS = ["invitation", "user", "band", "song"] as const;
+export const ACTIVITY_TARGETS = ["invitation", "user", "band", "song", "notification"] as const;
 
 export type ActivityTarget = (typeof ACTIVITY_TARGETS)[number];

@@ -1,10 +1,11 @@
 import { APP_NAME } from "@coverband/shared";
-import { Guitar, MailPlus, Users } from "lucide-react";
+import { Guitar, MailPlus, Megaphone, Users } from "lucide-react";
 import { Resource } from "ra-core";
 import { Admin } from "@/components/admin/admin";
 import { BandList, BandShow } from "@/components/bands";
 import { Dashboard } from "@/components/dashboard";
 import { InvitationList } from "@/components/invitations";
+import { NotificationList } from "@/components/notifications";
 import { UserList, UserShow } from "@/components/users";
 import { authProvider } from "@/lib/auth-provider";
 import { dataProvider } from "@/lib/data-provider";
@@ -42,6 +43,12 @@ export function App() {
         options={{ label: "Invitations" }}
         list={InvitationList}
         icon={MailPlus}
+      />
+      <Resource
+        name="notifications"
+        options={{ label: "Notifications" }}
+        list={NotificationList}
+        icon={Megaphone}
       />
     </Admin>
   );
