@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { NotificationModal } from "@/components/notification-modal";
 import { sessionQuery } from "@/lib/auth";
 import { useKeepBandsOffline } from "@/lib/offline-bands";
 import { guardData } from "@/lib/query-client";
@@ -19,5 +20,11 @@ export const Route = createFileRoute("/_app")({
 function AppLayout() {
   // Every band ready for offline use (#165), whichever page the user lands on.
   useKeepBandsOffline();
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      {/* Notes from the team (#260), over whichever page opens. */}
+      <NotificationModal />
+    </>
+  );
 }

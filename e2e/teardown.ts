@@ -4,7 +4,7 @@ import { databaseUrl } from "./setup";
 /**
  * Removes everything end-to-end tests created, including leftovers of interrupted runs: users at
  * `@e2e.localhost` (this run's admin included, with their sessions, memberships, invitations and
- * rate limit counters), "E2E " bands (with their activity). Emails are removed from Mailpit.
+ * rate limit counters, and the notes they sent), "E2E " bands (with their activity). Emails are removed from Mailpit.
  */
 export default async function teardown() {
   const sql = postgres(databaseUrl(), { prepare: false, onnotice: () => {} });
@@ -17,6 +17,8 @@ export default async function teardown() {
     await sql`delete from rate_limits where key like ${"coverband:access-codes:e2e-%"}`;
     await sql`delete from bands where name like ${"E2E %"}`;
     await sql`delete from invitations where email like ${"%@e2e.localhost"}`;
+    // Notes from the team (#260) every user would see.
+    await sql`delete from notifications where sent_by_id in (${users})`;
     await sql`delete from users where email like ${"%@e2e.localhost"}`;
   } finally {
     await sql.end();

@@ -12,6 +12,7 @@ import { MAX_INSTRUMENTS } from "./instruments";
 import { MUSICAL_KEYS } from "./keys";
 import { LANGUAGES, type Language } from "./languages";
 import { MEDIA_LIMITS, parseMediaUrl } from "./media";
+import { NOTIFICATION_TEXT_MAX_LENGTH } from "./notifications";
 import { LYRICS_SOURCES, MAX_ENERGY, SONG_MAX_LENGTH, SONG_STATUSES, SONG_TEMPO } from "./songs";
 
 /** Required text, trimmed. */
@@ -187,3 +188,8 @@ export const updateDocumentBody = z
     instruments: instrumentList,
   })
   .partial();
+
+/** A note from the app's team, sent by an admin to every user (#260): plain text. */
+export const teamNoteBody = z.object({
+  text: z.string().trim().min(1).max(NOTIFICATION_TEXT_MAX_LENGTH),
+});
