@@ -110,7 +110,7 @@ test("an admin finds the band leader in the admin app, then views the app as the
   await expect(row).toContainText(band);
   await expect(row.getByLabel("band leader")).toBeVisible();
   await expect(row).toContainText("Guitar");
-  await row.getByRole("cell", { name: leaderEmail }).click();
+  await openAdminRow(page, leaderEmail);
   await expect(page.getByRole("heading", { name: "Lea Leader" })).toBeVisible();
   await expect(page.getByText("Last session")).toBeVisible();
 
