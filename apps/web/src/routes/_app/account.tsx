@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AvatarCard } from "@/components/account/avatar-card";
 import { NewPasswordFields, readNewPassword } from "@/components/account/new-password-fields";
+import { PushCard } from "@/components/account/push-card";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,7 +23,8 @@ import { AuthRequestError, authClient, ensureAuthOk, sessionQuery } from "@/lib/
 import { ensureOk, errorMessage } from "@/lib/errors";
 import { useOnline } from "@/lib/online";
 
-// The logged-in user's account: profile (#58), avatar (#60), then password (#24).
+// The logged-in user's account: profile (#58), avatar (#60), password (#24), then this device's
+// push notifications (#261).
 export const Route = createFileRoute("/_app/account")({
   component: AccountPage,
 });
@@ -47,6 +49,7 @@ function AccountPage() {
           <AvatarCard user={user} />
         </div>
         <ChangePasswordCard />
+        <PushCard />
       </div>
     </section>
   );

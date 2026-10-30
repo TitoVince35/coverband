@@ -39,3 +39,24 @@ export const notificationReads = pgTable(
   },
   (table) => [primaryKey({ columns: [table.notificationId, table.userId] })],
 );
+
+/**
+ * Devices that accepted push notifications (#261): one row per browser subscription, so a user may
+ * have several. The endpoint is the push service's address for that device; `p256dh` and `auth`
+ * encrypt what is sent to it. Deleted when the device turns them off, logs out, or the push
+ * service says it's gone.
+ */
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    endpoint: text().notNull().unique(),
+    p256dh: text().notNull(),
+    auth: text().notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index().on(table.userId)],
+);

@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { APP_NAME } from "@coverband/shared";
 import { renderUnicodeCompact } from "uqr";
 import { type LocalTls, localTls, rootCertificate } from "./tls";
+import { localVapidKey } from "./vapid";
 
 export const WEB_PORT = 5173;
 /** The admin app's Vite dev server (#246), on its own host as in production. */
@@ -127,6 +128,8 @@ export async function runApp(
       ...env,
       BETTER_AUTH_URL: appUrl,
       ADMIN_URL: adminUrl,
+      // Push notifications (#261): `.env` may set its own key.
+      VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || localVapidKey(),
       TRUSTED_ORIGINS: [process.env.TRUSTED_ORIGINS, localUrl].filter(Boolean).join(","),
     },
     stdio: ["inherit", "inherit", "inherit"],

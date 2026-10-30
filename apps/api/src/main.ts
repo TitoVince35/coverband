@@ -4,6 +4,7 @@ import { createAuth } from "./adapters/auth";
 import { createDeezerCatalog } from "./adapters/deezer";
 import { createLrclibProvider } from "./adapters/lyrics";
 import { createSmtpMailer } from "./adapters/mail/mailer";
+import { PUSH_SERVICE_HOSTS, vapidKeys } from "./adapters/push";
 import { createS3Storage } from "./adapters/storage";
 import { createYoutubeSearch } from "./adapters/youtube";
 import { createApp } from "./app";
@@ -58,6 +59,12 @@ const app = createApp({
     redirectHosts: env.REDIRECT_HOSTS,
     ...(env.CRON_SECRET && { cronSecret: env.CRON_SECRET }),
     ...(env.CONTACT_FORM_RECIPIENT && { contactRecipient: env.CONTACT_FORM_RECIPIENT }),
+    ...(env.VAPID_PRIVATE_KEY && {
+      push: {
+        keys: vapidKeys(env.VAPID_PRIVATE_KEY, env.BETTER_AUTH_URL),
+        serviceHosts: env.PUSH_SERVICE_HOSTS ?? PUSH_SERVICE_HOSTS,
+      },
+    }),
     buildInfo: { version: rootPackage.version, build: env.BUILD_SHA },
     ...(env.BETA_ACCESS_CODE && {
       access: {

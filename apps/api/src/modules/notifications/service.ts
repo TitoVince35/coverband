@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
 import type { Db } from "../../core/db/client";
-import { notificationReads, notifications, users } from "../../core/db/schema";
+import { notificationReads, notifications, pushSubscriptions, users } from "../../core/db/schema";
 
 /**
  * Sends a note from the app's team (#260): every user whose account exists now sees it, in a
@@ -102,5 +102,49 @@ export async function markNotificationRead(db: Db, userId: string, notificationI
       });
     }
     return true;
+  });
+}
+
+/**
+ * Saves a device's push subscription (#261). An endpoint already known (the device's browser
+ * logged in as someone else since) moves to this user with its new keys.
+ */
+export async function savePushSubscription(
+  db: Db,
+  userId: string,
+  subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
+) {
+  const { endpoint, keys } = subscription;
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(pushSubscriptions)
+      .values({ userId, endpoint, ...keys })
+      .onConflictDoUpdate({
+        target: pushSubscriptions.endpoint,
+        set: { userId, ...keys, createdAt: sql`now()` },
+      });
+    await recordActivity(tx, {
+      action: "user.push_enabled",
+      bandId: null,
+      actorId: userId,
+      target: { type: "user", id: userId },
+    });
+  });
+}
+
+/** Deletes one of the user's push subscriptions: the device turned them off, or logs out. */
+export async function removePushSubscription(db: Db, userId: string, endpoint: string) {
+  await db.transaction(async (tx) => {
+    const removed = await tx
+      .delete(pushSubscriptions)
+      .where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.endpoint, endpoint)))
+      .returning({ id: pushSubscriptions.id });
+    if (!removed.length) return;
+    await recordActivity(tx, {
+      action: "user.push_disabled",
+      bandId: null,
+      actorId: userId,
+      target: { type: "user", id: userId },
+    });
   });
 }

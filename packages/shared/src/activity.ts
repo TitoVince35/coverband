@@ -33,6 +33,8 @@ export const ACTIVITY_ACTIONS = [
   "user.deleted",
   "notification.sent",
   "notification.read",
+  "user.push_enabled",
+  "user.push_disabled",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
