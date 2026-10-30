@@ -61,7 +61,12 @@ export function useKeepBandsOffline() {
   const queryClient = useQueryClient();
   const online = useOnline();
   const bands = useQuery(myBandsQuery);
-  const key = bands.data?.map((band) => band.slug).join("\n") ?? "";
+  // A suspended band (#248) has nothing to keep: its pages only say it's suspended.
+  const key =
+    bands.data
+      ?.filter((band) => !band.suspended)
+      .map((band) => band.slug)
+      .join("\n") ?? "";
   // Again each time the bands are fetched again (stale, back to the foreground): what is still
   // fresh isn't loaded twice.
   const fetchedAt = bands.dataUpdatedAt;

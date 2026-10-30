@@ -11,7 +11,7 @@ import { logoOf } from "./logo";
 
 export type Band = typeof bands.$inferSelect;
 
-/** A user's bands by name, with their role and their instruments in each. */
+/** A user's bands by name, with their role and their instruments in each, suspended ones too. */
 export async function bandsOf(db: Db, userId: string) {
   const rows = await db
     .select({
@@ -22,14 +22,17 @@ export async function bandsOf(db: Db, userId: string) {
       bandId: bands.id,
       logoKey: bands.logoKey,
       logoThumbnailKey: bands.logoThumbnailKey,
+      disabledAt: bands.disabledAt,
     })
     .from(bandMembers)
     .innerJoin(bands, eq(bands.id, bandMembers.bandId))
     .where(eq(bandMembers.userId, userId))
     .orderBy(asc(bands.name));
   const instruments = await instrumentsByBand(db, userId);
-  return rows.map(({ bandId, logoKey, logoThumbnailKey, ...band }) => ({
+  return rows.map(({ bandId, logoKey, logoThumbnailKey, disabledAt, ...band }) => ({
     ...band,
+    // Suspended by an admin (#248): its pages only say so.
+    suspended: disabledAt !== null,
     logo: logoOf({ id: bandId, slug: band.slug, logoKey, logoThumbnailKey }),
     instruments: instruments.get(bandId) ?? [],
   }));
@@ -188,6 +191,7 @@ export async function adminBandPage(db: Db, query: AdminBandQuery) {
         slug: bands.slug,
         genre: bands.genre,
         createdAt: bands.createdAt,
+        disabledAt: bands.disabledAt,
         members,
       })
       .from(bands)
@@ -231,10 +235,72 @@ export async function adminBandOf(db: Db, id: string) {
       slug: bands.slug,
       genre: bands.genre,
       createdAt: bands.createdAt,
+      disabledAt: bands.disabledAt,
     })
     .from(bands)
     .where(eq(bands.id, id));
   return band;
+}
+
+export class BandNotDisabledError extends AppError {
+  constructor() {
+    super("band_not_disabled", "Disable the band before deleting it");
+  }
+}
+
+export class BandNameMismatchError extends AppError {
+  constructor() {
+    super("band_name_mismatch", "The name typed isn't the band's");
+  }
+}
+
+const bandNotFound = () => new AppError("not_found", "Band not found");
+
+/**
+ * An admin suspends a band (#248), or makes it active again: its members then see only that it's
+ * suspended. Recorded as `band.disabled` / `band.enabled`; doing it twice changes nothing.
+ */
+export async function setBandDisabled(db: Db, id: string, disabled: boolean, actorId: string) {
+  await db.transaction(async (tx) => {
+    const [band] = await tx
+      .select({ disabledAt: bands.disabledAt })
+      .from(bands)
+      .where(eq(bands.id, id))
+      .for("update");
+    if (!band) throw bandNotFound();
+    if ((band.disabledAt !== null) === disabled) return;
+    await tx
+      .update(bands)
+      .set({ disabledAt: disabled ? new Date() : null })
+      .where(eq(bands.id, id));
+    await recordActivity(tx, {
+      action: disabled ? "band.disabled" : "band.enabled",
+      bandId: id,
+      actorId,
+      target: { type: "band", id },
+    });
+  });
+}
+
+/**
+ * Deletes a disabled band (#248) for good, in the caller's transaction, once `name` is typed as
+ * it is (spaces around ignored): its rows go with it (cascade), its journal too. Returns its logo's
+ * storage keys, for the caller to delete once committed. `band.deleted` is recorded outside the
+ * band (it's gone), with no name.
+ */
+export async function deleteDisabledBand(tx: Tx, id: string, name: string, actorId: string) {
+  const [band] = await tx.select().from(bands).where(eq(bands.id, id)).for("update");
+  if (!band) throw bandNotFound();
+  if (!band.disabledAt) throw new BandNotDisabledError();
+  if (name.trim() !== band.name) throw new BandNameMismatchError();
+  await tx.delete(bands).where(eq(bands.id, id));
+  await recordActivity(tx, {
+    action: "band.deleted",
+    bandId: null,
+    actorId,
+    target: { type: "band", id },
+  });
+  return [band.logoKey, band.logoThumbnailKey].filter((key): key is string => key !== null);
 }
 
 /** Every membership, by band name, with the band's name and slug: the admin console. */

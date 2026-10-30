@@ -9,6 +9,7 @@ import {
   invitations,
   memberInstruments,
   rateLimits,
+  songDocuments,
   songs,
   users,
 } from "../../core/db/schema";
@@ -26,7 +27,7 @@ import {
 const databaseUrl = process.env.DATABASE_URL;
 
 describe.skipIf(!databaseUrl)("admin API", () => {
-  const { deps, db, sql, auth, mailer } = createTestDeps(databaseUrl);
+  const { deps, db, sql, auth, mailer, storage } = createTestDeps(databaseUrl);
   const app = createApp({ deps });
 
   const run = crypto.randomUUID().slice(0, 8);
@@ -213,6 +214,93 @@ describe.skipIf(!databaseUrl)("admin API", () => {
         storage: { usedBytes: 0, quotaBytes: DOCUMENT_LIMITS.perBand },
         journal: [],
       });
+    });
+
+    test("a suspended band only says so to its members, until it's enabled again (#248)", async () => {
+      const userCookie = await login(userEmail);
+      const bandPage = () =>
+        app.request(`/api/bands/alpha-${run}`, { headers: { cookie: userCookie } });
+      expect((await bandPage()).status).toBe(200);
+
+      const disabled = await call(`/bands/${ids.alpha}/disable`, { method: "POST" });
+      expect(disabled.status).toBe(200);
+      expect(
+        ((await disabled.json()) as { data: { disabledAt: string | null } }).data.disabledAt,
+      ).not.toBeNull();
+      const refused = await bandPage();
+      expect(refused.status).toBe(403);
+      expect(await refused.json()).toMatchObject({ error: { code: "band_suspended" } });
+      // Its features too, and the list says it.
+      expect(
+        (await app.request(`/api/bands/alpha-${run}/songs`, { headers: { cookie: userCookie } }))
+          .status,
+      ).toBe(403);
+      const mine = (await (
+        await app.request("/api/bands", { headers: { cookie: userCookie } })
+      ).json()) as { bands: { slug: string; suspended: boolean }[] };
+      expect(mine.bands.find((b) => b.slug === `alpha-${run}`)?.suspended).toBe(true);
+      expect((await list(`q=Alpha ${run}`)).data[0]).toHaveProperty("disabledAt");
+
+      // Twice changes nothing; enabling brings it back.
+      expect((await call(`/bands/${ids.alpha}/disable`, { method: "POST" })).status).toBe(200);
+      expect((await call(`/bands/${ids.alpha}/enable`, { method: "POST" })).status).toBe(200);
+      expect((await bandPage()).status).toBe(200);
+      expect((await activityOf(db, ids.alpha ?? "")).map((a) => a.action)).toEqual([
+        "band.disabled",
+        "band.enabled",
+      ]);
+      expect((await call(`/bands/${crypto.randomUUID()}/disable`, { method: "POST" })).status).toBe(
+        404,
+      );
+    });
+
+    test("a band is deleted only once disabled, its name typed, its files with it", async () => {
+      const id = ids.gamma ?? "";
+      const name = `Gamma_% ${run}`;
+      const remove = (typed: string) =>
+        call(`/bands/${id}`, { method: "DELETE", body: { name: typed } });
+      // Its files: a document and a logo.
+      const [song] = await db
+        .insert(songs)
+        .values({ bandId: id, title: "Linger", artist: "The Cranberries" })
+        .returning({ id: songs.id });
+      const documentKey = `bands/${id}/documents/chords.pdf`;
+      await db.insert(songDocuments).values({
+        bandId: id,
+        songId: song?.id ?? "",
+        title: "Chords",
+        kind: "pdf",
+        contentType: "application/pdf",
+        extension: "pdf",
+        size: 4,
+        storageKey: documentKey,
+      });
+      const logoKey = `bands/${id}/logo/logo.webp`;
+      await db
+        .update(bands)
+        .set({ logoKey, logoThumbnailKey: `${logoKey}-thumbnail` })
+        .where(eq(bands.id, id));
+      for (const key of [documentKey, logoKey, `${logoKey}-thumbnail`]) {
+        await storage.put(key, new Uint8Array([1, 2, 3, 4]), "application/octet-stream");
+      }
+
+      const active = await remove(name);
+      expect(active.status).toBe(409);
+      expect(await active.json()).toMatchObject({ error: { code: "band_not_disabled" } });
+      await call(`/bands/${id}/disable`, { method: "POST" });
+      const mistyped = await remove(name.toUpperCase());
+      expect(mistyped.status).toBe(400);
+      expect(await mistyped.json()).toMatchObject({ error: { code: "band_name_mismatch" } });
+
+      expect((await remove(` ${name} `)).status).toBe(200);
+      expect(await db.select().from(bands).where(eq(bands.id, id))).toEqual([]);
+      expect(await db.select().from(songs).where(eq(songs.bandId, id))).toEqual([]);
+      expect([...storage.objects.keys()].filter((key) => key.includes(id))).toEqual([]);
+      // Recorded outside the band (it's gone), with no name.
+      expect(await activityOf(db, id)).toEqual([
+        { action: "band.deleted", bandId: null, actorId: adminId, targetType: "band", data: null },
+      ]);
+      expect((await remove(name)).status).toBe(404);
     });
 
     test("an unknown band is a 404, a malformed id a 400", async () => {

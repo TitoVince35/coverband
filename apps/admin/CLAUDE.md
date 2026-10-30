@@ -20,6 +20,7 @@ The administration console (#246, brief 024, study 023): React + Vite + [Shadcn 
 - `src/components/bands.tsx`: `BandList` (the `bands` resource: searched by name, `q`; sorted by name, creation date or member count; band leaders, several possible; a row opens the band) and `BandShow` (genre and creation date, lineup with roles and instruments, songs and documents, documents storage out of the band's quota with `StorageRing`, the latest `ADMIN_JOURNAL_SIZE` events). react-admin first shows the list's row while a band's page loads: `BandPage` waits for its details (`lineup`).
 - Journal sentences in English: `journalSentence` (`src/lib/journal.ts`, tested), the web app's `journal.*` sentences; an action without one says its code. A new band event needs a sentence in both apps.
 - No avatars on the admin host (their route isn't there): the lineup shows names.
+- **Disable, enable, delete** (#248, `BandActions`, `src/components/band-actions.tsx`): disabling and enabling are confirmed (`Confirm`), through `dataProvider.setBandStatus`; deleting is only offered once disabled, in a dialog where the band's name is typed (`dataProvider.delete` with `meta: { name }`), then back to the list. The list has a Status column ("Suspended").
 
 ## The kit's code
 

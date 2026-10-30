@@ -50,10 +50,18 @@ export const dataProvider = {
   create: notYet("create"),
   update: notYet("update"),
   updateMany: notYet("updateMany"),
-  delete: notYet("delete"),
+  /** Deleting asks for what the API needs to confirm it in `meta` (a band's name, #248). */
+  delete: (resource, { id, meta }) =>
+    apiFetch(`/api/admin/${resource}/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      body: JSON.stringify(meta ?? {}),
+    }),
   deleteMany: notYet("deleteMany"),
   /** The homepage numbers. */
   stats: () => apiFetch<AdminStats>("/api/admin/stats"),
-} satisfies DataProvider & { stats: () => Promise<AdminStats> };
+  /** Suspends a band, or makes it active again (#248). */
+  setBandStatus: (id: string, status: "disable" | "enable") =>
+    apiFetch(`/api/admin/bands/${encodeURIComponent(id)}/${status}`, { method: "POST" }),
+} satisfies DataProvider & Record<string, unknown>;
 
 export type AdminDataProvider = typeof dataProvider;

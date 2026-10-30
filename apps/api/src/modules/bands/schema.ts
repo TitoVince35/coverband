@@ -25,6 +25,8 @@ export const bands = pgTable(
     // Storage keys of the logo and its thumbnail (bands/{id}/logo/{uuid}.{ext}), both or neither.
     logoKey: text(),
     logoThumbnailKey: text(),
+    // Set by an admin (#248): the band is suspended, its members see only that. Null: active.
+    disabledAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp({ withTimezone: true })
       .defaultNow()

@@ -5,9 +5,9 @@ import { apiError } from "../../core/errors";
 import { requireAdmin, type SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
-import { ADMIN_BAND_SORTS, adminBandPage } from "../bands/service";
+import { ADMIN_BAND_SORTS, adminBandPage, setBandDisabled } from "../bands/service";
 import type { JournalSource } from "../journal/service";
-import { adminBandDetails, adminStats, usersWithBands } from "./service";
+import { adminBandDetails, adminStats, deleteBand, usersWithBands } from "./service";
 
 /** A list page of the admin app (react-admin's pagination, sort and search). */
 const listQuery = <Sort extends string>(sorts: readonly [Sort, ...Sort[]], defaultSort: Sort) =>
@@ -26,6 +26,9 @@ const listQuery = <Sort extends string>(sorts: readonly [Sort, ...Sort[]], defau
 
 const bandListQuery = listQuery(ADMIN_BAND_SORTS, "name");
 const idParam = z.object({ id: z.uuid() });
+const statusParam = idParam.extend({ status: z.enum(["disable", "enable"]) });
+/** Deleting a band: its name, typed again. */
+const deleteBandBody = z.object({ name: z.string().max(200) });
 
 /**
  * Administration console API (/api/admin), application admins only. Leader invitations: see
@@ -33,16 +36,43 @@ const idParam = z.object({ id: z.uuid() });
  */
 export function adminRoutes(deps: AppDeps, journalSources: readonly JournalSource[]) {
   const { db } = deps;
-  return new Hono<SessionEnv>()
-    .use(requireAdmin)
-    .get("/stats", async (c) => c.json(await adminStats(db, new Date())))
-    .get("/users", async (c) => c.json({ users: await usersWithBands(db) }))
-    .get("/bands", zValidator("query", bandListQuery, validationHook), async (c) =>
-      c.json(await adminBandPage(db, c.req.valid("query"))),
-    )
-    .get("/bands/:id", zValidator("param", idParam, validationHook), async (c) => {
-      const band = await adminBandDetails(db, c.req.valid("param").id, journalSources);
-      if (!band) return apiError(c, 404, "Band not found");
-      return c.json({ data: band });
-    });
+  return (
+    new Hono<SessionEnv>()
+      .use(requireAdmin)
+      .get("/stats", async (c) => c.json(await adminStats(db, new Date())))
+      .get("/users", async (c) => c.json({ users: await usersWithBands(db) }))
+      .get("/bands", zValidator("query", bandListQuery, validationHook), async (c) =>
+        c.json(await adminBandPage(db, c.req.valid("query"))),
+      )
+      .get("/bands/:id", zValidator("param", idParam, validationHook), async (c) => {
+        const band = await adminBandDetails(db, c.req.valid("param").id, journalSources);
+        if (!band) return apiError(c, 404, "Band not found");
+        return c.json({ data: band });
+      })
+      // Suspending a band and making it active again (#248): the band's page in return.
+      .post(
+        "/bands/:id/:status{disable|enable}",
+        zValidator("param", statusParam, validationHook),
+        async (c) => {
+          const { id, status } = c.req.valid("param");
+          await setBandDisabled(db, id, status === "disable", c.var.user.id);
+          return c.json({ data: await adminBandDetails(db, id, journalSources) });
+        },
+      )
+      .delete(
+        "/bands/:id",
+        zValidator("param", idParam, validationHook),
+        zValidator("json", deleteBandBody, validationHook),
+        async (c) => {
+          const { id } = c.req.valid("param");
+          await deleteBand(
+            { ...deps, log: c.var.log },
+            id,
+            c.req.valid("json").name,
+            c.var.user.id,
+          );
+          return c.json({ data: { id } });
+        },
+      )
+  );
 }

@@ -37,6 +37,13 @@ describe("journalSentence", () => {
     );
   });
 
+  test("an admin suspending the band, then making it active again (#248)", () => {
+    expect(journalSentence(entry({ action: "band.disabled" }))).toBe("Lea suspended the band");
+    expect(journalSentence(entry({ action: "band.enabled" }))).toBe(
+      "Lea made the band active again",
+    );
+  });
+
   test("an action without a sentence says its code", () => {
     expect(journalSentence(entry({ action: "user.impersonated" }))).toBe("Lea: user.impersonated");
   });

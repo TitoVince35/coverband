@@ -16,7 +16,8 @@ export type BandEnv = UserEnv & {
 /**
  * For routes under /bands/:bandSlug: loads the band into `c.var.band` and the user's membership
  * into `c.var.membership`. Someone who isn't a member gets a 404, as if the band didn't exist,
- * so band names can't be probed.
+ * so band names can't be probed. A suspended band (#248) answers its members 403
+ * `band_suspended`, and nothing else.
  */
 export function requireMember(db: Db) {
   return createMiddleware<BandEnv>(async (c, next) => {
@@ -28,6 +29,9 @@ export function requireMember(db: Db) {
     const row = await membershipOf(db, c.req.param("bandSlug") ?? "", user.id);
     if (!row) {
       return apiError(c, 404, "Band not found");
+    }
+    if (row.band.disabledAt) {
+      return apiError(c, 403, "This band is suspended", "band_suspended");
     }
     c.set("band", row.band);
     c.set("membership", { role: row.role });

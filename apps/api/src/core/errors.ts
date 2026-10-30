@@ -44,6 +44,10 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   document_too_large: 413,
   too_many_documents: 409,
   band_storage_full: 409,
+  band_suspended: 403,
+  band_not_disabled: 409,
+  band_name_mismatch: 400,
+  only_band_leader: 409,
 };
 
 /**

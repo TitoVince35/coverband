@@ -2,11 +2,12 @@ import { DOCUMENT_LIMITS } from "@coverband/shared";
 import { and, asc, count, countDistinct, gte, isNull } from "drizzle-orm";
 import type { Db } from "../../core/db/client";
 import { sessions, users } from "../../core/db/schema";
-import { adminBandOf, allMemberships, countBands } from "../bands/service";
+import type { AppDeps } from "../../deps";
+import { adminBandOf, allMemberships, countBands, deleteDisabledBand } from "../bands/service";
 import { countPendingInvitations } from "../invitations/service";
 import { bandJournal, type JournalSource } from "../journal/service";
 import { lineupOf } from "../members/service";
-import { bandRepertoireTotals, repertoireTotals } from "../songs/service";
+import { bandDocumentKeys, bandRepertoireTotals, repertoireTotals } from "../songs/service";
 
 /** How many of a band's latest events its admin page shows. */
 export const ADMIN_JOURNAL_SIZE = 20;
@@ -32,6 +33,31 @@ export async function adminBandDetails(db: Db, id: string, sources: readonly Jou
     storage: { usedBytes: totals.documentsBytes, quotaBytes: DOCUMENT_LIMITS.perBand },
     journal,
   };
+}
+
+/**
+ * An admin deletes a disabled band for good (#248), its name typed to confirm: the band and
+ * everything in it in one transaction, then its files in storage (documents, logo). A file that
+ * can't be deleted is only an orphan: logged, the deletion stands.
+ */
+export async function deleteBand(
+  { db, storage, log }: Pick<AppDeps, "db" | "storage" | "log">,
+  id: string,
+  name: string,
+  actorId: string,
+) {
+  const keys = await db.transaction(async (tx) => {
+    const documents = await bandDocumentKeys(tx, id);
+    const logo = await deleteDisabledBand(tx, id, name, actorId);
+    return [...documents, ...logo];
+  });
+  for (const key of keys) {
+    try {
+      await storage.delete(key);
+    } catch (error) {
+      log.warn("A deleted band's file was not deleted", { key, err: error });
+    }
+  }
 }
 
 /** A user counts as active with a session used within this many days. */

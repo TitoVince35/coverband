@@ -34,6 +34,8 @@ const SENTENCES: Partial<Record<ActivityAction, string>> = {
   "song.lyrics_changed": "{name} updated the lyrics of {song}",
   "song.document_added": "{name} added a document to {song}",
   "song.document_removed": "{name} removed a document from {song}",
+  "band.disabled": "{name} suspended the band",
+  "band.enabled": "{name} made the band active again",
 };
 
 /** The sentence of a journal entry. */
