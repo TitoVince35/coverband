@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { generateKeyPairSync } from "node:crypto";
-import { isPushService, PUSH_SERVICE_HOSTS, vapidKeys } from "./push";
+import { isPushService, PUSH_SERVICE_HOSTS, vapidKeys, vapidSubject } from "./push";
 
 describe("push adapter", () => {
   test("VAPID keys from a P-256 key in PEM: raw private key, uncompressed public point", () => {
@@ -34,5 +34,13 @@ describe("push adapter", () => {
     expect(ok("https://localhost:3104/push")).toBe(false);
     expect(isPushService("https://localhost:3104/push", ["localhost"])).toBe(true);
     expect(ok("not a url")).toBe(false);
+  });
+
+  test("the subject: the app's HTTPS URL, else the emails' sender", () => {
+    expect(vapidSubject("https://beta.coverband.fr", "x")).toBe("https://beta.coverband.fr");
+    expect(vapidSubject("http://localhost:3100", "Coverband <noreply@coverband.fr>")).toBe(
+      "mailto:noreply@coverband.fr",
+    );
+    expect(vapidSubject("http://localhost:3100", " dev@localhost ")).toBe("mailto:dev@localhost");
   });
 });

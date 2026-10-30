@@ -1,4 +1,4 @@
-import { NOTIFICATION_KINDS, NOTIFICATION_SENDERS } from "@coverband/shared";
+import { type Language, NOTIFICATION_KINDS, NOTIFICATION_SENDERS } from "@coverband/shared";
 import { index, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { users } from "../../adapters/auth-schema";
 
@@ -56,7 +56,29 @@ export const pushSubscriptions = pgTable(
     endpoint: text().notNull().unique(),
     p256dh: text().notNull(),
     auth: text().notNull(),
+    // The app's language on the device when it subscribed (#262): a push's own words use it.
+    language: text().$type<Language>().notNull().default("en"),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [index().on(table.userId)],
+);
+
+/** What happened to a push, per notification and device (#262): sent, failed, or the device gone. */
+export const pushDeliveryStatus = pgEnum("push_delivery_status", ["sent", "failed", "gone"]);
+
+/**
+ * One row per notification and device it was pushed to (#262): the admin app's counts, and what a
+ * later job or queue would work through. The endpoint stays when the device is deleted.
+ */
+export const pushDeliveries = pgTable(
+  "push_deliveries",
+  {
+    notificationId: uuid()
+      .notNull()
+      .references(() => notifications.id, { onDelete: "cascade" }),
+    endpoint: text().notNull(),
+    status: pushDeliveryStatus().notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.notificationId, table.endpoint] })],
 );

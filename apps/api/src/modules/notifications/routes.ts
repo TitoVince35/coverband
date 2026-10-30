@@ -9,6 +9,7 @@ import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import {
   markNotificationRead,
+  pushTeamNote,
   removePushSubscription,
   savePushSubscription,
   sendTeamNote,
@@ -46,8 +47,13 @@ export function adminNotificationRoutes(deps: AppDeps) {
       c.json(await teamNotePage(deps.db, c.req.valid("query"))),
     )
     .post("/", zValidator("json", teamNoteBody, validationHook), async (c) => {
-      const note = await sendTeamNote(deps.db, c.req.valid("json").text, c.var.user.id);
-      return c.json({ data: note }, 201);
+      const { text } = c.req.valid("json");
+      const note = await sendTeamNote(deps.db, text, c.var.user.id);
+      // Pushed to subscribed devices too (#262): the app shows it either way.
+      const devices = deps.push
+        ? await pushTeamNote({ ...deps, log: c.var.log, push: deps.push }, { id: note.id, text })
+        : { reached: 0, failed: 0 };
+      return c.json({ data: { ...note, devices } }, 201);
     });
 }
 

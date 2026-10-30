@@ -201,6 +201,8 @@ export const pushSubscriptionBody = z.object({
     p256dh: z.base64url().max(200),
     auth: z.base64url().max(100),
   }),
+  // The app's language on the device (#262): pushes are written in it.
+  language: z.enum(Object.keys(LANGUAGES) as [Language, ...Language[]]).default("en"),
 });
 
 /** Turning push notifications off on a device: its subscription's endpoint. */

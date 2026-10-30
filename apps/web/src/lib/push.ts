@@ -1,3 +1,4 @@
+import type { Language } from "@coverband/shared";
 import { type QueryClient, queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { base64UrlBytes } from "@/lib/base64url";
@@ -49,9 +50,10 @@ export class PushDeniedError extends Error {}
 
 /**
  * Turns push notifications on for this device: the browser's permission prompt (it must follow a
- * tap), a subscription with the server's key, saved on the server.
+ * tap), a subscription with the server's key, saved on the server with the app's language (the
+ * pushes' own words, #262).
  */
-export async function enablePush(publicKey: string) {
+export async function enablePush(publicKey: string, language: Language) {
   if ((await Notification.requestPermission()) !== "granted") throw new PushDeniedError();
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.subscribe({
@@ -65,6 +67,7 @@ export async function enablePush(publicKey: string) {
         json: {
           endpoint: subscription.endpoint,
           keys: { p256dh: json.keys?.p256dh ?? "", auth: json.keys?.auth ?? "" },
+          language,
         },
       }),
     );

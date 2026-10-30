@@ -1,3 +1,4 @@
+import { DEFAULT_LANGUAGE, isLanguage } from "@coverband/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, BellOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -20,7 +21,7 @@ import { disablePush, enablePush, PushDeniedError, pushKeyQuery, pushStateQuery 
  * (no push in this browser, the dev server, push off on the server).
  */
 export function PushCard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Offline, the app is read-only (#165).
   const online = useOnline();
   const queryClient = useQueryClient();
@@ -28,7 +29,8 @@ export function PushCard() {
   const { data: state } = useQuery(pushStateQuery);
   const onSettled = () => queryClient.invalidateQueries({ queryKey: pushStateQuery.queryKey });
   const enable = useMutation({
-    mutationFn: (key: string) => enablePush(key),
+    mutationFn: (key: string) =>
+      enablePush(key, isLanguage(i18n.language) ? i18n.language : DEFAULT_LANGUAGE),
     onSuccess: () => toast.success(t("account.push.enabled")),
     // Refused at the prompt: the card says they're blocked.
     onError: (error) => {
