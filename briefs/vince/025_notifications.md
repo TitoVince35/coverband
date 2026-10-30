@@ -3,6 +3,8 @@
 > 🕒 Brief posted on Friday 2026/10/30 17:05
 >
 > 🕒 Brief settled on Friday 2026/10/30 17:14
+>
+> 🕒 Issues completed on Friday 2026/10/30 18:01
 
 Push notifications, first implementation: release notes from the team. Background: [study 022](../claude/022_push-notifications.md) (installed apps, VAPID, subscriptions, where sending runs), agreed.
 
