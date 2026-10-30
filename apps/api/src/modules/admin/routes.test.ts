@@ -464,7 +464,9 @@ describe.skipIf(!databaseUrl)("admin API", () => {
       body: { email: ` ${leaderEmail.toUpperCase()} `, language: "fr" },
     });
     expect(res.status).toBe(201);
-    const { id } = (await res.json()) as { id: string };
+    const {
+      data: { id },
+    } = (await res.json()) as { data: { id: string } };
 
     const mail = mailer.sent.at(-1);
     expect(mail?.to).toBe(leaderEmail);
@@ -480,9 +482,11 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     expect(Math.abs(ttl - INVITATION_TTL_MS)).toBeLessThan(60_000);
 
     const list = (await (await call("/invitations")).json()) as {
-      invitations: { id: string; email: string; status: string; invitedBy: string }[];
+      data: { id: string; email: string; status: string; invitedBy: string }[];
+      total: number;
     };
-    expect(list.invitations.find((i) => i.id === id)).toMatchObject({
+    expect(list.total).toBe(list.data.length);
+    expect(list.data.find((i) => i.id === id)).toMatchObject({
       email: leaderEmail,
       status: "pending",
       invitedBy: "Ada Admin",
@@ -538,10 +542,10 @@ describe.skipIf(!databaseUrl)("admin API", () => {
 
   test("revoke hides the invitation; revoking or resending again is a 404", async () => {
     const [row] = await db.select().from(invitations).where(eq(invitations.email, leaderEmail));
-    expect((await call(`/invitations/${row?.id}`, { method: "DELETE" })).status).toBe(204);
+    expect((await call(`/invitations/${row?.id}`, { method: "DELETE" })).status).toBe(200);
 
-    const list = (await (await call("/invitations")).json()) as { invitations: { id: string }[] };
-    expect(list.invitations.some((i) => i.id === row?.id)).toBe(false);
+    const list = (await (await call("/invitations")).json()) as { data: { id: string }[] };
+    expect(list.data.some((i) => i.id === row?.id)).toBe(false);
     expect((await call(`/invitations/${row?.id}`, { method: "DELETE" })).status).toBe(404);
     expect((await call(`/invitations/${row?.id}/resend`, { method: "POST" })).status).toBe(404);
     // Refused attempts record nothing.

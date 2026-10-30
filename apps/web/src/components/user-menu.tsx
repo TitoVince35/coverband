@@ -1,7 +1,6 @@
-import { ADMIN_ROLE } from "@coverband/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { KeyRound, LogOut, MessageSquare, Shield } from "lucide-react";
+import { KeyRound, LogOut, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,14 +54,6 @@ export function UserMenu() {
           <div>{session.user.email}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {session.user.role === ADMIN_ROLE && (
-          <DropdownMenuItem asChild>
-            <Link to="/admin">
-              <Shield />
-              {t("admin.title")}
-            </Link>
-          </DropdownMenuItem>
-        )}
         <DropdownMenuItem asChild>
           <Link to="/account">
             <KeyRound />

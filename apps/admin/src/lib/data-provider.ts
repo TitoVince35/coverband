@@ -47,7 +47,8 @@ export const dataProvider = {
   getOne: (resource, { id }) => apiFetch(`/api/admin/${resource}/${encodeURIComponent(id)}`),
   getMany: notYet("getMany"),
   getManyReference: notYet("getManyReference"),
-  create: notYet("create"),
+  create: (resource, { data }) =>
+    apiFetch(`/api/admin/${resource}`, { method: "POST", body: JSON.stringify(data) }),
   update: notYet("update"),
   updateMany: notYet("updateMany"),
   /** Deleting asks for what the API needs to confirm it in `meta` (a band's name, #248). */
@@ -65,6 +66,9 @@ export const dataProvider = {
   /** Blocks a user, or unblocks them (#249). */
   setUserBanned: (id: string, status: "ban" | "unban") =>
     apiFetch(`/api/admin/users/${encodeURIComponent(id)}/${status}`, { method: "POST" }),
+  /** Sends a band leader invitation again: a new link, 48 more hours (#250). */
+  resendInvitation: (id: string) =>
+    apiFetch(`/api/admin/invitations/${encodeURIComponent(id)}/resend`, { method: "POST" }),
   /** Sends the user Better Auth's password reset email (#249). */
   sendPasswordReset: (id: string) =>
     apiFetch(`/api/admin/users/${encodeURIComponent(id)}/password-reset`, { method: "POST" }),
