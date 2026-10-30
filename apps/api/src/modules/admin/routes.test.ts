@@ -141,10 +141,12 @@ describe.skipIf(!databaseUrl)("admin API", () => {
         ids[key] = band?.id ?? "";
       }
       const [user] = await db.select().from(users).where(eq(users.email, userEmail));
+      // Join dates apart: one insert would give them all the same, and the lineup no fixed order.
+      const day = (n: number) => new Date(Date.UTC(2026, 0, n));
       await db.insert(bandMembers).values([
-        { bandId: ids.alpha ?? "", userId: adminId, role: "leader" },
-        { bandId: ids.alpha ?? "", userId: user?.id ?? "", role: "musician" },
-        { bandId: ids.beta ?? "", userId: user?.id ?? "", role: "leader" },
+        { bandId: ids.alpha ?? "", userId: adminId, role: "leader", joinedAt: day(1) },
+        { bandId: ids.alpha ?? "", userId: user?.id ?? "", role: "musician", joinedAt: day(2) },
+        { bandId: ids.beta ?? "", userId: user?.id ?? "", role: "leader", joinedAt: day(1) },
       ]);
       await db.insert(memberInstruments).values({
         bandId: ids.alpha ?? "",
