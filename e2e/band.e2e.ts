@@ -97,6 +97,37 @@ test("an admin views the app as the band leader, read-only, then stops", async (
   await expect(page.getByText("Viewing the app as")).toBeHidden();
 });
 
+test("an admin finds the band leader in the admin app, then views the app as them (#249)", async ({
+  page,
+  browser,
+}) => {
+  await adminAppLogin(page, ADMIN, PASSWORD);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`${ADMIN_APP_URL}/#/users`);
+  await page.getByPlaceholder("Search by email or name").fill(leaderEmail);
+  await expect(page.getByText("1-1 of 1")).toBeVisible();
+  const row = page.getByRole("row").filter({ hasText: leaderEmail });
+  await expect(row).toContainText(band);
+  await expect(row.getByLabel("band leader")).toBeVisible();
+  await expect(row).toContainText("Guitar");
+  await row.getByRole("cell", { name: leaderEmail }).click();
+  await expect(page.getByRole("heading", { name: "Lea Leader" })).toBeVisible();
+  await expect(page.getByText("Last session")).toBeVisible();
+
+  // The admin app opens the web app's page, which starts it once confirmed.
+  const link = page.getByRole("link", { name: "View the app as this user" });
+  const href = (await link.getAttribute("href")) ?? "";
+  expect(href).toMatch(/\/impersonate\/[0-9a-f-]{36}$/);
+  const web = await (await browser.newContext()).newPage();
+  await login(web, ADMIN, PASSWORD);
+  await web.goto(new URL(href).pathname);
+  await web.getByRole("button", { name: "View the app as Lea Leader" }).click();
+  await expect(web.getByText("Viewing the app as Lea Leader: read-only.")).toBeVisible();
+  await web.getByRole("button", { name: "Stop" }).click();
+  await expect(web.getByText("Viewing the app as")).toBeHidden();
+  await web.context().close();
+});
+
 test("the band leader invites a musician, who joins the band", async ({ browser }) => {
   await leader.getByRole("link", { name: "Lineup" }).click();
   await leader.getByRole("button", { name: "Invite a musician" }).click();

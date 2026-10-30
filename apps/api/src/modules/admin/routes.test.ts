@@ -113,12 +113,27 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     expect(stats.documentsQuotaBytes).toBe((stats.bands ?? 0) * DOCUMENT_LIMITS.perBand);
   });
 
-  test("lists users with their global role", async () => {
-    const res = await call("/users");
+  test("lists users with their global role, searched by email or name (#249)", async () => {
+    const res = await call(`/users?q=${run}&sort=email`);
     expect(res.status).toBe(200);
-    const { users: rows } = (await res.json()) as { users: { email: string; role: string }[] };
-    expect(rows.find((u) => u.email === adminEmail)?.role).toBe("admin");
-    expect(rows.find((u) => u.email === userEmail)?.role).toBe("user");
+    const page = (await res.json()) as {
+      data: { email: string; role: string; banned: boolean }[];
+      total: number;
+    };
+    expect(page.data.map((u) => [u.email, u.role, u.banned])).toEqual([
+      [adminEmail, "admin", false],
+      [userEmail, "user", false],
+    ]);
+    expect(page.total).toBe(2);
+    const byName = (await (await call("/users?q=Max%20Musician")).json()) as {
+      data: { email: string }[];
+    };
+    expect(byName.data.map((u) => u.email)).toContain(userEmail);
+    const admins = (await (await call(`/users?q=${run}&admins=true`)).json()) as {
+      data: { email: string }[];
+    };
+    expect(admins.data.map((u) => u.email)).toEqual([adminEmail]);
+    expect((await call("/users?sort=password")).status).toBe(400);
   });
 
   describe("bands (#247)", () => {
@@ -306,6 +321,140 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     test("an unknown band is a 404, a malformed id a 400", async () => {
       expect((await call(`/bands/${crypto.randomUUID()}`)).status).toBe(404);
       expect((await call("/bands/nope")).status).toBe(400);
+    });
+  });
+
+  describe("users (#249)", () => {
+    const run2 = crypto.randomUUID().slice(0, 8);
+    const email = (name: string) => `${name}-${run2}@test.localhost`;
+    const ids: Record<string, string> = {};
+    let bandId = "";
+
+    beforeAll(async () => {
+      for (const name of ["lea", "max", "solo"]) {
+        const { user } = await auth.api.createUser({
+          body: { email: email(name), password, name: `${name} ${run2}` },
+        });
+        ids[name] = user.id;
+      }
+      // Lea and Max lead a band together, Max plays in it too; Solo is in no band.
+      const [band] = await db
+        .insert(bands)
+        .values({ name: `Duo ${run2}`, slug: `duo-${run2}` })
+        .returning({ id: bands.id });
+      bandId = band?.id ?? "";
+      await db.insert(bandMembers).values([
+        { bandId, userId: ids.lea ?? "", role: "leader" },
+        { bandId, userId: ids.max ?? "", role: "leader" },
+      ]);
+      await db.insert(memberInstruments).values([
+        { bandId, userId: ids.lea ?? "", position: 0, code: "guitar" },
+        { bandId, userId: ids.lea ?? "", position: 1, label: "Kazoo" },
+      ]);
+    });
+
+    afterAll(async () => {
+      await db.delete(bands).where(eq(bands.id, bandId));
+      await db.delete(users).where(like(users.email, `%-${run2}@test.localhost`));
+    });
+
+    type User = {
+      email: string;
+      bands: { name: string; role: string }[];
+      instruments: unknown[];
+      banned: boolean;
+      impersonateUrl?: string | null;
+      pendingInvitations?: unknown[];
+      lastSessionAt?: string | null;
+    };
+    const page = async (query: string) =>
+      (await (await call(`/users?${query}`)).json()) as { data: User[]; total: number };
+
+    test("bands with the role in each, instruments without duplicates; the no-band filter", async () => {
+      const { data } = await page(`q=${run2}&sort=email`);
+      expect(data.map((u) => [u.email, u.bands, u.instruments])).toEqual([
+        [
+          email("lea"),
+          [{ id: bandId, name: `Duo ${run2}`, slug: `duo-${run2}`, role: "leader" }],
+          [{ code: "guitar" }, { label: "Kazoo" }],
+        ],
+        [
+          email("max"),
+          [{ id: bandId, name: `Duo ${run2}`, slug: `duo-${run2}`, role: "leader" }],
+          [],
+        ],
+        [email("solo"), [], []],
+      ]);
+      expect((await page(`q=${run2}&bandless=true`)).data.map((u) => u.email)).toEqual([
+        email("solo"),
+      ]);
+    });
+
+    test("a user's page: the last session, and the link to view the app as them", async () => {
+      await login(email("solo"));
+      const res = await call(`/users/${ids.solo}`);
+      expect(res.status).toBe(200);
+      const { data } = (await res.json()) as { data: User };
+      expect(data.lastSessionAt).not.toBeNull();
+      expect(data.pendingInvitations).toEqual([]);
+      expect(data.impersonateUrl).toBe(`http://localhost:3000/impersonate/${ids.solo}`);
+      // Never for an admin (oneself included).
+      const self = (await (await call(`/users/${adminId}`)).json()) as { data: User };
+      expect(self.data.impersonateUrl).toBeNull();
+      expect((await call(`/users/${crypto.randomUUID()}`)).status).toBe(404);
+    });
+
+    test("blocking ends the sessions and refuses logins, until unblocked", async () => {
+      const cookie = await login(email("solo"));
+      const session = () => app.request("/api/bands", { headers: { cookie } });
+      expect((await session()).status).toBe(200);
+
+      expect((await call(`/users/${ids.solo}/ban`, { method: "POST" })).status).toBe(200);
+      expect((await session()).status).toBe(401);
+      expect(await login(email("solo"))).toBe("");
+      expect((await page(`q=solo-${run2}`)).data[0]?.banned).toBe(true);
+
+      expect((await call(`/users/${ids.solo}/unban`, { method: "POST" })).status).toBe(200);
+      expect(await login(email("solo"))).not.toBe("");
+      expect((await activityOf(db, ids.solo ?? "")).map((a) => a.action)).toEqual([
+        "user.banned",
+        "user.unbanned",
+      ]);
+      // Never an admin, nor oneself.
+      expect((await call(`/users/${adminId}/ban`, { method: "POST" })).status).toBe(403);
+    });
+
+    test("a password reset email, in the language of their latest invitation", async () => {
+      const sent = mailer.sent.length;
+      const res = await call(`/users/${ids.solo}/password-reset`, { method: "POST" });
+      expect(res.status).toBe(204);
+      expect(mailer.sent.length).toBe(sent + 1);
+      expect(mailer.sent.at(-1)?.to).toBe(email("solo"));
+      expect(mailer.sent.at(-1)?.text).toContain("/api/auth/reset-password/");
+    });
+
+    test("deleting: refused for the only band leader of a band, then done", async () => {
+      // Lea leads with Max: either may go, but not both.
+      expect((await call(`/users/${ids.max}`, { method: "DELETE" })).status).toBe(200);
+      const refused = await call(`/users/${ids.lea}`, { method: "DELETE" });
+      expect(refused.status).toBe(409);
+      expect(await refused.json()).toMatchObject({
+        error: { code: "only_band_leader", details: { bands: `Duo ${run2}` } },
+      });
+      expect((await call(`/users/${ids.solo}`, { method: "DELETE" })).status).toBe(200);
+      expect(
+        await db
+          .select()
+          .from(users)
+          .where(eq(users.id, ids.solo ?? "")),
+      ).toEqual([]);
+      expect((await activityOf(db, ids.solo ?? "")).at(-1)).toMatchObject({
+        action: "user.deleted",
+        bandId: null,
+        actorId: adminId,
+      });
+      expect((await call(`/users/${adminId}`, { method: "DELETE" })).status).toBe(403);
+      expect((await call(`/users/${ids.solo}`, { method: "DELETE" })).status).toBe(404);
     });
   });
 

@@ -20,6 +20,7 @@ import { Route as AppAdminRouteImport } from './routes/_app/admin'
 import { Route as AppContactRouteImport } from './routes/_app/contact'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppBBandSlugRouteImport } from './routes/_app/b.$bandSlug'
+import { Route as AppImpersonateUserIdRouteImport } from './routes/_app/impersonate.$userId'
 import { Route as AppBBandSlugIndexRouteImport } from './routes/_app/b.$bandSlug/index'
 import { Route as AppBBandSlugLineupRouteImport } from './routes/_app/b.$bandSlug/lineup'
 import { Route as AppBBandSlugSettingsRouteImport } from './routes/_app/b.$bandSlug/settings'
@@ -81,6 +82,11 @@ const AppBBandSlugRoute = AppBBandSlugRouteImport.update({
   path: '/b/$bandSlug',
   getParentRoute: () => AppRoute,
 } as any)
+const AppImpersonateUserIdRoute = AppImpersonateUserIdRouteImport.update({
+  id: '/impersonate/$userId',
+  path: '/impersonate/$userId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppBBandSlugIndexRoute = AppBBandSlugIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof AppContactRoute
   '/invite/$token': typeof InviteTokenRoute
   '/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
+  '/impersonate/$userId': typeof AppImpersonateUserIdRoute
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug/': typeof AppBBandSlugIndexRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/contact': typeof AppContactRoute
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AppIndexRoute
+  '/impersonate/$userId': typeof AppImpersonateUserIdRoute
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug': typeof AppBBandSlugIndexRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
+  '/_app/impersonate/$userId': typeof AppImpersonateUserIdRoute
   '/_app/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/_app/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/_app/b/$bandSlug/': typeof AppBBandSlugIndexRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/invite/$token'
     | '/b/$bandSlug'
+    | '/impersonate/$userId'
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug/settings'
     | '/b/$bandSlug/'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/invite/$token'
     | '/'
+    | '/impersonate/$userId'
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug/settings'
     | '/b/$bandSlug'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_app/'
     | '/_app/b/$bandSlug'
+    | '/_app/impersonate/$userId'
     | '/_app/b/$bandSlug/lineup'
     | '/_app/b/$bandSlug/settings'
     | '/_app/b/$bandSlug/'
@@ -313,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/impersonate/$userId': {
+      id: '/_app/impersonate/$userId'
+      path: '/impersonate/$userId'
+      fullPath: '/impersonate/$userId'
+      preLoaderRoute: typeof AppImpersonateUserIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/b/$bandSlug/': {
       id: '/_app/b/$bandSlug/'
       path: '/'
@@ -386,6 +405,7 @@ interface AppRouteChildren {
   AppContactRoute: typeof AppContactRoute
   AppIndexRoute: typeof AppIndexRoute
   AppBBandSlugRoute: typeof AppBBandSlugRouteWithChildren
+  AppImpersonateUserIdRoute: typeof AppImpersonateUserIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -394,6 +414,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppContactRoute: AppContactRoute,
   AppIndexRoute: AppIndexRoute,
   AppBBandSlugRoute: AppBBandSlugRouteWithChildren,
+  AppImpersonateUserIdRoute: AppImpersonateUserIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

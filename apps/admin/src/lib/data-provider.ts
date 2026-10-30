@@ -62,6 +62,12 @@ export const dataProvider = {
   /** Suspends a band, or makes it active again (#248). */
   setBandStatus: (id: string, status: "disable" | "enable") =>
     apiFetch(`/api/admin/bands/${encodeURIComponent(id)}/${status}`, { method: "POST" }),
+  /** Blocks a user, or unblocks them (#249). */
+  setUserBanned: (id: string, status: "ban" | "unban") =>
+    apiFetch(`/api/admin/users/${encodeURIComponent(id)}/${status}`, { method: "POST" }),
+  /** Sends the user Better Auth's password reset email (#249). */
+  sendPasswordReset: (id: string) =>
+    apiFetch(`/api/admin/users/${encodeURIComponent(id)}/password-reset`, { method: "POST" }),
 } satisfies DataProvider & Record<string, unknown>;
 
 export type AdminDataProvider = typeof dataProvider;

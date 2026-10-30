@@ -465,7 +465,12 @@
   "impersonation": {
     "viewAs": "View as",
     "banner": "Viewing the app as {{name}}: read-only.",
-    "stop": "Stop"
+    "stop": "Stop",
+    "confirmTitle": "View the app as {{name}}?",
+    "confirmText": "You'll see their app as they do, read-only, for an hour at most. Stop from the banner at the top.",
+    "confirm": "View the app as {{name}}",
+    "notAllowed": "You can't view the app as this user: not an admin, nor yourself.",
+    "cancel": "Back to the app"
   },
   "invitations": {
     "email": "Email",

@@ -160,6 +160,32 @@ export async function countPendingInvitations(db: Db, now: Date) {
   return row?.count ?? 0;
 }
 
+/** The invitations still waiting for this email's answer, newest first (#249). */
+export async function pendingInvitationsFor(db: Db, email: string, now: Date) {
+  return db
+    .select({
+      id: invitations.id,
+      role: invitations.role,
+      bandId: invitations.bandId,
+      createdAt: invitations.createdAt,
+      expiresAt: invitations.expiresAt,
+    })
+    .from(invitations)
+    .where(and(open(), gt(invitations.expiresAt, now), eq(invitations.email, email)))
+    .orderBy(desc(invitations.createdAt));
+}
+
+/** The language of the latest invitation sent to this email: their emails' language, else English. */
+export async function invitationLanguageOf(db: Db, email: string): Promise<Language> {
+  const [row] = await db
+    .select({ language: invitations.language })
+    .from(invitations)
+    .where(eq(invitations.email, email))
+    .orderBy(desc(invitations.createdAt))
+    .limit(1);
+  return row?.language ?? "en";
+}
+
 /** Open invitations of a scope, newest first, with their status. */
 export async function listInvitations(
   { db, now = () => new Date() }: InvitationDeps,

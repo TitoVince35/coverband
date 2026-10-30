@@ -1,5 +1,5 @@
 import { type BandLogo, type BandRole, type Instrument, slugify } from "@coverband/shared";
-import { and, asc, count, desc, eq, gte, ilike, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, ne, notExists, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
@@ -303,18 +303,58 @@ export async function deleteDisabledBand(tx: Tx, id: string, name: string, actor
   return [band.logoKey, band.logoThumbnailKey].filter((key): key is string => key !== null);
 }
 
-/** Every membership, by band name, with the band's name and slug: the admin console. */
-export function allMemberships(db: Db) {
-  return db
+/** The bands of some users, by band name, with their role in each, by user id (#249). */
+export async function membershipsOfUsers(db: Db, userIds: readonly string[]) {
+  const byUser = new Map<string, { id: string; name: string; slug: string; role: BandRole }[]>(
+    userIds.map((id) => [id, []]),
+  );
+  if (userIds.length === 0) return byUser;
+  const rows = await db
     .select({
       userId: bandMembers.userId,
-      bandName: bands.name,
-      bandSlug: bands.slug,
+      id: bands.id,
+      name: bands.name,
+      slug: bands.slug,
       role: bandMembers.role,
     })
     .from(bandMembers)
     .innerJoin(bands, eq(bands.id, bandMembers.bandId))
-    .orderBy(asc(bands.name));
+    .where(inArray(bandMembers.userId, [...userIds]))
+    .orderBy(asc(sql`lower(${bands.name})`));
+  for (const { userId, ...band } of rows) byUser.get(userId)?.push(band);
+  return byUser;
+}
+
+/** Every user with at least one band, as a subquery (the admin console's "no band" filter). */
+export function bandMemberIds(db: Db) {
+  return db.selectDistinct({ userId: bandMembers.userId }).from(bandMembers);
+}
+
+/** The bands this user leads alone (no other band leader): deleting them would orphan them. */
+export async function bandsLedAlone(db: Db | Tx, userId: string) {
+  const others = alias(bandMembers, "others");
+  return db
+    .select({ id: bands.id, name: bands.name })
+    .from(bandMembers)
+    .innerJoin(bands, eq(bands.id, bandMembers.bandId))
+    .where(
+      and(
+        eq(bandMembers.userId, userId),
+        eq(bandMembers.role, "leader"),
+        notExists(
+          db
+            .select({ userId: others.userId })
+            .from(others)
+            .where(
+              and(
+                eq(others.bandId, bandMembers.bandId),
+                eq(others.role, "leader"),
+                ne(others.userId, userId),
+              ),
+            ),
+        ),
+      ),
+    );
 }
 
 /** A band's members by join date: their names, role and avatar key (`users.image`). */
