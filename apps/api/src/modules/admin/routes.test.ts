@@ -1,8 +1,17 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { APP_NAME, DOCUMENT_LIMITS } from "@coverband/shared";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, like } from "drizzle-orm";
 import { createApp } from "../../app";
-import { activity, invitations, rateLimits, users } from "../../core/db/schema";
+import {
+  activity,
+  bandMembers,
+  bands,
+  invitations,
+  memberInstruments,
+  rateLimits,
+  songs,
+  users,
+} from "../../core/db/schema";
 import { hit } from "../../core/http/rate-limit";
 import { activityOf, createTestDeps } from "../../test-deps";
 import { INVITATION_EMAILS } from "../invitations/routes";
@@ -66,6 +75,7 @@ describe.skipIf(!databaseUrl)("admin API", () => {
   afterAll(async () => {
     // Invitations go with their inviter (on delete cascade); activity outside a band doesn't.
     await db.delete(activity).where(eq(activity.actorId, adminId));
+    await db.delete(bands).where(like(bands.slug, `%${run}%`));
     await db.delete(users).where(inArray(users.email, [adminEmail, userEmail]));
     await db.delete(rateLimits).where(eq(rateLimits.key, `coverband:invitation-emails:${adminId}`));
     await sql.end();
@@ -108,6 +118,105 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     const { users: rows } = (await res.json()) as { users: { email: string; role: string }[] };
     expect(rows.find((u) => u.email === adminEmail)?.role).toBe("admin");
     expect(rows.find((u) => u.email === userEmail)?.role).toBe("user");
+  });
+
+  describe("bands (#247)", () => {
+    type Page = {
+      data: { id: string; name: string; members: number; leaders: { name: string }[] }[];
+      total: number;
+    };
+    const ids: Record<string, string> = {};
+
+    beforeAll(async () => {
+      // Three bands: Alpha (2 members, a leader), Beta (1), Gamma_% (none, a name to escape).
+      for (const [key, name] of [
+        ["alpha", `Alpha ${run}`],
+        ["beta", `Beta ${run}`],
+        ["gamma", `Gamma_% ${run}`],
+      ] as const) {
+        const [band] = await db
+          .insert(bands)
+          .values({ name, slug: `${key}-${run}` })
+          .returning({ id: bands.id });
+        ids[key] = band?.id ?? "";
+      }
+      const [user] = await db.select().from(users).where(eq(users.email, userEmail));
+      await db.insert(bandMembers).values([
+        { bandId: ids.alpha ?? "", userId: adminId, role: "leader" },
+        { bandId: ids.alpha ?? "", userId: user?.id ?? "", role: "musician" },
+        { bandId: ids.beta ?? "", userId: user?.id ?? "", role: "leader" },
+      ]);
+      await db.insert(memberInstruments).values({
+        bandId: ids.alpha ?? "",
+        userId: user?.id ?? "",
+        position: 0,
+        code: "drums",
+      });
+      await db
+        .insert(songs)
+        .values({ bandId: ids.alpha ?? "", title: "Zombie", artist: "The Cranberries" });
+    });
+
+    const list = async (query: string) => (await (await call(`/bands?${query}`)).json()) as Page;
+
+    test("admins only", async () => {
+      const userCookie = await login(userEmail);
+      expect((await call("/bands", { cookie: userCookie })).status).toBe(403);
+      expect((await call(`/bands/${ids.alpha}`, { cookie: userCookie })).status).toBe(403);
+    });
+
+    test("a page: member count and leaders, searched by name", async () => {
+      const page = await list(`q=${run}&sort=name`);
+      expect(page.total).toBe(3);
+      expect(page.data.map((b) => [b.name, b.members, b.leaders.map((l) => l.name)])).toEqual([
+        [`Alpha ${run}`, 2, ["Ada Admin"]],
+        [`Beta ${run}`, 1, ["Max Musician"]],
+        [`Gamma_% ${run}`, 0, []],
+      ]);
+      // `%` and `_` are searched as themselves.
+      expect((await list(`q=${encodeURIComponent(`_% ${run}`)}`)).total).toBe(1);
+      expect((await list(`q=${encodeURIComponent(`a% ${run}`)}`)).total).toBe(0);
+    });
+
+    test("sorted and paged: the total is the whole search", async () => {
+      const page = await list(`q=${run}&sort=members&order=desc&page=2&perPage=2`);
+      expect(page.total).toBe(3);
+      expect(page.data.map((b) => b.members)).toEqual([0]);
+      expect((await call("/bands?sort=email")).status).toBe(400);
+      expect((await call("/bands?perPage=1000")).status).toBe(400);
+    });
+
+    test("a band's page: lineup, counts, storage and journal", async () => {
+      const res = await call(`/bands/${ids.alpha}`);
+      expect(res.status).toBe(200);
+      const { data } = (await res.json()) as {
+        data: {
+          name: string;
+          lineup: { name: string; role: string; instruments: unknown[]; avatarUrl?: unknown }[];
+          songs: number;
+          documents: number;
+          storage: { usedBytes: number; quotaBytes: number };
+          journal: unknown[];
+        };
+      };
+      expect(data.name).toBe(`Alpha ${run}`);
+      expect(data.lineup.map((m) => [m.name, m.role, m.instruments])).toEqual([
+        ["Ada Admin", "leader", []],
+        ["Max Musician", "musician", [{ code: "drums" }]],
+      ]);
+      expect(data.lineup[0]).not.toHaveProperty("avatarUrl");
+      expect(data).toMatchObject({
+        songs: 1,
+        documents: 0,
+        storage: { usedBytes: 0, quotaBytes: DOCUMENT_LIMITS.perBand },
+        journal: [],
+      });
+    });
+
+    test("an unknown band is a 404, a malformed id a 400", async () => {
+      expect((await call(`/bands/${crypto.randomUUID()}`)).status).toBe(404);
+      expect((await call("/bands/nope")).status).toBe(400);
+    });
   });
 
   test("invites a band leader: email with a link, only the token hash stored", async () => {

@@ -1,5 +1,5 @@
 import { type BandLogo, type BandRole, type Instrument, slugify } from "@coverband/shared";
-import { and, asc, count, eq, gte, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
@@ -146,6 +146,95 @@ export async function countBands(db: Db, since: Date) {
     })
     .from(bands);
   return { total: row?.total ?? 0, since: row?.since ?? 0 };
+}
+
+/** How the admin console sorts bands (#247). */
+export const ADMIN_BAND_SORTS = ["name", "createdAt", "members"] as const;
+export type AdminBandSort = (typeof ADMIN_BAND_SORTS)[number];
+
+/** A page of the admin console's band list: `q` searches the name (case-insensitive). */
+export type AdminBandQuery = {
+  page: number;
+  perPage: number;
+  sort: AdminBandSort;
+  order: "asc" | "desc";
+  q?: string | undefined;
+};
+
+/** `%` and `_` typed in a search are matched as themselves. */
+const likePattern = (text: string) => `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+
+/**
+ * A page of bands for the admin console (#247), with their member count and band leaders (there
+ * can be several), and the total matching the search. Ties keep one order (the id).
+ */
+export async function adminBandPage(db: Db, query: AdminBandQuery) {
+  const where = query.q ? ilike(bands.name, likePattern(query.q)) : undefined;
+  const members =
+    sql<number>`(select count(*) from ${bandMembers} where ${bandMembers.bandId} = ${bands.id})`.mapWith(
+      Number,
+    );
+  const sortColumn = {
+    name: sql`lower(${bands.name})`,
+    createdAt: bands.createdAt,
+    members,
+  }[query.sort];
+  const direction = query.order === "desc" ? desc : asc;
+  const [rows, [total]] = await Promise.all([
+    db
+      .select({
+        id: bands.id,
+        name: bands.name,
+        slug: bands.slug,
+        genre: bands.genre,
+        createdAt: bands.createdAt,
+        members,
+      })
+      .from(bands)
+      .where(where)
+      .orderBy(direction(sortColumn), asc(bands.id))
+      .limit(query.perPage)
+      .offset((query.page - 1) * query.perPage),
+    db.select({ count: count() }).from(bands).where(where),
+  ]);
+  const leaders = rows.length
+    ? await db
+        .select({ bandId: bandMembers.bandId, id: users.id, name: users.name })
+        .from(bandMembers)
+        .innerJoin(users, eq(users.id, bandMembers.userId))
+        .where(
+          and(
+            inArray(
+              bandMembers.bandId,
+              rows.map((row) => row.id),
+            ),
+            eq(bandMembers.role, "leader"),
+          ),
+        )
+        .orderBy(asc(bandMembers.joinedAt))
+    : [];
+  return {
+    data: rows.map((row) => ({
+      ...row,
+      leaders: leaders.filter((l) => l.bandId === row.id).map(({ bandId: _, ...l }) => l),
+    })),
+    total: total?.count ?? 0,
+  };
+}
+
+/** One band as the admin console shows it (#247), by id; undefined when there's none. */
+export async function adminBandOf(db: Db, id: string) {
+  const [band] = await db
+    .select({
+      id: bands.id,
+      name: bands.name,
+      slug: bands.slug,
+      genre: bands.genre,
+      createdAt: bands.createdAt,
+    })
+    .from(bands)
+    .where(eq(bands.id, id));
+  return band;
 }
 
 /** Every membership, by band name, with the band's name and slug: the admin console. */

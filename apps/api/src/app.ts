@@ -47,7 +47,7 @@ function createApi(deps: AppDeps) {
       .use(loadSession(deps.auth))
       .route("/health", healthRoutes(deps.buildInfo))
       .route("/access", accessRoutes(deps.db, deps.access))
-      .route("/admin", adminRoutes(deps))
+      .route("/admin", adminRoutes(deps, [bandJournalSource, songJournalSource]))
       .route("/admin/invitations", leaderInvitationRoutes(deps))
       // Invitation links, public: the token is the proof (onboarding).
       .route("/invitations", onboardingRoutes(deps))

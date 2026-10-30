@@ -114,6 +114,20 @@ export async function repertoireTotals(db: Db) {
   };
 }
 
+/** One band's songs (archived ones included) and documents, with the documents' bytes (#247). */
+export async function bandRepertoireTotals(db: Db, bandId: string) {
+  const [songRow] = await db.select({ count: count() }).from(songs).where(eq(songs.bandId, bandId));
+  const [documentRow] = await db
+    .select({ count: count(), bytes: sum(songDocuments.size).mapWith(Number) })
+    .from(songDocuments)
+    .where(eq(songDocuments.bandId, bandId));
+  return {
+    songs: songRow?.count ?? 0,
+    documents: documentRow?.count ?? 0,
+    documentsBytes: documentRow?.bytes ?? 0,
+  };
+}
+
 /** One song of a band, with who added it (their current display name; null once deleted). */
 export async function getSong(db: Db, bandId: string, id: string) {
   const [song] = await db

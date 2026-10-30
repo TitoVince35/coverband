@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { type Browser, expect, type Locator, type Page, test } from "@playwright/test";
+import { ADMIN_APP_URL } from "./playwright.config";
 import { ADMIN, adminAppLogin, bandName, email, invitationLink, login, PASSWORD } from "./support";
 
 // One story, in order: each step builds on the previous one.
@@ -131,6 +132,27 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   await musician.goto(musician.url().replace(/\/lineup$/, "/settings"));
   await expect(musician).toHaveURL(/\/b\/e2e-rockers-[^/]+$/);
   await musician.context().close();
+});
+
+test("an admin finds the band in the admin app and opens its page (#247)", async ({ page }) => {
+  await adminAppLogin(page, ADMIN, PASSWORD);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`${ADMIN_APP_URL}/#/bands`);
+  await page.getByPlaceholder("Search by name").fill(band);
+  // The search is debounced: once the list shows only this band, open it.
+  await expect(page.getByText("1-1 of 1")).toBeVisible();
+  const row = page.getByRole("row").filter({ hasText: band });
+  await expect(row).toContainText("Lea Leader");
+  await expect(row).toContainText("2");
+  await row.getByRole("cell", { name: band }).click();
+
+  await expect(page.getByRole("heading", { name: band })).toBeVisible();
+  await expect(page.getByText("band leader")).toBeVisible();
+  await expect(page.getByText("Maxou", { exact: true })).toBeVisible();
+  await expect(page.getByText("Maxou joined the band")).toBeVisible();
+  await expect(page.getByText("Bass guitar")).toBeVisible();
+  await expect(page.getByText("Lea Leader created the band")).toBeVisible();
+  await expect(page.getByRole("img", { name: /0% used: 0 bytes of 500 MB/ })).toBeVisible();
 });
 
 test("the band leader updates their profile: the new name shows everywhere", async () => {
