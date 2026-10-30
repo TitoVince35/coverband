@@ -7,7 +7,7 @@ import {
 } from "@coverband/shared";
 import { and, asc, count, eq, isNotNull, isNull, sql, sum } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
-import type { Db } from "../../core/db/client";
+import type { Db, Tx } from "../../core/db/client";
 import { isForeignKeyViolation } from "../../core/db/pg-errors";
 import { songDocuments, songs, users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
@@ -126,6 +126,15 @@ export async function bandRepertoireTotals(db: Db, bandId: string) {
     documents: documentRow?.count ?? 0,
     documentsBytes: documentRow?.bytes ?? 0,
   };
+}
+
+/** The storage keys of every document of a band: deleting the band deletes their files (#248). */
+export async function bandDocumentKeys(tx: Tx, bandId: string) {
+  const rows = await tx
+    .select({ key: songDocuments.storageKey })
+    .from(songDocuments)
+    .where(eq(songDocuments.bandId, bandId));
+  return rows.map((row) => row.key);
 }
 
 /** One song of a band, with who added it (their current display name; null once deleted). */

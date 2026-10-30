@@ -5,7 +5,9 @@ import { DateField } from "@/components/admin/date-field";
 import { List } from "@/components/admin/list";
 import { SearchInput } from "@/components/admin/search-input";
 import { Show } from "@/components/admin/show";
+import { BandActions } from "@/components/band-actions";
 import { StorageRing } from "@/components/storage-ring";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type JournalEntry, journalSentence } from "@/lib/journal";
@@ -13,6 +15,7 @@ import { type JournalEntry, journalSentence } from "@/lib/journal";
 type BandRow = {
   id: string;
   name: string;
+  disabledAt: string | null;
   members: number;
   leaders: { id: string; name: string }[];
 };
@@ -20,6 +23,7 @@ type BandRow = {
 type BandDetails = {
   id: string;
   name: string;
+  disabledAt: string | null;
   genre: string | null;
   createdAt: string;
   lineup: {
@@ -37,6 +41,12 @@ type BandDetails = {
 
 const DATE = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 const DATE_TIME = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" });
+
+/** "Suspended" for a disabled band (#248), nothing for an active one. */
+function Status() {
+  const band = useRecordContext<BandRow>();
+  return band?.disabledAt ? <Badge variant="destructive">Suspended</Badge> : null;
+}
 
 function Leaders() {
   const band = useRecordContext<BandRow>();
@@ -62,6 +72,9 @@ export function BandList() {
           <Leaders />
         </DataTable.Col>
         <DataTable.NumberCol source="members" label="Members" />
+        <DataTable.Col label="Status" disableSort>
+          <Status />
+        </DataTable.Col>
       </DataTable>
     </List>
   );
@@ -84,9 +97,17 @@ function BandPage() {
   if (!band || !("lineup" in band)) return <Skeleton className="h-64 w-full" />;
   return (
     <div className="space-y-4">
-      <p className="text-muted-foreground">
-        {band.genre ?? "No genre"} · created {DATE.format(new Date(band.createdAt))}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <p className="text-muted-foreground">
+          {band.genre ?? "No genre"} · created {DATE.format(new Date(band.createdAt))}
+          {band.disabledAt && (
+            <span className="ml-2 text-destructive">
+              · suspended since {DATE.format(new Date(band.disabledAt))}
+            </span>
+          )}
+        </p>
+        <BandActions band={band} />
+      </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Section title="Lineup">
           {band.lineup.length === 0 ? (

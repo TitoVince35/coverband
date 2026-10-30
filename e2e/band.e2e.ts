@@ -899,3 +899,57 @@ test("the colour theme switches and is remembered", async () => {
   await leader.reload();
   await expect(html).not.toHaveClass(/dark/);
 });
+
+/** The admin app, on the e2e band's page. */
+async function adminBandPage(page: Page) {
+  await adminAppLogin(page, ADMIN, PASSWORD);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`${ADMIN_APP_URL}/#/bands`);
+  await page.getByPlaceholder("Search by name").fill(band);
+  await expect(page.getByText("1-1 of 1")).toBeVisible();
+  await page.getByRole("row").filter({ hasText: band }).getByRole("cell", { name: band }).click();
+  await expect(page.getByRole("heading", { name: band })).toBeVisible();
+}
+
+test("an admin suspends the band: its members only see that, until it's enabled (#248)", async ({
+  page,
+}) => {
+  await adminBandPage(page);
+  // Deleting comes only once it's disabled.
+  await expect(page.getByRole("button", { name: "Delete band" })).toBeDisabled();
+  await page.getByRole("button", { name: "Disable band" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Disable" }).click();
+  await expect(page.getByText(/suspended since/)).toBeVisible();
+  await expect(page.getByText("E2E Admin suspended the band")).toBeVisible();
+
+  await leader.goto("/");
+  await expect(leader.getByText("Suspended")).toBeVisible();
+  await leader.getByRole("link", { name: band }).first().click();
+  await expect(leader.getByRole("heading", { name: "This band is suspended" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Enable band" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Enable" }).click();
+  await expect(page.getByText(/suspended since/)).toBeHidden();
+  await leader.reload();
+  await expect(leader.getByRole("heading", { name: band })).toBeVisible();
+});
+
+// Last: the band is gone afterwards.
+test("an admin deletes the band for good, its name typed to confirm (#248)", async ({ page }) => {
+  await adminBandPage(page);
+  await page.getByRole("button", { name: "Disable band" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Disable" }).click();
+  await page.getByRole("button", { name: "Delete band" }).click();
+  const dialog = page.getByRole("dialog");
+  const confirm = dialog.getByRole("button", { name: "Delete for good" });
+  await dialog.getByLabel("Type the band's name to confirm").fill("E2E Rockers");
+  await expect(confirm).toBeDisabled();
+  await dialog.getByLabel("Type the band's name to confirm").fill(band);
+  await confirm.click();
+  await expect(page.getByText("Band deleted")).toBeVisible();
+  await expect(page.getByText("No results found.")).toBeVisible();
+
+  // The band leader keeps their account, without the band.
+  await leader.goto("/");
+  await expect(leader.getByRole("link", { name: band })).toHaveCount(0);
+});

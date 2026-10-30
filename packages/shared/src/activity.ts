@@ -25,6 +25,12 @@ export const ACTIVITY_ACTIONS = [
   "contact.sent",
   "song.document_added",
   "song.document_removed",
+  "band.disabled",
+  "band.enabled",
+  "band.deleted",
+  "user.banned",
+  "user.unbanned",
+  "user.deleted",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];

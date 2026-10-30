@@ -28,6 +28,10 @@
   },
   "band": {
     "notFound": "Ce groupe n'existe pas ou vous n'en faites pas partie.",
+    "suspended": "Suspendu",
+    "suspendedTitle": "Ce groupe est suspendu",
+    "suspendedText": "Un administrateur a suspendu ce groupe : ses pages ne peuvent pas être ouvertes pour l'instant. Si vous pensez que c'est une erreur, contactez-nous.",
+    "suspendedBack": "Retour à mes groupes",
     "comingSoon": "Les setlists et les concerts arrivent bientôt.",
     "roles": {
       "leader": "band leader",
@@ -530,7 +534,11 @@
     "document_invalid": "Seulement des photos (JPEG, PNG, WebP), des PDF, des fichiers Guitar Pro et MuseScore.",
     "document_too_large": "Ce document dépasse 4 Mo.",
     "too_many_documents": "Une chanson a au plus 20 documents : supprimez-en un d'abord.",
-    "band_storage_full": "Les documents de votre groupe ont atteint leur limite de stockage : supprimez-en d'abord."
+    "band_storage_full": "Les documents de votre groupe ont atteint leur limite de stockage : supprimez-en d'abord.",
+    "band_suspended": "Ce groupe est suspendu.",
+    "band_not_disabled": "Désactivez le groupe avant de le supprimer.",
+    "band_name_mismatch": "Le nom saisi n'est pas celui du groupe.",
+    "only_band_leader": "Cette personne est le seul band leader d'un groupe."
   },
   "instruments": {
     "picker": {
