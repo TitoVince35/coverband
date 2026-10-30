@@ -40,6 +40,18 @@ export async function adminAppLogin(page: Page, address: string, password: strin
   await page.getByRole("button", { name: "Sign in" }).click();
 }
 
+/**
+ * Opens a row of an admin app list (#247): once its search has settled (the URL carries it), the
+ * row's cell is clicked until the record's page opens (a list still refreshing drops the click).
+ */
+export async function openAdminRow(page: Page, text: string) {
+  await expect(page).toHaveURL(/filter=/);
+  await expect(async () => {
+    await page.getByRole("row").filter({ hasText: text }).getByRole("cell", { name: text }).click();
+    await expect(page).toHaveURL(/\/show$/, { timeout: 1000 });
+  }).toPass();
+}
+
 const mailpit = () => {
   const url = process.env.MAILPIT_URL;
   if (!url) throw new Error("Set MAILPIT_URL (Mailpit's API, from docker-compose)");

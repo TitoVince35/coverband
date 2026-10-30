@@ -2,9 +2,37 @@ import { DOCUMENT_LIMITS } from "@coverband/shared";
 import { and, asc, count, countDistinct, gte, isNull } from "drizzle-orm";
 import type { Db } from "../../core/db/client";
 import { sessions, users } from "../../core/db/schema";
-import { allMemberships, countBands } from "../bands/service";
+import { adminBandOf, allMemberships, countBands } from "../bands/service";
 import { countPendingInvitations } from "../invitations/service";
-import { repertoireTotals } from "../songs/service";
+import { bandJournal, type JournalSource } from "../journal/service";
+import { lineupOf } from "../members/service";
+import { bandRepertoireTotals, repertoireTotals } from "../songs/service";
+
+/** How many of a band's latest events its admin page shows. */
+export const ADMIN_JOURNAL_SIZE = 20;
+
+/**
+ * A band's admin page (#247): the band, its lineup (no avatars: their route isn't on the admin
+ * host), its songs and documents, the storage its documents use out of its quota, its journal.
+ * Undefined when there's no such band.
+ */
+export async function adminBandDetails(db: Db, id: string, sources: readonly JournalSource[]) {
+  const band = await adminBandOf(db, id);
+  if (!band) return undefined;
+  const [lineup, totals, journal] = await Promise.all([
+    lineupOf(db, id),
+    bandRepertoireTotals(db, id),
+    bandJournal(db, id, sources, ADMIN_JOURNAL_SIZE),
+  ]);
+  return {
+    ...band,
+    lineup: lineup.map(({ avatarUrl: _, ...member }) => member),
+    songs: totals.songs,
+    documents: totals.documents,
+    storage: { usedBytes: totals.documentsBytes, quotaBytes: DOCUMENT_LIMITS.perBand },
+    journal,
+  };
+}
 
 /** A user counts as active with a session used within this many days. */
 export const ACTIVE_DAYS = 30;

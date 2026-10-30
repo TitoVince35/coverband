@@ -341,7 +341,8 @@ function DataTableHeadCell<RecordType extends RaRecord<Identifier> = RaRecord<Id
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="-ml-3 -mr-3 h-8 data-[state=open]:bg-accent cursor-pointer"
+                  // No wider than the header's own padding (px-2): -mr-3 made the last column overflow.
+                  className="-mx-2 h-8 data-[state=open]:bg-accent cursor-pointer"
                   data-field={source}
                   onClick={handleSort}
                 />

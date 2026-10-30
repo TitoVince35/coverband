@@ -1,6 +1,8 @@
 import { APP_NAME } from "@coverband/shared";
-import { CustomRoutes } from "ra-core";
+import { Guitar } from "lucide-react";
+import { Resource } from "ra-core";
 import { Admin } from "@/components/admin/admin";
+import { BandList, BandShow } from "@/components/bands";
 import { Dashboard } from "@/components/dashboard";
 import { authProvider } from "@/lib/auth-provider";
 import { dataProvider } from "@/lib/data-provider";
@@ -17,8 +19,14 @@ export function App() {
       // It would load an image from Marmelab's server, which the security policy blocks anyway.
       disableTelemetry
     >
-      {/* Not empty, so the homepage shows before the first resource exists (bands: #247). */}
-      <CustomRoutes>{[]}</CustomRoutes>
+      <Resource
+        name="bands"
+        options={{ label: "Bands" }}
+        list={BandList}
+        show={BandShow}
+        recordRepresentation="name"
+        icon={Guitar}
+      />
     </Admin>
   );
 }
