@@ -2,6 +2,7 @@ import type { Auth } from "./adapters/auth";
 import type { MusicCatalog } from "./adapters/deezer";
 import type { LyricsProvider } from "./adapters/lyrics";
 import type { Mailer } from "./adapters/mail/mailer";
+import type { PushKeys } from "./adapters/push";
 import type { Storage } from "./adapters/storage";
 import type { VideoSearch } from "./adapters/youtube";
 import type { Db } from "./core/db/client";
@@ -38,6 +39,11 @@ export type AppDeps = {
   cronSecret?: string;
   /** Where the contact form's messages go (#234); absent: no contact form. */
   contactRecipient?: string;
+  /**
+   * Push notifications (#261): the VAPID keys, and the push services subscriptions may point to.
+   * Absent without VAPID_PRIVATE_KEY: no push.
+   */
+  push?: { keys: PushKeys; serviceHosts: readonly string[] };
   /** The beta access code; absent: no gate. */
   access?: AccessConfig;
 };

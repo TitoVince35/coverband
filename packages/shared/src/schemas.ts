@@ -193,3 +193,15 @@ export const updateDocumentBody = z
 export const teamNoteBody = z.object({
   text: z.string().trim().min(1).max(NOTIFICATION_TEXT_MAX_LENGTH),
 });
+
+/** A browser's push subscription (#261), as `PushSubscription.toJSON()` gives it. */
+export const pushSubscriptionBody = z.object({
+  endpoint: z.url({ protocol: /^https$/ }).max(2000),
+  keys: z.object({
+    p256dh: z.base64url().max(200),
+    auth: z.base64url().max(100),
+  }),
+});
+
+/** Turning push notifications off on a device: its subscription's endpoint. */
+export const pushEndpointBody = z.object({ endpoint: z.string().max(2000) });

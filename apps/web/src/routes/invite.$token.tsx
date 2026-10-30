@@ -10,6 +10,7 @@ import { isLanguage } from "@/i18n/languages";
 import { api } from "@/lib/api";
 import { authClient, sessionQuery } from "@/lib/auth";
 import { ensureOk, errorMessage } from "@/lib/errors";
+import { forgetPushSubscription } from "@/lib/push";
 import { clearUserData } from "@/lib/query-client";
 
 // Public page opened from an invitation email. The token in the URL is the proof.
@@ -66,6 +67,7 @@ function InvitePage() {
         <Button
           variant="outline"
           onClick={async () => {
+            await forgetPushSubscription();
             await authClient.signOut();
             // Also drops this invitation's query: the page fetches it again by itself.
             clearUserData(queryClient);

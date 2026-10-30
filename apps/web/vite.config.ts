@@ -67,6 +67,9 @@ export default defineConfig({
       workbox: {
         // API calls are never answered with the cached app shell.
         navigateFallbackDenylist: [/^\/api\//],
+        // Push notifications (#261): showing them and opening the app from them. The worker
+        // keeps its name and scope (sw.js, /), so installed apps update to it.
+        importScripts: ["push-sw.js"],
       },
     }),
   ],

@@ -1,3 +1,4 @@
+import { generateKeyPairSync } from "node:crypto";
 import { defineConfig, devices } from "@playwright/test";
 
 /** Own port, so end-to-end runs never clash with `bun run dev` (3000 and 5173). */
@@ -14,6 +15,12 @@ export const GATED_ACCESS_CODE = "e2e access code";
 export const FAKE_MUSIC_PORT = 3103;
 const fakeMusic = `http://localhost:${FAKE_MUSIC_PORT}`;
 const ci = Boolean(process.env.CI);
+/** The fake push service devices subscribe to in these tests (`push.e2e.ts`, #261). */
+export const FAKE_PUSH_PORT = 3104;
+/** This run's VAPID key (#261): a throwaway, as a fresh database's subscriptions need no other. */
+const vapidKey = generateKeyPairSync("ec", { namedCurve: "prime256v1" })
+  .privateKey.export({ type: "pkcs8", format: "pem" })
+  .toString();
 /** Where the contact form's messages go (#234). */
 export const CONTACT_RECIPIENT = "team@e2e.localhost";
 
@@ -63,6 +70,9 @@ export default defineConfig({
         YOUTUBE_THUMBNAILS_URL: `${fakeMusic}/ytimg`,
         // An e2e address: the teardown removes its emails from Mailpit (contact.e2e.ts).
         CONTACT_FORM_RECIPIENT: CONTACT_RECIPIENT,
+        VAPID_PRIVATE_KEY: vapidKey,
+        // Subscriptions point to the fake push service, never a browser's real one.
+        PUSH_SERVICE_HOSTS: "localhost",
       },
     },
     // The same build behind the beta access code. Started with the first one, whose build is

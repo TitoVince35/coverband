@@ -15,6 +15,7 @@ import { sessionAvatarUrl, UserAvatar } from "@/components/user-avatar";
 import { authClient, sessionQuery } from "@/lib/auth";
 import { contactQuery } from "@/lib/contact";
 import { stopImpersonating } from "@/lib/impersonation";
+import { forgetPushSubscription } from "@/lib/push";
 import { clearUserData } from "@/lib/query-client";
 
 /** Account menu in the header; hidden when logged out. */
@@ -36,6 +37,8 @@ export function UserMenu() {
     // An admin viewing the app as a user (#214): back to their own session first, which the
     // logout then ends (logging the user's session out would leave the admin's one behind).
     if (session?.session.impersonatedBy) await stopImpersonating();
+    // This device stops getting the user's push notifications (#261).
+    await forgetPushSubscription();
     await authClient.signOut();
     clearUserData(queryClient);
     await router.navigate({ to: "/login" });

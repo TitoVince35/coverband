@@ -7,6 +7,7 @@ import { accessQuery } from "./lib/access";
 import { startAppUpdates } from "./lib/app-updates";
 import { listenForInstall } from "./lib/install";
 import { startOfflineCache } from "./lib/offline-cache";
+import { listenForPushes } from "./lib/push";
 import { createQueryClient, SESSION_KEY, watchGuardData } from "./lib/query-client";
 import { installSlowNetwork } from "./lib/slow-network";
 import { routeTree } from "./routeTree.gen";
@@ -36,6 +37,7 @@ const router = createRouter({
 
 // A guard's background check found another answer (#211): the guards run again, and redirect.
 watchGuardData(queryClient, [SESSION_KEY, accessQuery.queryKey], () => void router.invalidate());
+listenForPushes(queryClient);
 
 declare module "@tanstack/react-router" {
   interface Register {

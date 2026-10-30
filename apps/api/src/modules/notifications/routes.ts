@@ -1,12 +1,20 @@
-import { teamNoteBody } from "@coverband/shared/schemas";
+import { pushEndpointBody, pushSubscriptionBody, teamNoteBody } from "@coverband/shared/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
+import { isPushService } from "../../adapters/push";
 import { apiError } from "../../core/errors";
 import { requireAdmin, requireUser, type SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
-import { markNotificationRead, sendTeamNote, teamNotePage, unreadNotifications } from "./service";
+import {
+  markNotificationRead,
+  removePushSubscription,
+  savePushSubscription,
+  sendTeamNote,
+  teamNotePage,
+  unreadNotifications,
+} from "./service";
 
 const idParam = z.object({ id: z.uuid() });
 const pageQuery = z.object({
@@ -40,5 +48,30 @@ export function adminNotificationRoutes(deps: AppDeps) {
     .post("/", zValidator("json", teamNoteBody, validationHook), async (c) => {
       const note = await sendTeamNote(deps.db, c.req.valid("json").text, c.var.user.id);
       return c.json({ data: note }, 201);
+    });
+}
+
+/**
+ * Push notifications on the user's devices (/api/push, #261): the server's public VAPID key (null:
+ * push is off), and a device's subscription saved or removed.
+ */
+export function pushRoutes(deps: AppDeps) {
+  const { push } = deps;
+  return new Hono<SessionEnv>()
+    .use(requireUser)
+    .get("/key", (c) => c.json({ publicKey: push?.keys.publicKey ?? null }))
+    .put("/subscription", zValidator("json", pushSubscriptionBody, validationHook), async (c) => {
+      if (!push) return apiError(c, 404, "Push notifications are off");
+      const subscription = c.req.valid("json");
+      // Only the browsers' push services: the server will send to this address.
+      if (!isPushService(subscription.endpoint, push.serviceHosts)) {
+        return apiError(c, 400, "Unknown push service");
+      }
+      await savePushSubscription(deps.db, c.var.user.id, subscription);
+      return c.body(null, 204);
+    })
+    .delete("/subscription", zValidator("json", pushEndpointBody, validationHook), async (c) => {
+      await removePushSubscription(deps.db, c.var.user.id, c.req.valid("json").endpoint);
+      return c.body(null, 204);
     });
 }

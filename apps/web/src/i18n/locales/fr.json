@@ -445,6 +445,17 @@
       "submitting": "Modification…",
       "done": "Mot de passe modifié.",
       "wrongCurrent": "Le mot de passe actuel est incorrect."
+    },
+    "push": {
+      "title": "Notifications",
+      "description": "Recevez les nouvelles de l'équipe sur cet appareil, même quand l'application est fermée.",
+      "on": "Les notifications sont activées sur cet appareil.",
+      "enable": "Activer les notifications",
+      "disable": "Désactiver",
+      "denied": "Les notifications sont bloquées pour cette application. Autorisez-les dans les réglages du navigateur ou du téléphone, puis revenez ici.",
+      "install": "Sur iPhone, les notifications demandent d'ajouter l'application à l'écran d'accueil (Partager › Sur l'écran d'accueil). Ouvrez-la depuis là, puis revenez ici.",
+      "enabled": "Notifications activées",
+      "disabled": "Notifications désactivées"
     }
   },
   "impersonation": {

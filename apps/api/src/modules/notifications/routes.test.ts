@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { inArray } from "drizzle-orm";
+import { generateKeyPairSync } from "node:crypto";
+import { eq, inArray } from "drizzle-orm";
+import { PUSH_SERVICE_HOSTS, vapidKeys } from "../../adapters/push";
 import { createApp } from "../../app";
-import { activity, notifications, users } from "../../core/db/schema";
+import { activity, notifications, pushSubscriptions, users } from "../../core/db/schema";
 import { activityOf, createTestDeps } from "../../test-deps";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
@@ -9,7 +11,12 @@ const databaseUrl = process.env.DATABASE_URL;
 
 describe.skipIf(!databaseUrl)("notifications (#260)", () => {
   const { deps, db, sql, auth } = createTestDeps(databaseUrl);
-  const app = createApp({ deps });
+  const pem = generateKeyPairSync("ec", { namedCurve: "prime256v1" })
+    .privateKey.export({ type: "pkcs8", format: "pem" })
+    .toString();
+  const push = { keys: vapidKeys(pem, "https://app.test"), serviceHosts: PUSH_SERVICE_HOSTS };
+  const app = createApp({ deps: { ...deps, push } });
+  const withoutPush = createApp({ deps });
 
   const run = crypto.randomUUID().slice(0, 8);
   const adminEmail = `admin-${run}@test.localhost`;
@@ -155,5 +162,61 @@ describe.skipIf(!databaseUrl)("notifications (#260)", () => {
     // The later user only received the third note; the user read the second.
     expect((ours[0]?.recipients ?? 0) - (ours[1]?.recipients ?? 0)).toBe(1);
     expect(ours.map((note) => note.readers)).toEqual([0, 1, 0]);
+  });
+
+  test("push (#261): the public key, and a device's subscription saved, moved, removed", async () => {
+    const key = async (server = app) =>
+      (await (
+        await server.request("/api/push/key", { headers: { cookie: cookies[userEmail] ?? "" } })
+      ).json()) as { publicKey: string | null };
+    expect((await key()).publicKey).toBe(push.keys.publicKey);
+    expect((await key(withoutPush)).publicKey).toBeNull();
+
+    const endpoint = `https://fcm.googleapis.com/fcm/send/${run}`;
+    const subscription = { endpoint, keys: { p256dh: "BNcRdreALRFX", auth: "tBHItJI5svbpez7K" } };
+    const save = (email: string, body: unknown = subscription) =>
+      call("/push/subscription", email, { method: "PUT", body });
+    const rows = () =>
+      db.select().from(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+
+    // Only the browsers' push services, over HTTPS.
+    expect(
+      (await save(userEmail, { ...subscription, endpoint: "https://evil.example/x" })).status,
+    ).toBe(400);
+    expect(
+      (await save(userEmail, { ...subscription, endpoint: "http://fcm.googleapis.com/x" })).status,
+    ).toBe(400);
+    expect(
+      (await save(userEmail, { endpoint, keys: { p256dh: "not base64!", auth: "x" } })).status,
+    ).toBe(400);
+    expect(
+      (
+        await withoutPush.request("/api/push/subscription", {
+          method: "PUT",
+          headers: { "content-type": "application/json", cookie: cookies[userEmail] ?? "" },
+          body: JSON.stringify(subscription),
+        })
+      ).status,
+    ).toBe(404);
+
+    expect((await save(userEmail)).status).toBe(204);
+    expect((await save(userEmail)).status).toBe(204);
+    expect(await rows()).toEqual([
+      expect.objectContaining({ userId: userIds[1], auth: "tBHItJI5svbpez7K" }),
+    ]);
+    // The same browser, logged in as someone else: the device moves to them.
+    expect((await save(laterEmail)).status).toBe(204);
+    expect((await rows()).map((row) => row.userId)).toEqual([userIds[2] ?? ""]);
+    // Only one's own devices are removed.
+    const remove = (email: string) =>
+      call("/push/subscription", email, { method: "DELETE", body: { endpoint } });
+    expect((await remove(userEmail)).status).toBe(204);
+    expect(await rows()).toHaveLength(1);
+    expect((await remove(laterEmail)).status).toBe(204);
+    expect(await rows()).toEqual([]);
+    expect((await activityOf(db, userIds[2] ?? "")).map((event) => event.action)).toEqual([
+      "user.push_enabled",
+      "user.push_disabled",
+    ]);
   });
 });

@@ -445,6 +445,17 @@
       "submitting": "Changing…",
       "done": "Password changed.",
       "wrongCurrent": "The current password is wrong."
+    },
+    "push": {
+      "title": "Notifications",
+      "description": "Get the team's news on this device, even when the app is closed.",
+      "on": "Notifications are on for this device.",
+      "enable": "Turn on notifications",
+      "disable": "Turn off",
+      "denied": "Notifications are blocked for this app. Allow them in your browser's or phone's settings, then come back here.",
+      "install": "On an iPhone, notifications need the app added to your Home Screen (Share › Add to Home Screen). Open it from there, then come back here.",
+      "enabled": "Notifications turned on",
+      "disabled": "Notifications turned off"
     }
   },
   "impersonation": {
