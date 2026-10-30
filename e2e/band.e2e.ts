@@ -907,7 +907,7 @@ async function adminBandPage(page: Page) {
   await page.goto(`${ADMIN_APP_URL}/#/bands`);
   await page.getByPlaceholder("Search by name").fill(band);
   await expect(page.getByText("1-1 of 1")).toBeVisible();
-  await page.getByRole("row").filter({ hasText: band }).getByRole("cell", { name: band }).click();
+  await openAdminRow(page, band);
   await expect(page.getByRole("heading", { name: band })).toBeVisible();
 }
 
