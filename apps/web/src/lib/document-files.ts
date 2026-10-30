@@ -1,4 +1,5 @@
 import { DOCUMENT_EXTENSIONS, DOCUMENT_LIMITS } from "@coverband/shared";
+import { decodeImage } from "@/lib/decode-image";
 import { fitWithin, sizesFrom } from "@/lib/logo";
 
 // A document's file before upload (#239): what the picker offers, the photos shrunk. No API here,
@@ -33,35 +34,30 @@ export function titleFrom(fileName: string) {
   return name.slice(0, DOCUMENT_LIMITS.title);
 }
 
+/** A phone photo is decoded at about this many pixels a side, then drawn at PHOTO_SIZE (#257). */
+const PHOTO_DECODE_SIDE = 2400;
+
 /**
  * A photo shrunk as hard as reading allows (#239): within PHOTO_SIZE, then smaller sizes until it
  * fits PHOTO_MAX_BYTES; WebP, else JPEG (Safari can't encode WebP). The EXIF orientation is
  * applied; HEIC is converted where the browser reads it. Throws when it can't read the image.
  *
- * Never decoded at full size: a phone's photo (12 to 50 megapixels) would take hundreds of MB, and
- * Android then kills the page, the more so just after the camera. A tiny decode gives its
- * proportions, then it is decoded straight at PHOTO_SIZE (browsers scale while decoding).
+ * A phone's JPEG is decoded already reduced (`decodeImage`, #257): at full size, a 50-megapixel
+ * photo takes hundreds of MB, and Android kills the page.
  */
 export async function shrinkPhoto(file: File): Promise<File> {
-  const probe = await createImageBitmap(file, { resizeWidth: 64, resizeQuality: "low" });
-  const ratio = probe.height / probe.width;
-  probe.close();
-  const target =
-    ratio > 1
-      ? { resizeHeight: PHOTO_SIZE, resizeWidth: Math.max(1, Math.round(PHOTO_SIZE / ratio)) }
-      : { resizeWidth: PHOTO_SIZE, resizeHeight: Math.max(1, Math.round(PHOTO_SIZE * ratio)) };
-  const bitmap = await createImageBitmap(file, { ...target, resizeQuality: "high" });
+  const image = await decodeImage(file, PHOTO_DECODE_SIDE);
   try {
     let smallest: Blob | null = null;
     for (const size of sizesFrom(PHOTO_SIZE)) {
-      const { width, height } = fitWithin(bitmap.width, bitmap.height, size);
+      const { width, height } = fitWithin(image.width, image.height, size);
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
       const context = canvas.getContext("2d");
       if (!context) throw new Error("No canvas");
       context.imageSmoothingQuality = "high";
-      context.drawImage(bitmap, 0, 0, width, height);
+      context.drawImage(image.source, 0, 0, width, height);
       for (const type of ["image/webp", "image/jpeg"] as const) {
         const blob = await encode(canvas, type, 0.7);
         // A browser that can't encode the type gives PNG: tried next anyway.
@@ -73,7 +69,7 @@ export async function shrinkPhoto(file: File): Promise<File> {
     if (!smallest) throw new Error("Encoding failed");
     return asFile(smallest, file.name);
   } finally {
-    bitmap.close();
+    image.close();
   }
 }
 
