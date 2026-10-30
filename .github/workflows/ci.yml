@@ -64,9 +64,13 @@ jobs:
 
       # Known vulnerabilities in dependencies: fails on high and critical.
       # Ignored, no fixed version yet: GHSA-vfj7-8cjw-p6xm (braces, only in the shadcn CLI, a dev tool
-      # run on our own patterns). Remove the --ignore once a fix is out.
+      # run on our own patterns) and GHSA-mrhx-c7xc-m3w5 (zod 3, only in the shadcn CLI too, which
+      # validates the registries' answers with it; our own code is on zod 4.6.7), GHSA-qr28-fpjm-wq7f
+      # (decode-uri-component 0.2, through react-admin's query-string 7, which can't load the fixed
+      # 0.5.1: a slow decoding of a crafted URL, only in the admin's own browser). Remove an --ignore
+      # once a fix is out.
       - name: Audit dependencies
-        run: bun audit --audit-level=high --ignore=GHSA-vfj7-8cjw-p6xm
+        run: bun audit --audit-level=high --ignore=GHSA-vfj7-8cjw-p6xm --ignore=GHSA-mrhx-c7xc-m3w5 --ignore=GHSA-qr28-fpjm-wq7f
 
       - name: Lint
         run: bun run lint

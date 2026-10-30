@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { Ban } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BandLogo } from "@/components/band/band-logo";
 import { BandNav } from "@/components/band/band-nav";
@@ -23,6 +24,9 @@ function BandLayout() {
     return <BandSkeleton />;
   }
   if (query.isError) {
+    if (query.error instanceof ApiRequestError && query.error.code === "band_suspended") {
+      return <BandSuspended />;
+    }
     const notFound = query.error instanceof ApiRequestError && query.error.code === "not_found";
     return (
       <p role="alert" className="text-muted-foreground">
@@ -46,5 +50,20 @@ function BandLayout() {
       <BandNav bandSlug={bandSlug} />
       <Outlet />
     </div>
+  );
+}
+
+/** Suspended by an admin (#248): its members only see that, never its pages. */
+function BandSuspended() {
+  const { t } = useTranslation();
+  return (
+    <section className="flex flex-col items-center gap-4 py-16 text-center">
+      <Ban className="size-10 text-muted-foreground" aria-hidden="true" />
+      <h1 className="font-bold text-2xl tracking-tight">{t("band.suspendedTitle")}</h1>
+      <p className="max-w-md text-muted-foreground">{t("band.suspendedText")}</p>
+      <Link to="/" className="text-primary underline-offset-4 hover:underline">
+        {t("band.suspendedBack")}
+      </Link>
+    </section>
   );
 }

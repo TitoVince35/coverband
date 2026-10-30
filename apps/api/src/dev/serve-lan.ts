@@ -7,8 +7,16 @@
  * wake lock then work on the phone too. Over plain http, they only work on localhost.
  */
 
-import { announce, apiTlsEnv, appUrl, lanHost, runApp, serveRootCertificate } from "./lan";
-import { SERVE_PORT } from "./serve";
+import {
+  ADMIN_HOST,
+  announce,
+  apiTlsEnv,
+  appUrl,
+  lanHost,
+  runApp,
+  serveRootCertificate,
+} from "./lan";
+import { SERVE_DIST, SERVE_PORT } from "./serve";
 import { localTls } from "./tls";
 
 if (import.meta.main) {
@@ -19,7 +27,9 @@ if (import.meta.main) {
   // Bun.serve listens on every interface.
   await runApp(["bun", "apps/api/src/main.ts"], {
     appUrl: url,
+    // The admin app stays on this machine.
+    adminUrl: appUrl(ADMIN_HOST, SERVE_PORT, tls),
     localUrl: appUrl("localhost", SERVE_PORT, tls),
-    env: { PORT: String(SERVE_PORT), WEB_DIST_DIR: "apps/web/dist", ...apiTlsEnv(tls) },
+    env: { PORT: String(SERVE_PORT), ...SERVE_DIST, ...apiTlsEnv(tls) },
   });
 }

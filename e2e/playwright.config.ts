@@ -3,6 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 /** Own port, so end-to-end runs never clash with `bun run dev` (3000 and 5173). */
 export const E2E_PORT = 3100;
 const baseURL = `http://localhost:${E2E_PORT}`;
+/** The admin app (#246): the same server, on its own host (browsers send `*.localhost` home). */
+export const ADMIN_APP_URL = `http://admin.localhost:${E2E_PORT}`;
 /** The fake LRCLIB the app searches lyrics on (`fake-lrclib.ts`). */
 export const FAKE_LRCLIB_PORT = 3101;
 /** A second server of the same build, with a beta access code (`access.e2e.ts`). */
@@ -39,7 +41,7 @@ export default defineConfig({
       use: { ...devices["Pixel 7"], ...(ci ? {} : { channel: "chrome" }) },
     },
   ],
-  // Production-like: the API serves the built web app (`bun run build` + `bun run serve`).
+  // Production-like: the API serves the built web and admin apps (`bun run build` + `bun run serve`).
   webServer: [
     {
       command: "bun run build && bun apps/api/src/main.ts",
@@ -52,6 +54,8 @@ export default defineConfig({
         PORT: String(E2E_PORT),
         BETTER_AUTH_URL: baseURL,
         WEB_DIST_DIR: "apps/web/dist",
+        ADMIN_URL: ADMIN_APP_URL,
+        ADMIN_DIST_DIR: "apps/admin/dist",
         LRCLIB_URL: `http://localhost:${FAKE_LRCLIB_PORT}`,
         DEEZER_URL: `${fakeMusic}/deezer`,
         YOUTUBE_API_KEY: "e2e-youtube-key",

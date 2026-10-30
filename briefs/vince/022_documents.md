@@ -4,7 +4,7 @@
 >
 > 🕒 Brief settled on Friday 2026/10/23 14:52
 >
-> 🕒 Issues completed on Friday 2026/10/23 15:20
+> 🕒 Issues completed on Friday 2026/10/30 12:06
 
 Documents may be sheet music, chord grids, or playable files in many formats.
 
@@ -61,3 +61,4 @@ At most 20 documents per song, and a storage budget per band during the beta (50
 - [#238 Documents: the files, their types and the API](https://github.com/TitoVince35/coverband/issues/238)
 - [#239 Documents: the song page block, adding with a progress bar](https://github.com/TitoVince35/coverband/issues/239)
 - [#240 Documents offline: photos and PDFs on the device](https://github.com/TitoVince35/coverband/issues/240)
+- [#257 Photos: a full-resolution phone photo crashes the page](https://github.com/TitoVince35/coverband/issues/257)

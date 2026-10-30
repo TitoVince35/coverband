@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { ADMIN_APP_URL } from "./playwright.config";
 
 /**
  * Everything an end-to-end test creates is marked, so the teardown can remove it (and leftovers
@@ -15,15 +16,40 @@ export const PASSWORD = "e2e correct horse battery";
 /** This run's admin, created by the global setup (password: PASSWORD). */
 export const ADMIN = email("admin");
 
-export async function login(page: Page, address: string, password: string) {
-  // Logins are rate limited per client IP (3 per 10 s): each one comes from its own address.
+/** Logins are rate limited per client IP (3 per 10 s): each one comes from its own address. */
+async function ownAddress(page: Page) {
   const ip = `10.${randomByte()}.${randomByte()}.${randomByte()}`;
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": ip });
+}
+
+export async function login(page: Page, address: string, password: string) {
+  await ownAddress(page);
   await page.goto("/login");
   await page.getByLabel("Email").fill(address);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).not.toHaveURL(/\/login/);
+}
+
+/** Fills in the admin app's login form (#246); what follows depends on who logs in. */
+export async function adminAppLogin(page: Page, address: string, password: string) {
+  await ownAddress(page);
+  await page.goto(ADMIN_APP_URL);
+  await page.getByLabel("Email").fill(address);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+}
+
+/**
+ * Opens a row of an admin app list (#247): once its search has settled (the URL carries it), the
+ * row's cell is clicked until the record's page opens (a list still refreshing drops the click).
+ */
+export async function openAdminRow(page: Page, text: string) {
+  await expect(page).toHaveURL(/filter=/);
+  await expect(async () => {
+    await page.getByRole("row").filter({ hasText: text }).getByRole("cell", { name: text }).click();
+    await expect(page).toHaveURL(/\/show$/, { timeout: 1000 });
+  }).toPass();
 }
 
 const mailpit = () => {

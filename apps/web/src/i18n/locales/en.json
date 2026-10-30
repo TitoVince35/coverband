@@ -28,6 +28,10 @@
   },
   "band": {
     "notFound": "This band doesn't exist or you're not a member.",
+    "suspended": "Suspended",
+    "suspendedTitle": "This band is suspended",
+    "suspendedText": "An administrator has suspended this band: its pages can't be opened for now. If you think it's a mistake, contact us.",
+    "suspendedBack": "Back to my bands",
     "comingSoon": "Setlists and gigs are coming soon.",
     "roles": {
       "leader": "band leader",
@@ -461,7 +465,12 @@
   "impersonation": {
     "viewAs": "View as",
     "banner": "Viewing the app as {{name}}: read-only.",
-    "stop": "Stop"
+    "stop": "Stop",
+    "confirmTitle": "View the app as {{name}}?",
+    "confirmText": "You'll see their app as they do, read-only, for an hour at most. Stop from the banner at the top.",
+    "confirm": "View the app as {{name}}",
+    "notAllowed": "You can't view the app as this user: not an admin, nor yourself.",
+    "cancel": "Back to the app"
   },
   "invitations": {
     "email": "Email",
@@ -530,7 +539,11 @@
     "document_invalid": "Only photos (JPEG, PNG, WebP), PDFs, Guitar Pro and MuseScore files.",
     "document_too_large": "This document is larger than 4 MB.",
     "too_many_documents": "A song has at most 20 documents: remove one first.",
-    "band_storage_full": "Your band's documents have reached their storage limit: remove some first."
+    "band_storage_full": "Your band's documents have reached their storage limit: remove some first.",
+    "band_suspended": "This band is suspended.",
+    "band_not_disabled": "Disable the band before deleting it.",
+    "band_name_mismatch": "The name typed isn't the band's.",
+    "only_band_leader": "This person is the only band leader of a band."
   },
   "instruments": {
     "picker": {

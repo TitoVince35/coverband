@@ -33,6 +33,10 @@ export const ERROR_CODES = [
   "document_too_large",
   "too_many_documents",
   "band_storage_full",
+  "band_suspended",
+  "band_not_disabled",
+  "band_name_mismatch",
+  "only_band_leader",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

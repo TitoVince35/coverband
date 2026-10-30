@@ -1,4 +1,5 @@
 import { AVATAR_SIZE } from "@coverband/shared";
+import { decodeImage } from "@/lib/decode-image";
 
 /** Stays under the API's 100 KB body limit with some margin. */
 const MAX_BYTES = 95_000;
@@ -20,15 +21,16 @@ export function centeredSquare(width: number, height: number, max = AVATAR_SIZE)
  * can't read as an image.
  */
 export async function prepareAvatar(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file); // applies the photo's EXIF orientation
-  const { sx, sy, side, size } = centeredSquare(bitmap.width, bitmap.height);
+  // A phone's JPEG decoded already reduced (#257): enough for a 512 px square from its middle.
+  const image = await decodeImage(file, AVATAR_SIZE * 3);
+  const { sx, sy, side, size } = centeredSquare(image.width, image.height);
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("No canvas");
-  context.drawImage(bitmap, sx, sy, side, side, 0, 0, size, size);
-  bitmap.close();
+  context.drawImage(image.source, sx, sy, side, side, 0, 0, size, size);
+  image.close();
 
   for (const quality of [0.85, 0.7, 0.5]) {
     let blob = await encode(canvas, "image/webp", quality);

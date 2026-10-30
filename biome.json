@@ -38,5 +38,17 @@
     "parser": {
       "tailwindDirectives": true
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "apps/admin/src/components/admin/**",
+        "apps/admin/src/components/ui/**",
+        "apps/admin/src/lib/field.type.ts"
+      ],
+      "linter": {
+        "enabled": false
+      }
+    }
+  ]
 }

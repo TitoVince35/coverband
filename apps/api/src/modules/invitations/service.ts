@@ -1,5 +1,5 @@
 import { APP_NAME, type Language } from "@coverband/shared";
-import { and, desc, eq, isNull, type SQL, sql } from "drizzle-orm";
+import { and, count, desc, eq, gt, isNull, type SQL, sql } from "drizzle-orm";
 import type { Mailer } from "../../adapters/mail/mailer";
 import { leaderInvitationEmail, musicianInvitationEmail } from "../../adapters/mail/templates";
 import { recordActivity } from "../../core/activity/record";
@@ -150,6 +150,41 @@ function inScope(scope: InvitationScope): SQL | undefined {
 
 /** Neither accepted nor revoked (but possibly expired). */
 const open = () => and(isNull(invitations.acceptedAt), isNull(invitations.revokedAt));
+
+/** Invitations still waiting for an answer, leaders' and musicians' (the admin console). */
+export async function countPendingInvitations(db: Db, now: Date) {
+  const [row] = await db
+    .select({ count: count() })
+    .from(invitations)
+    .where(and(open(), gt(invitations.expiresAt, now)));
+  return row?.count ?? 0;
+}
+
+/** The invitations still waiting for this email's answer, newest first (#249). */
+export async function pendingInvitationsFor(db: Db, email: string, now: Date) {
+  return db
+    .select({
+      id: invitations.id,
+      role: invitations.role,
+      bandId: invitations.bandId,
+      createdAt: invitations.createdAt,
+      expiresAt: invitations.expiresAt,
+    })
+    .from(invitations)
+    .where(and(open(), gt(invitations.expiresAt, now), eq(invitations.email, email)))
+    .orderBy(desc(invitations.createdAt));
+}
+
+/** The language of the latest invitation sent to this email: their emails' language, else English. */
+export async function invitationLanguageOf(db: Db, email: string): Promise<Language> {
+  const [row] = await db
+    .select({ language: invitations.language })
+    .from(invitations)
+    .where(eq(invitations.email, email))
+    .orderBy(desc(invitations.createdAt))
+    .limit(1);
+  return row?.language ?? "en";
+}
 
 /** Open invitations of a scope, newest first, with their status. */
 export async function listInvitations(

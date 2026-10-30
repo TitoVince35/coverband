@@ -1,0 +1,1 @@
+ALTER TABLE "bands" ADD COLUMN "disabled_at" timestamp with time zone;

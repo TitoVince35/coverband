@@ -54,6 +54,9 @@ function HomePage() {
                         <span className="inline-block text-muted-foreground text-xs first-letter:uppercase">
                           {t(`band.roles.${band.role}`)}
                         </span>
+                        {band.suspended && (
+                          <span className="text-destructive text-xs">{t("band.suspended")}</span>
+                        )}
                         <InstrumentTags instruments={band.instruments} />
                       </div>
                     </div>

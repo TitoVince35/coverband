@@ -14,8 +14,8 @@ export const CERT_DIR = fileURLToPath(new URL("../../../../.certs", import.meta.
 
 export type LocalTls = { certFile: string; keyFile: string };
 
-/** Names every certificate covers; the LAN IP is added in the LAN modes. */
-export const LOCAL_NAMES = ["localhost", "127.0.0.1", "::1"];
+/** Names every certificate covers (the admin app's host too, #246); the LAN IP is added in the LAN modes. */
+export const LOCAL_NAMES = ["localhost", "admin.localhost", "127.0.0.1", "::1"];
 
 /** What a certificate was issued for: its names, and the authority that signed it. */
 export type Issued = { names: string[]; authority: string };

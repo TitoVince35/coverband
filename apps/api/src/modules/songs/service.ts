@@ -5,11 +5,11 @@ import {
   type SongStatus,
   songKey,
 } from "@coverband/shared";
-import { and, asc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, count, eq, isNotNull, isNull, sql, sum } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
-import type { Db } from "../../core/db/client";
+import type { Db, Tx } from "../../core/db/client";
 import { isForeignKeyViolation } from "../../core/db/pg-errors";
-import { songs, users } from "../../core/db/schema";
+import { songDocuments, songs, users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
 import type { AppDeps } from "../../deps";
 import { deleteQuietly, documentKeys } from "./documents.service";
@@ -99,6 +99,42 @@ export function listSongs(db: Db, bandId: string, { archived = false } = {}) {
       // The id last: confirmed duplicates keep one order.
       .orderBy(asc(sql`lower(${songs.title})`), asc(sql`lower(${songs.artist})`), asc(songs.id))
   );
+}
+
+/** Every band's songs (archived ones included) and documents, with the documents' bytes: the admin console. */
+export async function repertoireTotals(db: Db) {
+  const [songRow] = await db.select({ count: count() }).from(songs);
+  const [documentRow] = await db
+    .select({ count: count(), bytes: sum(songDocuments.size).mapWith(Number) })
+    .from(songDocuments);
+  return {
+    songs: songRow?.count ?? 0,
+    documents: documentRow?.count ?? 0,
+    documentsBytes: documentRow?.bytes ?? 0,
+  };
+}
+
+/** One band's songs (archived ones included) and documents, with the documents' bytes (#247). */
+export async function bandRepertoireTotals(db: Db, bandId: string) {
+  const [songRow] = await db.select({ count: count() }).from(songs).where(eq(songs.bandId, bandId));
+  const [documentRow] = await db
+    .select({ count: count(), bytes: sum(songDocuments.size).mapWith(Number) })
+    .from(songDocuments)
+    .where(eq(songDocuments.bandId, bandId));
+  return {
+    songs: songRow?.count ?? 0,
+    documents: documentRow?.count ?? 0,
+    documentsBytes: documentRow?.bytes ?? 0,
+  };
+}
+
+/** The storage keys of every document of a band: deleting the band deletes their files (#248). */
+export async function bandDocumentKeys(tx: Tx, bandId: string) {
+  const rows = await tx
+    .select({ key: songDocuments.storageKey })
+    .from(songDocuments)
+    .where(eq(songDocuments.bandId, bandId));
+  return rows.map((row) => row.key);
 }
 
 /** One song of a band, with who added it (their current display name; null once deleted). */

@@ -31,6 +31,10 @@ const envSchema = z
     BETTER_AUTH_SECRET: z.string().min(32),
     // Public URL of the app (where the browser loads it), used for links and origin checks.
     BETTER_AUTH_URL: z.url({ protocol: /^https?$/ }),
+    // Public URL of the admin app (#246), on its own host of the same container. Unset: none.
+    ADMIN_URL: z.url({ protocol: /^https?$/ }).optional(),
+    // Built admin app to serve on that host (apps/admin/dist). Unset in development: Vite serves it.
+    ADMIN_DIST_DIR: z.string().min(1).optional(),
     // Other origins allowed to log in, comma-separated (`bun run dev:lan` adds localhost).
     TRUSTED_ORIGINS: z
       .string()

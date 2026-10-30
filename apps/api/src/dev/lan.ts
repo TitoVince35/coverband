@@ -13,6 +13,10 @@ import { renderUnicodeCompact } from "uqr";
 import { type LocalTls, localTls, rootCertificate } from "./tls";
 
 export const WEB_PORT = 5173;
+/** The admin app's Vite dev server (#246), on its own host as in production. */
+export const ADMIN_PORT = 5174;
+/** The admin app's host on this machine: browsers send `*.localhost` to the loopback. */
+export const ADMIN_HOST = "admin.localhost";
 const MAILPIT_PORT = 8025;
 
 // Docker bridges, VMs and VPNs: not reachable from a phone on the Wi-Fi.
@@ -104,16 +108,17 @@ export function appUrl(host: string, port: number, tls: LocalTls | undefined) {
 
 /**
  * Runs a command from the repository root with the given environment, `appUrl` as the app's public
- * URL (links in emails, Better Auth's origin checks), and logging in through `localUrl` on this
- * machine still allowed. Exits with the command.
+ * URL (links in emails, Better Auth's origin checks), `adminUrl` as the admin app's, and logging in
+ * through `localUrl` on this machine still allowed. Exits with the command.
  */
 export async function runApp(
   command: string[],
   {
     appUrl,
+    adminUrl,
     localUrl,
     env = {},
-  }: { appUrl: string; localUrl?: string; env?: Record<string, string> },
+  }: { appUrl: string; adminUrl: string; localUrl?: string; env?: Record<string, string> },
 ): Promise<never> {
   const child = Bun.spawn(command, {
     cwd: fileURLToPath(new URL("../../../..", import.meta.url)),
@@ -121,6 +126,7 @@ export async function runApp(
       ...process.env,
       ...env,
       BETTER_AUTH_URL: appUrl,
+      ADMIN_URL: adminUrl,
       TRUSTED_ORIGINS: [process.env.TRUSTED_ORIGINS, localUrl].filter(Boolean).join(","),
     },
     stdio: ["inherit", "inherit", "inherit"],
@@ -151,6 +157,7 @@ if (import.meta.main) {
   // Vite listens on every interface (see vite.config.ts) and serves HTTPS with the certificate.
   await runApp(["bun", "run", "--parallel", "--filter", "./apps/*", "dev"], {
     appUrl: webUrl,
+    adminUrl: appUrl(ADMIN_HOST, ADMIN_PORT, tls),
     localUrl: appUrl("localhost", WEB_PORT, tls),
     env: { DEV_LAN: "1", ...viteTlsEnv(tls) },
   });

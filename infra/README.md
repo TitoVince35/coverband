@@ -12,7 +12,7 @@ Day to day, nothing happens here: every push to `main` whose CI passes is deploy
 | `storage.tf` | Private bucket for files |
 | `email.tf` | TEM domain (DNS records written by autoconfig) |
 | `iam.tf` | `coverband-app` (data, files, SMTP) and `coverband-deploy` (registry, container, schema changes) |
-| `container.tf` | Container, its environment and secrets, the `app.<domain>` custom domain |
+| `container.tf` | Container, its environment and secrets, the `app.<domain>` and `admin.<domain>` (the admin app, #246) custom domains |
 | `budget.tf` | Monthly budget, alerts at 50%, 90% and 100% |
 | `cron.tf` | Nightly jobs calling the app's `/api/internal` routes with `CRON_SECRET`: activity purge (rows older than a year) |
 | `cockpit.tf` | Container logs kept 30 days (Scaleway's own logs data source, imported) |

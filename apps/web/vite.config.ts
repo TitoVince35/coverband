@@ -22,6 +22,22 @@ export default defineConfig({
     tailwindcss(),
     // `%APP_NAME%` in index.html.
     { name: "app-name", transformIndexHtml: (html) => html.replaceAll("%APP_NAME%", APP_NAME) },
+    // Development: this server answers for admin.localhost too (browsers send `*.localhost` here),
+    // where logging in fails. Send it to the admin app's own dev server (#246, ADMIN_URL).
+    {
+      name: "admin-host-redirect",
+      configureServer(server) {
+        const adminUrl = process.env.ADMIN_URL && new URL(process.env.ADMIN_URL);
+        if (!adminUrl) return;
+        server.middlewares.use((req, res, next) => {
+          const host = req.headers.host ?? "";
+          if (host.split(":")[0]?.toLowerCase() !== adminUrl.hostname || host === adminUrl.host) {
+            return next();
+          }
+          res.writeHead(302, { location: `${adminUrl.origin}${req.url ?? "/"}` }).end();
+        });
+      },
+    },
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "logo.svg", "favicon.svg", "apple-touch-icon-180x180.png"],

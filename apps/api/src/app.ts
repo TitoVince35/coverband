@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { AppError, apiError, appErrorResponse } from "./core/errors";
 import { accessGate, accessRoutes } from "./core/http/access";
+import { adminHost, adminHostApi, onAdminHost } from "./core/http/admin-host";
 import { healthRoutes } from "./core/http/health";
 import { impersonationReadOnly } from "./core/http/impersonation";
 import { internalRoutes } from "./core/http/internal";
@@ -34,6 +35,8 @@ export type AppOptions = {
   deps: AppDeps;
   /** Directory of the built web app; when set, it is served with an SPA fallback. */
   webDistDir?: string | undefined;
+  /** Directory of the built admin app (#246), served the same way on the admin host. */
+  adminDistDir?: string | undefined;
 };
 
 // REST API, mounted under /api. Chained so that AppType carries every route for the typed client.
@@ -44,7 +47,7 @@ function createApi(deps: AppDeps) {
       .use(loadSession(deps.auth))
       .route("/health", healthRoutes(deps.buildInfo))
       .route("/access", accessRoutes(deps.db, deps.access))
-      .route("/admin", adminRoutes(deps))
+      .route("/admin", adminRoutes(deps, [bandJournalSource, songJournalSource]))
       .route("/admin/invitations", leaderInvitationRoutes(deps))
       // Invitation links, public: the token is the proof (onboarding).
       .route("/invitations", onboardingRoutes(deps))
@@ -68,8 +71,24 @@ function createApi(deps: AppDeps) {
 
 export type AppType = ReturnType<typeof createApi>;
 
-export function createApp({ deps, webDistDir }: AppOptions) {
+/** A built single-page app: its files, and its shell for client-side routes. */
+function spa(dir: string) {
+  const root = resolve(dir);
+  return (
+    new Hono()
+      .use("*", staticCacheHeaders)
+      .use("*", serveStatic({ root }))
+      // A missing build file (an old build's, after a deploy) is a 404, never the app shell: the
+      // web app then reloads onto the new build (#164).
+      .get("/assets/*", (c) => c.text("Not found", 404))
+      // Client-side routing: any other GET that accepts HTML gets the app shell.
+      .get("*", serveStatic({ root, path: "index.html" }))
+  );
+}
+
+export function createApp({ deps, webDistDir, adminDistDir }: AppOptions) {
   const app = new Hono<LogEnv>();
+  const admin = adminHost(deps.adminUrl);
 
   // First, so it times and logs everything below; it also logs the 500s of onError.
   app.use(requestLog(deps.log));
@@ -96,7 +115,7 @@ export function createApp({ deps, webDistDir }: AppOptions) {
   app.use(
     "/api/*",
     ...requestGuards(
-      [deps.appUrl, ...(deps.trustedOrigins ?? [])],
+      [deps.appUrl, ...(deps.adminUrl ? [deps.adminUrl] : []), ...(deps.trustedOrigins ?? [])],
       [
         { method: "PUT", path: /^\/api\/bands\/[^/]+\/logo$/, maxSize: LOGO_UPLOAD_MAX_SIZE },
         {
@@ -107,8 +126,12 @@ export function createApp({ deps, webDistDir }: AppOptions) {
       ],
     ),
   );
-  // The beta access code, before Better Auth and any session lookup.
-  app.use("/api/*", accessGate(deps.access));
+  // The admin host only reaches what the admin app needs (#246).
+  app.use("/api/*", adminHostApi(admin));
+  // The beta access code, before Better Auth and any session lookup. Not on the admin host: only
+  // logging in and the admin routes are there, and an account is as good a proof as the code.
+  const gate = accessGate(deps.access);
+  app.use("/api/*", (c, next) => (onAdminHost(c, admin) ? next() : gate(c, next)));
   // An admin viewing the app as another user changes nothing (#214), Better Auth included.
   app.use("/api/*", impersonationReadOnly(deps.auth));
 
@@ -122,15 +145,14 @@ export function createApp({ deps, webDistDir }: AppOptions) {
   // Unknown API routes stay JSON 404s, never the web app shell.
   app.all("/api/*", (c) => apiError(c, 404, "Not found"));
 
-  if (webDistDir) {
-    const root = resolve(webDistDir);
-    app.use("*", staticCacheHeaders);
-    app.use("*", serveStatic({ root }));
-    // A missing build file (an old build's, after a deploy) is a 404, never the app shell: the
-    // web app then reloads onto the new build (#164).
-    app.get("/assets/*", (c) => c.text("Not found", 404));
-    // Client-side routing: any other GET that accepts HTML gets the app shell.
-    app.get("*", serveStatic({ root, path: "index.html" }));
+  // The admin host gets the admin app, every other host the web app.
+  const web = webDistDir ? spa(webDistDir) : undefined;
+  const adminSite = adminDistDir ? spa(adminDistDir) : undefined;
+  if (web || adminSite) {
+    app.all("*", (c) => {
+      const site = onAdminHost(c, admin) ? adminSite : web;
+      return site ? site.fetch(c.req.raw) : c.text("Not found", 404);
+    });
   }
 
   return app;

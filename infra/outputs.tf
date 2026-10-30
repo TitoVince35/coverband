@@ -1,3 +1,7 @@
+output "admin_url" {
+  value = local.admin_url
+}
+
 output "app_url" {
   value = local.app_url
 }

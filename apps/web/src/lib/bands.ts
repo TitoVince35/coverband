@@ -1,17 +1,23 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { ensureOk } from "@/lib/errors";
+import { ApiRequestError, ensureOk } from "@/lib/errors";
 
 export const myBandsQuery = queryOptions({
   queryKey: ["bands"],
   queryFn: async () => (await (await ensureOk(await api.bands.$get())).json()).bands,
 });
 
+/** Answers that won't change by asking again: the band suspended (#248), or none. */
+const FINAL_CODES = new Set(["band_suspended", "not_found"]);
+
 export const bandQuery = (bandSlug: string) =>
   queryOptions({
     queryKey: ["bands", bandSlug],
     queryFn: async () =>
       (await ensureOk(await api.bands[":bandSlug"].$get({ param: { bandSlug } }))).json(),
+    // Other failures (the network, a sleeping database) are retried as usual (3 times).
+    retry: (failures, error) =>
+      !(error instanceof ApiRequestError && FINAL_CODES.has(error.code)) && failures < 3,
   });
 
 export const membersQuery = (bandSlug: string) =>

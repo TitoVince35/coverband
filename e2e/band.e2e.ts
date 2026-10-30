@@ -1,6 +1,16 @@
 import { fileURLToPath } from "node:url";
 import { type Browser, expect, type Locator, type Page, test } from "@playwright/test";
-import { ADMIN, bandName, email, invitationLink, login, PASSWORD } from "./support";
+import { ADMIN_APP_URL } from "./playwright.config";
+import {
+  ADMIN,
+  adminAppLogin,
+  bandName,
+  email,
+  invitationLink,
+  login,
+  openAdminRow,
+  PASSWORD,
+} from "./support";
 
 // One story, in order: each step builds on the previous one.
 test.describe.configure({ mode: "serial" });
@@ -58,6 +68,14 @@ test("the band leader creates an account and the band from the email's link", as
   await expect(leader.getByRole("link", { name: "Add your band's logo" })).toBeVisible();
 });
 
+test("the admin app refuses the band leader, who isn't an admin (#246)", async ({ browser }) => {
+  const page = await person(browser);
+  await adminAppLogin(page, leaderEmail, PASSWORD);
+  await expect(page.getByText("This console is for administrators only.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await page.context().close();
+});
+
 test("an admin views the app as the band leader, read-only, then stops", async ({ page }) => {
   await login(page, ADMIN, PASSWORD);
   await page.goto("/admin");
@@ -77,6 +95,37 @@ test("an admin views the app as the band leader, read-only, then stops", async (
   await page.getByRole("button", { name: "Stop" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByText("Viewing the app as")).toBeHidden();
+});
+
+test("an admin finds the band leader in the admin app, then views the app as them (#249)", async ({
+  page,
+  browser,
+}) => {
+  await adminAppLogin(page, ADMIN, PASSWORD);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`${ADMIN_APP_URL}/#/users`);
+  await page.getByPlaceholder("Search by email or name").fill(leaderEmail);
+  await expect(page.getByText("1-1 of 1")).toBeVisible();
+  const row = page.getByRole("row").filter({ hasText: leaderEmail });
+  await expect(row).toContainText(band);
+  await expect(row.getByLabel("band leader")).toBeVisible();
+  await expect(row).toContainText("Guitar");
+  await openAdminRow(page, leaderEmail);
+  await expect(page.getByRole("heading", { name: "Lea Leader" })).toBeVisible();
+  await expect(page.getByText("Last session")).toBeVisible();
+
+  // The admin app opens the web app's page, which starts it once confirmed.
+  const link = page.getByRole("link", { name: "View the app as this user" });
+  const href = (await link.getAttribute("href")) ?? "";
+  expect(href).toMatch(/\/impersonate\/[0-9a-f-]{36}$/);
+  const web = await (await browser.newContext()).newPage();
+  await login(web, ADMIN, PASSWORD);
+  await web.goto(new URL(href).pathname);
+  await web.getByRole("button", { name: "View the app as Lea Leader" }).click();
+  await expect(web.getByText("Viewing the app as Lea Leader: read-only.")).toBeVisible();
+  await web.getByRole("button", { name: "Stop" }).click();
+  await expect(web.getByText("Viewing the app as")).toBeHidden();
+  await web.context().close();
 });
 
 test("the band leader invites a musician, who joins the band", async ({ browser }) => {
@@ -123,6 +172,27 @@ test("the band leader invites a musician, who joins the band", async ({ browser 
   await musician.goto(musician.url().replace(/\/lineup$/, "/settings"));
   await expect(musician).toHaveURL(/\/b\/e2e-rockers-[^/]+$/);
   await musician.context().close();
+});
+
+test("an admin finds the band in the admin app and opens its page (#247)", async ({ page }) => {
+  await adminAppLogin(page, ADMIN, PASSWORD);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`${ADMIN_APP_URL}/#/bands`);
+  await page.getByPlaceholder("Search by name").fill(band);
+  // The search is debounced: once the list shows only this band, open it.
+  await expect(page.getByText("1-1 of 1")).toBeVisible();
+  const row = page.getByRole("row").filter({ hasText: band });
+  await expect(row).toContainText("Lea Leader");
+  await expect(row).toContainText("2");
+  await openAdminRow(page, band);
+
+  await expect(page.getByRole("heading", { name: band })).toBeVisible();
+  await expect(page.getByText("band leader")).toBeVisible();
+  await expect(page.getByText("Maxou", { exact: true })).toBeVisible();
+  await expect(page.getByText("Maxou joined the band")).toBeVisible();
+  await expect(page.getByText("Bass guitar")).toBeVisible();
+  await expect(page.getByText("Lea Leader created the band")).toBeVisible();
+  await expect(page.getByRole("img", { name: /0% used: 0 bytes of 500 MB/ })).toBeVisible();
 });
 
 test("the band leader updates their profile: the new name shows everywhere", async () => {
@@ -859,4 +929,58 @@ test("the colour theme switches and is remembered", async () => {
   await expect(html).not.toHaveClass(/dark/);
   await leader.reload();
   await expect(html).not.toHaveClass(/dark/);
+});
+
+/** The admin app, on the e2e band's page. */
+async function adminBandPage(page: Page) {
+  await adminAppLogin(page, ADMIN, PASSWORD);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`${ADMIN_APP_URL}/#/bands`);
+  await page.getByPlaceholder("Search by name").fill(band);
+  await expect(page.getByText("1-1 of 1")).toBeVisible();
+  await openAdminRow(page, band);
+  await expect(page.getByRole("heading", { name: band })).toBeVisible();
+}
+
+test("an admin suspends the band: its members only see that, until it's enabled (#248)", async ({
+  page,
+}) => {
+  await adminBandPage(page);
+  // Deleting comes only once it's disabled.
+  await expect(page.getByRole("button", { name: "Delete band" })).toBeDisabled();
+  await page.getByRole("button", { name: "Disable band" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Disable" }).click();
+  await expect(page.getByText(/suspended since/)).toBeVisible();
+  await expect(page.getByText("E2E Admin suspended the band")).toBeVisible();
+
+  await leader.goto("/");
+  await expect(leader.getByText("Suspended")).toBeVisible();
+  await leader.getByRole("link", { name: band }).first().click();
+  await expect(leader.getByRole("heading", { name: "This band is suspended" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Enable band" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Enable" }).click();
+  await expect(page.getByText(/suspended since/)).toBeHidden();
+  await leader.reload();
+  await expect(leader.getByRole("heading", { name: band })).toBeVisible();
+});
+
+// Last: the band is gone afterwards.
+test("an admin deletes the band for good, its name typed to confirm (#248)", async ({ page }) => {
+  await adminBandPage(page);
+  await page.getByRole("button", { name: "Disable band" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Disable" }).click();
+  await page.getByRole("button", { name: "Delete band" }).click();
+  const dialog = page.getByRole("dialog");
+  const confirm = dialog.getByRole("button", { name: "Delete for good" });
+  await dialog.getByLabel("Type the band's name to confirm").fill("E2E Rockers");
+  await expect(confirm).toBeDisabled();
+  await dialog.getByLabel("Type the band's name to confirm").fill(band);
+  await confirm.click();
+  await expect(page.getByText("Band deleted")).toBeVisible();
+  await expect(page.getByText("No results found.")).toBeVisible();
+
+  // The band leader keeps their account, without the band.
+  await leader.goto("/");
+  await expect(leader.getByRole("link", { name: band })).toHaveCount(0);
 });

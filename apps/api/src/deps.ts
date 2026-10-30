@@ -26,6 +26,8 @@ export type AppDeps = {
   videos?: VideoSearch;
   /** Public URL of the web app, for links in emails. */
   appUrl: string;
+  /** Public URL of the admin app (#246), served on its own host; absent: no admin app. */
+  adminUrl?: string;
   /** Other origins the web app may be loaded from (`bun run dev:lan`). */
   trustedOrigins?: string[];
   /** Version and build of the running release (`/api/health`). */

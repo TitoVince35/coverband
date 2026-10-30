@@ -68,9 +68,9 @@ export function UsersList() {
                 {user.bands.length > 0 && (
                   <div className="flex flex-wrap gap-1 pt-1">
                     {user.bands.map((band) => (
-                      <Badge key={band.bandSlug} variant="outline">
+                      <Badge key={band.slug} variant="outline">
                         {t("admin.users.roleInBand", {
-                          band: band.bandName,
+                          band: band.name,
                           role: t(`band.roles.${band.role}`),
                         })}
                       </Badge>
