@@ -3,6 +3,8 @@
 > 🕒 Brief posted on Thursday 2026/10/29 17:56
 >
 > 🕒 Brief settled on Thursday 2026/10/29 18:07
+>
+> 🕒 Issues completed on Friday 2026/10/30 15:57
 
 An administration console, as a new application. Decisions: [study 023](../claude/023_admin-backoffice-review.md).
 

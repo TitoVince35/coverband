@@ -24,11 +24,19 @@ The administration console (#246, brief 024, study 023): React + Vite + [Shadcn 
 
 ## Users (#249)
 
-- `src/components/users.tsx`: `UserList` (the `users` resource: email, first and last names, bands with a star for those they lead, instruments across bands without duplicates, Admin and Blocked badges; searched by email or name, `q`; "Admins" and "No band" toggles, `admins` and `bandless`; sorted by email; the kit's toggles take `w-auto`, being made for a sidebar) and `UserShow` (profile, last session, bands, pending invitations, and `UserActions`).
+- `src/components/users.tsx`: `UserList` (the `users` resource: email, first and last names, bands with a star for those they lead, instruments across bands without duplicates, how many devices get push notifications, Admin and Blocked badges; searched by email or name, `q`; "Admins" and "No band" toggles, `admins` and `bandless`; sorted by email; the kit's toggles take `w-auto`, being made for a sidebar) and `UserShow` (profile, last session, bands, pending invitations, push notification devices by service, language and date, and `UserActions`).
 - **Actions:** "View the app as this user" opens the web app's `/impersonate/<id>` (the API's `impersonateUrl`: null for an admin, oneself included), which starts the read-only impersonation of #214 once confirmed; the admin needs to be logged in to the web app too (sessions are per host). "Send a password reset email" (`dataProvider.sendPasswordReset`). Block / Unblock and Delete, confirmed (`dataProvider.setUserBanned`, `dataProvider.delete`); never offered for an admin. Deleting the only band leader of a band is refused (`only_band_leader`, its message says so).
+
+## Band leader invitations (#250)
+
+- `src/components/invitations.tsx`: `InvitationList` (the `invitations` resource, `/api/admin/invitations`, which answers in react-admin's shape: open invitations, pending or expired, newest first, no pagination): "Invite a band leader" (email and the email's language, `dataProvider.create`), and on each row "Send again" (`dataProvider.resendInvitation`) and "Revoke" (confirmed, `dataProvider.delete`).
+
+## Notifications (#260)
+
+- `src/components/notifications.tsx`: `NotificationList` (the `notifications` resource, `/api/admin/notifications`: sent notes newest first, with "Pushed to" devices, failed ones too, #262, and "Read by" readers of recipients) and "Write a note": a text box, then a preview as the main app shows it ("The Coverband team", written as is, the text with its line breaks and links, `textParts` from `@coverband/shared`), then "Send to all" (`dataProvider.create`; the toast says how many devices it was pushed to). No editing or deleting.
 
 ## The kit's code
 
 - `src/components/admin/`, `src/components/ui/` and `src/lib/field.type.ts` come from the kit's registry (`bunx --bun shadcn@latest add https://marmelab.com/shadcn-admin-kit/r/admin.json`, from `apps/admin`; shadcn components with `bunx --bun shadcn@latest add <name>`). They are ours to edit, as shadcn intends: CoverBand's name and logo in `login-page.tsx` and `app-sidebar.tsx`, dark theme by default (`theme-provider.tsx`), autocomplete on the login fields, sortable headers no wider than their padding (`data-table.tsx`: the last column overflowed). Biome formats them but doesn't lint them (`biome.json` overrides), and `tsconfig.json` turns off `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess` for them.
 - Our own code (`src/app.tsx`, `src/lib/`, `src/components/*.tsx`) follows the usual rules. The theme tokens in `src/index.css` are the web app's: keep them in sync.
-- Routes are react-admin's (a hash router: `/#/...`). Resources come with their features: bands (#247), users (#249), band leader invitations (#250). A list route answers `{ data, total }` and takes `page`, `perPage`, `sort`, `order`, `q`, validated by `listQuery` in the API's `modules/admin/routes.ts`.
+- Routes are react-admin's (a hash router: `/#/...`). Resources: bands (#247), users (#249), band leader invitations (#250), notifications (#260). A list route answers `{ data, total }` and takes `page`, `perPage`, `sort`, `order`, `q`, validated by `listQuery` in the API's `modules/admin/routes.ts`.

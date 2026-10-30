@@ -12,6 +12,7 @@ import { MAX_INSTRUMENTS } from "./instruments";
 import { MUSICAL_KEYS } from "./keys";
 import { LANGUAGES, type Language } from "./languages";
 import { MEDIA_LIMITS, parseMediaUrl } from "./media";
+import { NOTIFICATION_TEXT_MAX_LENGTH } from "./notifications";
 import { LYRICS_SOURCES, MAX_ENERGY, SONG_MAX_LENGTH, SONG_STATUSES, SONG_TEMPO } from "./songs";
 
 /** Required text, trimmed. */
@@ -187,3 +188,22 @@ export const updateDocumentBody = z
     instruments: instrumentList,
   })
   .partial();
+
+/** A note from the app's team, sent by an admin to every user (#260): plain text. */
+export const teamNoteBody = z.object({
+  text: z.string().trim().min(1).max(NOTIFICATION_TEXT_MAX_LENGTH),
+});
+
+/** A browser's push subscription (#261), as `PushSubscription.toJSON()` gives it. */
+export const pushSubscriptionBody = z.object({
+  endpoint: z.url({ protocol: /^https$/ }).max(2000),
+  keys: z.object({
+    p256dh: z.base64url().max(200),
+    auth: z.base64url().max(100),
+  }),
+  // The app's language on the device (#262): pushes are written in it.
+  language: z.enum(Object.keys(LANGUAGES) as [Language, ...Language[]]).default("en"),
+});
+
+/** Turning push notifications off on a device: its subscription's endpoint. */
+export const pushEndpointBody = z.object({ endpoint: z.string().max(2000) });

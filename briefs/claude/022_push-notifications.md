@@ -2,7 +2,7 @@
 
 > 🕒 Study posted on Friday 2026/10/23 15:12
 >
-> 🕒 Study updated on Thursday 2026/10/29 15:21
+> 🕒 Study updated on Friday 2026/10/30 16:50
 
 Two questions from Vince: what happens to an already installed app if we add push notifications, and can an admin send a live notification to every subscriber, or to the members of a band?
 
@@ -26,7 +26,7 @@ Nothing breaks, and nobody needs to reinstall. An installed PWA is the browser r
   - **A real `subject`.** VAPID carries a contact (`mailto:` or an `https://` URL). Apple rejects pushes (403 `BadJwtToken`) when it isn't a real address or points at `localhost`, so it is an address on our domain, set in `.env.example` with the keys.
   - **One pair per environment.** A subscription only works with the pair it was made with. Local dev and production each have their own; the end-to-end setup can generate a throwaway pair per run.
   - **Permanent.** Changing production's pair invalidates every subscription. The keys follow the environment-variable process (`env.ts`, `.env.example`, `infra/container.tf`).
-- **Fits the stateless server.** Subscriptions go in a Postgres table, and sending happens from API requests, for example "setlist updated → notify the band". Anything time-based, like a reminder the day before a gig, needs a Scaleway cron trigger: no cron inside the process.
+- **Fits the stateless server.** Subscriptions go in a Postgres table, and sending happens from API requests, for example "setlist updated → notify the band". Anything time-based, like a reminder the day before a gig, needs a scheduled Serverless Job (see [Where sending runs](#where-sending-runs)): no cron inside the process.
 - **Apps installed from the LAN** (`https://<LAN IP>:port`) are a separate origin, so they have separate subscriptions. That only matters for testing.
 
 ## Admin broadcasts
@@ -56,13 +56,29 @@ Yes to both: each case is a database query that picks which subscriptions to sen
 ### How the admin sends it
 
 - **An admin page** (global `admin` role) with a form: title, text, optional link inside the app, and a target ("everyone" or "band X"). It calls a route like `POST /api/admin/notifications`, which picks the recipients and sends.
-- **A notifications log table** (who sent what, to whom, how many delivered or failed): an audit trail and a place to show the result.
+- **A notifications log in Postgres:** a `notification` row (who sent what, to whom) and one delivery row per targeted device (delivered, failed, device gone). It is the audit trail, the place to show the result, and what lets the sending move elsewhere later (see below).
+
+### Where sending runs
+
+Question from Vince: should a Scaleway **Serverless Job** do the sending? A job runs a container to completion, on a cron schedule or when started through Scaleway's API. It can reuse the API's Docker image with another command (same code, database access and VAPID keys), declared in `infra/` like the container, and a run of a few seconds costs next to nothing.
+
+- **Time-based notifications: yes, a job.** A reminder the day before a gig is a daily job: find tomorrow's gigs, send to the members' devices, exit. The same job can take other chores later (expired invitations, orphaned files in storage).
+- **Live sends from the admin: not a job, for now.**
+  - **Startup.** A job starts its container before sending, probably tens of seconds (not measured): "live" would become "within a minute or so".
+  - **A new secret.** Starting a job from a request needs a Scaleway API key allowed to start jobs in the container's environment.
+  - **Not needed at beta size.** Sent during the request with limited concurrency, a few hundred devices take a few seconds. A job only pays off at many thousands.
+  - **If volume grows, a queue rather than a job.** Scaleway's Messaging and Queuing can trigger the container for each batch, which starts faster than a job.
+- **Recommendation: one send function, the trigger changes.**
+  1. The function takes subscriptions and a payload, sends with limited concurrency, writes the delivery rows, and deletes dead devices (404 or 410).
+  2. **Now:** the admin route calls it during the request.
+  3. **With gig reminders:** a scheduled job calls the same function.
+  4. **If volume calls for it:** live sends go through a queue or a job. Since the notification and its deliveries are in Postgres, only the trigger changes.
 
 ### Points to decide
 
 - **Language.** A free-text message isn't translated. Either the form takes an English and a French version and each device gets the one matching its saved `locale`, or the message goes out as typed.
 - **Who may send to a band.** A global admin sending to a band they don't belong to is a step outside the multi-tenancy rule, so it should be a deliberate decision. Letting a **band leader** notify their own band is probably the more common need, and it fits the existing membership check.
-- **Volume and the serverless container.** Sending happens during the request. A few hundred subscriptions, sent with limited concurrency (say 20 at a time), finish in a few seconds. Many thousands would need a queue, for example a Scaleway queue or a job that works through them in batches.
+- **Volume and the serverless container.** Sending happens during the request. A few hundred subscriptions, sent with limited concurrency (say 20 at a time), finish in a few seconds. Many thousands would need a queue or a job (see [Where sending runs](#where-sending-runs)).
 - **Cleanup.** When a send gets 404 or 410 back, that row is deleted right then.
 - **"Live" means:** a device that's online typically shows it within seconds, even with the app closed. An offline device gets it when it reconnects, as long as the `TTL` (time-to-live) hasn't expired; set it to a day, for example. Payloads are limited to about 4 KB: send the text and a link, not data.
 

@@ -24,6 +24,11 @@ import { instrumentRoutes } from "./modules/instruments/routes";
 import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
 import { journalRoutes } from "./modules/journal/routes";
 import { memberRoutes } from "./modules/members/routes";
+import {
+  adminNotificationRoutes,
+  notificationRoutes,
+  pushRoutes,
+} from "./modules/notifications/routes";
 import { onboardingRoutes } from "./modules/onboarding/routes";
 import { meRoutes } from "./modules/profile/routes";
 import { userRoutes } from "./modules/profile/user-routes";
@@ -49,6 +54,7 @@ function createApi(deps: AppDeps) {
       .route("/access", accessRoutes(deps.db, deps.access))
       .route("/admin", adminRoutes(deps, [bandJournalSource, songJournalSource]))
       .route("/admin/invitations", leaderInvitationRoutes(deps))
+      .route("/admin/notifications", adminNotificationRoutes(deps))
       // Invitation links, public: the token is the proof (onboarding).
       .route("/invitations", onboardingRoutes(deps))
       .route("/bands", bandRoutes(deps))
@@ -66,6 +72,8 @@ function createApi(deps: AppDeps) {
       .route("/users", userRoutes(deps))
       .route("/instruments", instrumentRoutes(deps))
       .route("/contact", contactRoutes(deps))
+      .route("/notifications", notificationRoutes(deps))
+      .route("/push", pushRoutes(deps))
   );
 }
 

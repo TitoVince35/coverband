@@ -6,6 +6,13 @@ resource "random_password" "admin" {
   length = 24
 }
 
+# The VAPID key signing push notifications (#261). Never replace it: every device's subscription
+# was made with its public half.
+resource "tls_private_key" "vapid" {
+  algorithm   = "ECDSA"
+  ecdsa_curve = "P256"
+}
+
 resource "scaleway_container_namespace" "main" {
   name        = local.name
   description = "Coverband"
@@ -57,6 +64,7 @@ resource "scaleway_container" "app" {
       S3_ACCESS_KEY_ID     = scaleway_iam_api_key.app.access_key
       S3_SECRET_ACCESS_KEY = scaleway_iam_api_key.app.secret_key
       CRON_SECRET          = random_password.cron_secret.result
+      VAPID_PRIVATE_KEY    = tls_private_key.vapid.private_key_pem_pkcs8
     },
     var.beta_access_code == "" ? {} : { BETA_ACCESS_CODE = var.beta_access_code },
     var.youtube_api_key == "" ? {} : { YOUTUBE_API_KEY = var.youtube_api_key },

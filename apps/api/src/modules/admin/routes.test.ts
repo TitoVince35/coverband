@@ -8,6 +8,7 @@ import {
   bands,
   invitations,
   memberInstruments,
+  pushSubscriptions,
   rateLimits,
   songDocuments,
   songs,
@@ -366,6 +367,7 @@ describe.skipIf(!databaseUrl)("admin API", () => {
       impersonateUrl?: string | null;
       pendingInvitations?: unknown[];
       lastSessionAt?: string | null;
+      pushDevices: number | { service: string; language: string }[];
     };
     const page = async (query: string) =>
       (await (await call(`/users?${query}`)).json()) as { data: User[]; total: number };
@@ -402,6 +404,37 @@ describe.skipIf(!databaseUrl)("admin API", () => {
       const self = (await (await call(`/users/${adminId}`)).json()) as { data: User };
       expect(self.data.impersonateUrl).toBeNull();
       expect((await call(`/users/${crypto.randomUUID()}`)).status).toBe(404);
+    });
+
+    test("push notifications: devices counted in the list, named by their service on the page", async () => {
+      // Inserted together, they'd share their date: the oldest is listed first.
+      await db.insert(pushSubscriptions).values([
+        {
+          userId: ids.lea ?? "",
+          endpoint: `https://fcm.googleapis.com/fcm/send/${run2}`,
+          p256dh: "p",
+          auth: "a",
+          createdAt: new Date(Date.now() - 60_000),
+        },
+        {
+          userId: ids.lea ?? "",
+          endpoint: `https://web.push.apple.com/${run2}`,
+          p256dh: "p",
+          auth: "a",
+          language: "fr",
+        },
+      ]);
+      const { data } = await page(`q=${run2}&sort=email`);
+      expect(data.map((u) => u.pushDevices)).toEqual([2, 0, 0]);
+      const lea = (await (await call(`/users/${ids.lea}`)).json()) as { data: User };
+      const devices = lea.data.pushDevices as Record<string, unknown>[];
+      expect(devices.map(({ service, language }) => ({ service, language }))).toEqual([
+        { service: "Google", language: "en" },
+        { service: "Apple", language: "fr" },
+      ]);
+      // Never the endpoint: whoever has it can push to the device.
+      expect(JSON.stringify(lea.data)).not.toContain("googleapis");
+      expect(devices.every((device) => !("endpoint" in device))).toBe(true);
     });
 
     test("blocking ends the sessions and refuses logins, until unblocked", async () => {
@@ -464,7 +497,9 @@ describe.skipIf(!databaseUrl)("admin API", () => {
       body: { email: ` ${leaderEmail.toUpperCase()} `, language: "fr" },
     });
     expect(res.status).toBe(201);
-    const { id } = (await res.json()) as { id: string };
+    const {
+      data: { id },
+    } = (await res.json()) as { data: { id: string } };
 
     const mail = mailer.sent.at(-1);
     expect(mail?.to).toBe(leaderEmail);
@@ -480,9 +515,11 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     expect(Math.abs(ttl - INVITATION_TTL_MS)).toBeLessThan(60_000);
 
     const list = (await (await call("/invitations")).json()) as {
-      invitations: { id: string; email: string; status: string; invitedBy: string }[];
+      data: { id: string; email: string; status: string; invitedBy: string }[];
+      total: number;
     };
-    expect(list.invitations.find((i) => i.id === id)).toMatchObject({
+    expect(list.total).toBe(list.data.length);
+    expect(list.data.find((i) => i.id === id)).toMatchObject({
       email: leaderEmail,
       status: "pending",
       invitedBy: "Ada Admin",
@@ -538,10 +575,10 @@ describe.skipIf(!databaseUrl)("admin API", () => {
 
   test("revoke hides the invitation; revoking or resending again is a 404", async () => {
     const [row] = await db.select().from(invitations).where(eq(invitations.email, leaderEmail));
-    expect((await call(`/invitations/${row?.id}`, { method: "DELETE" })).status).toBe(204);
+    expect((await call(`/invitations/${row?.id}`, { method: "DELETE" })).status).toBe(200);
 
-    const list = (await (await call("/invitations")).json()) as { invitations: { id: string }[] };
-    expect(list.invitations.some((i) => i.id === row?.id)).toBe(false);
+    const list = (await (await call("/invitations")).json()) as { data: { id: string }[] };
+    expect(list.data.some((i) => i.id === row?.id)).toBe(false);
     expect((await call(`/invitations/${row?.id}`, { method: "DELETE" })).status).toBe(404);
     expect((await call(`/invitations/${row?.id}/resend`, { method: "POST" })).status).toBe(404);
     // Refused attempts record nothing.

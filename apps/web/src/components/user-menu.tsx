@@ -1,7 +1,6 @@
-import { ADMIN_ROLE } from "@coverband/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { KeyRound, LogOut, MessageSquare, Shield } from "lucide-react";
+import { KeyRound, LogOut, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +15,7 @@ import { sessionAvatarUrl, UserAvatar } from "@/components/user-avatar";
 import { authClient, sessionQuery } from "@/lib/auth";
 import { contactQuery } from "@/lib/contact";
 import { stopImpersonating } from "@/lib/impersonation";
+import { forgetPushSubscription } from "@/lib/push";
 import { clearUserData } from "@/lib/query-client";
 
 /** Account menu in the header; hidden when logged out. */
@@ -37,6 +37,8 @@ export function UserMenu() {
     // An admin viewing the app as a user (#214): back to their own session first, which the
     // logout then ends (logging the user's session out would leave the admin's one behind).
     if (session?.session.impersonatedBy) await stopImpersonating();
+    // This device stops getting the user's push notifications (#261).
+    await forgetPushSubscription();
     await authClient.signOut();
     clearUserData(queryClient);
     await router.navigate({ to: "/login" });
@@ -55,14 +57,6 @@ export function UserMenu() {
           <div>{session.user.email}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {session.user.role === ADMIN_ROLE && (
-          <DropdownMenuItem asChild>
-            <Link to="/admin">
-              <Shield />
-              {t("admin.title")}
-            </Link>
-          </DropdownMenuItem>
-        )}
         <DropdownMenuItem asChild>
           <Link to="/account">
             <KeyRound />

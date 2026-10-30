@@ -445,25 +445,20 @@
       "submitting": "Changing…",
       "done": "Password changed.",
       "wrongCurrent": "The current password is wrong."
-    }
-  },
-  "admin": {
-    "title": "Administration",
-    "description": "Band leader invitations and users.",
-    "invite": {
-      "new": "New band leader",
-      "title": "Invite a band leader",
-      "description": "They'll receive an email to create their band. The link is valid for 48 hours."
     },
-    "users": {
-      "title": "Users",
-      "admin": "Admin",
-      "joined": "joined {{date}}",
-      "roleInBand": "{{band}} · {{role}}"
+    "push": {
+      "title": "Notifications",
+      "description": "Get the team's news on this device, even when the app is closed.",
+      "on": "Notifications are on for this device.",
+      "enable": "Turn on notifications",
+      "disable": "Turn off",
+      "denied": "Notifications are blocked for this app. Allow them in your browser's or phone's settings, then come back here.",
+      "install": "On an iPhone, notifications need the app added to your Home Screen (Share › Add to Home Screen). Open it from there, then come back here.",
+      "enabled": "Notifications turned on",
+      "disabled": "Notifications turned off"
     }
   },
   "impersonation": {
-    "viewAs": "View as",
     "banner": "Viewing the app as {{name}}: read-only.",
     "stop": "Stop",
     "confirmTitle": "View the app as {{name}}?",
@@ -601,5 +596,11 @@
     "send": "Send",
     "sending": "Sending…",
     "sent": "Message sent. Thank you!"
+  },
+  "notifications": {
+    "sender": {
+      "team": "The Coverband team"
+    },
+    "ok": "OK"
   }
 }
