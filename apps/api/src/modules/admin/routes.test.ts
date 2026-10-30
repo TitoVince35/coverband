@@ -407,12 +407,14 @@ describe.skipIf(!databaseUrl)("admin API", () => {
     });
 
     test("push notifications: devices counted in the list, named by their service on the page", async () => {
+      // Inserted together, they'd share their date: the oldest is listed first.
       await db.insert(pushSubscriptions).values([
         {
           userId: ids.lea ?? "",
           endpoint: `https://fcm.googleapis.com/fcm/send/${run2}`,
           p256dh: "p",
           auth: "a",
+          createdAt: new Date(Date.now() - 60_000),
         },
         {
           userId: ids.lea ?? "",
