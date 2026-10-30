@@ -23,7 +23,8 @@ const auth = createAuth({
   mailer,
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
-  trustedOrigins: env.TRUSTED_ORIGINS,
+  // The admin app logs in from its own host (#246).
+  trustedOrigins: [...env.TRUSTED_ORIGINS, ...(env.ADMIN_URL ? [env.ADMIN_URL] : [])],
   clientIpHeader: env.CLIENT_IP_HEADER,
 });
 
@@ -52,6 +53,7 @@ const app = createApp({
       }),
     }),
     appUrl: env.BETTER_AUTH_URL,
+    ...(env.ADMIN_URL && { adminUrl: env.ADMIN_URL }),
     trustedOrigins: env.TRUSTED_ORIGINS,
     redirectHosts: env.REDIRECT_HOSTS,
     ...(env.CRON_SECRET && { cronSecret: env.CRON_SECRET }),
@@ -67,6 +69,7 @@ const app = createApp({
     }),
   },
   webDistDir: env.WEB_DIST_DIR,
+  adminDistDir: env.ADMIN_DIST_DIR,
 });
 
 // Started here rather than by a default export, which makes Bun print its own non-JSON line.

@@ -4,13 +4,14 @@ An installable web app (PWA) for music bands: repertoire, setlists, gigs, member
 Multi-tenant: each band's data is private; a musician can belong to several bands.
 
 Product briefs and technical decisions live in `briefs/`. Read them before making structural choices.
-App-specific conventions: `apps/api/CLAUDE.md` and `apps/web/CLAUDE.md`. Task workflow (GitHub board, branches, PRs, releases): the `task-workflow` skill.
+App-specific conventions: `apps/api/CLAUDE.md`, `apps/web/CLAUDE.md` and `apps/admin/CLAUDE.md`. Task workflow (GitHub board, branches, PRs, releases): the `task-workflow` skill.
 
 ## Stack
 
 - **Bun** workspaces monorepo, TypeScript strict everywhere
 - `apps/api`: Hono on Bun, REST API under `/api` plus the built web app (single container)
 - `apps/web`: React + Vite + TanStack Router/Query, Tailwind + shadcn/ui, vite-plugin-pwa
+- `apps/admin`: the admin console (#246), React + Vite + Shadcn Admin Kit (react-admin's core with shadcn/ui), desktop first, served by the API on its own host (`admin-beta.coverband.fr`, `admin.localhost` locally)
 - `packages/shared`: code shared by both apps (Zod schemas, types, helpers)
 - PostgreSQL + **Drizzle** ORM, **Better Auth** (organization plugin: band = organization)
 - Hosting: Scaleway (Paris), Serverless Containers + Serverless SQL Database + Object Storage
@@ -21,13 +22,14 @@ App-specific conventions: `apps/api/CLAUDE.md` and `apps/web/CLAUDE.md`. Task wo
 ```sh
 bun install          # install all workspaces
 bun run check        # lint + typecheck + tests (run before every commit)
-bun run dev          # API (http://localhost:3000) + web app (https://localhost:5173, proxies /api) + Drizzle Studio
+bun run dev          # API (http://localhost:3000) + web app (https://localhost:5173, proxies /api)
+                     # + admin app (https://admin.localhost:5174, proxies /api) + Drizzle Studio
 bun run dev:lan      # same, reachable from a phone on the local network: prints a QR code (LAN IP override: DEV_HOST)
                      # (no service worker in dev: test installing and offline use with serve:lan)
 bun run dev:api      # API only, watch mode
 bun run dev:web      # web app only (Vite, plain http)
-bun run build        # build the web app into apps/web/dist
-bun run serve        # production-like: the API serves apps/web/dist on :3000 (open https://localhost:3000)
+bun run build        # build the web and admin apps into apps/web/dist and apps/admin/dist
+bun run serve        # production-like: the API serves both on :3000 (https://localhost:3000, https://admin.localhost:3000)
 bun run serve:lan    # same, reachable from a phone on the local network: builds, then prints a QR code
                      # dev, dev:lan, serve and serve:lan use HTTPS when mkcert is installed (see Local HTTPS)
 bun run format       # apply Biome formatting and safe fixes
@@ -72,7 +74,7 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 - Workspace packages are imported by name (`@coverband/shared`), never by relative path across packages.
 - **API errors** are JSON `{ "error": { "code", "message" } }`: `code` is a stable code from `ERROR_CODES` in `@coverband/shared` that the web app translates (a new code needs a translation in both locale files, tested); `message` is an English fallback for developers.
 - **App name:** `APP_NAME` in `@coverband/shared` (currently "Coverband Beta") is the only place it is written: use the constant in code and `{{appName}}` in translations, never a literal.
-- **i18n from day one:** English (default and fallback) and French, in the web app and in emails. Never hardcode user-visible text. Supported languages: `LANGUAGES` in `@coverband/shared`.
+- **i18n from day one:** English (default and fallback) and French, in the web app and in emails. Never hardcode user-visible text. Supported languages: `LANGUAGES` in `@coverband/shared`. The one exception: the admin app (`apps/admin`) is English only, since only the app's admins use it.
 - **Vocabulary (all languages, UI and emails):** "band leader" is never translated (French: "un band leader", never "leader" alone or "chef de groupe"). Musicians' terms like "setlist" also stay as they are. In French, a musician (the band role) is « zicos » (invariable, gender-neutral): « un zicos », « Inviter un zicos ». In French, prefer gender-neutral wording ("envoyée par", "membre depuis") over a masculine default.
 - **Accounts:** no public sign-up; accounts only come from invitations. Global role on the user (`admin` / `user`); band roles (`leader` / `musician`) live on the band membership, never on the user.
 - **Multi-tenancy:** every band-scoped table has a `band_id`; every band-scoped request checks that the user is a member of that band (non-members get a 404). The band is in the URL (`/b/:bandSlug/...`). **A band name is forever** (it is also the URL): it can't be renamed, only the genre changes.

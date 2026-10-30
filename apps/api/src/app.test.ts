@@ -79,3 +79,60 @@ describe("web app serving", () => {
     expect(await res.json()).toEqual({ error: { code: "not_found", message: "Not found" } });
   });
 });
+
+describe("admin app serving (#246)", () => {
+  let web: string;
+  let admin: string;
+  const adminDeps = {
+    ...deps,
+    adminUrl: "https://admin.localhost:3000",
+    access: {
+      code: "beta",
+      secret: "s".repeat(32),
+      clientIpHeader: "x-forwarded-for",
+      https: false,
+    },
+  };
+  const onAdmin = { headers: { host: "admin.localhost:3000" } };
+
+  beforeAll(async () => {
+    web = await mkdtemp(join(tmpdir(), "coverband-web-"));
+    admin = await mkdtemp(join(tmpdir(), "coverband-admin-"));
+    await writeFile(join(web, "index.html"), "<title>Web</title>");
+    await writeFile(join(admin, "index.html"), "<title>Admin</title>");
+  });
+
+  afterAll(async () => {
+    await rm(web, { recursive: true, force: true });
+    await rm(admin, { recursive: true, force: true });
+  });
+
+  const app = () => createApp({ deps: adminDeps, webDistDir: web, adminDistDir: admin });
+
+  test("the admin host gets the admin app, any other host the web app", async () => {
+    expect(await (await app().request("/users", onAdmin)).text()).toContain("Admin");
+    expect(await (await app().request("/users")).text()).toContain("Web");
+    // The port doesn't matter, nor the case.
+    const other = { headers: { host: "ADMIN.localhost:5174" } };
+    expect(await (await app().request("/", other)).text()).toContain("Admin");
+  });
+
+  test("the admin host only reaches the API routes the admin app needs", async () => {
+    expect((await app().request("/api/bands", onAdmin)).status).toBe(404);
+    expect((await app().request("/api/me", onAdmin)).status).toBe(404);
+    expect((await app().request("/api/health", onAdmin)).status).toBe(200);
+    // Past the beta access code: the admin routes ask for an admin session.
+    expect((await app().request("/api/admin/stats", onAdmin)).status).toBe(401);
+  });
+
+  test("the main host keeps the beta access code", async () => {
+    const res = await app().request("/api/admin/stats");
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ error: { code: "access_required" } });
+  });
+
+  test("without an admin URL, every host gets the web app", async () => {
+    const plain = createApp({ deps, webDistDir: web, adminDistDir: admin });
+    expect(await (await plain.request("/", onAdmin)).text()).toContain("Web");
+  });
+});

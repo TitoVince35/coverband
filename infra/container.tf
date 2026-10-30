@@ -29,6 +29,8 @@ resource "scaleway_container" "app" {
 
   environment_variables = {
     BETTER_AUTH_URL = local.app_url
+    # The admin app, on its own host (#246).
+    ADMIN_URL = local.admin_url
     # The bare domain is redirected to the app URL by the app itself (#156).
     REDIRECT_HOSTS = var.domain
     # Scaleway's proxy overwrites X-Real-IP with the caller's IP; X-Forwarded-For keeps what the client sends.
@@ -98,4 +100,20 @@ resource "scaleway_container_domain" "apex" {
   container_id = scaleway_container.app.id
   hostname     = var.domain
   depends_on   = [scaleway_domain_record.apex]
+}
+
+# https://<admin_subdomain>.<domain>: the admin app (#246), served by the same container on its own
+# host (the API picks the app from the request's host).
+resource "scaleway_domain_record" "admin" {
+  dns_zone = var.domain
+  name     = var.admin_subdomain
+  type     = "CNAME"
+  data     = "${trimprefix(scaleway_container.app.public_endpoint, "https://")}."
+  ttl      = 3600
+}
+
+resource "scaleway_container_domain" "admin" {
+  container_id = scaleway_container.app.id
+  hostname     = local.admin_hostname
+  depends_on   = [scaleway_domain_record.admin]
 }

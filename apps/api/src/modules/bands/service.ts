@@ -1,5 +1,5 @@
 import { type BandLogo, type BandRole, type Instrument, slugify } from "@coverband/shared";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, count, eq, gte, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
@@ -135,6 +135,17 @@ export async function hasMemberWithEmail(db: Db | Tx, bandId: string, email: str
     .innerJoin(users, eq(users.id, bandMembers.userId))
     .where(and(eq(bandMembers.bandId, bandId), eq(users.email, email)));
   return member !== undefined;
+}
+
+/** How many bands there are, and how many were created since `since` (the admin console). */
+export async function countBands(db: Db, since: Date) {
+  const [row] = await db
+    .select({
+      total: count(),
+      since: count(sql`case when ${gte(bands.createdAt, since)} then 1 end`),
+    })
+    .from(bands);
+  return { total: row?.total ?? 0, since: row?.since ?? 0 };
 }
 
 /** Every membership, by band name, with the band's name and slug: the admin console. */
