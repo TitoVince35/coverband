@@ -25,6 +25,12 @@ variable "app_subdomain" {
   default     = "app"
 }
 
+variable "admin_subdomain" {
+  description = "The admin app is served at https://<admin_subdomain>.<domain>, by the same container."
+  type        = string
+  default     = "admin"
+}
+
 variable "mail_from" {
   description = "Sender of the app's emails, an address of the domain. Defaults to noreply@<domain>."
   type        = string

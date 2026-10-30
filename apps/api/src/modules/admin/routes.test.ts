@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { APP_NAME } from "@coverband/shared";
+import { APP_NAME, DOCUMENT_LIMITS } from "@coverband/shared";
 import { eq, inArray } from "drizzle-orm";
 import { createApp } from "../../app";
 import { activity, invitations, rateLimits, users } from "../../core/db/schema";
@@ -72,8 +72,34 @@ describe.skipIf(!databaseUrl)("admin API", () => {
   });
 
   test("admins only", async () => {
-    expect((await call("/users", { cookie: "" })).status).toBe(401);
-    expect((await call("/users", { cookie: await login(userEmail) })).status).toBe(403);
+    const userCookie = await login(userEmail);
+    for (const path of ["/users", "/stats"]) {
+      expect((await call(path, { cookie: "" })).status).toBe(401);
+      expect((await call(path, { cookie: userCookie })).status).toBe(403);
+    }
+  });
+
+  test("homepage numbers: every count, logged-in users as active", async () => {
+    const res = await call("/stats");
+    expect(res.status).toBe(200);
+    const stats = (await res.json()) as Record<string, number>;
+    expect(Object.keys(stats).sort()).toEqual([
+      "activeUsers",
+      "bands",
+      "documents",
+      "documentsBytes",
+      "documentsQuotaBytes",
+      "newBandsThisMonth",
+      "pendingInvitations",
+      "songs",
+      "users",
+    ]);
+    for (const value of Object.values(stats)) expect(Number.isInteger(value)).toBe(true);
+    // At least this test's admin and user, both logged in.
+    expect(stats.users).toBeGreaterThanOrEqual(2);
+    expect(stats.activeUsers).toBeGreaterThanOrEqual(2);
+    expect(stats.newBandsThisMonth).toBeLessThanOrEqual(stats.bands ?? 0);
+    expect(stats.documentsQuotaBytes).toBe((stats.bands ?? 0) * DOCUMENT_LIMITS.perBand);
   });
 
   test("lists users with their global role", async () => {

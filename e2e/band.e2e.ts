@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { type Browser, expect, type Locator, type Page, test } from "@playwright/test";
-import { ADMIN, bandName, email, invitationLink, login, PASSWORD } from "./support";
+import { ADMIN, adminAppLogin, bandName, email, invitationLink, login, PASSWORD } from "./support";
 
 // One story, in order: each step builds on the previous one.
 test.describe.configure({ mode: "serial" });
@@ -56,6 +56,14 @@ test("the band leader creates an account and the band from the email's link", as
   // No welcome message (#222); no logo yet: the band leader's way to add one.
   await expect(leader.getByText("Welcome to")).toBeHidden();
   await expect(leader.getByRole("link", { name: "Add your band's logo" })).toBeVisible();
+});
+
+test("the admin app refuses the band leader, who isn't an admin (#246)", async ({ browser }) => {
+  const page = await person(browser);
+  await adminAppLogin(page, leaderEmail, PASSWORD);
+  await expect(page.getByText("This console is for administrators only.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await page.context().close();
 });
 
 test("an admin views the app as the band leader, read-only, then stops", async ({ page }) => {

@@ -14,7 +14,7 @@
     "dev:lan": "bun --env-file=.env apps/api/src/dev/lan.ts",
     "dev:api": "bun --env-file=.env run --filter @coverband/api dev",
     "dev:web": "bun run --filter @coverband/web dev",
-    "build": "bun run --filter @coverband/web build",
+    "build": "bun run --filter @coverband/web --filter @coverband/admin build",
     "serve": "bun --env-file=.env apps/api/src/dev/serve.ts",
     "serve:lan": "bun run build && bun --env-file=.env apps/api/src/dev/serve-lan.ts",
     "lint": "biome check .",
