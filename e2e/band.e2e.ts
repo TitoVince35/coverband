@@ -30,13 +30,18 @@ test.afterAll(async () => {
   await leader?.context().close();
 });
 
-test("an admin invites a band leader", async ({ page }) => {
-  await login(page, ADMIN, PASSWORD);
-  await page.goto("/admin");
-  await page.getByRole("button", { name: "New band leader" }).click();
-  await page.getByLabel("Email", { exact: true }).fill(leaderEmail);
+test("an admin invites a band leader from the admin app (#250)", async ({ page }) => {
+  await adminAppLogin(page, ADMIN, PASSWORD);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.goto(`${ADMIN_APP_URL}/#/invitations`);
+  await page.getByRole("button", { name: "Invite a band leader" }).click();
+  await page.getByRole("dialog").getByLabel("Email", { exact: true }).fill(leaderEmail);
+  await page.getByRole("dialog").getByLabel("Email's language").selectOption("en");
   await page.getByRole("button", { name: "Send invitation" }).click();
   await expect(page.getByText(`Invitation sent to ${leaderEmail}`)).toBeVisible();
+  const row = page.getByRole("row").filter({ hasText: leaderEmail });
+  await expect(row).toContainText("Pending");
+  await expect(row).toContainText("E2E Admin");
 });
 
 test("the band leader creates an account and the band from the email's link", async ({
@@ -76,27 +81,6 @@ test("the admin app refuses the band leader, who isn't an admin (#246)", async (
   await page.context().close();
 });
 
-test("an admin views the app as the band leader, read-only, then stops", async ({ page }) => {
-  await login(page, ADMIN, PASSWORD);
-  await page.goto("/admin");
-  await page
-    .getByRole("listitem")
-    .filter({ hasText: leaderEmail })
-    .getByRole("button", { name: "View as" })
-    .click();
-  await expect(page.getByText("Viewing the app as Lea Leader: read-only.")).toBeVisible();
-  await expect(page.getByRole("link", { name: band })).toBeVisible();
-
-  await page.goto("/account");
-  await page.getByLabel("Nickname").fill("Hacked");
-  await page.getByRole("button", { name: "Update" }).click();
-  await expect(page.getByText("Read-only while viewing the app as another user.")).toBeVisible();
-
-  await page.getByRole("button", { name: "Stop" }).click();
-  await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByText("Viewing the app as")).toBeHidden();
-});
-
 test("an admin finds the band leader in the admin app, then views the app as them (#249)", async ({
   page,
   browser,
@@ -123,8 +107,14 @@ test("an admin finds the band leader in the admin app, then views the app as the
   await web.goto(new URL(href).pathname);
   await web.getByRole("button", { name: "View the app as Lea Leader" }).click();
   await expect(web.getByText("Viewing the app as Lea Leader: read-only.")).toBeVisible();
+  await expect(web.getByRole("link", { name: band })).toBeVisible();
+  // Read-only (#214).
+  await web.goto("/account");
+  await web.getByLabel("Nickname").fill("Hacked");
+  await web.getByRole("button", { name: "Update" }).click();
+  await expect(web.getByText("Read-only while viewing the app as another user.")).toBeVisible();
   await web.getByRole("button", { name: "Stop" }).click();
-  await expect(web.getByText("Viewing the app as")).toBeHidden();
+  await expect(web.getByText("Viewing the app as Lea Leader")).toBeHidden();
   await web.context().close();
 });
 

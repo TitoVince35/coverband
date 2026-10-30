@@ -447,23 +447,7 @@
       "wrongCurrent": "The current password is wrong."
     }
   },
-  "admin": {
-    "title": "Administration",
-    "description": "Band leader invitations and users.",
-    "invite": {
-      "new": "New band leader",
-      "title": "Invite a band leader",
-      "description": "They'll receive an email to create their band. The link is valid for 48 hours."
-    },
-    "users": {
-      "title": "Users",
-      "admin": "Admin",
-      "joined": "joined {{date}}",
-      "roleInBand": "{{band}} · {{role}}"
-    }
-  },
   "impersonation": {
-    "viewAs": "View as",
     "banner": "Viewing the app as {{name}}: read-only.",
     "stop": "Stop",
     "confirmTitle": "View the app as {{name}}?",

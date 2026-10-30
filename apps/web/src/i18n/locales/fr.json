@@ -447,23 +447,7 @@
       "wrongCurrent": "Le mot de passe actuel est incorrect."
     }
   },
-  "admin": {
-    "title": "Administration",
-    "description": "Invitations des band leaders et utilisateurs.",
-    "invite": {
-      "new": "Nouveau band leader",
-      "title": "Inviter un band leader",
-      "description": "Cette personne recevra un e-mail pour créer son groupe. Le lien est valable 48 heures."
-    },
-    "users": {
-      "title": "Utilisateurs",
-      "admin": "Admin",
-      "joined": "membre depuis le {{date}}",
-      "roleInBand": "{{band}} · {{role}}"
-    }
-  },
   "impersonation": {
-    "viewAs": "Voir en tant que",
     "banner": "Vous voyez l'app en tant que {{name}} : lecture seule.",
     "stop": "Arrêter",
     "confirmTitle": "Voir l'app comme {{name}} ?",

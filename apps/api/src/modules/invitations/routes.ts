@@ -29,28 +29,34 @@ const idParam = z.object({ id: z.uuid() });
 /** Band leader invitations (/api/admin/invitations), sent by application admins. */
 export function leaderInvitationRoutes(deps: AppDeps) {
   const limit = rateLimitUser(deps.db, INVITATION_EMAILS);
-  return new Hono<SessionEnv>()
-    .use(requireAdmin)
-    .get("/", async (c) => {
-      return c.json({ invitations: await listInvitations(deps, LEADER_INVITATIONS) });
-    })
-    .post("/", limit, zValidator("json", invitationBody, validationHook), async (c) => {
-      const invitation = await invite(deps, LEADER_INVITATIONS, {
-        ...c.req.valid("json"),
-        invitedById: c.var.user.id,
-      });
-      return c.json({ id: invitation.id }, 201);
-    })
-    .post("/:id/resend", limit, zValidator("param", idParam, validationHook), async (c) => {
-      const { id } = c.req.valid("param");
-      const invitation = await resendInvitation(deps, LEADER_INVITATIONS, id, c.var.user.id);
-      return invitation ? c.json({ id: invitation.id }) : apiError(c, 404, "Invitation not found");
-    })
-    .delete("/:id", zValidator("param", idParam, validationHook), async (c) => {
-      const { id } = c.req.valid("param");
-      const revoked = await revokeInvitation(deps, LEADER_INVITATIONS, id, c.var.user.id);
-      return revoked ? c.body(null, 204) : apiError(c, 404, "Invitation not found");
-    });
+  return (
+    new Hono<SessionEnv>()
+      .use(requireAdmin)
+      // In react-admin's shape (the admin app, #250): a list is `{ data, total }`, a record `{ data }`.
+      .get("/", async (c) => {
+        const data = await listInvitations(deps, LEADER_INVITATIONS);
+        return c.json({ data, total: data.length });
+      })
+      .post("/", limit, zValidator("json", invitationBody, validationHook), async (c) => {
+        const invitation = await invite(deps, LEADER_INVITATIONS, {
+          ...c.req.valid("json"),
+          invitedById: c.var.user.id,
+        });
+        return c.json({ data: { id: invitation.id } }, 201);
+      })
+      .post("/:id/resend", limit, zValidator("param", idParam, validationHook), async (c) => {
+        const { id } = c.req.valid("param");
+        const invitation = await resendInvitation(deps, LEADER_INVITATIONS, id, c.var.user.id);
+        return invitation
+          ? c.json({ id: invitation.id })
+          : apiError(c, 404, "Invitation not found");
+      })
+      .delete("/:id", zValidator("param", idParam, validationHook), async (c) => {
+        const { id } = c.req.valid("param");
+        const revoked = await revokeInvitation(deps, LEADER_INVITATIONS, id, c.var.user.id);
+        return revoked ? c.json({ data: { id } }) : apiError(c, 404, "Invitation not found");
+      })
+  );
 }
 
 /** A band's musician invitations (/api/bands/:bandSlug/invitations), sent by its band leader. */
