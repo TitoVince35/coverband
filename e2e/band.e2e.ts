@@ -204,9 +204,9 @@ test("the band's sections: a bottom bar on a phone, tabs on a large screen (#223
   await leader.goto("/");
   await leader.getByRole("link", { name: band }).first().click();
   const sections = leader.getByRole("navigation", { name: "Band sections" });
-  // Five items: Setlists and Gigs there already, not links yet.
-  await expect(sections.getByRole("link")).toHaveCount(3);
-  await expect(sections.getByText("Setlists")).toBeVisible();
+  // Five items: Gigs there already, not a link yet.
+  await expect(sections.getByRole("link")).toHaveCount(4);
+  await expect(sections.getByRole("link", { name: "Setlists" })).toBeVisible();
   await expect(sections.getByText("Gigs")).toBeVisible();
   // At the bottom of the screen.
   const phone = leader.viewportSize() ?? { width: 393, height: 727 };
@@ -233,7 +233,7 @@ test("the band's sections: a bottom bar on a phone, tabs on a large screen (#223
   await leader.setViewportSize({ width: 1024, height: 768 });
   const tabs = await sections.boundingBox();
   expect(tabs?.y ?? 768).toBeLessThan(300);
-  await expect(sections.getByRole("link")).toHaveCount(3);
+  await expect(sections.getByRole("link")).toHaveCount(4);
   await leader.setViewportSize(phone);
 });
 
@@ -797,6 +797,63 @@ function savedCount(page: Page, name: "logos" | "documents") {
 const savedLogos = (page: Page) => savedCount(page, "logos");
 
 /** The data the app saved on the device for offline use (#165), as JSON, or "" before any. */
+test("members manage setlists: create, a taken title, rename, archive, restore, delete (#271)", async () => {
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  await expect(leader.getByText("No setlists yet")).toBeVisible();
+  const create = async (title: string) => {
+    await leader.getByRole("button", { name: "New setlist" }).click();
+    const dialog = leader.getByRole("dialog");
+    await dialog.getByLabel("Title").fill(title);
+    await dialog.getByRole("button", { name: "New setlist" }).click();
+    return dialog;
+  };
+
+  // Created, then opened.
+  await create("Wedding, full night");
+  await expect(leader.getByRole("heading", { name: "Wedding, full night" })).toBeVisible();
+  await expect(leader.getByText("By Captain Lea")).toBeVisible();
+
+  // A title is unique in the band, whatever its case.
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  const taken = await create("WEDDING, FULL NIGHT");
+  await expect(taken.getByRole("alert")).toHaveText(
+    "The band already has a setlist with this title.",
+  );
+  await taken.getByRole("button", { name: "Cancel" }).click();
+
+  // Renamed from its menu in the list.
+  const setlists = leader.getByRole("list", { name: "Setlists" });
+  await setlists.getByRole("button", { name: "Actions for Wedding, full night" }).click();
+  await leader.getByRole("menuitem", { name: "Rename" }).click();
+  await leader.getByRole("dialog").getByLabel("Title").fill("Wedding");
+  await leader.getByRole("dialog").getByRole("button", { name: "Rename" }).click();
+  await expect(setlists.getByRole("link", { name: /Wedding/ })).toContainText("Wedding");
+
+  // Archived: out of the current ones, read-only, then restored from its page.
+  await setlists.getByRole("button", { name: "Actions for Wedding" }).click();
+  await leader.getByRole("menuitem", { name: "Archive" }).click();
+  await expect(leader.getByText("No setlists yet")).toBeVisible();
+  await leader.getByRole("link", { name: /Archived/ }).click();
+  await setlists.getByRole("link", { name: /Wedding/ }).click();
+  await expect(leader.getByText("This setlist is archived: it's read-only.")).toBeVisible();
+  await leader.getByRole("button", { name: "Restore" }).click();
+  await expect(leader.getByText("This setlist is archived")).toBeHidden();
+
+  // The journal tells it.
+  await leader.getByRole("link", { name: "Home" }).first().click();
+  await leader.getByRole("button", { name: "Latest activity" }).click();
+  await expect(leader.getByText("Captain Lea restored setlist “Wedding”")).toBeVisible();
+
+  // Deleted for good by the band leader, confirmed.
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  await create("To delete");
+  await leader.getByRole("button", { name: "Actions for To delete" }).click();
+  await leader.getByRole("menuitem", { name: "Delete…" }).click();
+  await leader.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+  await expect(leader.getByText("Setlist deleted")).toBeVisible();
+  await expect(leader.getByRole("list", { name: "Setlists" })).not.toContainText("To delete");
+});
+
 function savedCopy(page: Page) {
   return page.evaluate(
     () =>

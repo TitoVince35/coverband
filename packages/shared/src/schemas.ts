@@ -13,6 +13,7 @@ import { MUSICAL_KEYS } from "./keys";
 import { LANGUAGES, type Language } from "./languages";
 import { MEDIA_LIMITS, parseMediaUrl } from "./media";
 import { NOTIFICATION_TEXT_MAX_LENGTH } from "./notifications";
+import { SETLIST_MAX_LENGTH } from "./setlists";
 import { LYRICS_SOURCES, MAX_ENERGY, SONG_MAX_LENGTH, SONG_STATUSES, SONG_TEMPO } from "./songs";
 
 /** Required text, trimmed. */
@@ -207,3 +208,6 @@ export const pushSubscriptionBody = z.object({
 
 /** Turning push notifications off on a device: its subscription's endpoint. */
 export const pushEndpointBody = z.object({ endpoint: z.string().max(2000) });
+
+/** A new setlist, or a new title: unique within the band, case ignored (409 setlist_title_taken). */
+export const setlistTitleBody = z.object({ title: text(SETLIST_MAX_LENGTH.title) });

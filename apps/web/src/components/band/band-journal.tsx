@@ -27,6 +27,11 @@ const SENTENCES = {
   "song.lyrics_changed": "journal.songLyricsChanged",
   "song.document_added": "journal.documentAdded",
   "song.document_removed": "journal.documentRemoved",
+  "setlist.created": "journal.setlistCreated",
+  "setlist.renamed": "journal.setlistRenamed",
+  "setlist.archived": "journal.setlistArchived",
+  "setlist.restored": "journal.setlistRestored",
+  "setlist.deleted": "journal.setlistDeleted",
 } as const satisfies Partial<Record<ActivityAction, string>>;
 
 /** The status a song was given, as a word of the sentence. */
@@ -67,6 +72,11 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
             const song = songTitle
               ? t("journal.songTitle", { title: songTitle })
               : t("journal.aSong");
+            // The setlist's current title; "a setlist" once it's gone.
+            const setlistTitle = "setlist" in entry ? entry.setlist : null;
+            const setlist = setlistTitle
+              ? t("journal.setlistTitle", { title: setlistTitle })
+              : t("journal.aSetlist");
             const sentence =
               entry.action === "band.genre_changed" && !("genre" in entry && entry.genre)
                 ? t("journal.genreRemoved", { name })
@@ -78,6 +88,7 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
                       name,
                       genre: "genre" in entry ? entry.genre : "",
                       song,
+                      setlist,
                       status: statusWord(entry),
                     });
             return (

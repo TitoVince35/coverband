@@ -35,11 +35,23 @@ export const ACTIVITY_ACTIONS = [
   "notification.read",
   "user.push_enabled",
   "user.push_disabled",
+  "setlist.created",
+  "setlist.renamed",
+  "setlist.archived",
+  "setlist.restored",
+  "setlist.deleted",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
 
 /** What an activity is about (`target_type`). */
-export const ACTIVITY_TARGETS = ["invitation", "user", "band", "song", "notification"] as const;
+export const ACTIVITY_TARGETS = [
+  "invitation",
+  "user",
+  "band",
+  "song",
+  "notification",
+  "setlist",
+] as const;
 
 export type ActivityTarget = (typeof ACTIVITY_TARGETS)[number];
