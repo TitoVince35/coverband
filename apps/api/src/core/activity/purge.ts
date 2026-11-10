@@ -2,7 +2,7 @@ import { lt } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { activity } from "../db/schema";
 
-/** Activity rows are kept one year (briefs/claude/006_logging.md); logs, 30 days in Cockpit. */
+/** Activity rows are kept one year (doc/briefs/claude/006_logging.md); logs, 30 days in Cockpit. */
 export const ACTIVITY_RETENTION_DAYS = 365;
 
 /** Deletes the activity older than the retention; returns how many rows went. */

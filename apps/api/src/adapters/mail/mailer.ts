@@ -27,7 +27,7 @@ export type SmtpConfig = {
 
 /**
  * Sends over SMTP: Mailpit locally, Scaleway TEM in production. Switching provider is only
- * configuration (see briefs/claude/004_auth-review.md).
+ * configuration (see doc/briefs/claude/004_auth-review.md).
  */
 export function createSmtpMailer(config: SmtpConfig): Mailer {
   const transport = nodemailer.createTransport({

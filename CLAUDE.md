@@ -3,7 +3,7 @@
 An installable web app (PWA) for music bands: repertoire, setlists, gigs, members.
 Multi-tenant: each band's data is private; a musician can belong to several bands.
 
-Product briefs and technical decisions live in `briefs/`. Read them before making structural choices.
+Product briefs and technical decisions live in `doc/briefs/`. Read them before making structural choices.
 App-specific conventions: `apps/api/CLAUDE.md`, `apps/web/CLAUDE.md` and `apps/admin/CLAUDE.md`. Task workflow (GitHub board, branches, PRs, releases): the `task-workflow` skill.
 
 ## Stack
@@ -42,6 +42,8 @@ bun run db:up        # start local Postgres (port 5432), Mailpit (SMTP 1025, ema
 bun run db:generate  # generate a SQL migration from apps/api/src/core/db/schema.ts
 bun run db:migrate   # apply pending migrations
 bun run db:studio    # browse the database
+bun run db:diagram   # draw the database model from the Drizzle schema (needs Graphviz: sudo apt install graphviz)
+                     # into doc/schemas/YYmmddhhmm_db-diagram.{pdf,svg,dot}
 bun run mail:test you@example.com fr   # send a test email (lands in Mailpit locally)
 bun run db:down      # stop Postgres (add -v to docker compose down to wipe data)
 ```
@@ -91,9 +93,9 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 
 They track the product scaffolding and the design decisions made along the way. Every document has a human-readable timestamp line right after its title, separated by blank lines: `> 🕒 Brief posted on Thursday 2026/03/26 14:44` (Vince's) or `> 🕒 Study posted on ...` (Claude's), in English, local time.
 
-- `briefs/vince/NNN_title.md`: Vince's briefs. Vince writes them without the timestamp line; Claude adds it when asked to review the brief, using the time of that request.
-- `briefs/claude/NNN_title.md`: Claude's proposals and answers, numbered in their own sequence (not matched to Vince's numbers).
-- Only save a reply to `briefs/claude/` when Vince explicitly asks.
+- `doc/briefs/vince/NNN_title.md`: Vince's briefs. Vince writes them without the timestamp line; Claude adds it when asked to review the brief, using the time of that request.
+- `doc/briefs/claude/NNN_title.md`: Claude's proposals and answers, numbered in their own sequence (not matched to Vince's numbers).
+- Only save a reply to `doc/briefs/claude/` when Vince explicitly asks.
 - A Vince brief's timestamp block grows with its life cycle, one line per step, same format, separated by `>` lines:
 
   ```md

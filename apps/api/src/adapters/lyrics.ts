@@ -50,7 +50,7 @@ const RETRIED_STATUSES = new Set([429, 502, 503, 504]);
 /**
  * LRCLIB (lrclib.net): free, no key; it asks clients to name themselves in the User-Agent. Its
  * lyrics come from its community, without a licence from the rights holders (see
- * briefs/claude/014_lyrics.md). Nothing is cached: the server keeps no state.
+ * doc/briefs/claude/014_lyrics.md). Nothing is cached: the server keeps no state.
  *
  * When it's overloaded, LRCLIB refuses part of the requests at random ("server busy"): a busy
  * answer or a network failure is asked again after each of `retryDelaysMs`.

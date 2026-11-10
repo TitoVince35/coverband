@@ -14,7 +14,7 @@ Hono on Bun. Cross-cutting rules are in the root `CLAUDE.md`.
 ## Routes
 
 - REST under `/api` (resource URLs, HTTP verbs, status codes, JSON). No OpenAPI for now.
-- One Hono sub-app per resource, in its module's `routes.ts`, built by a function taking `AppDeps` (`src/deps.ts`: auth, db, log, mailer, storage, lyrics, appUrl) and mounted in `src/app.ts` with **chained calls** so `AppType` keeps every route. The web app calls it through the typed client from `@coverband/api/client` (Hono calls this "RPC"; see `briefs/claude/003_rest-vs-rpc.md`).
+- One Hono sub-app per resource, in its module's `routes.ts`, built by a function taking `AppDeps` (`src/deps.ts`: auth, db, log, mailer, storage, lyrics, appUrl) and mounted in `src/app.ts` with **chained calls** so `AppType` keeps every route. The web app calls it through the typed client from `@coverband/api/client` (Hono calls this "RPC"; see `doc/briefs/claude/003_rest-vs-rpc.md`).
 - Routes don't query the database (no `drizzle-orm` or `db/schema` import): they validate, call their module's service and shape the response.
 - Validate input with `zValidator(..., validationHook)` (`src/core/http/validation.ts`: invalid input becomes a 400 `bad_request`). Request bodies are Zod schemas in `@coverband/shared/schemas` (shared with the web app; a separate entry so Zod stays out of the web bundle until it uses one); route params and queries stay in the routes.
 - Send errors with `apiError()` (`src/core/errors.ts`). It keeps the status as a literal type, so `ensureOk(res)` in the web app narrows typed-client responses to their success body.
