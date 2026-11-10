@@ -40,6 +40,7 @@ export const ERROR_CODES = [
   "setlist_title_taken",
   "too_many_setlists",
   "setlist_archived",
+  "setlist_outdated",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

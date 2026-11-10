@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { formatSetlistDuration } from "@/components/setlists/setlist-duration";
 import { SetlistMenu } from "@/components/setlists/setlist-menu";
 import { useLanguage } from "@/i18n/use-language";
 import { formatDate } from "@/lib/format";
@@ -79,6 +80,20 @@ export function SetlistList({
             className="min-w-0 flex-1 space-y-1 rounded-xl py-3 pl-4 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
           >
             <p className="truncate font-semibold">{setlist.title}</p>
+            <p className="flex flex-wrap gap-x-3 text-sm tabular-nums">
+              <span className="font-semibold">{formatSetlistDuration(t, setlist.duration)}</span>
+              <span className="text-muted-foreground">
+                {t("setlists.songCount", { count: setlist.songs })}
+              </span>
+              <span className="text-muted-foreground">
+                {t("setlists.partCount", { count: setlist.parts })}
+              </span>
+            </p>
+            {setlist.duration.missing > 0 && (
+              <p className="text-amber-700 text-xs dark:text-amber-300">
+                {t("setlists.duration.withoutOne", { count: setlist.duration.missing })}
+              </p>
+            )}
             <p className="truncate text-muted-foreground text-xs">
               {setlist.archivedAt
                 ? t("setlists.archivedOn", { date: formatDate(setlist.archivedAt, language) })

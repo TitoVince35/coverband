@@ -330,13 +330,12 @@
     "by": "By {{name}}",
     "byChanged": "By {{name}} · changed {{date}}",
     "archivedOn": "Archived {{date}}",
-    "noSongs": "No songs yet.",
     "fields": {
       "title": "Title"
     },
     "new": {
       "title": "New setlist",
-      "description": "Its title is unique in the band. Add parts and songs once it's created.",
+      "description": "Its title is unique in the band. Add songs and parts once it's created.",
       "button": "New setlist"
     },
     "rename": {
@@ -360,6 +359,73 @@
       "description": "It's deleted for good, for the whole band. Archive it instead to keep it.",
       "confirm": "Delete",
       "done": "Setlist deleted"
+    },
+    "songCount_one": "{{count}} song",
+    "songCount_other": "{{count}} songs",
+    "partCount_one": "{{count}} part",
+    "partCount_other": "{{count}} parts",
+    "duration": {
+      "hoursMinutes": "{{hours}} h {{minutes}} min",
+      "minutes": "{{minutes}} min",
+      "approx": "~{{duration}}",
+      "missing_one": "{{count}} song without a duration is not counted",
+      "missing_other": "{{count}} songs without a duration are not counted",
+      "withoutOne_one": "{{count}} song without a duration",
+      "withoutOne_other": "{{count}} songs without a duration"
+    },
+    "editor": {
+      "saved": "Saved",
+      "saving": "Saving…",
+      "notSaved": "Not saved",
+      "hint": "Tap a song to move or remove it, or drag it by its handle. Each change is saved at once.",
+      "drag": "Drag {{title}} to move it",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "toPart": "To a part…",
+      "toPartLabel": "Move to",
+      "remove": "Remove",
+      "alsoIn": "Also in {{parts}}",
+      "archivedSong": "Archived song",
+      "noDuration": "no duration"
+    },
+    "part": {
+      "default": "Part {{n}}",
+      "actions": "Actions for {{part}}",
+      "add": "Add a part",
+      "max": "{{max}} parts at most",
+      "empty": "No songs in this part yet.",
+      "rename": "Rename",
+      "name": "Name",
+      "nameHint": "Optional. Without one, it shows as “Part {{n}}”.",
+      "moveUp": "Move part up",
+      "moveDown": "Move part down",
+      "remove": "Remove this part…",
+      "removeTitle": "Remove “{{part}}”?",
+      "removeDescription_one": "Its song leaves the setlist.",
+      "removeDescription_other": "Its {{count}} songs leave the setlist.",
+      "removeConfirm": "Remove"
+    },
+    "add": {
+      "title": "Add songs",
+      "description": "Choose songs from the repertoire to add to a part.",
+      "to": "Add to",
+      "search": "Search by title or artist",
+      "learning": "Also show the songs being learned",
+      "songs": "Songs to add",
+      "inSetlist": "In {{parts}}",
+      "twice": "In {{parts}}: it will be played twice",
+      "none": "No songs match.",
+      "button_one": "Add {{count}} song to {{part}}",
+      "button_other": "Add {{count}} songs to {{part}}",
+      "choose": "Choose songs to add",
+      "full": "The setlist has {{max}} songs, the most it can have.",
+      "added_one": "{{count}} song added to {{part}}",
+      "added_other": "{{count}} songs added to {{part}}"
+    },
+    "conflict": {
+      "title": "This setlist has just changed",
+      "description": "Another member saved it while you were editing, so your last change wasn't saved. Reload to see the setlist as it is now, then make your change again.",
+      "reload": "Reload the setlist"
     }
   },
   "login": {
@@ -585,7 +651,8 @@
     "only_band_leader": "This person is the only band leader of a band.",
     "setlist_title_taken": "The band already has a setlist with this title.",
     "too_many_setlists": "The band has as many setlists as it can: archive one to make room.",
-    "setlist_archived": "This setlist is archived: restore it to change it."
+    "setlist_archived": "This setlist is archived: restore it to change it.",
+    "setlist_outdated": "This setlist changed meanwhile: reload it, then make your change again."
   },
   "instruments": {
     "picker": {
@@ -631,7 +698,8 @@
     "setlistRenamed": "{{name}} renamed {{setlist}}",
     "setlistArchived": "{{name}} archived {{setlist}}",
     "setlistRestored": "{{name}} restored {{setlist}}",
-    "setlistDeleted": "{{name}} deleted {{setlist}}"
+    "setlistDeleted": "{{name}} deleted {{setlist}}",
+    "setlistUpdated": "{{name}} updated {{setlist}}"
   },
   "contact": {
     "title": "Contact us",

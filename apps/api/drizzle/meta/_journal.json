@@ -134,6 +134,13 @@
       "when": 1794351228546,
       "tag": "0018_setlists",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794351725448,
+      "tag": "0019_setlist_parts_songs",
+      "breakpoints": true
     }
   ]
 }

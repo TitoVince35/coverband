@@ -1,10 +1,11 @@
-import { SETLIST_LIMITS } from "@coverband/shared";
-import { and, asc, count, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { SETLIST_LIMITS, setlistDuration } from "@coverband/shared";
+import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { isUniqueViolation } from "../../core/db/pg-errors";
-import { setlists, users } from "../../core/db/schema";
+import { activity, setlistParts, setlistSongs, setlists, users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
+import { type SetlistSong, setlistSongsOf } from "../songs/service";
 
 /** The band already has a setlist with this title, whatever its case. */
 export class SetlistTitleTakenError extends AppError {
@@ -24,6 +25,20 @@ export class TooManySetlistsError extends AppError {
 export class SetlistArchivedError extends AppError {
   constructor() {
     super("setlist_archived", "This setlist is archived: restore it to change it");
+  }
+}
+
+/** Someone saved the setlist since it was read: reload it, then change it again. */
+export class SetlistOutdatedError extends AppError {
+  constructor() {
+    super("setlist_outdated", "The setlist changed since it was read: reload it");
+  }
+}
+
+/** A song that isn't one of the band's. */
+export class UnknownSongError extends AppError {
+  constructor() {
+    super("bad_request", "Unknown song");
   }
 }
 
@@ -49,9 +64,9 @@ const columns = {
 /** With who created it: their current display name, null once their account is deleted. */
 const withAuthor = { ...columns, createdBy: users.name };
 
-/** A band's current setlists, or its archived ones; the latest changed first. */
-export function listSetlists(db: Db, bandId: string, { archived = false } = {}) {
-  return db
+/** A band's current setlists, or its archived ones, the latest changed first, with their summary. */
+export async function listSetlists(db: Db, bandId: string, { archived = false } = {}) {
+  const rows = await db
     .select(withAuthor)
     .from(setlists)
     .leftJoin(users, eq(users.id, setlists.createdById))
@@ -62,6 +77,158 @@ export function listSetlists(db: Db, bandId: string, { archived = false } = {}) 
       ),
     )
     .orderBy(desc(setlists.updatedAt), asc(setlists.id));
+  const summaries = await summariesOf(
+    db,
+    bandId,
+    rows.map((row) => row.id),
+  );
+  return rows.map((row) => ({ ...row, ...summaries(row.id) }));
+}
+
+/**
+ * How many parts and songs each setlist has, and how long it lasts (`setlistDuration`: the
+ * seconds counted, and the songs without a duration).
+ */
+async function summariesOf(db: Db, bandId: string, ids: readonly string[]) {
+  const [parts, entries] = ids.length
+    ? await Promise.all([
+        db
+          .select({ setlistId: setlistParts.setlistId, count: count() })
+          .from(setlistParts)
+          .where(inArray(setlistParts.setlistId, [...ids]))
+          .groupBy(setlistParts.setlistId),
+        db
+          .select({ setlistId: setlistSongs.setlistId, songId: setlistSongs.songId })
+          .from(setlistSongs)
+          .where(inArray(setlistSongs.setlistId, [...ids])),
+      ])
+    : [[], []];
+  const songs = await setlistSongsOf(
+    db,
+    bandId,
+    entries.map((entry) => entry.songId),
+  );
+  return (id: string) => {
+    const played = entries
+      .filter((entry) => entry.setlistId === id)
+      .flatMap((entry) => songs.get(entry.songId) ?? []);
+    return {
+      parts: parts.find((part) => part.setlistId === id)?.count ?? 0,
+      songs: played.length,
+      duration: setlistDuration(played),
+    };
+  };
+}
+
+/**
+ * A setlist's parts in order, each with its name and its songs in order, as a setlist shows them
+ * (title, artist, durations, status, energy, archived).
+ */
+export async function setlistContent(db: Db | Tx, bandId: string, setlistId: string) {
+  const parts = await db
+    .select({ id: setlistParts.id, name: setlistParts.name })
+    .from(setlistParts)
+    .where(eq(setlistParts.setlistId, setlistId))
+    .orderBy(asc(setlistParts.position));
+  const entries = await db
+    .select({ partId: setlistSongs.partId, songId: setlistSongs.songId })
+    .from(setlistSongs)
+    .where(eq(setlistSongs.setlistId, setlistId))
+    .orderBy(asc(setlistSongs.position));
+  const songs = await setlistSongsOf(
+    db,
+    bandId,
+    entries.map((entry) => entry.songId),
+  );
+  return parts.map((part) => ({
+    name: part.name,
+    songs: entries
+      .filter((entry) => entry.partId === part.id)
+      .flatMap((entry): SetlistSong[] => {
+        const song = songs.get(entry.songId);
+        return song ? [song] : [];
+      }),
+  }));
+}
+
+/** A setlist with its content, or null. */
+export async function getSetlistWithContent(db: Db, bandId: string, id: string) {
+  const setlist = await getSetlist(db, bandId, id);
+  return setlist ? { ...setlist, parts: await setlistContent(db, bandId, id) } : null;
+}
+
+/** A setlist's content as saved: its parts in order, each with its songs' ids in order. */
+export type SetlistContent = { name: string | null; songs: string[] }[];
+
+/** Replaces a setlist's parts and songs (its songs must be the band's). */
+async function writeContent(tx: Tx, bandId: string, setlistId: string, parts: SetlistContent) {
+  const ids = parts.flatMap((part) => part.songs);
+  const known = await setlistSongsOf(tx, bandId, ids);
+  if (ids.some((id) => !known.has(id))) throw new UnknownSongError();
+  await tx.delete(setlistParts).where(eq(setlistParts.setlistId, setlistId));
+  const inserted = await tx
+    .insert(setlistParts)
+    .values(parts.map((part, position) => ({ bandId, setlistId, position, name: part.name })))
+    .returning({ id: setlistParts.id, position: setlistParts.position });
+  const rows = parts.flatMap((part, partPosition) => {
+    const partId = inserted.find((row) => row.position === partPosition)?.id ?? "";
+    return part.songs.map((songId, position) => ({ bandId, setlistId, partId, position, songId }));
+  });
+  if (rows.length > 0) await tx.insert(setlistSongs).values(rows);
+}
+
+/** One `setlist.updated` per member and setlist within this time: saves come at each change. */
+export const UPDATE_EVENT_WINDOW_MS = 10 * 60 * 1000;
+
+/**
+ * A member saves a setlist's whole content (#272), read at `version`: refused when someone saved
+ * since (SetlistOutdatedError), or when it's archived. Raises the version; records
+ * `setlist.updated`, once per member within UPDATE_EVENT_WINDOW_MS. Returns the setlist with its
+ * content, or null when the band has no such setlist.
+ */
+export async function saveSetlistContent(
+  db: Db,
+  member: Member,
+  id: string,
+  { version, parts }: { version: number; parts: SetlistContent },
+) {
+  return db.transaction(async (tx) => {
+    const [current] = await tx
+      .select({ version: setlists.version, archivedAt: setlists.archivedAt })
+      .from(setlists)
+      .where(and(eq(setlists.bandId, member.bandId), eq(setlists.id, id)))
+      .for("update");
+    if (!current) return null;
+    if (current.archivedAt) throw new SetlistArchivedError();
+    if (current.version !== version) throw new SetlistOutdatedError();
+    await writeContent(tx, member.bandId, id, parts);
+    await tx
+      .update(setlists)
+      .set({ version: sql`${setlists.version} + 1` })
+      .where(eq(setlists.id, id));
+    const [recent] = await tx
+      .select({ id: activity.id })
+      .from(activity)
+      .where(
+        and(
+          eq(activity.targetId, id),
+          eq(activity.action, "setlist.updated"),
+          eq(activity.actorId, member.userId),
+          gt(activity.createdAt, new Date(Date.now() - UPDATE_EVENT_WINDOW_MS)),
+        ),
+      )
+      .limit(1);
+    if (!recent) {
+      await recordActivity(tx, {
+        action: "setlist.updated",
+        bandId: member.bandId,
+        actorId: member.userId,
+        target: { type: "setlist", id },
+      });
+    }
+    const setlist = await getSetlist(tx, member.bandId, id);
+    return setlist ? { ...setlist, parts: await setlistContent(tx, member.bandId, id) } : null;
+  });
 }
 
 /** One setlist of a band, or null. */
@@ -120,13 +287,18 @@ export function createSetlist(db: Db, member: Member, title: string) {
         .values({ bandId: member.bandId, title, createdById: member.userId })
         .returning({ id: setlists.id });
       if (!setlist) throw new Error("Setlist not inserted");
+      // A new setlist has one part, unnamed.
+      await writeContent(tx, member.bandId, setlist.id, [{ name: null, songs: [] }]);
       await recordActivity(tx, {
         action: "setlist.created",
         bandId: member.bandId,
         actorId: member.userId,
         target: { type: "setlist", id: setlist.id },
       });
-      return getSetlist(tx, member.bandId, setlist.id);
+      const created = await getSetlist(tx, member.bandId, setlist.id);
+      return created
+        ? { ...created, parts: await setlistContent(tx, member.bandId, setlist.id) }
+        : null;
     }),
   );
 }

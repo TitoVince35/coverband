@@ -51,6 +51,7 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   setlist_title_taken: 409,
   too_many_setlists: 409,
   setlist_archived: 409,
+  setlist_outdated: 409,
 };
 
 /**

@@ -5,7 +5,7 @@ import {
   type SongStatus,
   songKey,
 } from "@coverband/shared";
-import { and, asc, count, eq, isNotNull, isNull, sql, sum } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, isNull, sql, sum } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { isForeignKeyViolation } from "../../core/db/pg-errors";
@@ -100,6 +100,39 @@ export function listSongs(db: Db, bandId: string, { archived = false } = {}) {
       .orderBy(asc(sql`lower(${songs.title})`), asc(sql`lower(${songs.artist})`), asc(songs.id))
   );
 }
+
+/**
+ * Some songs of a band as a setlist shows them (#272), archived ones included: title, artist,
+ * durations, status, energy, by id. Ids of other bands' songs are left out.
+ */
+export async function setlistSongsOf(db: Db | Tx, bandId: string, ids: readonly string[]) {
+  if (ids.length === 0) return new Map<string, SetlistSong>();
+  const rows = await db
+    .select({
+      id: songs.id,
+      title: songs.title,
+      artist: songs.artist,
+      standardDuration: songs.standardDuration,
+      ownDuration: songs.ownDuration,
+      status: songs.status,
+      energy: songs.energy,
+      archivedAt: songs.archivedAt,
+    })
+    .from(songs)
+    .where(and(eq(songs.bandId, bandId), inArray(songs.id, [...new Set(ids)])));
+  return new Map(rows.map((row) => [row.id, row]));
+}
+
+export type SetlistSong = {
+  id: string;
+  title: string;
+  artist: string;
+  standardDuration: number | null;
+  ownDuration: number | null;
+  status: SongStatus;
+  energy: number | null;
+  archivedAt: Date | null;
+};
 
 /** Every band's songs (archived ones included) and documents, with the documents' bytes: the admin console. */
 export async function repertoireTotals(db: Db) {
