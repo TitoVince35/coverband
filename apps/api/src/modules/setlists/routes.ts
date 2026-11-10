@@ -10,6 +10,7 @@ import { type BandEnv, requireMember } from "../bands/guard";
 import {
   createSetlist,
   deleteSetlist,
+  duplicateSetlist,
   getSetlistWithContent,
   listSetlists,
   renameSetlist,
@@ -75,6 +76,21 @@ export function setlistRoutes({ db }: AppDeps) {
             c.req.valid("json").title,
           );
           return setlist ? c.json({ setlist }) : apiError(c, 404, "Setlist not found");
+        },
+      )
+      // A copy with the same parts and songs (#273): the title asked for, numbered when taken.
+      .post(
+        "/:setlistId/duplicate",
+        zValidator("param", setlistParam, validationHook),
+        zValidator("json", setlistTitleBody, validationHook),
+        async (c) => {
+          const setlist = await duplicateSetlist(
+            db,
+            who(c),
+            c.req.valid("param").setlistId,
+            c.req.valid("json").title,
+          );
+          return setlist ? c.json({ setlist }, 201) : apiError(c, 404, "Setlist not found");
         },
       )
       .post("/:setlistId/archive", zValidator("param", setlistParam, validationHook), async (c) => {
