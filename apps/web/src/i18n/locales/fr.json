@@ -426,6 +426,11 @@
       "title": "Cette setlist vient de changer",
       "description": "Un autre membre l'a enregistrée pendant que vous la modifiiez : votre dernier changement n'a pas été enregistré. Rechargez-la pour la voir telle qu'elle est, puis refaites votre changement.",
       "reload": "Recharger la setlist"
+    },
+    "duplicate": {
+      "button": "Dupliquer",
+      "copyTitle": "{{title}} (copie)",
+      "done": "Setlist dupliquée : voici la copie"
     }
   },
   "login": {

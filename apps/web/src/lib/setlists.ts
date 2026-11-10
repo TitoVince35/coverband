@@ -119,3 +119,15 @@ export async function saveSetlistContent(
   });
   return (await (await ensureOk(res)).json()).setlist;
 }
+
+/**
+ * Duplicates a setlist (#273): a copy with the same parts and songs, titled `title` (numbered
+ * by the API when taken); throws `too_many_setlists` when the band is full.
+ */
+export async function duplicateSetlist(bandSlug: string, setlistId: string, title: string) {
+  const res = await api.bands[":bandSlug"].setlists[":setlistId"].duplicate.$post({
+    param: { bandSlug, setlistId },
+    json: { title },
+  });
+  return (await (await ensureOk(res)).json()).setlist;
+}

@@ -426,6 +426,11 @@
       "title": "This setlist has just changed",
       "description": "Another member saved it while you were editing, so your last change wasn't saved. Reload to see the setlist as it is now, then make your change again.",
       "reload": "Reload the setlist"
+    },
+    "duplicate": {
+      "button": "Duplicate",
+      "copyTitle": "{{title}} (copy)",
+      "done": "Setlist duplicated: this is the copy"
     }
   },
   "login": {

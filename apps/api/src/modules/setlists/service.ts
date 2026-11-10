@@ -1,4 +1,4 @@
-import { SETLIST_LIMITS, setlistDuration } from "@coverband/shared";
+import { SETLIST_LIMITS, SETLIST_MAX_LENGTH, setlistDuration } from "@coverband/shared";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
@@ -277,28 +277,99 @@ async function titleChecked<T>(work: () => Promise<T>) {
   }
 }
 
-/** A member creates a setlist; it starts empty. */
+/** Inserts a setlist with its content, records `setlist.created`, and returns it with its content. */
+async function insertSetlist(
+  tx: Tx,
+  member: Member,
+  title: string,
+  parts: SetlistContent,
+  data?: Record<string, string>,
+) {
+  const [setlist] = await tx
+    .insert(setlists)
+    .values({ bandId: member.bandId, title, createdById: member.userId })
+    .returning({ id: setlists.id });
+  if (!setlist) throw new Error("Setlist not inserted");
+  await writeContent(tx, member.bandId, setlist.id, parts);
+  await recordActivity(tx, {
+    action: "setlist.created",
+    bandId: member.bandId,
+    actorId: member.userId,
+    target: { type: "setlist", id: setlist.id },
+    ...(data ? { data } : {}),
+  });
+  const created = await getSetlist(tx, member.bandId, setlist.id);
+  return created
+    ? { ...created, parts: await setlistContent(tx, member.bandId, setlist.id) }
+    : null;
+}
+
+/** A member creates a setlist; it starts with one unnamed, empty part. */
 export function createSetlist(db: Db, member: Member, title: string) {
   return titleChecked(() =>
     db.transaction(async (tx) => {
       await checkSetlistRoom(tx, member.bandId);
-      const [setlist] = await tx
-        .insert(setlists)
-        .values({ bandId: member.bandId, title, createdById: member.userId })
-        .returning({ id: setlists.id });
-      if (!setlist) throw new Error("Setlist not inserted");
-      // A new setlist has one part, unnamed.
-      await writeContent(tx, member.bandId, setlist.id, [{ name: null, songs: [] }]);
-      await recordActivity(tx, {
-        action: "setlist.created",
-        bandId: member.bandId,
-        actorId: member.userId,
-        target: { type: "setlist", id: setlist.id },
-      });
-      const created = await getSetlist(tx, member.bandId, setlist.id);
-      return created
-        ? { ...created, parts: await setlistContent(tx, member.bandId, setlist.id) }
-        : null;
+      return insertSetlist(tx, member, title, [{ name: null, songs: [] }]);
+    }),
+  );
+}
+
+/** A setlist's content as stored: its parts' names and song ids, in order. */
+async function storedContent(tx: Tx, setlistId: string): Promise<SetlistContent> {
+  const parts = await tx
+    .select({ id: setlistParts.id, name: setlistParts.name })
+    .from(setlistParts)
+    .where(eq(setlistParts.setlistId, setlistId))
+    .orderBy(asc(setlistParts.position));
+  const entries = await tx
+    .select({ partId: setlistSongs.partId, songId: setlistSongs.songId })
+    .from(setlistSongs)
+    .where(eq(setlistSongs.setlistId, setlistId))
+    .orderBy(asc(setlistSongs.position));
+  return parts.map((part) => ({
+    name: part.name,
+    songs: entries.filter((entry) => entry.partId === part.id).map((entry) => entry.songId),
+  }));
+}
+
+/**
+ * The first title of `title`, `title 2`, `title 3`… that no setlist of the band has (case
+ * ignored), within SETLIST_MAX_LENGTH.title.
+ */
+async function freeTitle(tx: Tx, bandId: string, title: string) {
+  const rows = await tx
+    .select({ title: setlists.title })
+    .from(setlists)
+    .where(eq(setlists.bandId, bandId));
+  const taken = new Set(rows.map((row) => row.title.toLowerCase()));
+  for (let n = 1; ; n++) {
+    const suffix = n === 1 ? "" : ` ${n}`;
+    const candidate = `${title.slice(0, SETLIST_MAX_LENGTH.title - suffix.length).trimEnd()}${suffix}`;
+    if (!taken.has(candidate.toLowerCase())) return candidate;
+  }
+}
+
+/**
+ * A member duplicates a setlist (#273), archived ones too: a new current setlist with the same
+ * parts and songs, the member as its author, titled `title` (the web app's "… (copy)"), or
+ * `title 2`, `title 3`… when taken. Within the band's limit. Null when there's no such setlist.
+ */
+export function duplicateSetlist(db: Db, member: Member, id: string, title: string) {
+  return titleChecked(() =>
+    db.transaction(async (tx) => {
+      const [source] = await tx
+        .select({ id: setlists.id })
+        .from(setlists)
+        .where(and(eq(setlists.bandId, member.bandId), eq(setlists.id, id)));
+      if (!source) return null;
+      await checkSetlistRoom(tx, member.bandId);
+      return insertSetlist(
+        tx,
+        member,
+        await freeTitle(tx, member.bandId, title),
+        await storedContent(tx, id),
+        { from: id },
+      );
     }),
   );
 }

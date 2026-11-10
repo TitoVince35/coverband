@@ -926,6 +926,29 @@ test("members build a two-part setlist and see its duration (#272)", async () =>
   await expect(card).toContainText("2 parts");
 });
 
+test("a setlist duplicated, then changed without changing the original (#273)", async () => {
+  // From the list: the copy opens, with the same parts and songs.
+  await leader
+    .getByRole("list", { name: "Setlists" })
+    .getByRole("button", { name: "Actions for Wedding" })
+    .click();
+  await leader.getByRole("menuitem", { name: "Duplicate" }).click();
+  await expect(leader.getByRole("heading", { name: "Wedding (copy)" })).toBeVisible();
+  const encore = leader.getByRole("region", { name: "Encore" });
+  await expect(encore.locator("li").first()).toContainText("Linger");
+
+  // Linger taken out of the copy only.
+  await encore.locator("button[aria-pressed]").filter({ hasText: "Linger" }).click();
+  await leader.getByRole("button", { name: "Remove" }).click();
+  await expect(encore).not.toContainText("Linger");
+  await expect(leader.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
+
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  const cards = leader.getByRole("list", { name: "Setlists" }).getByRole("listitem");
+  await expect(cards.filter({ hasText: "Wedding (copy)" })).toContainText("3 songs");
+  await expect(cards.filter({ hasText: /^Wedding~/ })).toContainText("4 songs");
+});
+
 function savedCopy(page: Page) {
   return page.evaluate(
     () =>

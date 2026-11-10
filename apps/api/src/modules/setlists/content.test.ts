@@ -201,6 +201,57 @@ describe.skipIf(!databaseUrl)("a setlist's parts and songs (#272)", () => {
     expect(await errorOf(archived)).toBe("setlist_archived");
   });
 
+  test("duplicating copies the parts and songs, by the member, titled as asked (#273)", async () => {
+    const original = await create("Usual set");
+    await save("lea", original.id, {
+      version: 1,
+      parts: [
+        { name: "Set 1", songs: [song.Africa, song.Linger] },
+        { name: "Encore", songs: [song.Africa] },
+      ],
+    });
+    const duplicate = (title: string, id = original.id) =>
+      call(`/bands/${slug}/setlists/${id}/duplicate`, "max", { method: "POST", body: { title } });
+    const res = await duplicate("Usual set (copy)");
+    expect(res.status).toBe(201);
+    const copy = ((await res.json()) as { setlist: Content & { title: string; createdBy: string } })
+      .setlist;
+    expect(copy).toMatchObject({ title: "Usual set (copy)", createdBy: "max name", version: 1 });
+    expect(
+      copy.parts.map((part) => ({ name: part.name, songs: part.songs.map((s) => s.title) })),
+    ).toEqual([
+      { name: "Set 1", songs: ["Africa", "Linger"] },
+      { name: "Encore", songs: ["Africa"] },
+    ]);
+    expect(await activityOf(db, copy.id)).toEqual([
+      {
+        action: "setlist.created",
+        actorId: ids.max ?? "",
+        bandId,
+        data: { from: original.id },
+        targetType: "setlist",
+      },
+    ]);
+
+    // Changing the copy leaves the original as it was.
+    await save("max", copy.id, { version: 1, parts: [{ name: null, songs: [song.Zombie] }] });
+    expect((await read(original.id)).parts[0]?.songs.map((s) => s.title)).toEqual([
+      "Africa",
+      "Linger",
+    ]);
+
+    // A taken title is numbered, whatever its case.
+    const again = await duplicate("USUAL SET (COPY)");
+    expect(((await again.json()) as { setlist: { title: string } }).setlist.title).toBe(
+      "USUAL SET (COPY) 2",
+    );
+
+    // An archived setlist can be duplicated too; an unknown one is a 404.
+    await call(`/bands/${slug}/setlists/${original.id}/archive`, "lea", { method: "POST" });
+    expect((await duplicate("From the archive")).status).toBe(201);
+    expect((await duplicate("Nothing", crypto.randomUUID())).status).toBe(404);
+  });
+
   test("a song in a setlist can't be deleted: archive it instead", async () => {
     const res = await call(`/bands/${slug}/songs/${song.Linger}`, "lea", { method: "DELETE" });
     expect(res.status).toBe(409);

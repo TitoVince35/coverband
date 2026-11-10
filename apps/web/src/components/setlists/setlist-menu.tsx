@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Archive, ArchiveRestore, EllipsisVertical, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Copy, EllipsisVertical, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -27,7 +27,12 @@ import { sessionQuery } from "@/lib/auth";
 import { bandQuery } from "@/lib/bands";
 import { errorMessage } from "@/lib/errors";
 import { useOnline } from "@/lib/online";
-import { canDeleteSetlist, deleteSetlist, setSetlistArchived } from "@/lib/setlists";
+import {
+  canDeleteSetlist,
+  deleteSetlist,
+  duplicateSetlist,
+  setSetlistArchived,
+} from "@/lib/setlists";
 
 type Props = {
   bandSlug: string;
@@ -37,8 +42,8 @@ type Props = {
 };
 
 /**
- * A setlist's actions (#271): rename and archive (current ones), restore (archived ones), and
- * delete for good (the band leader and its author).
+ * A setlist's actions (#271): rename and archive (current ones), restore (archived ones),
+ * duplicate (#273: the copy then opens), and delete for good (the band leader and its author).
  */
 export function SetlistMenu({ bandSlug, setlist, onDeleted }: Props) {
   const { t } = useTranslation();
@@ -58,6 +63,27 @@ export function SetlistMenu({ bandSlug, setlist, onDeleted }: Props) {
     onSuccess: async (_saved, next) => {
       toast.success(next ? t("setlists.archive.done") : t("setlists.archive.restored"));
       await refresh();
+    },
+    onError: (error) => toast.error(errorMessage(t, error)),
+  });
+
+  const duplicate = useMutation({
+    networkMode: "always",
+    mutationFn: () =>
+      duplicateSetlist(
+        bandSlug,
+        setlist.id,
+        t("setlists.duplicate.copyTitle", { title: setlist.title }),
+      ),
+    onSuccess: async (copy) => {
+      toast.success(t("setlists.duplicate.done"));
+      await refresh();
+      if (copy) {
+        await navigate({
+          to: "/b/$bandSlug/setlists/$setlistId",
+          params: { bandSlug, setlistId: copy.id },
+        });
+      }
     },
     onError: (error) => toast.error(errorMessage(t, error)),
   });
@@ -84,7 +110,7 @@ export function SetlistMenu({ bandSlug, setlist, onDeleted }: Props) {
             variant="ghost"
             size="icon"
             aria-label={t("setlists.actions", { title: setlist.title })}
-            pending={archive.isPending || remove.isPending}
+            pending={archive.isPending || duplicate.isPending || remove.isPending}
           >
             <EllipsisVertical />
           </Button>
@@ -96,6 +122,10 @@ export function SetlistMenu({ bandSlug, setlist, onDeleted }: Props) {
               {t("setlists.rename.title")}
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem disabled={!online} onSelect={() => duplicate.mutate()}>
+            <Copy />
+            {t("setlists.duplicate.button")}
+          </DropdownMenuItem>
           <DropdownMenuItem disabled={!online} onSelect={() => archive.mutate(!archived)}>
             {archived ? <ArchiveRestore /> : <Archive />}
             {archived ? t("setlists.archive.restore") : t("setlists.archive.button")}
