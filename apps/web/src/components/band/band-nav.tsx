@@ -7,15 +7,20 @@ import { cn } from "@/lib/utils";
 
 type Section = {
   /** null: not there yet, shown disabled. */
-  to: "/b/$bandSlug" | "/b/$bandSlug/songs" | "/b/$bandSlug/lineup" | null;
+  to:
+    | "/b/$bandSlug"
+    | "/b/$bandSlug/songs"
+    | "/b/$bandSlug/lineup"
+    | "/b/$bandSlug/setlists"
+    | null;
   label: string;
   icon: LucideIcon;
 };
 
 /**
  * The band's sections (#223), each with its icon and label: tabs under the band's name on a large
- * screen, a bottom bar on a phone (hidden while its keyboard is up). Setlists and gigs are
- * there already, disabled until they exist: five items, which fit a phone with their labels.
+ * screen, a bottom bar on a phone (hidden while its keyboard is up). Gigs are there already,
+ * disabled until they exist: five items, which fit a phone with their labels.
  */
 export function BandNav({ bandSlug }: { bandSlug: string }) {
   const { t } = useTranslation();
@@ -24,7 +29,7 @@ export function BandNav({ bandSlug }: { bandSlug: string }) {
     { to: "/b/$bandSlug", label: t("band.home"), icon: House },
     { to: "/b/$bandSlug/songs", label: t("songs.title"), icon: ListMusic },
     { to: "/b/$bandSlug/lineup", label: t("lineup.title"), icon: Users },
-    { to: null, label: t("band.nav.setlists"), icon: ListOrdered },
+    { to: "/b/$bandSlug/setlists", label: t("band.nav.setlists"), icon: ListOrdered },
     { to: null, label: t("band.nav.gigs"), icon: CalendarDays },
   ];
 

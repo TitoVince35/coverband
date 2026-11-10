@@ -318,6 +318,50 @@
       "notSaved": "Ce document n'est pas encore enregistré sur cet appareil."
     }
   },
+  "setlists": {
+    "title": "Setlists",
+    "current": "En cours",
+    "archived": "Archivées",
+    "empty": "Pas encore de setlist. Créez la première : les morceaux d'un concert ou d'une répète, dans l'ordre.",
+    "count": "{{count}} setlists sur {{max}}",
+    "full": "Le groupe a {{max}} setlists, le maximum : archivez-en une pour faire de la place.",
+    "back": "Setlists",
+    "actions": "Actions pour {{title}}",
+    "by": "Par {{name}}",
+    "byChanged": "Par {{name}} · modifiée le {{date}}",
+    "archivedOn": "Archivée le {{date}}",
+    "noSongs": "Pas encore de morceaux.",
+    "fields": {
+      "title": "Titre"
+    },
+    "new": {
+      "title": "Nouvelle setlist",
+      "description": "Son titre est unique dans le groupe. Ajoutez des parties et des morceaux une fois créée.",
+      "button": "Nouvelle setlist"
+    },
+    "rename": {
+      "title": "Renommer",
+      "description": "Son titre est unique dans le groupe.",
+      "button": "Renommer",
+      "done": "Setlist renommée"
+    },
+    "archive": {
+      "button": "Archiver",
+      "done": "Setlist archivée",
+      "restore": "Restaurer",
+      "restored": "Setlist restaurée",
+      "banner": "Cette setlist est archivée : elle est en lecture seule.",
+      "hint": "Les setlists archivées sont en lecture seule et ne comptent pas dans la limite du groupe. Restaurez-en une pour la modifier.",
+      "empty": "Aucune setlist archivée."
+    },
+    "delete": {
+      "button": "Supprimer…",
+      "title": "Supprimer « {{title}} » ?",
+      "description": "Elle est supprimée pour de bon, pour tout le groupe. Archivez-la plutôt pour la garder.",
+      "confirm": "Supprimer",
+      "done": "Setlist supprimée"
+    }
+  },
   "login": {
     "title": "Connexion",
     "description": "Bon retour sur {{appName}}.",
@@ -538,7 +582,10 @@
     "band_suspended": "Ce groupe est suspendu.",
     "band_not_disabled": "Désactivez le groupe avant de le supprimer.",
     "band_name_mismatch": "Le nom saisi n'est pas celui du groupe.",
-    "only_band_leader": "Cette personne est le seul band leader d'un groupe."
+    "only_band_leader": "Cette personne est le seul band leader d'un groupe.",
+    "setlist_title_taken": "Le groupe a déjà une setlist avec ce titre.",
+    "too_many_setlists": "Le groupe a autant de setlists que possible : archivez-en une pour faire de la place.",
+    "setlist_archived": "Cette setlist est archivée : restaurez-la pour la modifier."
   },
   "instruments": {
     "picker": {
@@ -577,7 +624,14 @@
     "songDeleted": "{{name}} a supprimé {{song}}",
     "songLyricsChanged": "{{name}} a modifié {{song}} (paroles)",
     "documentAdded": "{{name}} a ajouté un document à {{song}}",
-    "documentRemoved": "{{name}} a supprimé un document de {{song}}"
+    "documentRemoved": "{{name}} a supprimé un document de {{song}}",
+    "setlistTitle": "la setlist « {{title}} »",
+    "aSetlist": "une setlist",
+    "setlistCreated": "{{name}} a créé {{setlist}}",
+    "setlistRenamed": "{{name}} a renommé {{setlist}}",
+    "setlistArchived": "{{name}} a archivé {{setlist}}",
+    "setlistRestored": "{{name}} a restauré {{setlist}}",
+    "setlistDeleted": "{{name}} a supprimé {{setlist}}"
   },
   "contact": {
     "title": "Nous contacter",

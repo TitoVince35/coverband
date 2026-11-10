@@ -76,6 +76,7 @@ export {
   type TextPart,
   textParts,
 } from "./notifications";
+export { SETLIST_LIMITS, SETLIST_MAX_LENGTH } from "./setlists";
 export {
   findDuplicateSong,
   LYRICS_SOURCES,

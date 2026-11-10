@@ -318,6 +318,50 @@
       "notSaved": "This document isn't saved on this device yet."
     }
   },
+  "setlists": {
+    "title": "Setlists",
+    "current": "Current",
+    "archived": "Archived",
+    "empty": "No setlists yet. Create the first one: a gig's or a rehearsal's songs, in order.",
+    "count": "{{count}} of {{max}} setlists",
+    "full": "The band has {{max}} setlists, the most it can have: archive one to make room.",
+    "back": "Setlists",
+    "actions": "Actions for {{title}}",
+    "by": "By {{name}}",
+    "byChanged": "By {{name}} · changed {{date}}",
+    "archivedOn": "Archived {{date}}",
+    "noSongs": "No songs yet.",
+    "fields": {
+      "title": "Title"
+    },
+    "new": {
+      "title": "New setlist",
+      "description": "Its title is unique in the band. Add parts and songs once it's created.",
+      "button": "New setlist"
+    },
+    "rename": {
+      "title": "Rename",
+      "description": "Its title is unique in the band.",
+      "button": "Rename",
+      "done": "Setlist renamed"
+    },
+    "archive": {
+      "button": "Archive",
+      "done": "Setlist archived",
+      "restore": "Restore",
+      "restored": "Setlist restored",
+      "banner": "This setlist is archived: it's read-only.",
+      "hint": "Archived setlists are read-only and don't count toward the band's limit. Restore one to change it.",
+      "empty": "No archived setlists."
+    },
+    "delete": {
+      "button": "Delete…",
+      "title": "Delete “{{title}}”?",
+      "description": "It's deleted for good, for the whole band. Archive it instead to keep it.",
+      "confirm": "Delete",
+      "done": "Setlist deleted"
+    }
+  },
   "login": {
     "title": "Log in",
     "description": "Welcome back to {{appName}}.",
@@ -538,7 +582,10 @@
     "band_suspended": "This band is suspended.",
     "band_not_disabled": "Disable the band before deleting it.",
     "band_name_mismatch": "The name typed isn't the band's.",
-    "only_band_leader": "This person is the only band leader of a band."
+    "only_band_leader": "This person is the only band leader of a band.",
+    "setlist_title_taken": "The band already has a setlist with this title.",
+    "too_many_setlists": "The band has as many setlists as it can: archive one to make room.",
+    "setlist_archived": "This setlist is archived: restore it to change it."
   },
   "instruments": {
     "picker": {
@@ -577,7 +624,14 @@
     "songDeleted": "{{name}} deleted {{song}}",
     "songLyricsChanged": "{{name}} updated the lyrics of {{song}}",
     "documentAdded": "{{name}} added a document to {{song}}",
-    "documentRemoved": "{{name}} removed a document from {{song}}"
+    "documentRemoved": "{{name}} removed a document from {{song}}",
+    "setlistTitle": "setlist “{{title}}”",
+    "aSetlist": "a setlist",
+    "setlistCreated": "{{name}} created {{setlist}}",
+    "setlistRenamed": "{{name}} renamed {{setlist}}",
+    "setlistArchived": "{{name}} archived {{setlist}}",
+    "setlistRestored": "{{name}} restored {{setlist}}",
+    "setlistDeleted": "{{name}} deleted {{setlist}}"
   },
   "contact": {
     "title": "Contact us",
