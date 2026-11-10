@@ -69,6 +69,9 @@ It may be best to create a new artifact from scratch, inspired by the previous l
 
 The new design comes first, before the editor is built.
 
+The new design (#270): https://claude.ai/artifact/F2HCwCyYPfNhL1544XASX9
+Each change is saved at once (no Save button); tapping a song selects it and shows its move up / move down / to a part / remove buttons; a part's name is optional ("Part 2" when empty), and removing a part removes its songs, after a confirmation.
+
 ## The Setlist Epic
 
 In this first epic, we will deal with setlists alone.
