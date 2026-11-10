@@ -32,6 +32,8 @@ import {
 import { onboardingRoutes } from "./modules/onboarding/routes";
 import { meRoutes } from "./modules/profile/routes";
 import { userRoutes } from "./modules/profile/user-routes";
+import { setlistJournalSource } from "./modules/setlists/journal";
+import { setlistRoutes } from "./modules/setlists/routes";
 import { DOCUMENT_UPLOAD_MAX_SIZE, documentRoutes } from "./modules/songs/documents-routes";
 import { songJournalSource } from "./modules/songs/journal";
 import { songRoutes } from "./modules/songs/routes";
@@ -44,6 +46,9 @@ export type AppOptions = {
   adminDistDir?: string | undefined;
 };
 
+/** Each module's part of the band journal. */
+const JOURNAL_SOURCES = [bandJournalSource, songJournalSource, setlistJournalSource];
+
 // REST API, mounted under /api. Chained so that AppType carries every route for the typed client.
 // Routes read the logged-in user from `c.var.user` and guard with requireUser / requireAdmin.
 function createApi(deps: AppDeps) {
@@ -52,7 +57,7 @@ function createApi(deps: AppDeps) {
       .use(loadSession(deps.auth))
       .route("/health", healthRoutes(deps.buildInfo))
       .route("/access", accessRoutes(deps.db, deps.access))
-      .route("/admin", adminRoutes(deps, [bandJournalSource, songJournalSource]))
+      .route("/admin", adminRoutes(deps, JOURNAL_SOURCES))
       .route("/admin/invitations", leaderInvitationRoutes(deps))
       .route("/admin/notifications", adminNotificationRoutes(deps))
       // Invitation links, public: the token is the proof (onboarding).
@@ -60,12 +65,10 @@ function createApi(deps: AppDeps) {
       .route("/bands", bandRoutes(deps))
       // A band's features: each sub-app requires membership of the band (404 otherwise).
       .route("/bands/:bandSlug/members", memberRoutes(deps))
-      .route(
-        "/bands/:bandSlug/activity",
-        journalRoutes(deps, [bandJournalSource, songJournalSource]),
-      )
+      .route("/bands/:bandSlug/activity", journalRoutes(deps, JOURNAL_SOURCES))
       .route("/bands/:bandSlug/songs", songRoutes(deps))
       .route("/bands/:bandSlug/songs/:songId/documents", documentRoutes(deps))
+      .route("/bands/:bandSlug/setlists", setlistRoutes(deps))
       .route("/bands/:bandSlug/autofill", autofillRoutes(deps))
       .route("/bands/:bandSlug/invitations", bandInvitationRoutes(deps))
       .route("/me", meRoutes(deps))

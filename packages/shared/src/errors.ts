@@ -37,6 +37,10 @@ export const ERROR_CODES = [
   "band_not_disabled",
   "band_name_mismatch",
   "only_band_leader",
+  "setlist_title_taken",
+  "too_many_setlists",
+  "setlist_archived",
+  "setlist_outdated",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

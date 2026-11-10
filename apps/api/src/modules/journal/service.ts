@@ -13,6 +13,8 @@ export const JOURNAL_SIZE = 10;
  */
 export type JournalDetails = {
   song?: string | null;
+  /** A setlist's current title (null once deleted). */
+  setlist?: string | null;
   status?: string | null;
   genre?: string | null;
   /** A logo change: removed, or anything else (added, replaced, another background). */

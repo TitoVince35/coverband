@@ -1,4 +1,4 @@
-# Catches a database left awake or a runaway container long before the bill (briefs/claude/007).
+# Catches a database left awake or a runaway container long before the bill (doc/briefs/claude/007).
 resource "scaleway_billing_budget" "main" {
   consumption_limit = var.budget_eur
   enabled           = true

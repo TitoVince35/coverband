@@ -6,9 +6,9 @@ An installable web app (PWA) to help music bands manage their activities: repert
 
 ## Status
 
-Early stage: technical choices are being made. See [`briefs/`](briefs/) for the project's decision trail:
-- `briefs/vince/`: product briefs
-- `briefs/claude/`: technical proposals and answers
+Early stage: technical choices are being made. See [`doc/briefs/`](doc/briefs/) for the project's decision trail:
+- `doc/briefs/vince/`: product briefs
+- `doc/briefs/claude/`: technical proposals and answers
 
 ## Planned stack
 

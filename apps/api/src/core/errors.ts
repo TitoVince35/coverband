@@ -48,6 +48,10 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   band_not_disabled: 409,
   band_name_mismatch: 400,
   only_band_leader: 409,
+  setlist_title_taken: 409,
+  too_many_setlists: 409,
+  setlist_archived: 409,
+  setlist_outdated: 409,
 };
 
 /**

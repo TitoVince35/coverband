@@ -204,9 +204,9 @@ test("the band's sections: a bottom bar on a phone, tabs on a large screen (#223
   await leader.goto("/");
   await leader.getByRole("link", { name: band }).first().click();
   const sections = leader.getByRole("navigation", { name: "Band sections" });
-  // Five items: Setlists and Gigs there already, not links yet.
-  await expect(sections.getByRole("link")).toHaveCount(3);
-  await expect(sections.getByText("Setlists")).toBeVisible();
+  // Five items: Gigs there already, not a link yet.
+  await expect(sections.getByRole("link")).toHaveCount(4);
+  await expect(sections.getByRole("link", { name: "Setlists" })).toBeVisible();
   await expect(sections.getByText("Gigs")).toBeVisible();
   // At the bottom of the screen.
   const phone = leader.viewportSize() ?? { width: 393, height: 727 };
@@ -233,7 +233,7 @@ test("the band's sections: a bottom bar on a phone, tabs on a large screen (#223
   await leader.setViewportSize({ width: 1024, height: 768 });
   const tabs = await sections.boundingBox();
   expect(tabs?.y ?? 768).toBeLessThan(300);
-  await expect(sections.getByRole("link")).toHaveCount(3);
+  await expect(sections.getByRole("link")).toHaveCount(4);
   await leader.setViewportSize(phone);
 });
 
@@ -797,6 +797,158 @@ function savedCount(page: Page, name: "logos" | "documents") {
 const savedLogos = (page: Page) => savedCount(page, "logos");
 
 /** The data the app saved on the device for offline use (#165), as JSON, or "" before any. */
+test("members manage setlists: create, a taken title, rename, archive, restore, delete (#271)", async () => {
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  await expect(leader.getByText("No setlists yet")).toBeVisible();
+  const create = async (title: string) => {
+    await leader.getByRole("button", { name: "New setlist" }).click();
+    const dialog = leader.getByRole("dialog");
+    await dialog.getByLabel("Title").fill(title);
+    await dialog.getByRole("button", { name: "New setlist" }).click();
+    return dialog;
+  };
+
+  // Created, then opened.
+  await create("Wedding, full night");
+  await expect(leader.getByRole("heading", { name: "Wedding, full night" })).toBeVisible();
+  await expect(leader.getByText("By Captain Lea")).toBeVisible();
+
+  // A title is unique in the band, whatever its case.
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  const taken = await create("WEDDING, FULL NIGHT");
+  await expect(taken.getByRole("alert")).toHaveText(
+    "The band already has a setlist with this title.",
+  );
+  await taken.getByRole("button", { name: "Cancel" }).click();
+
+  // Renamed from its menu in the list.
+  const setlists = leader.getByRole("list", { name: "Setlists" });
+  await setlists.getByRole("button", { name: "Actions for Wedding, full night" }).click();
+  await leader.getByRole("menuitem", { name: "Rename" }).click();
+  await leader.getByRole("dialog").getByLabel("Title").fill("Wedding");
+  await leader.getByRole("dialog").getByRole("button", { name: "Rename" }).click();
+  await expect(setlists.getByRole("link", { name: /Wedding/ })).toContainText("Wedding");
+
+  // Archived: out of the current ones, read-only, then restored from its page.
+  await setlists.getByRole("button", { name: "Actions for Wedding" }).click();
+  await leader.getByRole("menuitem", { name: "Archive" }).click();
+  await expect(leader.getByText("No setlists yet")).toBeVisible();
+  await leader.getByRole("link", { name: /Archived/ }).click();
+  await setlists.getByRole("link", { name: /Wedding/ }).click();
+  await expect(leader.getByText("This setlist is archived: it's read-only.")).toBeVisible();
+  await leader.getByRole("button", { name: "Restore" }).click();
+  await expect(leader.getByText("This setlist is archived")).toBeHidden();
+
+  // The journal tells it.
+  await leader.getByRole("link", { name: "Home" }).first().click();
+  await leader.getByRole("button", { name: "Latest activity" }).click();
+  await expect(leader.getByText("Captain Lea restored setlist “Wedding”")).toBeVisible();
+
+  // Deleted for good by the band leader, confirmed.
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  await create("To delete");
+  await leader.getByRole("button", { name: "Actions for To delete" }).click();
+  await leader.getByRole("menuitem", { name: "Delete…" }).click();
+  await leader.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+  await expect(leader.getByText("Setlist deleted")).toBeVisible();
+  await expect(leader.getByRole("list", { name: "Setlists" })).not.toContainText("To delete");
+});
+
+test("members build a two-part setlist and see its duration (#272)", async () => {
+  // Songs with known statuses and durations, added as the leader.
+  const bandSlug = new URL(leader.url()).pathname.split("/")[2];
+  for (const song of [
+    { title: "Africa", artist: "Toto", standardDuration: 295, status: "ready" },
+    { title: "Linger", artist: "The Cranberries", status: "ready" },
+    { title: "Black Hole Sun", artist: "Soundgarden", standardDuration: 318, status: "learning" },
+  ]) {
+    const res = await leader.request.post(`/api/bands/${bandSlug}/songs`, {
+      data: { ...song, confirmDuplicate: true },
+    });
+    expect(res.ok()).toBe(true);
+  }
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  await leader
+    .getByRole("list", { name: "Setlists" })
+    .getByRole("link", { name: /Wedding/ })
+    .click();
+  const part1 = leader.getByRole("region", { name: "Part 1" });
+  await expect(part1).toContainText("No songs in this part yet.");
+
+  // Ready songs only, unless the songs being learned are asked for too.
+  await leader.getByRole("button", { name: "Add songs" }).click();
+  const dialog = leader.getByRole("dialog");
+  await expect(dialog.getByLabel("Africa")).toBeVisible();
+  await expect(dialog.getByText("Black Hole Sun")).toHaveCount(0);
+  await dialog.getByLabel("Africa").check();
+  await dialog.getByLabel("Linger").check();
+  await dialog.getByRole("button", { name: "Add 2 songs to Part 1" }).click();
+  await expect(part1.getByText("Africa")).toBeVisible();
+  await expect(part1.getByText("Linger")).toBeVisible();
+
+  // A second part: added songs go to the last one; the same song twice is flagged.
+  await leader.getByRole("button", { name: "Add a part" }).click();
+  await leader.getByRole("button", { name: "Add songs" }).click();
+  await dialog.getByLabel("Also show the songs being learned").check();
+  await dialog.getByLabel("Black Hole Sun").check();
+  await dialog.getByLabel("Africa").check();
+  await expect(dialog.getByText("In Part 1: it will be played twice")).toBeVisible();
+  await dialog.getByRole("button", { name: "Add 2 songs to Part 2" }).click();
+  const part2 = leader.getByRole("region", { name: "Part 2" });
+  await expect(part2.getByText("Also in Part 1")).toBeVisible();
+
+  // The duration: Africa twice and Black Hole Sun; Linger has none.
+  await expect(leader.getByText("~15 min")).toBeVisible();
+  await expect(leader.getByText("1 song without a duration is not counted")).toBeVisible();
+
+  // The second part named; a song moved with the buttons, from one part to the next.
+  await part2.getByRole("button", { name: "Actions for Part 2" }).click();
+  await leader.getByRole("menuitem", { name: "Rename" }).click();
+  await leader.getByRole("dialog").getByLabel("Name").fill("Encore");
+  await leader.getByRole("dialog").getByRole("button", { name: "Rename" }).click();
+  const encore = leader.getByRole("region", { name: "Encore" });
+  await part1.locator("button[aria-pressed]").filter({ hasText: "Linger" }).click();
+  await leader.getByRole("button", { name: "Move down" }).click();
+  await expect(encore.locator("li").first()).toContainText("Linger");
+  await expect(leader.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
+
+  // Saved: the same after a reload, and in the list.
+  await leader.reload();
+  await expect(leader.getByRole("region", { name: "Encore" }).locator("li").first()).toContainText(
+    "Linger",
+  );
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  const card = leader.getByRole("list", { name: "Setlists" }).getByRole("listitem").filter({
+    hasText: "Wedding",
+  });
+  await expect(card).toContainText("~15 min");
+  await expect(card).toContainText("4 songs");
+  await expect(card).toContainText("2 parts");
+});
+
+test("a setlist duplicated, then changed without changing the original (#273)", async () => {
+  // From the list: the copy opens, with the same parts and songs.
+  await leader
+    .getByRole("list", { name: "Setlists" })
+    .getByRole("button", { name: "Actions for Wedding" })
+    .click();
+  await leader.getByRole("menuitem", { name: "Duplicate" }).click();
+  await expect(leader.getByRole("heading", { name: "Wedding (copy)" })).toBeVisible();
+  const encore = leader.getByRole("region", { name: "Encore" });
+  await expect(encore.locator("li").first()).toContainText("Linger");
+
+  // Linger taken out of the copy only.
+  await encore.locator("button[aria-pressed]").filter({ hasText: "Linger" }).click();
+  await leader.getByRole("button", { name: "Remove" }).click();
+  await expect(encore).not.toContainText("Linger");
+  await expect(leader.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
+
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  const cards = leader.getByRole("list", { name: "Setlists" }).getByRole("listitem");
+  await expect(cards.filter({ hasText: "Wedding (copy)" })).toContainText("3 songs");
+  await expect(cards.filter({ hasText: /^Wedding~/ })).toContainText("4 songs");
+});
+
 function savedCopy(page: Page) {
   return page.evaluate(
     () =>
@@ -828,6 +980,8 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
   await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
   await expect.poll(() => savedCount(page, "documents")).toBe(1);
+  // The setlists too, with their songs, though this device never opened them (#274).
+  await expect.poll(() => savedCopy(page)).toContain("Wedding (copy)");
 
   await context.setOffline(true);
   await page.reload();
@@ -867,6 +1021,21 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await expect(page.getByText("Document removed")).toBeVisible();
   await page.reload();
   await expect.poll(() => savedCount(page, "documents")).toBe(0);
+
+  // A setlist never opened on this device, offline and read-only (#274).
+  const setlistsPage = `${new URL(page.url()).pathname.split("/").slice(0, 3).join("/")}/setlists`;
+  await context.setOffline(true);
+  await page.goto(setlistsPage);
+  await expect(page.getByText("You're offline")).toBeVisible();
+  await expect(page.getByRole("button", { name: "New setlist" })).toBeDisabled();
+  await page
+    .getByRole("list", { name: "Setlists" })
+    .getByRole("link", { name: /Wedding \(copy\)/ })
+    .click();
+  await expect(page.getByRole("region", { name: "Part 1" })).toContainText("Africa");
+  await expect(page.getByRole("region", { name: "Encore" })).toContainText("Black Hole Sun");
+  await expect(page.getByRole("button", { name: "Add songs" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Drag / })).toHaveCount(0);
   await context.close();
 });
 

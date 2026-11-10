@@ -1,4 +1,4 @@
-# Serverless SQL Database: billed only while awake, at most 1 vCPU (briefs/claude/007).
+# Serverless SQL Database: billed only while awake, at most 1 vCPU (doc/briefs/claude/007).
 # Authentication goes through IAM: the user is an application ID, the password its API key's secret.
 resource "scaleway_sdb_sql_database" "main" {
   name    = local.name

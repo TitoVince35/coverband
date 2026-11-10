@@ -318,6 +318,121 @@
       "notSaved": "Ce document n'est pas encore enregistré sur cet appareil."
     }
   },
+  "setlists": {
+    "title": "Setlists",
+    "current": "En cours",
+    "archived": "Archivées",
+    "empty": "Pas encore de setlist. Créez la première : les morceaux d'un concert ou d'une répète, dans l'ordre.",
+    "count": "{{count}} setlists sur {{max}}",
+    "full": "Le groupe a {{max}} setlists, le maximum : archivez-en une pour faire de la place.",
+    "back": "Setlists",
+    "actions": "Actions pour {{title}}",
+    "by": "Par {{name}}",
+    "byChanged": "Par {{name}} · modifiée le {{date}}",
+    "archivedOn": "Archivée le {{date}}",
+    "fields": {
+      "title": "Titre"
+    },
+    "new": {
+      "title": "Nouvelle setlist",
+      "description": "Son titre est unique dans le groupe. Ajoutez des parties et des morceaux une fois créée.",
+      "button": "Nouvelle setlist"
+    },
+    "rename": {
+      "title": "Renommer",
+      "description": "Son titre est unique dans le groupe.",
+      "button": "Renommer",
+      "done": "Setlist renommée"
+    },
+    "archive": {
+      "button": "Archiver",
+      "done": "Setlist archivée",
+      "restore": "Restaurer",
+      "restored": "Setlist restaurée",
+      "banner": "Cette setlist est archivée : elle est en lecture seule.",
+      "hint": "Les setlists archivées sont en lecture seule et ne comptent pas dans la limite du groupe. Restaurez-en une pour la modifier.",
+      "empty": "Aucune setlist archivée."
+    },
+    "delete": {
+      "button": "Supprimer…",
+      "title": "Supprimer « {{title}} » ?",
+      "description": "Elle est supprimée pour de bon, pour tout le groupe. Archivez-la plutôt pour la garder.",
+      "confirm": "Supprimer",
+      "done": "Setlist supprimée"
+    },
+    "songCount_one": "{{count}} morceau",
+    "songCount_other": "{{count}} morceaux",
+    "partCount_one": "{{count}} partie",
+    "partCount_other": "{{count}} parties",
+    "duration": {
+      "hoursMinutes": "{{hours}} h {{minutes}} min",
+      "minutes": "{{minutes}} min",
+      "approx": "~{{duration}}",
+      "missing_one": "{{count}} morceau sans durée n'est pas compté",
+      "missing_other": "{{count}} morceaux sans durée ne sont pas comptés",
+      "withoutOne_one": "{{count}} morceau sans durée",
+      "withoutOne_other": "{{count}} morceaux sans durée"
+    },
+    "editor": {
+      "saved": "Enregistrée",
+      "saving": "Enregistrement…",
+      "notSaved": "Non enregistrée",
+      "hint": "Touchez un morceau pour le déplacer ou le retirer, ou faites-le glisser par sa poignée. Chaque changement est enregistré aussitôt.",
+      "drag": "Faire glisser {{title}} pour le déplacer",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "toPart": "Vers une partie…",
+      "toPartLabel": "Déplacer vers",
+      "remove": "Retirer",
+      "alsoIn": "Aussi dans {{parts}}",
+      "archivedSong": "Morceau archivé",
+      "noDuration": "sans durée"
+    },
+    "part": {
+      "default": "Partie {{n}}",
+      "actions": "Actions pour {{part}}",
+      "add": "Ajouter une partie",
+      "max": "{{max}} parties au plus",
+      "empty": "Pas encore de morceaux dans cette partie.",
+      "rename": "Renommer",
+      "name": "Nom",
+      "nameHint": "Facultatif. Sans nom, elle s'appelle « Partie {{n}} ».",
+      "moveUp": "Monter la partie",
+      "moveDown": "Descendre la partie",
+      "remove": "Retirer cette partie…",
+      "removeTitle": "Retirer « {{part}} » ?",
+      "removeDescription_one": "Son morceau quitte la setlist.",
+      "removeDescription_other": "Ses {{count}} morceaux quittent la setlist.",
+      "removeConfirm": "Retirer"
+    },
+    "add": {
+      "title": "Ajouter des morceaux",
+      "description": "Choisissez des morceaux du répertoire à ajouter à une partie.",
+      "to": "Ajouter à",
+      "search": "Chercher par titre ou artiste",
+      "learning": "Montrer aussi les morceaux en cours",
+      "songs": "Morceaux à ajouter",
+      "inSetlist": "Dans {{parts}}",
+      "twice": "Dans {{parts}} : il sera joué deux fois",
+      "none": "Aucun morceau ne correspond.",
+      "button_one": "Ajouter {{count}} morceau à {{part}}",
+      "button_other": "Ajouter {{count}} morceaux à {{part}}",
+      "choose": "Choisissez des morceaux à ajouter",
+      "full": "La setlist a {{max}} morceaux, le maximum.",
+      "added_one": "{{count}} morceau ajouté à {{part}}",
+      "added_other": "{{count}} morceaux ajoutés à {{part}}"
+    },
+    "conflict": {
+      "title": "Cette setlist vient de changer",
+      "description": "Un autre membre l'a enregistrée pendant que vous la modifiiez : votre dernier changement n'a pas été enregistré. Rechargez-la pour la voir telle qu'elle est, puis refaites votre changement.",
+      "reload": "Recharger la setlist"
+    },
+    "duplicate": {
+      "button": "Dupliquer",
+      "copyTitle": "{{title}} (copie)",
+      "done": "Setlist dupliquée : voici la copie"
+    }
+  },
   "login": {
     "title": "Connexion",
     "description": "Bon retour sur {{appName}}.",
@@ -538,7 +653,11 @@
     "band_suspended": "Ce groupe est suspendu.",
     "band_not_disabled": "Désactivez le groupe avant de le supprimer.",
     "band_name_mismatch": "Le nom saisi n'est pas celui du groupe.",
-    "only_band_leader": "Cette personne est le seul band leader d'un groupe."
+    "only_band_leader": "Cette personne est le seul band leader d'un groupe.",
+    "setlist_title_taken": "Le groupe a déjà une setlist avec ce titre.",
+    "too_many_setlists": "Le groupe a autant de setlists que possible : archivez-en une pour faire de la place.",
+    "setlist_archived": "Cette setlist est archivée : restaurez-la pour la modifier.",
+    "setlist_outdated": "Cette setlist a changé entre-temps : rechargez-la, puis refaites votre changement."
   },
   "instruments": {
     "picker": {
@@ -577,7 +696,15 @@
     "songDeleted": "{{name}} a supprimé {{song}}",
     "songLyricsChanged": "{{name}} a modifié {{song}} (paroles)",
     "documentAdded": "{{name}} a ajouté un document à {{song}}",
-    "documentRemoved": "{{name}} a supprimé un document de {{song}}"
+    "documentRemoved": "{{name}} a supprimé un document de {{song}}",
+    "setlistTitle": "la setlist « {{title}} »",
+    "aSetlist": "une setlist",
+    "setlistCreated": "{{name}} a créé {{setlist}}",
+    "setlistRenamed": "{{name}} a renommé {{setlist}}",
+    "setlistArchived": "{{name}} a archivé {{setlist}}",
+    "setlistRestored": "{{name}} a restauré {{setlist}}",
+    "setlistDeleted": "{{name}} a supprimé {{setlist}}",
+    "setlistUpdated": "{{name}} a modifié {{setlist}}"
   },
   "contact": {
     "title": "Nous contacter",

@@ -5,5 +5,6 @@ export * from "../../modules/bands/schema";
 export * from "../../modules/instruments/schema";
 export * from "../../modules/invitations/schema";
 export * from "../../modules/notifications/schema";
+export * from "../../modules/setlists/schema";
 export * from "../../modules/songs/schema";
 export * from "../activity/schema";
