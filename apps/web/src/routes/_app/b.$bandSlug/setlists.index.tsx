@@ -8,6 +8,7 @@ import { SetlistList, SetlistTabs } from "@/components/setlists/setlist-list";
 import { SetlistTitleDialog } from "@/components/setlists/setlist-title-dialog";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/lib/errors";
+import { useOnline } from "@/lib/online";
 import { archivedSetlistsQuery, setlistsQuery } from "@/lib/setlists";
 
 // The band's setlists (brief 026, #271): the current ones, the latest changed first; any member
@@ -22,6 +23,8 @@ function SetlistsPage() {
   const setlists = useQuery(setlistsQuery(bandSlug));
   const archived = useQuery(archivedSetlistsQuery(bandSlug)).data?.length;
   const full = (setlists.data?.length ?? 0) >= SETLIST_LIMITS.perBand;
+  // Offline, the app is read-only (#165, #274).
+  const online = useOnline();
 
   return (
     <section className="space-y-4">
@@ -30,7 +33,7 @@ function SetlistsPage() {
         <SetlistTitleDialog
           bandSlug={bandSlug}
           trigger={
-            <Button disabled={full}>
+            <Button disabled={full || !online}>
               <Plus />
               {t("setlists.new.button")}
             </Button>

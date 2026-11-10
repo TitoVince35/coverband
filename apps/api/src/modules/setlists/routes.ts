@@ -15,6 +15,7 @@ import {
   listSetlists,
   renameSetlist,
   saveSetlistContent,
+  setlistDetails,
   setSetlistArchived,
 } from "./service";
 
@@ -41,6 +42,8 @@ export function setlistRoutes({ db }: AppDeps) {
         const setlist = await createSetlist(db, who(c), c.req.valid("json").title);
         return c.json({ setlist }, 201);
       })
+      // Every setlist, archived ones too, with its parts and songs, for offline use (#274).
+      .get("/details", async (c) => c.json({ setlists: await setlistDetails(db, c.var.band.id) }))
       .get("/:setlistId", zValidator("param", setlistParam, validationHook), async (c) => {
         const setlist = await getSetlistWithContent(
           db,

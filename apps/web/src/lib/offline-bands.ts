@@ -6,6 +6,7 @@ import { ensureOk } from "@/lib/errors";
 import { keepDocumentsOffline } from "@/lib/offline-documents";
 import { keepLogoOffline } from "@/lib/offline-logos";
 import { useOnline } from "@/lib/online";
+import { archivedSetlistsQuery, setlistQuery, setlistsQuery } from "@/lib/setlists";
 import { songQuery, songsQuery } from "@/lib/songs";
 
 /**
@@ -33,8 +34,30 @@ export const songDetailsQuery = (bandSlug: string) =>
   });
 
 /**
+ * Every setlist of the band, archived ones too, with its parts and songs (#274), so setlists never
+ * opened are there offline: it fills each setlist's query and only keeps how many there were.
+ * A query, like the repertoire's details.
+ */
+export const setlistDetailsQuery = (bandSlug: string) =>
+  queryOptions({
+    queryKey: ["bands", bandSlug, "setlists", "details"],
+    queryFn: async ({ client }) => {
+      const res = await api.bands[":bandSlug"].setlists.details.$get({ param: { bandSlug } });
+      const { setlists } = await (await ensureOk(res)).json();
+      for (const setlist of setlists) {
+        const key = setlistQuery(bandSlug, setlist.id).queryKey;
+        // Never older than what's there (an editor that just saved).
+        if ((client.getQueryData(key)?.version ?? 0) <= setlist.version) {
+          client.setQueryData(key, setlist);
+        }
+      }
+      return setlists.length;
+    },
+  });
+
+/**
  * Loads what a band needs offline (#165): its page, journal, lineup, repertoire and every song,
- * each only if no longer fresh: every load wakes the database. And its logo (#178), downloaded
+ * its setlists with their songs (#274), each only if no longer fresh: every load wakes the database. And its logo (#178), downloaded
  * only when it changed.
  */
 export async function keepBandOffline(queryClient: QueryClient, bandSlug: string) {
@@ -50,6 +73,9 @@ export async function keepBandOffline(queryClient: QueryClient, bandSlug: string
     queryClient.prefetchQuery(membersQuery(bandSlug)),
     queryClient.prefetchQuery(songsQuery(bandSlug)),
     queryClient.prefetchQuery(songDetailsQuery(bandSlug)),
+    queryClient.prefetchQuery(setlistsQuery(bandSlug)),
+    queryClient.prefetchQuery(archivedSetlistsQuery(bandSlug)),
+    queryClient.prefetchQuery(setlistDetailsQuery(bandSlug)),
   ]);
 }
 

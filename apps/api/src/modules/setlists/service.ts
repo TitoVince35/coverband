@@ -151,6 +151,48 @@ export async function setlistContent(db: Db | Tx, bandId: string, setlistId: str
   }));
 }
 
+/**
+ * Every setlist of a band, current and archived, with its content (#274): the web app keeps them
+ * for offline use. The latest changed first.
+ */
+export async function setlistDetails(db: Db, bandId: string) {
+  const rows = await db
+    .select(withAuthor)
+    .from(setlists)
+    .leftJoin(users, eq(users.id, setlists.createdById))
+    .where(eq(setlists.bandId, bandId))
+    .orderBy(desc(setlists.updatedAt), asc(setlists.id));
+  const parts = await db
+    .select({ id: setlistParts.id, setlistId: setlistParts.setlistId, name: setlistParts.name })
+    .from(setlistParts)
+    .where(eq(setlistParts.bandId, bandId))
+    .orderBy(asc(setlistParts.position));
+  const entries = await db
+    .select({ partId: setlistSongs.partId, songId: setlistSongs.songId })
+    .from(setlistSongs)
+    .where(eq(setlistSongs.bandId, bandId))
+    .orderBy(asc(setlistSongs.position));
+  const songs = await setlistSongsOf(
+    db,
+    bandId,
+    entries.map((entry) => entry.songId),
+  );
+  return rows.map((row) => ({
+    ...row,
+    parts: parts
+      .filter((part) => part.setlistId === row.id)
+      .map((part) => ({
+        name: part.name,
+        songs: entries
+          .filter((entry) => entry.partId === part.id)
+          .flatMap((entry): SetlistSong[] => {
+            const song = songs.get(entry.songId);
+            return song ? [song] : [];
+          }),
+      })),
+  }));
+}
+
 /** A setlist with its content, or null. */
 export async function getSetlistWithContent(db: Db, bandId: string, id: string) {
   const setlist = await getSetlist(db, bandId, id);
