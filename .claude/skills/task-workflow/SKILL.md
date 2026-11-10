@@ -21,7 +21,7 @@ For each task (issue `#NN`):
    Moving or renaming files gets its own commit: the moves plus the import path updates they need, nothing else (`bun run check` passes). Content changes go in the next commits. Git detects renames by similarity, so a file that also changes a lot in the move commit loses its history (`git log --follow`, blame, the PR's rename view).
 3. Push and open a PR to `dev` whose body contains `Closes #NN` (it closes the issue because `dev` is the default branch). The board automation moves it to **In review**. A PR with a move commit says in its body to merge it with a merge commit, never squash: squashing would fold the move into the content changes on `dev`.
 4. Vince reviews and merges. Automation moves the task to **Done** and closes the issue.
-5. If the issue is listed in the `## Issues` section of a brief (`briefs/vince/`) and all issues there are now closed, add the `Issues completed on ...` timestamp line to that brief (see the Briefs rules in the root `CLAUDE.md`). Check this after a merge you learn about, and when starting the next task.
+5. If the issue is listed in the `## Issues` section of a brief (`doc/briefs/vince/`) and all issues there are now closed, add the `Issues completed on ...` timestamp line to that brief (see the Briefs rules in the root `CLAUDE.md`). Check this after a merge you learn about, and when starting the next task.
 
 ## Epics
 

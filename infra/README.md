@@ -1,6 +1,6 @@
 # Production infrastructure (Scaleway)
 
-Everything the app runs on, described with [OpenTofu](https://opentofu.org): one Serverless Container (API plus the built web app) at `https://app.<domain>`, a Serverless SQL Database, a private Object Storage bucket, Transactional Email on the domain, a private Container Registry, two IAM applications and a monthly budget with alerts. Costs: `briefs/claude/007_scaleway-products.md`.
+Everything the app runs on, described with [OpenTofu](https://opentofu.org): one Serverless Container (API plus the built web app) at `https://app.<domain>`, a Serverless SQL Database, a private Object Storage bucket, Transactional Email on the domain, a private Container Registry, two IAM applications and a monthly budget with alerts. Costs: `doc/briefs/claude/007_scaleway-products.md`.
 
 Day to day, nothing happens here: every push to `main` whose CI passes is deployed by `.github/workflows/deploy.yml` (build and push the image, run migrations, roll out the container, check `/api/health`). OpenTofu is only for setting up and changing the infrastructure.
 

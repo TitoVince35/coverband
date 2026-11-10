@@ -7,7 +7,7 @@
 .vscode
 .env
 .env.*
-briefs
+doc
 infra
 docker
 e2e/test-results

@@ -2,7 +2,7 @@
 
 > 🕒 Study posted on Tuesday 2026/10/20 07:21
 
-Answer to `briefs/vince/016_production_addons.md`: which version, where to show it, and how to keep the beta private.
+Answer to `doc/briefs/vince/016_production_addons.md`: which version, where to show it, and how to keep the beta private.
 
 ## Decisions (Vince)
 
