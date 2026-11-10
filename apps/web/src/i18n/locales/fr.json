@@ -330,7 +330,6 @@
     "by": "Par {{name}}",
     "byChanged": "Par {{name}} · modifiée le {{date}}",
     "archivedOn": "Archivée le {{date}}",
-    "noSongs": "Pas encore de morceaux.",
     "fields": {
       "title": "Titre"
     },
@@ -360,6 +359,73 @@
       "description": "Elle est supprimée pour de bon, pour tout le groupe. Archivez-la plutôt pour la garder.",
       "confirm": "Supprimer",
       "done": "Setlist supprimée"
+    },
+    "songCount_one": "{{count}} morceau",
+    "songCount_other": "{{count}} morceaux",
+    "partCount_one": "{{count}} partie",
+    "partCount_other": "{{count}} parties",
+    "duration": {
+      "hoursMinutes": "{{hours}} h {{minutes}} min",
+      "minutes": "{{minutes}} min",
+      "approx": "~{{duration}}",
+      "missing_one": "{{count}} morceau sans durée n'est pas compté",
+      "missing_other": "{{count}} morceaux sans durée ne sont pas comptés",
+      "withoutOne_one": "{{count}} morceau sans durée",
+      "withoutOne_other": "{{count}} morceaux sans durée"
+    },
+    "editor": {
+      "saved": "Enregistrée",
+      "saving": "Enregistrement…",
+      "notSaved": "Non enregistrée",
+      "hint": "Touchez un morceau pour le déplacer ou le retirer, ou faites-le glisser par sa poignée. Chaque changement est enregistré aussitôt.",
+      "drag": "Faire glisser {{title}} pour le déplacer",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "toPart": "Vers une partie…",
+      "toPartLabel": "Déplacer vers",
+      "remove": "Retirer",
+      "alsoIn": "Aussi dans {{parts}}",
+      "archivedSong": "Morceau archivé",
+      "noDuration": "sans durée"
+    },
+    "part": {
+      "default": "Partie {{n}}",
+      "actions": "Actions pour {{part}}",
+      "add": "Ajouter une partie",
+      "max": "{{max}} parties au plus",
+      "empty": "Pas encore de morceaux dans cette partie.",
+      "rename": "Renommer",
+      "name": "Nom",
+      "nameHint": "Facultatif. Sans nom, elle s'appelle « Partie {{n}} ».",
+      "moveUp": "Monter la partie",
+      "moveDown": "Descendre la partie",
+      "remove": "Retirer cette partie…",
+      "removeTitle": "Retirer « {{part}} » ?",
+      "removeDescription_one": "Son morceau quitte la setlist.",
+      "removeDescription_other": "Ses {{count}} morceaux quittent la setlist.",
+      "removeConfirm": "Retirer"
+    },
+    "add": {
+      "title": "Ajouter des morceaux",
+      "description": "Choisissez des morceaux du répertoire à ajouter à une partie.",
+      "to": "Ajouter à",
+      "search": "Chercher par titre ou artiste",
+      "learning": "Montrer aussi les morceaux en cours",
+      "songs": "Morceaux à ajouter",
+      "inSetlist": "Dans {{parts}}",
+      "twice": "Dans {{parts}} : il sera joué deux fois",
+      "none": "Aucun morceau ne correspond.",
+      "button_one": "Ajouter {{count}} morceau à {{part}}",
+      "button_other": "Ajouter {{count}} morceaux à {{part}}",
+      "choose": "Choisissez des morceaux à ajouter",
+      "full": "La setlist a {{max}} morceaux, le maximum.",
+      "added_one": "{{count}} morceau ajouté à {{part}}",
+      "added_other": "{{count}} morceaux ajoutés à {{part}}"
+    },
+    "conflict": {
+      "title": "Cette setlist vient de changer",
+      "description": "Un autre membre l'a enregistrée pendant que vous la modifiiez : votre dernier changement n'a pas été enregistré. Rechargez-la pour la voir telle qu'elle est, puis refaites votre changement.",
+      "reload": "Recharger la setlist"
     }
   },
   "login": {
@@ -585,7 +651,8 @@
     "only_band_leader": "Cette personne est le seul band leader d'un groupe.",
     "setlist_title_taken": "Le groupe a déjà une setlist avec ce titre.",
     "too_many_setlists": "Le groupe a autant de setlists que possible : archivez-en une pour faire de la place.",
-    "setlist_archived": "Cette setlist est archivée : restaurez-la pour la modifier."
+    "setlist_archived": "Cette setlist est archivée : restaurez-la pour la modifier.",
+    "setlist_outdated": "Cette setlist a changé entre-temps : rechargez-la, puis refaites votre changement."
   },
   "instruments": {
     "picker": {
@@ -631,7 +698,8 @@
     "setlistRenamed": "{{name}} a renommé {{setlist}}",
     "setlistArchived": "{{name}} a archivé {{setlist}}",
     "setlistRestored": "{{name}} a restauré {{setlist}}",
-    "setlistDeleted": "{{name}} a supprimé {{setlist}}"
+    "setlistDeleted": "{{name}} a supprimé {{setlist}}",
+    "setlistUpdated": "{{name}} a modifié {{setlist}}"
   },
   "contact": {
     "title": "Nous contacter",

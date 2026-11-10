@@ -40,6 +40,7 @@ export const ACTIVITY_ACTIONS = [
   "setlist.archived",
   "setlist.restored",
   "setlist.deleted",
+  "setlist.updated",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];

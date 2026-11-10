@@ -1,4 +1,4 @@
-import { setlistTitleBody } from "@coverband/shared/schemas";
+import { setlistContentBody, setlistTitleBody } from "@coverband/shared/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
@@ -10,9 +10,10 @@ import { type BandEnv, requireMember } from "../bands/guard";
 import {
   createSetlist,
   deleteSetlist,
-  getSetlist,
+  getSetlistWithContent,
   listSetlists,
   renameSetlist,
+  saveSetlistContent,
   setSetlistArchived,
 } from "./service";
 
@@ -40,9 +41,28 @@ export function setlistRoutes({ db }: AppDeps) {
         return c.json({ setlist }, 201);
       })
       .get("/:setlistId", zValidator("param", setlistParam, validationHook), async (c) => {
-        const setlist = await getSetlist(db, c.var.band.id, c.req.valid("param").setlistId);
+        const setlist = await getSetlistWithContent(
+          db,
+          c.var.band.id,
+          c.req.valid("param").setlistId,
+        );
         return setlist ? c.json({ setlist }) : apiError(c, 404, "Setlist not found");
       })
+      // Its whole content, read at a version: a save on an older one is refused (409).
+      .put(
+        "/:setlistId/content",
+        zValidator("param", setlistParam, validationHook),
+        zValidator("json", setlistContentBody, validationHook),
+        async (c) => {
+          const setlist = await saveSetlistContent(
+            db,
+            who(c),
+            c.req.valid("param").setlistId,
+            c.req.valid("json"),
+          );
+          return setlist ? c.json({ setlist }) : apiError(c, 404, "Setlist not found");
+        },
+      )
       .patch(
         "/:setlistId",
         zValidator("param", setlistParam, validationHook),

@@ -101,3 +101,21 @@ export const canDeleteSetlist = (
   setlist: { createdById: string | null },
   member: { userId: string | undefined; isLeader: boolean },
 ) => member.isLeader || (member.userId !== undefined && setlist.createdById === member.userId);
+
+export type Setlist = Awaited<ReturnType<ReturnType<typeof setlistQuery>["queryFn"] & {}>>;
+
+/**
+ * Saves a setlist's whole content (#272), read at `version`; throws `setlist_outdated` when
+ * someone saved it since.
+ */
+export async function saveSetlistContent(
+  bandSlug: string,
+  setlistId: string,
+  json: { version: number; parts: { name: string | null; songs: string[] }[] },
+) {
+  const res = await api.bands[":bandSlug"].setlists[":setlistId"].content.$put({
+    param: { bandSlug, setlistId },
+    json,
+  });
+  return (await (await ensureOk(res)).json()).setlist;
+}

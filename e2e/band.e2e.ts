@@ -854,6 +854,78 @@ test("members manage setlists: create, a taken title, rename, archive, restore, 
   await expect(leader.getByRole("list", { name: "Setlists" })).not.toContainText("To delete");
 });
 
+test("members build a two-part setlist and see its duration (#272)", async () => {
+  // Songs with known statuses and durations, added as the leader.
+  const bandSlug = new URL(leader.url()).pathname.split("/")[2];
+  for (const song of [
+    { title: "Africa", artist: "Toto", standardDuration: 295, status: "ready" },
+    { title: "Linger", artist: "The Cranberries", status: "ready" },
+    { title: "Black Hole Sun", artist: "Soundgarden", standardDuration: 318, status: "learning" },
+  ]) {
+    const res = await leader.request.post(`/api/bands/${bandSlug}/songs`, {
+      data: { ...song, confirmDuplicate: true },
+    });
+    expect(res.ok()).toBe(true);
+  }
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  await leader
+    .getByRole("list", { name: "Setlists" })
+    .getByRole("link", { name: /Wedding/ })
+    .click();
+  const part1 = leader.getByRole("region", { name: "Part 1" });
+  await expect(part1).toContainText("No songs in this part yet.");
+
+  // Ready songs only, unless the songs being learned are asked for too.
+  await leader.getByRole("button", { name: "Add songs" }).click();
+  const dialog = leader.getByRole("dialog");
+  await expect(dialog.getByLabel("Africa")).toBeVisible();
+  await expect(dialog.getByText("Black Hole Sun")).toHaveCount(0);
+  await dialog.getByLabel("Africa").check();
+  await dialog.getByLabel("Linger").check();
+  await dialog.getByRole("button", { name: "Add 2 songs to Part 1" }).click();
+  await expect(part1.getByText("Africa")).toBeVisible();
+  await expect(part1.getByText("Linger")).toBeVisible();
+
+  // A second part: added songs go to the last one; the same song twice is flagged.
+  await leader.getByRole("button", { name: "Add a part" }).click();
+  await leader.getByRole("button", { name: "Add songs" }).click();
+  await dialog.getByLabel("Also show the songs being learned").check();
+  await dialog.getByLabel("Black Hole Sun").check();
+  await dialog.getByLabel("Africa").check();
+  await expect(dialog.getByText("In Part 1: it will be played twice")).toBeVisible();
+  await dialog.getByRole("button", { name: "Add 2 songs to Part 2" }).click();
+  const part2 = leader.getByRole("region", { name: "Part 2" });
+  await expect(part2.getByText("Also in Part 1")).toBeVisible();
+
+  // The duration: Africa twice and Black Hole Sun; Linger has none.
+  await expect(leader.getByText("~15 min")).toBeVisible();
+  await expect(leader.getByText("1 song without a duration is not counted")).toBeVisible();
+
+  // The second part named; a song moved with the buttons, from one part to the next.
+  await part2.getByRole("button", { name: "Actions for Part 2" }).click();
+  await leader.getByRole("menuitem", { name: "Rename" }).click();
+  await leader.getByRole("dialog").getByLabel("Name").fill("Encore");
+  await leader.getByRole("dialog").getByRole("button", { name: "Rename" }).click();
+  const encore = leader.getByRole("region", { name: "Encore" });
+  await part1.locator("button[aria-pressed]").filter({ hasText: "Linger" }).click();
+  await leader.getByRole("button", { name: "Move down" }).click();
+  await expect(encore.locator("li").first()).toContainText("Linger");
+  await expect(leader.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
+
+  // Saved: the same after a reload, and in the list.
+  await leader.reload();
+  await expect(leader.getByRole("region", { name: "Encore" }).locator("li").first()).toContainText(
+    "Linger",
+  );
+  await leader.getByRole("link", { name: "Setlists" }).first().click();
+  const card = leader.getByRole("list", { name: "Setlists" }).getByRole("listitem").filter({
+    hasText: "Wedding",
+  });
+  await expect(card).toContainText("~15 min");
+  await expect(card).toContainText("4 songs");
+  await expect(card).toContainText("2 parts");
+});
+
 function savedCopy(page: Page) {
   return page.evaluate(
     () =>

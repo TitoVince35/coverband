@@ -4,13 +4,15 @@ import { Archive, ArchiveRestore, ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ListSkeleton } from "@/components/loading";
+import { SetlistEditor } from "@/components/setlists/setlist-editor";
 import { SetlistMenu } from "@/components/setlists/setlist-menu";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/lib/errors";
 import { useOnline } from "@/lib/online";
 import { setlistQuery, setSetlistArchived } from "@/lib/setlists";
 
-// One setlist (brief 026): its title, its author and its actions; an archived one is read-only.
+// One setlist (brief 026): its title, its author and its actions, then its parts and songs in the
+// editor (#272); an archived one is read-only.
 export const Route = createFileRoute("/_app/b/$bandSlug/setlists/$setlistId")({
   component: SetlistPage,
 });
@@ -52,7 +54,7 @@ function SetlistPage() {
           {setlist.data.archivedAt && (
             <ArchivedSetlistBanner bandSlug={bandSlug} setlistId={setlistId} />
           )}
-          <p className="text-muted-foreground text-sm">{t("setlists.noSongs")}</p>
+          <SetlistEditor key={setlistId} bandSlug={bandSlug} setlist={setlist.data} />
         </>
       )}
     </section>

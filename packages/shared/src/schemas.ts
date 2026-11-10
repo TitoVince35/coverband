@@ -13,7 +13,7 @@ import { MUSICAL_KEYS } from "./keys";
 import { LANGUAGES, type Language } from "./languages";
 import { MEDIA_LIMITS, parseMediaUrl } from "./media";
 import { NOTIFICATION_TEXT_MAX_LENGTH } from "./notifications";
-import { SETLIST_MAX_LENGTH } from "./setlists";
+import { SETLIST_LIMITS, SETLIST_MAX_LENGTH } from "./setlists";
 import { LYRICS_SOURCES, MAX_ENERGY, SONG_MAX_LENGTH, SONG_STATUSES, SONG_TEMPO } from "./songs";
 
 /** Required text, trimmed. */
@@ -211,3 +211,26 @@ export const pushEndpointBody = z.object({ endpoint: z.string().max(2000) });
 
 /** A new setlist, or a new title: unique within the band, case ignored (409 setlist_title_taken). */
 export const setlistTitleBody = z.object({ title: text(SETLIST_MAX_LENGTH.title) });
+
+/**
+ * A setlist's whole content (#272): its parts in order, each with an optional name and its songs
+ * in order (song ids; the same song may appear twice). `version` is the one it was read at: a
+ * save on an older version is refused (409 setlist_outdated).
+ */
+export const setlistContentBody = z.object({
+  version: z.number().int().min(1),
+  parts: z
+    .array(
+      z.object({
+        name: optionalText(SETLIST_MAX_LENGTH.partName),
+        songs: z.array(z.uuid()).max(SETLIST_LIMITS.songs),
+      }),
+    )
+    .min(1)
+    .max(SETLIST_LIMITS.parts)
+    .refine(
+      (parts) =>
+        parts.reduce((total, part) => total + part.songs.length, 0) <= SETLIST_LIMITS.songs,
+      { message: `At most ${SETLIST_LIMITS.songs} songs in a setlist` },
+    ),
+});
