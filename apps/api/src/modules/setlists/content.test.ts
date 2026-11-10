@@ -252,6 +252,21 @@ describe.skipIf(!databaseUrl)("a setlist's parts and songs (#272)", () => {
     expect((await duplicate("Nothing", crypto.randomUUID())).status).toBe(404);
   });
 
+  test("the details give every setlist, archived ones too, with its parts and songs (#274)", async () => {
+    const res = await call(`/bands/${slug}/setlists/details`, "max");
+    expect(res.status).toBe(200);
+    const { setlists } = (await res.json()) as {
+      setlists: (Content & { title: string; archivedAt: string | null })[];
+    };
+    const wedding = setlists.find((s) => s.title === "Wedding");
+    expect(wedding?.parts.map((part) => part.songs.map((s) => s.title))).toEqual([
+      ["Africa", "Zombie"],
+      ["Linger", "Africa"],
+    ]);
+    expect(setlists.some((s) => s.archivedAt !== null)).toBe(true);
+    expect((await call(`/bands/${otherSlug}/setlists/details`, "max")).status).toBe(404);
+  });
+
   test("a song in a setlist can't be deleted: archive it instead", async () => {
     const res = await call(`/bands/${slug}/songs/${song.Linger}`, "lea", { method: "DELETE" });
     expect(res.status).toBe(409);

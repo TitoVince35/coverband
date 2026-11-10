@@ -980,6 +980,8 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
   await expect.poll(() => savedCopy(page)).toContain(lyricsLine);
   await expect.poll(() => savedCount(page, "documents")).toBe(1);
+  // The setlists too, with their songs, though this device never opened them (#274).
+  await expect.poll(() => savedCopy(page)).toContain("Wedding (copy)");
 
   await context.setOffline(true);
   await page.reload();
@@ -1019,6 +1021,21 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await expect(page.getByText("Document removed")).toBeVisible();
   await page.reload();
   await expect.poll(() => savedCount(page, "documents")).toBe(0);
+
+  // A setlist never opened on this device, offline and read-only (#274).
+  const setlistsPage = `${new URL(page.url()).pathname.split("/").slice(0, 3).join("/")}/setlists`;
+  await context.setOffline(true);
+  await page.goto(setlistsPage);
+  await expect(page.getByText("You're offline")).toBeVisible();
+  await expect(page.getByRole("button", { name: "New setlist" })).toBeDisabled();
+  await page
+    .getByRole("list", { name: "Setlists" })
+    .getByRole("link", { name: /Wedding \(copy\)/ })
+    .click();
+  await expect(page.getByRole("region", { name: "Part 1" })).toContainText("Africa");
+  await expect(page.getByRole("region", { name: "Encore" })).toContainText("Black Hole Sun");
+  await expect(page.getByRole("button", { name: "Add songs" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Drag / })).toHaveCount(0);
   await context.close();
 });
 
