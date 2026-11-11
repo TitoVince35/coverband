@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { TFunction } from "i18next";
-import { ApiRequestError, ensureOk, errorMessage } from "./errors";
+import { ApiRequestError, ensureOk, errorMessage, replacesData } from "./errors";
 
 const t = ((key: string) => `t:${key}`) as unknown as TFunction;
 
@@ -41,5 +41,18 @@ describe("errorMessage", () => {
 
   test("uses a generic message otherwise", () => {
     expect(errorMessage(t, new Error("boom"))).toBe("t:errors.internal_error");
+  });
+});
+
+describe("replacesData (#281)", () => {
+  test("a failed connection keeps the data shown", () => {
+    expect(replacesData(new TypeError("Failed to fetch"))).toBe(false);
+    expect(replacesData(null)).toBe(false);
+  });
+
+  test("an answer from the server replaces it", () => {
+    expect(replacesData(new ApiRequestError("not_found", "Not found"))).toBe(true);
+    expect(replacesData(new ApiRequestError("band_suspended", "Suspended"))).toBe(true);
+    expect(replacesData(new Error("Could not load the session"))).toBe(true);
   });
 });

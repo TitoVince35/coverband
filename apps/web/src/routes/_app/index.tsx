@@ -8,7 +8,7 @@ import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { ListSkeleton } from "@/components/loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { myBandsQuery } from "@/lib/bands";
-import { errorMessage } from "@/lib/errors";
+import { errorMessage, replacesData } from "@/lib/errors";
 
 export const Route = createFileRoute("/_app/")({
   component: HomePage,
@@ -32,7 +32,7 @@ function HomePage() {
         <CardContent>
           {bands.isPending ? (
             <ListSkeleton rows={2} withIcon />
-          ) : bands.isError ? (
+          ) : bands.data === undefined || replacesData(bands.error) ? (
             <p role="alert" className="text-destructive text-sm">
               {errorMessage(t, bands.error)}
             </p>

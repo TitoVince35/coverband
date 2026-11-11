@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
 import { useLanguage } from "@/i18n/use-language";
 import { bandInvitations, bandQuery, membersQuery } from "@/lib/bands";
-import { errorMessage } from "@/lib/errors";
+import { errorMessage, replacesData } from "@/lib/errors";
 import { lineupOrder } from "@/lib/lineup";
 
 // Lineup: every member with their instruments and role; each member edits their own instruments
@@ -48,7 +48,7 @@ function LineupPage() {
         <CardContent>
           {members.isPending ? (
             <ListSkeleton withIcon />
-          ) : members.isError ? (
+          ) : members.data === undefined || replacesData(members.error) ? (
             <p role="alert" className="text-destructive text-sm">
               {errorMessage(t, members.error)}
             </p>

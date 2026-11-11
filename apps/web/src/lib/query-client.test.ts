@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import { focusManager, onlineManager, QueryObserver } from "@tanstack/react-query";
 import {
+  answersAtOnce,
   clearUserData,
   createQueryClient,
   guardData,
@@ -156,6 +157,48 @@ describe("guardData", () => {
     expect(client.getQueryData(["session"])).toBeNull();
     expect(changes).toHaveLength(1);
     setSystemTime();
+  });
+
+  test("the saved copy while a fetch is on its way: at once, never waiting for its retries (#281)", async () => {
+    const client = createQueryClient();
+    client.setQueryData(["session"], saved, { updatedAt: 0 });
+    // A focus refetch, retried for seconds as the server can't be reached.
+    const never = options(() => new Promise(() => {}));
+    void client.fetchQuery({ ...never, retry: 3 }).catch(() => {});
+    expect(await guardData(client, never)).toEqual(saved);
+  });
+
+  test("the saved copy once a fetch failed since the app started: at once (#281)", async () => {
+    const client = createQueryClient();
+    client.setQueryData(["session"], saved, { updatedAt: 0 });
+    await client
+      .fetchQuery({
+        ...options(async () => {
+          throw new TypeError("Failed to fetch");
+        }),
+        retry: false,
+      })
+      .catch(() => {});
+    // The browser believes it's online, the server still can't be reached: no new wait.
+    let asked = 0;
+    const sleeping = options(() => {
+      asked++;
+      return new Promise(() => {});
+    });
+    expect(await guardData(client, sleeping)).toEqual(saved);
+    // Still checked behind, for when the server answers again.
+    expect(asked).toBe(1);
+  });
+
+  test("answersAtOnce: waits only for the saved copy with nothing tried yet (#281)", () => {
+    const startedAt = 1000;
+    const state = { dataUpdatedAt: 500, errorUpdatedAt: 0, fetchStatus: "idle" } as const;
+    expect(answersAtOnce(state, startedAt)).toBe(false);
+    expect(answersAtOnce({ ...state, dataUpdatedAt: 1000 }, startedAt)).toBe(true);
+    expect(answersAtOnce({ ...state, fetchStatus: "fetching" }, startedAt)).toBe(true);
+    expect(answersAtOnce({ ...state, fetchStatus: "paused" }, startedAt)).toBe(false);
+    expect(answersAtOnce({ ...state, errorUpdatedAt: 1200 }, startedAt)).toBe(true);
+    expect(answersAtOnce({ ...state, errorUpdatedAt: 800 }, startedAt)).toBe(false);
   });
 
   test("watchGuardData: the same answer or a first one runs nothing again", async () => {

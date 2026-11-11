@@ -7,7 +7,7 @@ import { BandNav } from "@/components/band/band-nav";
 import { BandSwitcher } from "@/components/band/band-switcher";
 import { BandSkeleton } from "@/components/loading";
 import { bandQuery } from "@/lib/bands";
-import { ApiRequestError, errorMessage } from "@/lib/errors";
+import { ApiRequestError, errorMessage, replacesData } from "@/lib/errors";
 
 // Layout of every band page: band name (opening the band menu: settings, other bands) and the
 // band's sections (tabs, or a bottom bar on a phone).
@@ -23,7 +23,7 @@ function BandLayout() {
   if (query.isPending) {
     return <BandSkeleton />;
   }
-  if (query.isError) {
+  if (query.data === undefined || replacesData(query.error)) {
     if (query.error instanceof ApiRequestError && query.error.code === "band_suspended") {
       return <BandSuspended />;
     }

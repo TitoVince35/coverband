@@ -5,7 +5,7 @@ import { CollapsibleCard } from "@/components/collapsible-card";
 import { ListSkeleton } from "@/components/loading";
 import { useLanguage } from "@/i18n/use-language";
 import { bandJournalQuery } from "@/lib/bands";
-import { errorMessage } from "@/lib/errors";
+import { errorMessage, replacesData } from "@/lib/errors";
 import { formatJournalTime } from "@/lib/format";
 
 /** Sentence of each band event. An action without one (added later) isn't shown yet. */
@@ -57,7 +57,7 @@ export function BandJournal({ bandSlug }: { bandSlug: string }) {
     <CollapsibleCard title={t("journal.title")} defaultOpen={false}>
       {journal.isPending ? (
         <ListSkeleton rows={3} />
-      ) : journal.isError ? (
+      ) : journal.data === undefined || replacesData(journal.error) ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, journal.error)}
         </p>

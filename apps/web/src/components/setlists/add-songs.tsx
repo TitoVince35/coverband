@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { errorMessage } from "@/lib/errors";
+import { errorMessage, replacesData } from "@/lib/errors";
 import { type Draft, type DraftSong, songChoices, songCount } from "@/lib/setlist-editor";
 import { songsQuery } from "@/lib/songs";
 import { cn } from "@/lib/utils";
@@ -146,7 +146,7 @@ export function AddSongsPanel({
 
       {songs.isPending ? (
         <ListSkeleton rows={4} />
-      ) : songs.isError ? (
+      ) : songs.data === undefined || replacesData(songs.error) ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, songs.error)}
         </p>

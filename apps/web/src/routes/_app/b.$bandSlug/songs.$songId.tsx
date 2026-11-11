@@ -15,7 +15,7 @@ import { EnergyPicker, StatusPicker } from "@/components/songs/song-status";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/use-language";
 import { bandQuery } from "@/lib/bands";
-import { ApiRequestError, errorMessage } from "@/lib/errors";
+import { ApiRequestError, errorMessage, replacesData } from "@/lib/errors";
 import { formatDate } from "@/lib/format";
 import { type SongFields, songQuery, updateSong } from "@/lib/songs";
 import { cn } from "@/lib/utils";
@@ -54,7 +54,7 @@ function SongPage() {
   if (song.isPending) {
     return <SongSkeleton />;
   }
-  if (song.isError) {
+  if (song.data === undefined || replacesData(song.error)) {
     const notFound = song.error instanceof ApiRequestError && song.error.code === "not_found";
     return (
       <section className="space-y-4">

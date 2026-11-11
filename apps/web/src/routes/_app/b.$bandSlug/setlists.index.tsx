@@ -7,7 +7,7 @@ import { ListSkeleton } from "@/components/loading";
 import { SetlistList, SetlistTabs } from "@/components/setlists/setlist-list";
 import { SetlistTitleDialog } from "@/components/setlists/setlist-title-dialog";
 import { Button } from "@/components/ui/button";
-import { errorMessage } from "@/lib/errors";
+import { errorMessage, replacesData } from "@/lib/errors";
 import { useOnline } from "@/lib/online";
 import { archivedSetlistsQuery, setlistsQuery } from "@/lib/setlists";
 
@@ -43,7 +43,7 @@ function SetlistsPage() {
       <SetlistTabs bandSlug={bandSlug} current="current" archived={archived} />
       {setlists.isPending ? (
         <ListSkeleton rows={4} />
-      ) : setlists.isError ? (
+      ) : setlists.data === undefined || replacesData(setlists.error) ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, setlists.error)}
         </p>
