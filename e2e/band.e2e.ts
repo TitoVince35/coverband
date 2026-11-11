@@ -875,23 +875,39 @@ test("members build a two-part setlist and see its duration (#272)", async () =>
   const part1 = leader.getByRole("region", { name: "Part 1" });
   await expect(part1).toContainText("No songs in this part yet.");
 
-  // Ready songs only, unless the songs being learned are asked for too.
+  // Full screen on a phone (#283): ready songs only, unless the songs being learned are asked
+  // for too; a song is chosen by tapping its row.
   await leader.getByRole("button", { name: "Add songs" }).click();
   const dialog = leader.getByRole("dialog");
-  await expect(dialog.getByLabel("Africa")).toBeVisible();
+  const choices = dialog.getByRole("list", { name: "Songs to add" });
+  const choice = (title: string) => choices.getByRole("button", { name: new RegExp(`^${title}`) });
+  await expect(choice("Africa")).toBeVisible();
   await expect(dialog.getByText("Black Hole Sun")).toHaveCount(0);
-  await dialog.getByLabel("Africa").check();
-  await dialog.getByLabel("Linger").check();
+  // Cancel adds nothing.
+  await choice("Africa").click();
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(part1).toContainText("No songs in this part yet.");
+  await leader.getByRole("button", { name: "Add songs" }).click();
+  // Sorted by title, either way.
+  await expect(choices.getByRole("button").first()).toContainText("Africa");
+  await dialog.getByRole("button", { name: "Ascending" }).click();
+  await expect(choices.getByRole("button").first()).toContainText("Linger");
+  await choice("Africa").click();
+  await choice("Linger").click();
+  await expect(choice("Africa")).toHaveAttribute("aria-pressed", "true");
   await dialog.getByRole("button", { name: "Add 2 songs to Part 1" }).click();
   await expect(part1.getByText("Africa")).toBeVisible();
   await expect(part1.getByText("Linger")).toBeVisible();
 
-  // A second part: added songs go to the last one; the same song twice is flagged.
+  // A second part: added songs go to the last one; a song already there says where, and that
+  // it would be played twice once chosen.
   await leader.getByRole("button", { name: "Add a part" }).click();
   await leader.getByRole("button", { name: "Add songs" }).click();
   await dialog.getByLabel("Also show the songs being learned").check();
-  await dialog.getByLabel("Black Hole Sun").check();
-  await dialog.getByLabel("Africa").check();
+  await expect(choice("Africa")).toContainText("Played in Part 1");
+  await choice("Black Hole Sun").click();
+  await choice("Africa").click();
   await expect(dialog.getByText("In Part 1: it will be played twice")).toBeVisible();
   await dialog.getByRole("button", { name: "Add 2 songs to Part 2" }).click();
   const part2 = leader.getByRole("region", { name: "Part 2" });

@@ -243,6 +243,8 @@ export function SetlistEditor({ bandSlug, setlist }: { bandSlug: string; setlist
       draft={draft}
       defaultPart={addTarget}
       disabled={readOnly}
+      variant={onDone ? "dialog" : "aside"}
+      onCancel={onDone}
       onAdd={(part, songs: DraftSong[]) => {
         change(addSongs(draft, part, songs));
         toast.success(

@@ -412,6 +412,7 @@
       "search": "Chercher par titre ou artiste",
       "learning": "Montrer aussi les morceaux en cours",
       "songs": "Morceaux à ajouter",
+      "played": "Joué dans {{parts}}",
       "inSetlist": "Dans {{parts}}",
       "twice": "Dans {{parts}} : il sera joué deux fois",
       "none": "Aucun morceau ne correspond.",
