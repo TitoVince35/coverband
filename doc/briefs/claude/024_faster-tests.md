@@ -111,4 +111,16 @@ Not worth it: sharding the tests over several jobs. Each job pays ~35 s of setup
 
 Expected: from ~3 min to **~1.5 min** per run, depending on the workers measured.
 
-To measure the workers: a temporary commit runs the end-to-end job three times side by side (a matrix of 2, 3 and 4 workers), then the next commit keeps the best one and removes the matrix. It needs the branch pushed.
+### Workers measured on GitHub's runners
+
+A temporary commit ran the end-to-end job six times side by side (2, 3 and 4 workers, twice each; PR #294, 2026/11/11). The tests step (build and server start included):
+
+| Workers | Run 1 | Run 2 |
+| --- | --- | --- |
+| 2 | 74 s | 60 s |
+| **3** | **57 s** | **54 s** |
+| 4 | 77 s | 70 s |
+
+Before: 85 s on 1 worker. Chosen: **3, on CI as locally** (`workers: 3`): 4 is slower on a 4-core runner, as the API, the fakes and the browsers compete for it.
+
+One run failed, and not because of the workers: in `song-media.e2e.ts`, the second "Document added" toast came while the first still showed, so the text matched twice. Fixed (`.last()`, as the lyrics test already did with `.first()`).

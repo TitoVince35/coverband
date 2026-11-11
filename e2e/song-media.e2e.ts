@@ -107,7 +107,8 @@ test("documents: a photo made smaller, a PDF, edited and deleted (#239)", async 
   await doc.getByLabel("Add an instrument").fill("Trumpet");
   await doc.getByLabel("Add an instrument").press("Enter");
   await doc.getByRole("button", { name: "Save" }).click();
-  await expect(leader.getByText("Document added")).toBeVisible();
+  // The first one's toast may still show.
+  await expect(leader.getByText("Document added").last()).toBeVisible();
   await expect(documents).toHaveCount(2);
   await expect(documents.last()).toContainText("Horns");
   await expect(documents.last()).toContainText("PDF");

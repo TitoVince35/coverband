@@ -38,9 +38,9 @@ export default defineConfig({
   testMatch: "**/*.e2e.ts",
   // Files run in parallel, each with its own band, the tests inside a file in order (no
   // fullyParallel). Only the notes from the team can't share the run (NOTES, below). Measured
-  // (#292): 3 keeps a 16-core computer under 70% CPU (4 goes over at the start, for 4 s less);
-  // CI's runners have 4 cores for the server, the fakes and the browsers.
-  workers: ci ? 2 : 3,
+  // (#292): 3 keeps a 16-core computer under 70% CPU (4 goes over at the start, for 4 s less), and
+  // is the fastest on CI's 4-core runners (2 and 4 are slower there).
+  workers: 3,
   // No retries: a serial story would start over with the same people and fail for another reason.
   retries: 0,
   forbidOnly: ci,

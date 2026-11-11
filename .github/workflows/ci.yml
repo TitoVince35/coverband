@@ -116,14 +116,8 @@ jobs:
 
   # Alongside the other checks, not after them (#292): a run takes as long as its longest job.
   e2e:
-    name: End-to-end tests (${{ matrix.workers }} workers, run ${{ matrix.attempt }})
+    name: End-to-end tests
     runs-on: ubuntu-latest
-    # TEMPORARY (#292): measures the workers on a runner.
-    strategy:
-      fail-fast: false
-      matrix:
-        workers: [2, 3, 4]
-        attempt: [1, 2]
     timeout-minutes: 15
 
     services:
@@ -192,13 +186,13 @@ jobs:
 
       # Builds the web app and serves it from the API on port 3100 (see e2e/playwright.config.ts).
       - name: End-to-end tests
-        run: bun run e2e --workers ${{ matrix.workers }}
+        run: bun run e2e
 
       - name: Upload report and traces
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report-${{ matrix.workers }}-${{ matrix.attempt }}
+          name: playwright-report
           path: |
             e2e/playwright-report
             e2e/test-results
