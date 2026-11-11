@@ -359,12 +359,14 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     });
     const journal = (
       (await (await call(`/bands/${slug}/activity`, "max")).json()) as {
-        entries: { action: string; song?: string; status?: string | null }[];
+        entries: { action: string; song?: string; status?: string | null; target: unknown }[];
       }
     ).entries;
     expect(journal.find((e) => e.action === "song.status_changed")).toMatchObject({
       song: "Africa",
       status: "ready",
+      // The song, for a link to its page (#285).
+      target: { type: "song", id: song.id },
     });
   });
 

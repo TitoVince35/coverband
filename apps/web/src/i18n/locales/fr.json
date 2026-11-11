@@ -667,6 +667,7 @@
   },
   "journal": {
     "title": "Activité récente",
+    "more": "Voir plus",
     "empty": "Rien ne s'est encore passé.",
     "today": "Aujourd'hui",
     "yesterday": "Hier",

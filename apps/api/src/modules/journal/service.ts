@@ -77,8 +77,17 @@ export async function bandJournal(
     if (events.length === 0) continue;
     for (const [id, found] of await source.details(db, events)) details.set(id, found);
   }
-  return rows.map(({ targetType: _, targetId: __, data: ___, ...entry }) => ({
+  return rows.map(({ targetType, targetId, data: _, ...entry }) => ({
     ...entry,
+    target: pageTarget(targetType, targetId),
     ...details.get(entry.id),
   }));
+}
+
+/** A target the web app has a page for (#285): the journal links to it. */
+type PageTarget = { type: "song" | "setlist"; id: string };
+
+/** An entry's target when it has a page, else null: never another kind's id (users, invitations). */
+function pageTarget(type: ActivityTarget, id: string): PageTarget | null {
+  return type === "song" || type === "setlist" ? { type, id } : null;
 }

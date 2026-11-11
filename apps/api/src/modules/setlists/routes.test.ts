@@ -194,10 +194,11 @@ describe.skipIf(!databaseUrl)("a band's setlists", () => {
     const setlist = await setlistOf(await create("lea", "Journal set"));
     const res = await call(`/bands/${slug}/activity`, "max");
     const { entries } = (await res.json()) as {
-      entries: { action: string; setlist?: string | null }[];
+      entries: { action: string; setlist?: string | null; target: unknown }[];
     };
     expect(entries.find((entry) => entry.action === "setlist.created")).toMatchObject({
       setlist: setlist.title,
+      target: { type: "setlist", id: setlist.id },
     });
   });
 
