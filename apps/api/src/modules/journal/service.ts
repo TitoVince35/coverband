@@ -5,6 +5,18 @@ import { activity, users } from "../../core/db/schema";
 
 /** How many entries the band journal shows. */
 export const JOURNAL_SIZE = 10;
+/** How many entries a song's history shows (#286). */
+export const SONG_HISTORY_SIZE = 50;
+
+/** A song's history (#286): its latest events, newest first, as the band journal tells them. */
+export function songHistory(
+  db: Db,
+  bandId: string,
+  songId: string,
+  sources: readonly JournalSource[],
+) {
+  return bandJournal(db, bandId, sources, SONG_HISTORY_SIZE, { type: "song", id: songId });
+}
 
 /**
  * What an entry may add for its sentence, besides who did what and when: a song's current title
@@ -48,6 +60,7 @@ export async function bandJournal(
   bandId: string,
   sources: readonly JournalSource[],
   limit = JOURNAL_SIZE,
+  target?: { type: ActivityTarget; id: string },
 ) {
   const rows = await db
     .select({
@@ -64,6 +77,9 @@ export async function bandJournal(
     .where(
       and(
         eq(activity.bandId, bandId),
+        // One song's history (#286): only its own events, its documents' included.
+        target && eq(activity.targetType, target.type),
+        target && eq(activity.targetId, target.id),
         // A band leader joins by creating the band: "created the band" says it already.
         sql`not (${activity.action} = 'member.joined' and coalesce(${activity.data}->>'role', '') = 'leader')`,
       ),

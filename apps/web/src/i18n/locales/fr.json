@@ -99,6 +99,8 @@
     "noMatch": "Aucun morceau ne correspond à « {{query}} ».",
     "back": "Répertoire",
     "edit": "Modifier le morceau",
+    "history": "Historique",
+    "historyOffline": "L'historique de ce morceau n'est pas enregistré sur cet appareil : il s'affiche une fois en ligne.",
     "details": "Détails",
     "editDetails": "Modifier les détails",
     "notFound": "Ce morceau n'existe pas.",

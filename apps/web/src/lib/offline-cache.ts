@@ -26,7 +26,9 @@ export function isKeptOffline(queryKey: QueryKey) {
   const [root, , section, , extra] = queryKey;
   if (root === "session" || root === "access") return true;
   if (root !== "bands") return false;
-  // Lyrics searches (["bands", slug, "songs", id, "lyrics-search", ...]) and invitations stay out.
+  // A song's history (#286) is kept; lyrics searches (["bands", slug, "songs", id,
+  // "lyrics-search", ...]) and invitations stay out.
+  if (section === "songs" && extra === "activity" && queryKey.length === 5) return true;
   return section !== "invitations" && extra === undefined;
 }
 
