@@ -206,7 +206,9 @@ test("the band's home page shows its latest activity, newest first", async () =>
   await expect(journal).toContainText("Maxou joined the band");
   await expect(journal).toContainText("Captain Lea invited a musician");
   await expect(entries.last()).toContainText("Captain Lea created the band");
-  await expect(entries.first()).toContainText("Today");
+  // Today: the time alone, no day's name.
+  await expect(entries.first()).toContainText(/^\d{1,2}:\d{2}\s?[AP]M · /);
+  await expect(entries.first()).not.toContainText("Today");
   // Never an email.
   await expect(journal).not.toContainText("@");
 });

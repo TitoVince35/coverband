@@ -113,7 +113,11 @@ function Tile({
   return children(
     <>
       <span className="relative flex size-14 items-center justify-center">
-        <Icon aria-hidden className="absolute size-14 text-primary opacity-20" strokeWidth={1.5} />
+        <Icon
+          aria-hidden
+          className="absolute size-14 text-emerald-500/45 dark:text-emerald-400/70"
+          strokeWidth={1.5}
+        />
         {count === null ? (
           <Skeleton className="h-8 w-8" />
         ) : (

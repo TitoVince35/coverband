@@ -206,7 +206,7 @@ test("the band's home shows its numbers, each opening its page (#284)", async ()
   const overview = leader.getByRole("list").filter({ hasText: "Gigs to come" });
   await expect(overview.getByRole("link", { name: `${songs} Songs` })).toBeVisible();
   await expect(overview.getByRole("link", { name: `${members} Members` })).toBeVisible();
-  await expect(overview.getByText("Coming soon")).toBeVisible();
+  await expect(overview.getByText("(coming soon)")).toBeVisible();
   await overview.getByRole("link", { name: `${setlists} Setlists` }).click();
   await expect(leader).toHaveURL(/\/setlists$/);
 });

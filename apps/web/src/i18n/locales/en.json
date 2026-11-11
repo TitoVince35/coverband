@@ -673,13 +673,12 @@
     "setlists": "Setlists",
     "members": "Members",
     "gigs": "Gigs to come",
-    "soon": "Coming soon"
+    "soon": "(coming soon)"
   },
   "journal": {
     "title": "Latest activity",
     "more": "View more",
     "empty": "Nothing has happened yet.",
-    "today": "Today",
     "yesterday": "Yesterday",
     "someone": "Someone",
     "bandCreated": "{{name}} created the band",
