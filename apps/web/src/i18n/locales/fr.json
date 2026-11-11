@@ -32,7 +32,6 @@
     "suspendedTitle": "Ce groupe est suspendu",
     "suspendedText": "Un administrateur a suspendu ce groupe : ses pages ne peuvent pas être ouvertes pour l'instant. Si vous pensez que c'est une erreur, contactez-nous.",
     "suspendedBack": "Retour à mes groupes",
-    "comingSoon": "Les setlists et les concerts arrivent bientôt.",
     "roles": {
       "leader": "band leader",
       "musician": "zicos"
@@ -664,6 +663,14 @@
       "placeholder": "Choisissez ou tapez un instrument",
       "add": "Ajouter « {{label}} »"
     }
+  },
+  "overview": {
+    "title": "En bref",
+    "songs": "Morceaux",
+    "setlists": "Setlists",
+    "members": "Membres",
+    "gigs": "Concerts à venir",
+    "soon": "Bientôt"
   },
   "journal": {
     "title": "Activité récente",
