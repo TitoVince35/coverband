@@ -289,7 +289,9 @@ test("the band's home page shows its latest activity, newest first", async () =>
   await expect(journal).toContainText("Maxou joined the band");
   await expect(journal).toContainText("Captain Lea invited a musician");
   await expect(entries.last()).toContainText("Captain Lea created the band");
-  await expect(entries.first()).toContainText("Today");
+  // Today: the time alone, no day's name.
+  await expect(entries.first()).toContainText(/^\d{1,2}:\d{2}\s?[AP]M · /);
+  await expect(entries.first()).not.toContainText("Today");
   // Never an email.
   await expect(journal).not.toContainText("@");
 });
@@ -996,7 +998,7 @@ test("the band's home shows its numbers, each opening its page (#284)", async ()
   const overview = leader.getByRole("list").filter({ hasText: "Gigs to come" });
   await expect(overview.getByRole("link", { name: `${songs} Songs` })).toBeVisible();
   await expect(overview.getByRole("link", { name: `${members} Members` })).toBeVisible();
-  await expect(overview.getByText("Coming soon")).toBeVisible();
+  await expect(overview.getByText("(coming soon)")).toBeVisible();
   await overview.getByRole("link", { name: `${setlists} Setlists` }).click();
   await expect(leader).toHaveURL(/\/setlists$/);
 });

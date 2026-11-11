@@ -124,7 +124,7 @@ export function JournalList({
   const { t } = useTranslation();
   const language = useLanguage();
   const now = new Date();
-  const words = { today: t("journal.today"), yesterday: t("journal.yesterday") };
+  const words = { yesterday: t("journal.yesterday") };
   const shown = entries.filter((entry) => hasSentence(entry.action));
   const statusWord = (entry: object) =>
     "status" in entry && isStatus(entry.status) ? t(`journal.status.${entry.status}`) : "";
