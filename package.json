@@ -29,7 +29,8 @@
     "db:migrate": "bun --env-file=.env run --filter @coverband/api db:migrate",
     "mail:test": "bun --env-file=.env apps/api/src/adapters/mail/send-test.ts",
     "db:studio": "bun --env-file=.env run --filter @coverband/api db:studio",
-    "db:diagram": "bun apps/api/src/dev/db-diagram.ts"
+    "db:diagram": "bun apps/api/src/dev/db-diagram.ts",
+    "db:diagram:page": "bun apps/api/src/dev/db-diagram-page.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

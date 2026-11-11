@@ -21,3 +21,4 @@ test-results/
 
 # Graphviz sources of the generated diagrams (bun run db:diagram): only the PDF and SVG are kept
 doc/schemas/*.dot
+doc/schemas/*.html
