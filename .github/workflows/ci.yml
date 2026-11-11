@@ -114,9 +114,9 @@ jobs:
           tofu init -backend=false -input=false
           tofu validate
 
+  # Alongside the other checks, not after them (#292): a run takes as long as its longest job.
   e2e:
     name: End-to-end tests
-    needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -170,6 +170,13 @@ jobs:
 
       - name: Migrate database
         run: bun run db:migrate
+
+      # Playwright's Chromium, downloaded once per Playwright version.
+      - name: Cache Chromium for Playwright
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('e2e/package.json') }}
 
       # Without --with-deps: the runner already has the system libraries (it ships Chrome), and
       # their apt install from Ubuntu's mirror sometimes took 10 minutes (#230).
