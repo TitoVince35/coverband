@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserMenu } from "@/components/user-menu";
 import { accessQuery } from "@/lib/access";
+import { useMediaQuery } from "@/lib/media-query";
 import { isOpenPage } from "@/lib/open-pages";
 import { guardData } from "@/lib/query-client";
 
@@ -31,7 +32,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
 });
 
+/** Where a toast sits on a phone: above the band's bottom bar (#223) and the phone's own bar. */
+const ABOVE_BOTTOM_BAR = "calc(4.5rem + env(safe-area-inset-bottom))";
+
 function RootLayout() {
+  // Tailwind's `sm`, where the band's bottom bar gives way to tabs.
+  const largeScreen = useMediaQuery("(min-width: 640px)");
   return (
     <TooltipProvider>
       <div className="flex min-h-dvh flex-col bg-background text-foreground">
@@ -56,7 +62,13 @@ function RootLayout() {
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           <Outlet />
         </main>
-        <Toaster position="top-center" />
+        {/* At the bottom on a phone, above the band's bottom bar: at the top, a toast would cover
+            the header's buttons for its 4 s. At the top on a larger screen. */}
+        <Toaster
+          position={largeScreen ? "top-center" : "bottom-center"}
+          offset={{ bottom: ABOVE_BOTTOM_BAR }}
+          mobileOffset={{ bottom: ABOVE_BOTTOM_BAR }}
+        />
       </div>
     </TooltipProvider>
   );
