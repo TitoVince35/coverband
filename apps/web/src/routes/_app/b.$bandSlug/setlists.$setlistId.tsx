@@ -7,7 +7,7 @@ import { ListSkeleton } from "@/components/loading";
 import { SetlistEditor } from "@/components/setlists/setlist-editor";
 import { SetlistMenu } from "@/components/setlists/setlist-menu";
 import { Button } from "@/components/ui/button";
-import { errorMessage } from "@/lib/errors";
+import { errorMessage, replacesData } from "@/lib/errors";
 import { useOnline } from "@/lib/online";
 import { setlistQuery, setSetlistArchived } from "@/lib/setlists";
 
@@ -34,7 +34,7 @@ function SetlistPage() {
       </Link>
       {setlist.isPending ? (
         <ListSkeleton rows={4} />
-      ) : setlist.isError ? (
+      ) : setlist.data === undefined || replacesData(setlist.error) ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, setlist.error)}
         </p>

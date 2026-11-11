@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { errorMessage } from "@/lib/errors";
+import { errorMessage, replacesData } from "@/lib/errors";
 import {
   DEFAULT_DIRECTION,
   type RepertoireSort,
@@ -68,7 +68,7 @@ function RepertoirePage() {
       </div>
       {songs.isPending ? (
         <ListSkeleton rows={5} />
-      ) : songs.isError ? (
+      ) : songs.data === undefined || replacesData(songs.error) ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, songs.error)}
         </p>

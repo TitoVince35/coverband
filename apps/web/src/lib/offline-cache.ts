@@ -4,10 +4,11 @@
 // would survive a logout). The cache follows the user: logging out or in as someone else empties
 // it, so the saved copy is emptied too.
 
-import type { QueryClient, QueryKey } from "@tanstack/react-query";
+import type { Query, QueryClient, QueryKey } from "@tanstack/react-query";
 import type { PersistedClient, Persister } from "@tanstack/react-query-persist-client";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { APP_BUILD } from "./build-info";
+import { replacesData } from "./errors";
 
 /** Saved data older than this is dropped at startup. */
 export const OFFLINE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -27,6 +28,38 @@ export function isKeptOffline(queryKey: QueryKey) {
   if (root !== "bands") return false;
   // Lyrics searches (["bands", slug, "songs", id, "lyrics-search", ...]) and invitations stay out.
   return section !== "invitations" && extra === undefined;
+}
+
+/**
+ * Whether a query is saved: kept offline, with data the server gave. A refetch that failed for
+ * want of a connection keeps it (#281: a venue's Wi-Fi would otherwise drop it from the device at
+ * the next save); one the server refused (gone, suspended...) doesn't.
+ */
+export function isSaved(query: Pick<Query, "queryKey" | "state">) {
+  const { data, status, error } = query.state;
+  if (data === undefined || !isKeptOffline(query.queryKey)) return false;
+  return status === "success" || (status === "error" && !replacesData(error));
+}
+
+/**
+ * The copy written to the device: a query whose refetch failed is saved as its data, without the
+ * error (#281). An error may not be storable in IndexedDB, and the data is what's shown offline.
+ */
+export function savedCopy(client: PersistedClient): PersistedClient {
+  const queries = client.clientState.queries.map((query) =>
+    query.state.status === "error"
+      ? {
+          ...query,
+          state: {
+            ...query.state,
+            status: "success" as const,
+            error: null,
+            fetchFailureReason: null,
+          },
+        }
+      : query,
+  );
+  return { ...client, clientState: { ...client.clientState, queries } };
 }
 
 /** Saves wait this long, so a burst of changes (a band's whole repertoire) is one write. */
@@ -94,7 +127,7 @@ function saveNow() {
  */
 const indexedDbPersister: Persister = {
   persistClient: (client: PersistedClient) => {
-    latest = client;
+    latest = savedCopy(client);
     saving ??= setTimeout(saveNow, SAVE_DELAY_MS);
   },
   restoreClient: async () =>
@@ -122,8 +155,7 @@ export async function startOfflineCache(queryClient: QueryClient) {
     maxAge: OFFLINE_MAX_AGE_MS,
     buster: APP_BUILD,
     dehydrateOptions: {
-      shouldDehydrateQuery: (query) =>
-        query.state.status === "success" && isKeptOffline(query.queryKey),
+      shouldDehydrateQuery: isSaved,
     },
   });
   await restored.catch(() => {});

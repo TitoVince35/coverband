@@ -3,6 +3,7 @@ import {
   onlineManager,
   QueryClient,
   type QueryKey,
+  type QueryState,
 } from "@tanstack/react-query";
 import { clearOfflineCache } from "@/lib/offline-cache";
 import { clearSavedDocuments } from "@/lib/offline-documents";
@@ -49,7 +50,7 @@ export async function guardData<T, K extends QueryKey>(
   const saved = () => queryClient.getQueryData<T>(options.queryKey);
   if (!onlineManager.isOnline()) return saved();
   const state = queryClient.getQueryState<T>(options.queryKey);
-  if (state?.data !== undefined && state.dataUpdatedAt >= APP_STARTED_AT) {
+  if (state?.data !== undefined && answersAtOnce(state)) {
     // Fresh, nothing is fetched; stale, the answer comes later (an unreachable server keeps it).
     void queryClient.fetchQuery({ ...options, retry: false }).catch(() => {});
     return state.data;
@@ -61,6 +62,24 @@ export async function guardData<T, K extends QueryKey>(
     if (data === undefined) throw error;
     return data;
   }
+}
+
+/**
+ * Whether a guard answers with the data it has rather than waiting for the server (#211, #281):
+ * the server gave it since the app started; or it's the saved copy but a fetch is already on its
+ * way (a focus refetch, retried for seconds when the server can't be reached: waiting for it froze
+ * the navigation, then failed it) or has already failed since the app started (the server can't
+ * be reached, while the browser believes it's online). Only at startup does a guard wait.
+ */
+export function answersAtOnce(
+  state: Pick<QueryState, "dataUpdatedAt" | "errorUpdatedAt" | "fetchStatus">,
+  startedAt = APP_STARTED_AT,
+): boolean {
+  return (
+    state.dataUpdatedAt >= startedAt ||
+    state.fetchStatus === "fetching" ||
+    state.errorUpdatedAt >= startedAt
+  );
 }
 
 /**

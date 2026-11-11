@@ -41,3 +41,12 @@ export function errorMessage(t: TFunction, error: unknown): string {
   }
   return t("errors.internal_error");
 }
+
+/**
+ * Whether a query's error is shown instead of the data it still has (#281). A failed connection
+ * (offline, a venue's Wi-Fi, the browser wrongly believing it's online) keeps the saved data on
+ * screen; an answer from the server (gone, suspended...) replaces it.
+ */
+export function replacesData(error: unknown): boolean {
+  return error != null && !(error instanceof TypeError);
+}

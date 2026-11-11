@@ -971,6 +971,8 @@ function savedCopy(page: Page) {
 const lyricsLine = "And the violence caused such silence";
 
 test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async ({ browser }) => {
+  // Every band tab, twice over (#281).
+  test.slow();
   // A device that never opened the song: the home page saves every band for offline use.
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -1010,11 +1012,15 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   ]);
   await expect.poll(() => photo.url()).toMatch(/^blob:/);
   await photo.close();
+  // Opening it leaves the browser believing it's online, the server still out of reach (#281):
+  // like a venue's Wi-Fi. Every band tab opens anyway, with its saved data.
+  await openEveryBandTab(page, "Zombie");
 
   await context.setOffline(false);
   await expect(page.getByText("You're offline")).toBeHidden();
   await expect(edit).toBeEnabled();
   // Deleted: its file goes from the bucket, and from the device.
+  await page.getByRole("button", { name: "Documents" }).click();
   await page.getByRole("button", { name: "Edit the document Chords" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
@@ -1036,8 +1042,57 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await expect(page.getByRole("region", { name: "Encore" })).toContainText("Black Hole Sun");
   await expect(page.getByRole("button", { name: "Add songs" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^Drag / })).toHaveCount(0);
+  // Offline for the browser too: every band tab opens, from a song's page and the band's home (#281).
+  await openSong(page, "Zombie");
+  await openEveryBandTab(page, "Zombie");
   await context.close();
 });
+
+/** Opens a song of the band shown from its repertoire, through the band's tabs. */
+async function openSong(page: Page, title: string) {
+  await page
+    .getByRole("navigation", { name: "Band sections" })
+    .getByRole("link", { name: "Repertoire" })
+    .click();
+  await page
+    .getByRole("list", { name: "Repertoire" })
+    .getByRole("listitem")
+    .filter({ hasText: title })
+    .click();
+  await expect(page.getByRole("heading", { name: title })).toBeVisible();
+}
+
+/**
+ * Opens each band tab from this song's page, shown, then each again from the band's home (#281):
+ * each shows its saved data, never the router's error. Ends back on the song's page.
+ */
+async function openEveryBandTab(page: Page, song: string) {
+  const sections = page.getByRole("navigation", { name: "Band sections" });
+  // What each tab shows: the band's home, its journal (closed); the others, their list.
+  const tabs = [
+    ["Home", page.getByRole("button", { name: "Latest activity" })],
+    ["Repertoire", page.getByRole("list", { name: "Repertoire" })],
+    ["Lineup", page.getByRole("list", { name: "Lineup" })],
+    ["Setlists", page.getByRole("list", { name: "Setlists" })],
+  ] as const;
+  const from = page.url();
+  for (const start of [from, "home"]) {
+    for (const [tab, shown] of tabs) {
+      if (start === "home") {
+        await sections.getByRole("link", { name: "Home" }).click();
+        await expect(tabs[0][1]).toBeVisible();
+      } else {
+        await expect(page).toHaveURL(start);
+      }
+      await sections.getByRole("link", { name: tab }).click();
+      await expect(shown).toBeVisible();
+      await expect(page.getByText("Can't reach the server")).toHaveCount(0);
+      if (start !== "home") await page.goBack();
+    }
+  }
+  await openSong(page, song);
+  await expect(page).toHaveURL(from);
+}
 
 test("logging out and in again saves everything again (#174)", async ({ browser }) => {
   const context = await browser.newContext();

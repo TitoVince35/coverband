@@ -4,7 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ListSkeleton } from "@/components/loading";
 import { Card, CardContent } from "@/components/ui/card";
-import { errorMessage } from "@/lib/errors";
+import { errorMessage, replacesData } from "@/lib/errors";
 import { archivedSongsQuery } from "@/lib/songs";
 
 // The band's archived songs (#91): out of the repertoire; each song's page restores it.
@@ -30,7 +30,7 @@ function ArchivedSongsPage() {
       <h2 className="font-heading font-semibold text-lg">{t("songs.archive.list")}</h2>
       {songs.isPending ? (
         <ListSkeleton />
-      ) : songs.isError ? (
+      ) : songs.data === undefined || replacesData(songs.error) ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, songs.error)}
         </p>

@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ListSkeleton } from "@/components/loading";
 import { SetlistList, SetlistTabs } from "@/components/setlists/setlist-list";
-import { errorMessage } from "@/lib/errors";
+import { errorMessage, replacesData } from "@/lib/errors";
 import { archivedSetlistsQuery } from "@/lib/setlists";
 
 // The band's archived setlists (#271): read-only, not counted in the band's limit; restored from
@@ -24,7 +24,7 @@ function ArchivedSetlistsPage() {
       <p className="text-muted-foreground text-sm">{t("setlists.archive.hint")}</p>
       {setlists.isPending ? (
         <ListSkeleton rows={3} />
-      ) : setlists.isError ? (
+      ) : setlists.data === undefined || replacesData(setlists.error) ? (
         <p role="alert" className="text-destructive text-sm">
           {errorMessage(t, setlists.error)}
         </p>
