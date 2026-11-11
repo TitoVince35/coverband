@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { repertoireView } from "./repertoire";
+import { repertoireView, sortSongs } from "./repertoire";
 
 const songs = [
   { title: "Africa", artist: "Toto", status: "ready", energy: 2 },
@@ -41,5 +41,24 @@ describe("repertoireView", () => {
     expect(view("title", "desc")).toEqual(["Zombie", "Creep", "Café del Mar", "Africa"]);
     expect(view("energy", "asc")).toEqual(["Creep", "Africa", "Zombie", "Café del Mar"]);
     expect(view("energy", "desc")).toEqual(["Africa", "Zombie", "Creep", "Café del Mar"]);
+  });
+});
+
+describe("sortSongs (#283)", () => {
+  test("sorts a copy, by title or energy, either way", () => {
+    expect(titles(sortSongs(songs, "title", "desc"))).toEqual([
+      "Zombie",
+      "Creep",
+      "Café del Mar",
+      "Africa",
+    ]);
+    expect(titles(sortSongs(songs, "energy"))).toEqual([
+      "Africa",
+      "Zombie",
+      "Creep",
+      "Café del Mar",
+    ]);
+    // The list given keeps its order.
+    expect(titles(songs)).toEqual(["Africa", "Café del Mar", "Creep", "Zombie"]);
   });
 });
