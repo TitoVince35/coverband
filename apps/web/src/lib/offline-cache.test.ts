@@ -14,6 +14,8 @@ describe("isKeptOffline", () => {
       ["bands", "the-rockers", "songs"],
       ["bands", "the-rockers", "songs", "archived"],
       ["bands", "the-rockers", "songs", "6f1c0d1e-0000-4000-8000-000000000000"],
+      // A song's history (#286).
+      ["bands", "the-rockers", "songs", "6f1c0d1e-0000-4000-8000-000000000000", "activity"],
     ]) {
       expect(isKeptOffline(key)).toBe(true);
     }

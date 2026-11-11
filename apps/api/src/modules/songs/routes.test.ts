@@ -370,6 +370,45 @@ describe.skipIf(!databaseUrl)("songs of a band's repertoire", () => {
     });
   });
 
+  test("a song's history (#286): its own events only, newest first, at most 50", async () => {
+    const song = await songOf(await add("lea", { title: "History", artist: "Tellers" }));
+    const other = await songOf(await add("lea", { title: "Elsewhere", artist: "Others" }));
+    await update("max", song.id, { status: "learning" });
+    await update("lea", other.id, { status: "ready" });
+    const history = async (who: "lea" | "max" | "zoe", id = song.id) => {
+      const res = await call(`/bands/${slug}/songs/${id}/activity`, who);
+      return {
+        res,
+        entries: res.ok
+          ? (
+              (await res.json()) as {
+                entries: { action: string; song?: string | null; target: unknown }[];
+              }
+            ).entries
+          : [],
+      };
+    };
+    const { res, entries } = await history("max");
+    expect(res.status).toBe(200);
+    expect(entries.map((e) => e.action)).toEqual(["song.status_changed", "song.added"]);
+    expect(entries[0]).toMatchObject({ song: "History", target: { type: "song", id: song.id } });
+    // Not a member: 404, as everywhere in the band.
+    expect((await history("zoe")).res.status).toBe(404);
+
+    // At most the latest 50.
+    const [band] = await db.select({ id: bands.id }).from(bands).where(like(bands.slug, slug));
+    await db.insert(activity).values(
+      Array.from({ length: 55 }, () => ({
+        bandId: band?.id ?? "",
+        actorId: ids.lea ?? null,
+        action: "song.updated" as const,
+        targetType: "song" as const,
+        targetId: song.id,
+      })),
+    );
+    expect((await history("lea")).entries).toHaveLength(50);
+  });
+
   test("any member archives and restores; archived songs are listed apart", async () => {
     const song = await songOf(await add("lea", { title: "Macarena", artist: "Los del Rio" }));
     const archive = (who: string) =>

@@ -22,7 +22,7 @@ import { bandRoutes } from "./modules/bands/routes";
 import { contactRoutes } from "./modules/contact/routes";
 import { instrumentRoutes } from "./modules/instruments/routes";
 import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
-import { journalRoutes } from "./modules/journal/routes";
+import { journalRoutes, songHistoryRoutes } from "./modules/journal/routes";
 import { memberRoutes } from "./modules/members/routes";
 import {
   adminNotificationRoutes,
@@ -68,6 +68,7 @@ function createApi(deps: AppDeps) {
       .route("/bands/:bandSlug/activity", journalRoutes(deps, JOURNAL_SOURCES))
       .route("/bands/:bandSlug/songs", songRoutes(deps))
       .route("/bands/:bandSlug/songs/:songId/documents", documentRoutes(deps))
+      .route("/bands/:bandSlug/songs/:songId/activity", songHistoryRoutes(deps, JOURNAL_SOURCES))
       .route("/bands/:bandSlug/setlists", setlistRoutes(deps))
       .route("/bands/:bandSlug/autofill", autofillRoutes(deps))
       .route("/bands/:bandSlug/invitations", bandInvitationRoutes(deps))

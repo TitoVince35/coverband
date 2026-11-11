@@ -100,6 +100,8 @@
     "noMatch": "No song matches “{{query}}”.",
     "back": "Repertoire",
     "edit": "Edit the song",
+    "history": "History",
+    "historyOffline": "The history of this song isn't saved on this device: it shows once online.",
     "details": "Details",
     "editDetails": "Edit the details",
     "notFound": "This song doesn't exist.",

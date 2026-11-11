@@ -700,6 +700,15 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(statuses).toHaveAttribute("aria-busy", "false");
   await leader.getByRole("button", { name: "Rate energy 3 of 3" }).click();
   await expect(leader.getByText("Energy 3 of 3")).toBeVisible();
+  // The song's history (#286), a closed accordion: its own changes, its documents' too.
+  await leader.getByRole("button", { name: "History" }).click();
+  const history = leader.getByRole("list", { name: "History" });
+  await expect(history.getByRole("listitem").first()).toContainText(
+    "Captain Lea updated song “Zombie”",
+  );
+  await expect(history).toContainText("Captain Lea marked song “Zombie” as learning");
+  await expect(history).toContainText("Captain Lea removed a document from song “Zombie”");
+  await expect(history).toContainText("Captain Lea added song “Zombie”");
   await leader.getByRole("link", { name: "Repertoire" }).first().click();
   await leader.getByRole("button", { name: /^Learning/ }).click();
   await expect(songs).toHaveCount(1);
@@ -1000,6 +1009,10 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
     .click();
   await page.getByText("Lyrics", { exact: true }).click();
   await expect(page.getByText(lyricsLine)).toBeVisible();
+  // Its history was never loaded on this device: it says so (#286).
+  await page.getByRole("button", { name: "History" }).click();
+  await expect(page.getByText("The history of this song isn't saved on this device")).toBeVisible();
+  await page.getByRole("button", { name: "History" }).click();
   // Read-only: no change can start.
   const edit = page.getByRole("button", { name: "Edit the song" });
   await expect(edit).toBeDisabled();

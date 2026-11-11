@@ -8,6 +8,7 @@ import { SongSkeleton } from "@/components/loading";
 import { ArchivedBanner, SongActions } from "@/components/songs/song-actions";
 import { SongDocuments } from "@/components/songs/song-documents";
 import { SongFormDialog } from "@/components/songs/song-form-dialog";
+import { SongHistory } from "@/components/songs/song-history";
 import { SongLyrics } from "@/components/songs/song-lyrics";
 import { SongMedia } from "@/components/songs/song-media";
 import { SongNotes } from "@/components/songs/song-notes";
@@ -178,6 +179,7 @@ function SongPage() {
         isLeader={isLeader}
       />
       <SongNotes key={songId} bandSlug={bandSlug} songId={songId} notes={notes} />
+      <SongHistory bandSlug={bandSlug} songId={songId} />
       <p className="text-muted-foreground text-xs">
         {addedBy ? t("songs.addedBy", { name: addedBy, date }) : t("songs.addedOn", { date })}
       </p>
