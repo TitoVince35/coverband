@@ -412,6 +412,7 @@
       "search": "Search by title or artist",
       "learning": "Also show the songs being learned",
       "songs": "Songs to add",
+      "played": "Played in {{parts}}",
       "inSetlist": "In {{parts}}",
       "twice": "In {{parts}}: it will be played twice",
       "none": "No songs match.",
