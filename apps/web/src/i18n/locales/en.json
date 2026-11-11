@@ -32,7 +32,6 @@
     "suspendedTitle": "This band is suspended",
     "suspendedText": "An administrator has suspended this band: its pages can't be opened for now. If you think it's a mistake, contact us.",
     "suspendedBack": "Back to my bands",
-    "comingSoon": "Setlists and gigs are coming soon.",
     "roles": {
       "leader": "band leader",
       "musician": "musician"
@@ -414,6 +413,7 @@
       "search": "Search by title or artist",
       "learning": "Also show the songs being learned",
       "songs": "Songs to add",
+      "played": "Played in {{parts}}",
       "inSetlist": "In {{parts}}",
       "twice": "In {{parts}}: it will be played twice",
       "none": "No songs match.",
@@ -666,6 +666,14 @@
       "placeholder": "Choose or type an instrument",
       "add": "Add “{{label}}”"
     }
+  },
+  "overview": {
+    "title": "Overview",
+    "songs": "Songs",
+    "setlists": "Setlists",
+    "members": "Members",
+    "gigs": "Gigs to come",
+    "soon": "Coming soon"
   },
   "journal": {
     "title": "Latest activity",
