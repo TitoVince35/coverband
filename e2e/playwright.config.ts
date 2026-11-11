@@ -4,7 +4,8 @@ import { pushCertificate } from "./push-certificate";
 
 /** Own port, so end-to-end runs never clash with `bun run dev` (3000 and 5173). */
 export const E2E_PORT = 3100;
-const baseURL = `http://localhost:${E2E_PORT}`;
+/** The web app, served by the API: every test's `baseURL`. */
+export const BASE_URL = `http://localhost:${E2E_PORT}`;
 /** The admin app (#246): the same server, on its own host (browsers send `*.localhost` home). */
 export const ADMIN_APP_URL = `http://admin.localhost:${E2E_PORT}`;
 /** The fake LRCLIB the app searches lyrics on (`fake-lrclib.ts`). */
@@ -26,11 +27,20 @@ const vapidKey = generateKeyPairSync("ec", { namedCurve: "prime256v1" })
 /** Where the contact form's messages go (#234). */
 export const CONTACT_RECIPIENT = "team@e2e.localhost";
 
+/** Mobile-first: a phone, in Chromium. Playwright's own Chromium doesn't install on Ubuntu 26.04
+ * yet: locally, the system Chrome. */
+const phone = { ...devices["Pixel 7"], ...(ci ? {} : { channel: "chrome" }) };
+/** The files that send notes from the team (#260) to every user. */
+const NOTES = ["notifications.e2e.ts", "push.e2e.ts"];
+
 export default defineConfig({
   testDir: ".",
   testMatch: "**/*.e2e.ts",
-  // One server and one database: tests run in order, one at a time.
-  workers: 1,
+  // Files run in parallel, each with its own band, the tests inside a file in order (no
+  // fullyParallel). Only the notes from the team can't share the run (NOTES, below). Measured
+  // (#292): 3 keeps a 16-core computer under 70% CPU (4 goes over at the start, for 4 s less), and
+  // is the fastest on CI's 4-core runners (2 and 4 are slower there).
+  workers: 3,
   // No retries: a serial story would start over with the same people and fail for another reason.
   retries: 0,
   forbidOnly: ci,
@@ -38,30 +48,28 @@ export default defineConfig({
   globalSetup: "./setup.ts",
   globalTeardown: "./teardown.ts",
   use: {
-    baseURL,
+    baseURL: BASE_URL,
     locale: "en-US",
     trace: "retain-on-failure",
   },
   projects: [
-    {
-      // Mobile-first: a phone, in Chromium. Playwright's own Chromium doesn't install on
-      // Ubuntu 26.04 yet: locally, the system Chrome.
-      name: "phone",
-      use: { ...devices["Pixel 7"], ...(ci ? {} : { channel: "chrome" }) },
-    },
+    { name: "phone", use: phone, testIgnore: NOTES },
+    // After all the others, one file at a time: a note goes to every user and opens as a modal
+    // dialog on their next page, which would block another file's clicks (and the other note's test).
+    { name: "phone notes", use: phone, testMatch: NOTES, dependencies: ["phone"], workers: 1 },
   ],
   // Production-like: the API serves the built web and admin apps (`bun run build` + `bun run serve`).
   webServer: [
     {
       command: "bun run build && bun apps/api/src/main.ts",
       cwd: "..",
-      url: `${baseURL}/api/health`,
+      url: `${BASE_URL}/api/health`,
       // Never reused: a server started otherwise would search the real LRCLIB and Deezer.
       reuseExistingServer: false,
       timeout: 180_000,
       env: {
         PORT: String(E2E_PORT),
-        BETTER_AUTH_URL: baseURL,
+        BETTER_AUTH_URL: BASE_URL,
         WEB_DIST_DIR: "apps/web/dist",
         ADMIN_URL: ADMIN_APP_URL,
         ADMIN_DIST_DIR: "apps/admin/dist",
