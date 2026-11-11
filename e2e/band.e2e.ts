@@ -965,6 +965,30 @@ test("a setlist duplicated, then changed without changing the original (#273)", 
   await expect(cards.filter({ hasText: /^Wedding~/ })).toContainText("4 songs");
 });
 
+test("the band's home shows its numbers, each opening its page (#284)", async () => {
+  await leader
+    .getByRole("navigation", { name: "Band sections" })
+    .getByRole("link", { name: "Home" })
+    .click();
+  await expect(leader).toHaveURL(/\/b\/[^/]+$/);
+  const bandSlug = new URL(leader.url()).pathname.split("/")[2];
+  // An array, or an object holding one (the setlists).
+  const count = async (path: string) => {
+    const body: unknown = await (await leader.request.get(`/api/bands/${bandSlug}/${path}`)).json();
+    const list = Array.isArray(body) ? body : Object.values(body as object).find(Array.isArray);
+    return (list as unknown[]).length;
+  };
+  const songs = (await count("songs")) + (await count("songs?archived=true"));
+  const setlists = (await count("setlists")) + (await count("setlists?archived=true"));
+  const members = await count("members");
+  const overview = leader.getByRole("list").filter({ hasText: "Gigs to come" });
+  await expect(overview.getByRole("link", { name: `${songs} Songs` })).toBeVisible();
+  await expect(overview.getByRole("link", { name: `${members} Members` })).toBeVisible();
+  await expect(overview.getByText("Coming soon")).toBeVisible();
+  await overview.getByRole("link", { name: `${setlists} Setlists` }).click();
+  await expect(leader).toHaveURL(/\/setlists$/);
+});
+
 function savedCopy(page: Page) {
   return page.evaluate(
     () =>

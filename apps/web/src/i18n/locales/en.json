@@ -32,7 +32,6 @@
     "suspendedTitle": "This band is suspended",
     "suspendedText": "An administrator has suspended this band: its pages can't be opened for now. If you think it's a mistake, contact us.",
     "suspendedBack": "Back to my bands",
-    "comingSoon": "Setlists and gigs are coming soon.",
     "roles": {
       "leader": "band leader",
       "musician": "musician"
@@ -665,6 +664,14 @@
       "placeholder": "Choose or type an instrument",
       "add": "Add “{{label}}”"
     }
+  },
+  "overview": {
+    "title": "Overview",
+    "songs": "Songs",
+    "setlists": "Setlists",
+    "members": "Members",
+    "gigs": "Gigs to come",
+    "soon": "Coming soon"
   },
   "journal": {
     "title": "Latest activity",
