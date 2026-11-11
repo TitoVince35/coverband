@@ -280,14 +280,9 @@ test("a member edits their own instruments from the lineup", async () => {
 test("the band's home page shows its latest activity, newest first", async () => {
   await leader.goto("/");
   await leader.getByRole("link", { name: band }).first().click();
-  // The journal is a closed accordion.
+  // Shown at once, its height fixed (#285).
   const journal = leader.getByRole("list", { name: "Latest activity" });
-  await expect(leader.getByRole("button", { name: "Latest activity" })).toHaveAttribute(
-    "aria-expanded",
-    "false",
-  );
-  await expect(journal).toBeHidden();
-  await leader.getByRole("button", { name: "Latest activity" }).click();
+  await expect(journal).toBeVisible();
   const entries = journal.getByRole("listitem");
   // Names as they are now (Lea took a nickname since).
   await expect(entries.first()).toContainText("Captain Lea updated their instruments");
@@ -410,13 +405,11 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(leader.getByRole("heading", { name: "Band settings" })).toBeVisible();
   await leader.getByRole("link", { name: "Home" }).click();
 
-  await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea removed the band's logo",
   );
   await expect(journal).toContainText("Captain Lea changed the band's logo");
-  await leader.getByRole("button", { name: "Latest activity" }).click();
 
   await leader.goto("/");
   await expect(bandLink.getByText("ER", { exact: true })).toBeVisible();
@@ -721,12 +714,16 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
 
   // The journal names the songs.
   await leader.getByRole("link", { name: "Home" }).click();
-  // The journal is a closed accordion.
-  await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea updated song “Zombie”",
   );
+  // The song is a link to its page (#285); the entries past the fixed height, a tap away.
+  await expect(
+    journal.getByRole("listitem").first().getByRole("link", { name: "song “Zombie”" }),
+  ).toHaveAttribute("href", /\/songs\/[0-9a-f-]+$/);
+  await leader.getByRole("button", { name: "View more" }).click();
+  await expect(leader.getByRole("button", { name: "View more" })).toBeHidden();
   // (Its 10 latest events: the lyrics and "added song" are older, behind the documents.)
   await expect(journal).toContainText("Captain Lea added a document to song “Zombie”");
   await expect(journal).toContainText("Captain Lea removed a document from song “Zombie”");
@@ -841,8 +838,14 @@ test("members manage setlists: create, a taken title, rename, archive, restore, 
 
   // The journal tells it.
   await leader.getByRole("link", { name: "Home" }).first().click();
-  await leader.getByRole("button", { name: "Latest activity" }).click();
   await expect(leader.getByText("Captain Lea restored setlist “Wedding”")).toBeVisible();
+  // The setlist is a link to its page (#285).
+  await leader
+    .getByRole("list", { name: "Latest activity" })
+    .getByRole("link", { name: "setlist “Wedding”" })
+    .first()
+    .click();
+  await expect(leader.getByRole("heading", { name: "Wedding" })).toBeVisible();
 
   // Deleted for good by the band leader, confirmed.
   await leader.getByRole("link", { name: "Setlists" }).first().click();
@@ -1108,9 +1111,9 @@ async function openSong(page: Page, title: string) {
  */
 async function openEveryBandTab(page: Page, song: string) {
   const sections = page.getByRole("navigation", { name: "Band sections" });
-  // What each tab shows: the band's home, its journal (closed); the others, their list.
+  // What each tab shows: the band's home, its journal; the others, their list.
   const tabs = [
-    ["Home", page.getByRole("button", { name: "Latest activity" })],
+    ["Home", page.getByRole("list", { name: "Latest activity" })],
     ["Repertoire", page.getByRole("list", { name: "Repertoire" })],
     ["Lineup", page.getByRole("list", { name: "Lineup" })],
     ["Setlists", page.getByRole("list", { name: "Setlists" })],
