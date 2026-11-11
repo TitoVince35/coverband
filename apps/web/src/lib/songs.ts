@@ -19,6 +19,22 @@ export const songsQuery = (bandSlug: string) =>
 
 export type Song = Awaited<ReturnType<ReturnType<typeof songsQuery>["queryFn"] & {}>>[number];
 
+/** A song's history (#286): its latest events, newest first, told like the band's journal. */
+export const songHistoryQuery = (bandSlug: string, songId: string) =>
+  queryOptions({
+    queryKey: ["bands", bandSlug, "songs", songId, "activity"],
+    queryFn: async () =>
+      (
+        await (
+          await ensureOk(
+            await api.bands[":bandSlug"].songs[":songId"].activity.$get({
+              param: { bandSlug, songId },
+            }),
+          )
+        ).json()
+      ).entries,
+  });
+
 /** One song, with who added it. */
 export const songQuery = (bandSlug: string, songId: string) =>
   queryOptions({

@@ -44,6 +44,7 @@ bun run db:migrate   # apply pending migrations
 bun run db:studio    # browse the database
 bun run db:diagram   # draw the database model from the Drizzle schema (needs Graphviz: sudo apt install graphviz)
                      # into doc/schemas/YYmmddhhmm_db-diagram.{pdf,svg,dot}
+bun run db:diagram:page # the latest diagram as a zoomable HTML page (the db-diagram skill publishes it as an artifact)
 bun run mail:test you@example.com fr   # send a test email (lands in Mailpit locally)
 bun run db:down      # stop Postgres (add -v to docker compose down to wipe data)
 ```

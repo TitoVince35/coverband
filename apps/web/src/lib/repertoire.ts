@@ -35,10 +35,24 @@ export function repertoireView<S extends Pick<Song, "title" | "artist" | "status
       (status === "all" || song.status === status) &&
       normalizeName(`${song.title} ${song.artist}`).includes(words),
   );
-  if (sort === "title") return direction === "asc" ? shown : shown.reverse();
+  return sortSongs(shown, sort, direction);
+}
+
+/**
+ * Songs in title order (as the API sends them) sorted by title, either way, or by energy, unrated
+ * songs last whichever the direction; songs of the same energy keep their title order (#218).
+ * Shared by the repertoire and the setlist's add-songs list (#283). Sorts a copy.
+ */
+export function sortSongs<S extends Pick<Song, "energy">>(
+  songs: readonly S[],
+  sort: RepertoireSort,
+  direction: SortDirection = DEFAULT_DIRECTION[sort],
+): S[] {
+  const sorted = [...songs];
+  if (sort === "title") return direction === "asc" ? sorted : sorted.reverse();
   const sign = direction === "asc" ? 1 : -1;
   // Stable: songs of the same energy keep their title order.
-  return shown.sort((a, b) =>
+  return sorted.sort((a, b) =>
     a.energy === null || b.energy === null
       ? Number(a.energy === null) - Number(b.energy === null)
       : sign * (a.energy - b.energy),

@@ -4,10 +4,11 @@ import { ImagePlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BandJournal } from "@/components/band/band-journal";
 import { BandLogo } from "@/components/band/band-logo";
+import { BandOverview } from "@/components/band/band-overview";
 import { bandQuery } from "@/lib/bands";
 
 // Band home page: the band's logo (#177; without one, the band leader's way to add it, #222), the
-// band's journal (#84), then what's coming (setlists and gigs come later).
+// band's numbers (#284), then its journal (#84).
 export const Route = createFileRoute("/_app/b/$bandSlug/")({
   component: BandHome,
 });
@@ -37,8 +38,8 @@ function BandHome() {
           </Link>
         )
       )}
+      <BandOverview bandSlug={bandSlug} />
       <BandJournal bandSlug={bandSlug} />
-      <p className="text-muted-foreground text-sm">{t("band.comingSoon")}</p>
     </section>
   );
 }

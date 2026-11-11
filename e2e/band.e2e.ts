@@ -280,21 +280,18 @@ test("a member edits their own instruments from the lineup", async () => {
 test("the band's home page shows its latest activity, newest first", async () => {
   await leader.goto("/");
   await leader.getByRole("link", { name: band }).first().click();
-  // The journal is a closed accordion.
+  // Shown at once, its height fixed (#285).
   const journal = leader.getByRole("list", { name: "Latest activity" });
-  await expect(leader.getByRole("button", { name: "Latest activity" })).toHaveAttribute(
-    "aria-expanded",
-    "false",
-  );
-  await expect(journal).toBeHidden();
-  await leader.getByRole("button", { name: "Latest activity" }).click();
+  await expect(journal).toBeVisible();
   const entries = journal.getByRole("listitem");
   // Names as they are now (Lea took a nickname since).
   await expect(entries.first()).toContainText("Captain Lea updated their instruments");
   await expect(journal).toContainText("Maxou joined the band");
   await expect(journal).toContainText("Captain Lea invited a musician");
   await expect(entries.last()).toContainText("Captain Lea created the band");
-  await expect(entries.first()).toContainText("Today");
+  // Today: the time alone, no day's name.
+  await expect(entries.first()).toContainText(/^\d{1,2}:\d{2}\s?[AP]M · /);
+  await expect(entries.first()).not.toContainText("Today");
   // Never an email.
   await expect(journal).not.toContainText("@");
 });
@@ -410,13 +407,11 @@ test("the band leader adds the band's logo: on the band page and in the list, th
   await expect(leader.getByRole("heading", { name: "Band settings" })).toBeVisible();
   await leader.getByRole("link", { name: "Home" }).click();
 
-  await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea removed the band's logo",
   );
   await expect(journal).toContainText("Captain Lea changed the band's logo");
-  await leader.getByRole("button", { name: "Latest activity" }).click();
 
   await leader.goto("/");
   await expect(bandLink.getByText("ER", { exact: true })).toBeVisible();
@@ -707,6 +702,15 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
   await expect(statuses).toHaveAttribute("aria-busy", "false");
   await leader.getByRole("button", { name: "Rate energy 3 of 3" }).click();
   await expect(leader.getByText("Energy 3 of 3")).toBeVisible();
+  // The song's history (#286), a closed accordion: its own changes, its documents' too.
+  await leader.getByRole("button", { name: "History" }).click();
+  const history = leader.getByRole("list", { name: "History" });
+  await expect(history.getByRole("listitem").first()).toContainText(
+    "Captain Lea updated song “Zombie”",
+  );
+  await expect(history).toContainText("Captain Lea marked song “Zombie” as learning");
+  await expect(history).toContainText("Captain Lea removed a document from song “Zombie”");
+  await expect(history).toContainText("Captain Lea added song “Zombie”");
   await leader.getByRole("link", { name: "Repertoire" }).first().click();
   await leader.getByRole("button", { name: /^Learning/ }).click();
   await expect(songs).toHaveCount(1);
@@ -721,12 +725,16 @@ test("members build the repertoire: add, the duplicate warning, edit", async () 
 
   // The journal names the songs.
   await leader.getByRole("link", { name: "Home" }).click();
-  // The journal is a closed accordion.
-  await leader.getByRole("button", { name: "Latest activity" }).click();
   const journal = leader.getByRole("list", { name: "Latest activity" });
   await expect(journal.getByRole("listitem").first()).toContainText(
     "Captain Lea updated song “Zombie”",
   );
+  // The song is a link to its page (#285); the entries past the fixed height, a tap away.
+  await expect(
+    journal.getByRole("listitem").first().getByRole("link", { name: "song “Zombie”" }),
+  ).toHaveAttribute("href", /\/songs\/[0-9a-f-]+$/);
+  await leader.getByRole("button", { name: "View more" }).click();
+  await expect(leader.getByRole("button", { name: "View more" })).toBeHidden();
   // (Its 10 latest events: the lyrics and "added song" are older, behind the documents.)
   await expect(journal).toContainText("Captain Lea added a document to song “Zombie”");
   await expect(journal).toContainText("Captain Lea removed a document from song “Zombie”");
@@ -841,8 +849,14 @@ test("members manage setlists: create, a taken title, rename, archive, restore, 
 
   // The journal tells it.
   await leader.getByRole("link", { name: "Home" }).first().click();
-  await leader.getByRole("button", { name: "Latest activity" }).click();
   await expect(leader.getByText("Captain Lea restored setlist “Wedding”")).toBeVisible();
+  // The setlist is a link to its page (#285).
+  await leader
+    .getByRole("list", { name: "Latest activity" })
+    .getByRole("link", { name: "setlist “Wedding”" })
+    .first()
+    .click();
+  await expect(leader.getByRole("heading", { name: "Wedding" })).toBeVisible();
 
   // Deleted for good by the band leader, confirmed.
   await leader.getByRole("link", { name: "Setlists" }).first().click();
@@ -875,23 +889,39 @@ test("members build a two-part setlist and see its duration (#272)", async () =>
   const part1 = leader.getByRole("region", { name: "Part 1" });
   await expect(part1).toContainText("No songs in this part yet.");
 
-  // Ready songs only, unless the songs being learned are asked for too.
+  // Full screen on a phone (#283): ready songs only, unless the songs being learned are asked
+  // for too; a song is chosen by tapping its row.
   await leader.getByRole("button", { name: "Add songs" }).click();
   const dialog = leader.getByRole("dialog");
-  await expect(dialog.getByLabel("Africa")).toBeVisible();
+  const choices = dialog.getByRole("list", { name: "Songs to add" });
+  const choice = (title: string) => choices.getByRole("button", { name: new RegExp(`^${title}`) });
+  await expect(choice("Africa")).toBeVisible();
   await expect(dialog.getByText("Black Hole Sun")).toHaveCount(0);
-  await dialog.getByLabel("Africa").check();
-  await dialog.getByLabel("Linger").check();
+  // Cancel adds nothing.
+  await choice("Africa").click();
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(part1).toContainText("No songs in this part yet.");
+  await leader.getByRole("button", { name: "Add songs" }).click();
+  // Sorted by title, either way.
+  await expect(choices.getByRole("button").first()).toContainText("Africa");
+  await dialog.getByRole("button", { name: "Ascending" }).click();
+  await expect(choices.getByRole("button").first()).toContainText("Linger");
+  await choice("Africa").click();
+  await choice("Linger").click();
+  await expect(choice("Africa")).toHaveAttribute("aria-pressed", "true");
   await dialog.getByRole("button", { name: "Add 2 songs to Part 1" }).click();
   await expect(part1.getByText("Africa")).toBeVisible();
   await expect(part1.getByText("Linger")).toBeVisible();
 
-  // A second part: added songs go to the last one; the same song twice is flagged.
+  // A second part: added songs go to the last one; a song already there says where, and that
+  // it would be played twice once chosen.
   await leader.getByRole("button", { name: "Add a part" }).click();
   await leader.getByRole("button", { name: "Add songs" }).click();
   await dialog.getByLabel("Also show the songs being learned").check();
-  await dialog.getByLabel("Black Hole Sun").check();
-  await dialog.getByLabel("Africa").check();
+  await expect(choice("Africa")).toContainText("Played in Part 1");
+  await choice("Black Hole Sun").click();
+  await choice("Africa").click();
   await expect(dialog.getByText("In Part 1: it will be played twice")).toBeVisible();
   await dialog.getByRole("button", { name: "Add 2 songs to Part 2" }).click();
   const part2 = leader.getByRole("region", { name: "Part 2" });
@@ -949,6 +979,30 @@ test("a setlist duplicated, then changed without changing the original (#273)", 
   await expect(cards.filter({ hasText: /^Wedding~/ })).toContainText("4 songs");
 });
 
+test("the band's home shows its numbers, each opening its page (#284)", async () => {
+  await leader
+    .getByRole("navigation", { name: "Band sections" })
+    .getByRole("link", { name: "Home" })
+    .click();
+  await expect(leader).toHaveURL(/\/b\/[^/]+$/);
+  const bandSlug = new URL(leader.url()).pathname.split("/")[2];
+  // An array, or an object holding one (the setlists).
+  const count = async (path: string) => {
+    const body: unknown = await (await leader.request.get(`/api/bands/${bandSlug}/${path}`)).json();
+    const list = Array.isArray(body) ? body : Object.values(body as object).find(Array.isArray);
+    return (list as unknown[]).length;
+  };
+  const songs = (await count("songs")) + (await count("songs?archived=true"));
+  const setlists = (await count("setlists")) + (await count("setlists?archived=true"));
+  const members = await count("members");
+  const overview = leader.getByRole("list").filter({ hasText: "Gigs to come" });
+  await expect(overview.getByRole("link", { name: `${songs} Songs` })).toBeVisible();
+  await expect(overview.getByRole("link", { name: `${members} Members` })).toBeVisible();
+  await expect(overview.getByText("(coming soon)")).toBeVisible();
+  await overview.getByRole("link", { name: `${setlists} Setlists` }).click();
+  await expect(leader).toHaveURL(/\/setlists$/);
+});
+
 function savedCopy(page: Page) {
   return page.evaluate(
     () =>
@@ -997,6 +1051,10 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
     .click();
   await page.getByText("Lyrics", { exact: true }).click();
   await expect(page.getByText(lyricsLine)).toBeVisible();
+  // Its history was never loaded on this device: it says so (#286).
+  await page.getByRole("button", { name: "History" }).click();
+  await expect(page.getByText("The history of this song isn't saved on this device")).toBeVisible();
+  await page.getByRole("button", { name: "History" }).click();
   // Read-only: no change can start.
   const edit = page.getByRole("button", { name: "Edit the song" });
   await expect(edit).toBeDisabled();
@@ -1068,9 +1126,9 @@ async function openSong(page: Page, title: string) {
  */
 async function openEveryBandTab(page: Page, song: string) {
   const sections = page.getByRole("navigation", { name: "Band sections" });
-  // What each tab shows: the band's home, its journal (closed); the others, their list.
+  // What each tab shows: the band's home, its journal; the others, their list.
   const tabs = [
-    ["Home", page.getByRole("button", { name: "Latest activity" })],
+    ["Home", page.getByRole("list", { name: "Latest activity" })],
     ["Repertoire", page.getByRole("list", { name: "Repertoire" })],
     ["Lineup", page.getByRole("list", { name: "Lineup" })],
     ["Setlists", page.getByRole("list", { name: "Setlists" })],

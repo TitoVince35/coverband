@@ -1,14 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { formatJournalTime } from "./format";
 
-const words = { today: "Today", yesterday: "Yesterday" };
+const words = { yesterday: "Yesterday" };
 const now = new Date(2026, 9, 18, 17, 30);
 
 describe("formatJournalTime", () => {
-  test("today and yesterday by name, with the time", () => {
-    expect(formatJournalTime(new Date(2026, 9, 18, 10, 43), now, "en-GB", words)).toBe(
-      "Today 10:43",
-    );
+  test("today: the time alone; yesterday by name, with the time", () => {
+    expect(formatJournalTime(new Date(2026, 9, 18, 10, 43), now, "en-GB", words)).toBe("10:43");
     expect(formatJournalTime(new Date(2026, 9, 17, 23, 59), now, "en-GB", words)).toBe(
       "Yesterday 23:59",
     );

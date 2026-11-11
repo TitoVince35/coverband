@@ -8,7 +8,13 @@ import { JOURNAL_SIZE } from "./service";
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;
 
-type Entry = { action: string; createdAt: string; actorName: string | null; genre?: string | null };
+type Entry = {
+  action: string;
+  createdAt: string;
+  actorName: string | null;
+  genre?: string | null;
+  target: { type: string; id: string } | null;
+};
 
 describe.skipIf(!databaseUrl)("band journal", () => {
   const { deps, db, sql, auth } = createTestDeps(databaseUrl);
@@ -109,7 +115,10 @@ describe.skipIf(!databaseUrl)("band journal", () => {
       "actorName",
       "createdAt",
       "id",
+      "target",
     ]);
+    // Only songs and setlists have a page to link to (#285): no member's or invitation's id.
+    expect(entries.map((e) => e.target)).toEqual([null, null, null]);
   });
 
   test('a band leader\'s joining is said by "created the band" alone', async () => {

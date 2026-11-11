@@ -32,7 +32,6 @@
     "suspendedTitle": "Ce groupe est suspendu",
     "suspendedText": "Un administrateur a suspendu ce groupe : ses pages ne peuvent pas être ouvertes pour l'instant. Si vous pensez que c'est une erreur, contactez-nous.",
     "suspendedBack": "Retour à mes groupes",
-    "comingSoon": "Les setlists et les concerts arrivent bientôt.",
     "roles": {
       "leader": "band leader",
       "musician": "zicos"
@@ -100,6 +99,8 @@
     "noMatch": "Aucun morceau ne correspond à « {{query}} ».",
     "back": "Répertoire",
     "edit": "Modifier le morceau",
+    "history": "Historique",
+    "historyOffline": "L'historique de ce morceau n'est pas enregistré sur cet appareil : il s'affiche une fois en ligne.",
     "details": "Détails",
     "editDetails": "Modifier les détails",
     "notFound": "Ce morceau n'existe pas.",
@@ -412,6 +413,7 @@
       "search": "Chercher par titre ou artiste",
       "learning": "Montrer aussi les morceaux en cours",
       "songs": "Morceaux à ajouter",
+      "played": "Joué dans {{parts}}",
       "inSetlist": "Dans {{parts}}",
       "twice": "Dans {{parts}} : il sera joué deux fois",
       "none": "Aucun morceau ne correspond.",
@@ -665,10 +667,18 @@
       "add": "Ajouter « {{label}} »"
     }
   },
+  "overview": {
+    "title": "En bref",
+    "songs": "Morceaux",
+    "setlists": "Setlists",
+    "members": "Membres",
+    "gigs": "Concerts à venir",
+    "soon": "(bientôt)"
+  },
   "journal": {
     "title": "Activité récente",
+    "more": "Voir plus",
     "empty": "Rien ne s'est encore passé.",
-    "today": "Aujourd'hui",
     "yesterday": "Hier",
     "someone": "Quelqu'un",
     "bandCreated": "{{name}} a créé le groupe",

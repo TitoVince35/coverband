@@ -10,20 +10,21 @@ export function formatDate(value: string | Date, language: string): string {
 }
 
 /**
- * When a journal entry happened, in the viewer's time zone: "Today 10:43", "Yesterday 21:05",
- * "12 Oct 23:45", with the year when it isn't this year. `words` are the translated day names.
+ * When a journal entry happened, in the viewer's time zone: "10:43" today, "Yesterday 21:05",
+ * "12 Oct 23:45", with the year when it isn't this year. `words` holds the translated "Yesterday".
  */
 export function formatJournalTime(
   value: string | Date,
   now: Date,
   language: string,
-  words: { today: string; yesterday: string },
+  words: { yesterday: string },
 ): string {
   const date = new Date(value);
   const time = new Intl.DateTimeFormat(language, { timeStyle: "short" }).format(date);
   const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const daysAgo = Math.round((day(now) - day(date)) / 86_400_000);
-  if (daysAgo === 0) return `${words.today} ${time}`;
+  // Today: the time alone, short enough to keep each entry on fewer lines.
+  if (daysAgo === 0) return time;
   if (daysAgo === 1) return `${words.yesterday} ${time}`;
   const sameYear = date.getFullYear() === now.getFullYear();
   const dayAndMonth = new Intl.DateTimeFormat(language, {

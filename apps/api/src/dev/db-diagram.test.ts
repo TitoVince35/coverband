@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { is } from "drizzle-orm";
+import { getTableConfig, PgTable } from "drizzle-orm/pg-core";
+import * as schema from "../core/db/schema";
 import { databaseDot, timestampPrefix } from "./db-diagram";
 
 describe("timestampPrefix", () => {
@@ -15,6 +18,16 @@ describe("databaseDot", () => {
     expect(dot).toContain('subgraph "cluster_songs"');
     expect(dot).toContain('"songs" [label=');
     expect(dot).toContain('PORT="band_id"');
+  });
+
+  test("draws every table of the schema, each module in its own colour", () => {
+    const tables = Object.values(schema)
+      .filter((value) => is(value, PgTable))
+      .map((table) => getTableConfig(table).name);
+    expect(tables).toContain("setlists");
+    for (const table of tables) expect(dot).toContain(`"${table}" [label=`);
+    const fills = [...dot.matchAll(/fillcolor="(#[0-9a-f]{6})"/g)].map((match) => match[1]);
+    expect(new Set(fills).size).toBe(fills.length);
   });
 
   test("draws foreign keys with their delete rule", () => {

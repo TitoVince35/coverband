@@ -14,10 +14,20 @@ const MODULES: Record<string, Record<string, unknown>> = {
   invitations: await import("../modules/invitations/schema"),
   notifications: await import("../modules/notifications/schema"),
   songs: await import("../modules/songs/schema"),
+  setlists: await import("../modules/setlists/schema"),
   activity: await import("../core/activity/schema"),
 };
 
-const COLORS = ["#e8f0fe", "#fef7e0", "#e6f4ea", "#fce8e6", "#f3e8fd", "#e4f7fb", "#fff0e0"];
+const COLORS = [
+  "#e8f0fe",
+  "#fef7e0",
+  "#e6f4ea",
+  "#fce8e6",
+  "#f3e8fd",
+  "#e4f7fb",
+  "#fff0e0",
+  "#fde7f3",
+];
 
 // The schema relies on `casing: "snake_case"`: columns declared without a name take their key.
 const snake = (s: string) => s.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
