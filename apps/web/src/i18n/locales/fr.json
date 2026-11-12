@@ -332,6 +332,9 @@
     "actions": "Actions pour {{title}}",
     "by": "Par {{name}}",
     "live": {
+      "allDocuments": "Tous les instruments",
+      "openPhoto": "Photo : {{label}}",
+      "photo": "Une photo du morceau, en plein écran.",
       "lyrics": "Paroles",
       "previous": "Morceau précédent : {{title}}",
       "next": "Morceau suivant : {{title}}",

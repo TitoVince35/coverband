@@ -332,6 +332,9 @@
     "actions": "Actions for {{title}}",
     "by": "By {{name}}",
     "live": {
+      "allDocuments": "All instruments",
+      "openPhoto": "Photo: {{label}}",
+      "photo": "A song's photo, full screen.",
       "lyrics": "Lyrics",
       "previous": "Previous song: {{title}}",
       "next": "Next song: {{title}}",

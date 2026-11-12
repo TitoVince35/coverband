@@ -1,8 +1,10 @@
+import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
+import { BASE_URL } from "./playwright.config";
 import { addSetlist, addSong, type Band, newBand } from "./support";
 
 // Setlists live (brief 031): the live mode page (#307), the lyrics with previous and next song
-// (#308).
+// (#308), the photos for my instruments (#309).
 test.describe.configure({ mode: "serial" });
 
 let band: Band;
@@ -31,6 +33,34 @@ test.beforeAll(async ({ browser }) => {
     bandKey: "C",
     notes: LONG_NOTES,
   });
+  // The band leader plays the bass; Africa has photos for the bass, the guitar and everyone, and
+  // a PDF (no button in this first version).
+  const api = leader.request;
+  expect(
+    (
+      await api.put(`/api/bands/${band.slug}/members/me/instruments`, {
+        data: { instruments: [{ code: "bass_guitar" }] },
+      })
+    ).ok(),
+  ).toBe(true);
+  const fixture = (name: string) => readFile(new URL(`./fixtures/${name}`, import.meta.url));
+  for (const [title, instruments, file, mimeType] of [
+    ["Bass line", [{ code: "bass_guitar" }], "photo.jpg", "image/jpeg"],
+    ["Guitar riff", [{ code: "guitar" }], "photo.jpg", "image/jpeg"],
+    ["Stage plan", [], "thumbnail.jpg", "image/jpeg"],
+    ["Bass chart", [{ code: "bass_guitar" }], "horns.pdf", "application/pdf"],
+  ] as const) {
+    const res = await api.post(`/api/bands/${band.slug}/songs/${africa}/documents`, {
+      // A form post: the API's cross-site check wants its origin.
+      headers: { origin: BASE_URL },
+      multipart: {
+        file: { name: file, mimeType, buffer: await fixture(file) },
+        title,
+        instruments: JSON.stringify(instruments),
+      },
+    });
+    expect(res.ok()).toBe(true);
+  }
   await addSetlist(band, "Wedding", [
     { name: "Set 1", songs: [africa, linger] },
     { songs: [linger] },
@@ -123,7 +153,40 @@ test("a song's lyrics from live mode, then the next and previous songs (#308)", 
   await leader.getByRole("link", { name: "Leave live mode" }).click();
 });
 
-test("live mode works offline (#307, #308)", async () => {
+test("a song's photos for my instruments, all of them on demand, full screen (#309)", async () => {
+  await leader.getByRole("link", { name: "Live" }).click();
+  const live = leader.getByRole("dialog", { name: "Wedding" });
+  const africa = live.getByRole("region", { name: "Set 1" }).getByRole("listitem").first();
+  // Mine (the bass) and the untagged one; no PDF.
+  await expect(africa.getByRole("button", { name: /^Photo:/ })).toHaveCount(2);
+  await expect(africa.getByRole("button", { name: "Photo: Bass guitar" })).toBeVisible();
+  await expect(africa.getByRole("button", { name: "Photo: Stage plan" })).toBeVisible();
+
+  // Every instrument's, remembered on the phone.
+  const all = live.getByRole("button", { name: "All instruments" });
+  await all.click();
+  await expect(all).toHaveAttribute("aria-pressed", "true");
+  await expect(africa.getByRole("button", { name: "Photo: Guitar" })).toBeVisible();
+  await leader.getByRole("link", { name: "Leave live mode" }).click();
+  await leader.getByRole("link", { name: "Live" }).click();
+  await expect(africa.getByRole("button", { name: "Photo: Guitar" })).toBeVisible();
+  await all.click();
+  await expect(africa.getByRole("button", { name: "Photo: Guitar" })).toHaveCount(0);
+
+  // Full screen inside the app, then back to the list.
+  await africa.getByRole("button", { name: "Photo: Bass guitar" }).click();
+  const photo = leader.getByRole("dialog", { name: "Bass line" });
+  await expect(photo.getByRole("img", { name: "Bass line" })).toBeVisible();
+  await expect
+    .poll(() => photo.getByRole("img").evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+  await photo.getByRole("button", { name: "Close" }).click();
+  await expect(photo).toHaveCount(0);
+  await expect(africa).toBeVisible();
+  await leader.getByRole("link", { name: "Leave live mode" }).click();
+});
+
+test("live mode works offline (#307, #308, #309)", async () => {
   await leader.context().setOffline(true);
   const button = leader.getByRole("link", { name: "Live" });
   await expect(button).toBeVisible();
@@ -135,6 +198,13 @@ test("live mode works offline (#307, #308)", async () => {
   await expect(leader.getByRole("dialog", { name: "Africa" })).toContainText("drums echoing");
   await leader.keyboard.press("Escape");
   await expect(leader.getByRole("dialog", { name: "Africa" })).toHaveCount(0);
+  // The photos saved on the phone open offline.
+  await live.getByRole("button", { name: "Photo: Bass guitar" }).click();
+  const photo = leader.getByRole("dialog", { name: "Bass line" });
+  await expect
+    .poll(() => photo.getByRole("img").evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+  await photo.getByRole("button", { name: "Close" }).click();
   await leader.goBack();
   await expect(live).toHaveCount(0);
   await leader.context().setOffline(false);

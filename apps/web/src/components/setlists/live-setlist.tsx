@@ -1,18 +1,30 @@
 import { keyShort } from "@coverband/shared";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, MicVocal, XIcon } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Image, MicVocal, XIcon } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BandLogo } from "@/components/band/band-logo";
+import { InstrumentIcon } from "@/components/instrument-icon";
 import { ListSkeleton } from "@/components/loading";
+import { LivePhoto } from "@/components/setlists/live-photo";
 import { songsDuration } from "@/components/setlists/setlist-duration";
 import { LyricsView } from "@/components/songs/lyrics-view";
+import type { SongDocument } from "@/components/songs/song-documents";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/i18n/use-language";
 import { bandQuery } from "@/lib/bands";
 import { errorMessage, replacesData } from "@/lib/errors";
 import { playingOrder, useLeaveFullscreenOnClose } from "@/lib/live";
+import {
+  type LiveDocument,
+  liveDocuments,
+  readAllDocuments,
+  storeAllDocuments,
+} from "@/lib/live-documents";
 import { useWakeLock } from "@/lib/lyrics-view";
+import { savedDocumentIds } from "@/lib/offline-documents";
+import { useOnline } from "@/lib/online";
 import { type Setlist, setlistQuery } from "@/lib/setlists";
 import { songQuery } from "@/lib/songs";
 import { cn } from "@/lib/utils";
@@ -54,22 +66,48 @@ export function LiveSetlist({ bandSlug, setlistId }: { bandSlug: string; setlist
           {errorMessage(t, setlist.error)}
         </p>
       ) : (
-        <LiveContent bandSlug={bandSlug} setlist={setlist.data} band={band.data?.band} />
+        <LiveContent
+          bandSlug={bandSlug}
+          setlist={setlist.data}
+          band={band.data?.band}
+          instruments={band.data?.membership.instruments ?? []}
+        />
       )}
     </div>
   );
+}
+
+/** The photos saved on the phone, read again when the connection comes or goes (#309). */
+function useSavedDocuments(online: boolean) {
+  const [saved, setSaved] = useState<Set<string>>(new Set());
+  // biome-ignore lint/correctness/useExhaustiveDependencies: read again when `online` changes.
+  useEffect(() => {
+    let done = false;
+    void savedDocumentIds().then((ids) => !done && setSaved(ids));
+    return () => {
+      done = true;
+    };
+  }, [online]);
+  return saved;
 }
 
 function LiveContent({
   bandSlug,
   setlist,
   band,
+  instruments,
 }: {
   bandSlug: string;
   setlist: Setlist;
   band: Parameters<typeof BandLogo>[0]["band"] | undefined;
+  instruments: Parameters<typeof liveDocuments>[1]["mine"];
 }) {
   const { t } = useTranslation();
+  const language = useLanguage();
+  const online = useOnline();
+  const saved = useSavedDocuments(online);
+  const [all, setAll] = useState(readAllDocuments);
+  const [photo, setPhoto] = useState<SongDocument | null>(null);
   const songs = setlist.parts.flatMap((part) => part.songs);
   // Each song's details (its notes), as the phone keeps them for offline use.
   const details = useQueries({
@@ -84,6 +122,18 @@ function LiveContent({
   const shown = lyricsAt === null ? null : order[lyricsAt];
   // Where each part starts in the playing order.
   const starts = setlist.parts.map((_, p) => order.findIndex((place) => place.part === p));
+  // Each song's photos with a button (#309): online any, offline the saved ones.
+  const documentsOf = (songId: string, everyInstrument = all) =>
+    liveDocuments(detailsOf.get(songId)?.documents ?? [], {
+      mine: instruments,
+      all: everyInstrument,
+      canOpen: (id) => online || saved.has(id),
+      language,
+    });
+  // The switch only when it would change something.
+  const someNotMine = songs.some(
+    (song) => documentsOf(song.id, true).length > documentsOf(song.id, false).length,
+  );
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -104,6 +154,20 @@ function LiveContent({
           </p>
         </div>
       </header>
+      {someNotMine && (
+        <Button
+          variant={all ? "secondary" : "outline"}
+          className="h-11"
+          aria-pressed={all}
+          onClick={() => {
+            setAll(!all);
+            storeAllDocuments(!all);
+          }}
+        >
+          <Image />
+          {t("setlists.live.allDocuments")}
+        </Button>
+      )}
       {setlist.parts.map((part, p) => {
         const name = part.name ?? t("setlists.part.default", { n: p + 1 });
         return (
@@ -127,12 +191,15 @@ function LiveContent({
                   notes={detailsOf.get(song.id)?.notes ?? null}
                   hasLyrics={Boolean(detailsOf.get(song.id)?.lyrics)}
                   onLyrics={() => setLyricsAt((starts[p] ?? 0) + i)}
+                  documents={documentsOf(song.id)}
+                  onPhoto={setPhoto}
                 />
               ))}
             </ol>
           </section>
         );
       })}
+      <LivePhoto photo={photo} onClose={() => setPhoto(null)} />
       {shown && lyricsAt !== null && (
         <LyricsView
           title={shown.song.title}
@@ -198,8 +265,8 @@ function LyricsSteps({
 }
 
 /**
- * One song: its index, title and artist, then its tempo and key and its buttons (lyrics, #308);
- * its notes under it.
+ * One song: its index, title and artist, then its tempo and key and its buttons (lyrics, #308;
+ * photos, #309); its notes under it.
  */
 function LiveSongRow({
   index,
@@ -207,12 +274,16 @@ function LiveSongRow({
   notes,
   hasLyrics,
   onLyrics,
+  documents,
+  onPhoto,
 }: {
   index: number;
   song: LiveSong;
   notes: string | null;
   hasLyrics: boolean;
   onLyrics: () => void;
+  documents: LiveDocument<SongDocument>[];
+  onPhoto: (photo: SongDocument) => void;
 }) {
   const { t } = useTranslation();
   const key = song.bandKey ?? song.key;
@@ -229,7 +300,7 @@ function LiveSongRow({
           <span className="font-bold">{song.title}</span>
           <span className="text-base text-muted-foreground"> · {song.artist}</span>
         </p>
-        {(details || hasLyrics) && (
+        {(details || hasLyrics || documents.length > 0) && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             {details && <span className="text-muted-foreground">{details}</span>}
             {hasLyrics && (
@@ -242,6 +313,18 @@ function LiveSongRow({
                 <MicVocal className="size-5" />
               </Button>
             )}
+            {documents.map(({ document, instrument, label }) => (
+              <Button
+                key={document.id}
+                variant="outline"
+                className="h-11 max-w-full"
+                aria-label={t("setlists.live.openPhoto", { label })}
+                onClick={() => onPhoto(document)}
+              >
+                {instrument ? <InstrumentIcon instrument={instrument} /> : <Image />}
+                <span className="truncate">{label}</span>
+              </Button>
+            ))}
           </div>
         )}
         {notes && <LiveNotes notes={notes} />}
