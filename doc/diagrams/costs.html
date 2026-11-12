@@ -62,7 +62,6 @@
   .t-github { fill: var(--github); }
   .t-scaleway { fill: var(--scaleway); }
   .t-outside { fill: var(--outside); }
-  .t-dev { fill: var(--muted); }
   .inner { fill: color-mix(in srgb, var(--cost) 10%, var(--surface)); stroke: var(--cost); stroke-width: 1; }
   .name { fill: var(--fg); font-size: 13px; font-weight: 600; text-anchor: middle; }
   .name-l { fill: var(--fg); font-size: 13px; font-weight: 600; }
@@ -113,14 +112,14 @@
 
 <main>
   <header>
-    <span class="eyebrow">v1.0 · Thursday 2026/11/12 · brief 033 · bills to 2026/11/12</span>
+    <span class="eyebrow">v1.4 · Friday 2026/11/13 · brief 033 · bills to 2026/11/12</span>
     <h1>Coverband running costs</h1>
-    <p class="lead">Every box of the architecture diagram, with what it costs instead of what it does. Scaleway figures come from the real bills (October, and November up to the 12th, projected to a full month); prices are before VAT unless said otherwise.</p>
+    <p class="lead">The architecture services, with what each costs. Scaleway figures come from the real bills (October, and November up to the 12th, projected to a full month); prices are before VAT unless said otherwise.</p>
   </header>
 
   <figure>
     <div class="scroll">
-      <svg viewBox="0 0 1400 590" role="img" aria-label="The architecture diagram with costs. The Serverless SQL Database, about 13.80 euros a month, and the Serverless Container, about 7.50 euros a month, make almost the whole bill. Every GitHub service, the push services and the music APIs are free; the other Scaleway services cost cents a month, and the domain 5.98 euros a year.">
+      <svg viewBox="270 20 1120 560" role="img" aria-label="The architecture diagram with costs. The Serverless SQL Database, about 13.80 euros a month, and the Serverless Container, about 7.50 euros a month, make almost the whole bill. Every GitHub service, the push services and the music APIs are free; the other Scaleway services cost cents a month, and the domain 5.98 euros a year.">
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" class="mk"/>
@@ -129,17 +128,6 @@
             <path d="M0,0 L10,5 L0,10 z" class="mk-cost"/>
           </marker>
         </defs>
-
-        <!-- Development -->
-        <text x="20" y="62" class="glabel t-dev">Development</text>
-        <rect x="20" y="80" width="210" height="100" rx="8" class="box"/>
-        <text x="125" y="110" class="name">Vince's laptop</text>
-        <text x="125" y="132" class="price free">€0 extra</text>
-        <text x="125" y="150" class="sub">your own machine</text>
-        <rect x="20" y="260" width="210" height="120" rx="8" class="box"/>
-        <text x="125" y="292" class="name">Claude (Claude Code)</text>
-        <text x="125" y="314" class="price">your Claude plan</text>
-        <text x="125" y="332" class="sub">not in the bills read here</text>
 
         <!-- GitHub -->
         <rect x="290" y="60" width="240" height="420" rx="12" class="group g-github"/>
@@ -198,11 +186,7 @@
         <text x="1072" y="443" class="price">≈ €0.08 / mo</text>
 
         <!-- Outside -->
-        <text x="1190" y="182" class="glabel t-outside">On the Internet</text>
-        <rect x="1190" y="200" width="180" height="80" rx="8" class="box outside-box"/>
-        <text x="1280" y="230" class="name">Band members' phones</text>
-        <text x="1280" y="252" class="price free">€0 to us</text>
-        <text x="1280" y="268" class="sub">their own devices</text>
+        <text x="1190" y="352" class="glabel t-outside">Third-party services</text>
         <rect x="1190" y="370" width="180" height="80" rx="8" class="box outside-box"/>
         <text x="1280" y="398" class="name">Browsers' push services</text>
         <text x="1280" y="420" class="price free">€0 · no account</text>
@@ -210,12 +194,6 @@
         <rect x="1190" y="490" width="180" height="70" rx="8" class="box outside-box"/>
         <text x="1280" y="516" class="name">Music &amp; lyrics APIs</text>
         <text x="1280" y="538" class="price free">€0 · free quotas</text>
-
-        <!-- Development edges -->
-        <line x1="125" y1="180" x2="125" y2="258" class="edge" marker-end="url(#arrow)"/>
-        <line x1="230" y1="125" x2="318" y2="125" class="edge" marker-end="url(#arrow)"/>
-        <polyline points="230,290 270,290 270,145 318,145" class="edge" marker-end="url(#arrow)"/>
-        <polyline points="230,350 270,350 270,430 318,430" class="edge" marker-end="url(#arrow)"/>
 
         <!-- Deploy path -->
         <line x1="410" y1="160" x2="410" y2="278" class="edge" marker-end="url(#arrow)"/>
@@ -243,53 +221,12 @@
         <text x="1078" y="368" class="elabel">intake free</text>
 
         <!-- To the outside -->
-        <line x1="1132" y1="240" x2="1188" y2="240" class="edge" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
         <polyline points="1130,288 1160,288 1160,405 1188,405" class="edge" marker-end="url(#arrow)"/>
-        <line x1="1280" y1="370" x2="1280" y2="282" class="edge" marker-end="url(#arrow)"/>
         <polyline points="1130,318 1148,318 1148,525 1188,525" class="edge" marker-end="url(#arrow)"/>
       </svg>
     </div>
     <figcaption>Outlined in orange: the two services that make almost the whole bill. The database is billed by the second while it's awake, at least 5 minutes per wake-up, and the container by the second while an instance runs; everything else is free or costs cents. On a phone, the diagram scrolls sideways.</figcaption>
   </figure>
-
-  <section aria-labelledby="services">
-    <h2 id="services">Every service</h2>
-    <div class="table-wrap">
-      <table>
-        <caption>Monthly figures for Scaleway are November projected to 30 days, before VAT.</caption>
-        <thead>
-          <tr><th scope="col">Service</th><th scope="col">Characteristics</th><th scope="col">Cost or limitation</th></tr>
-        </thead>
-        <tbody>
-          <tr class="group-row"><th colspan="3" scope="colgroup">Development</th></tr>
-          <tr><th scope="row">Vince's laptop</th><td>Your own machine; runs the whole stack locally with Docker.</td><td class="cost"><span class="pill free">€0 extra</span></td></tr>
-          <tr><th scope="row">Claude (Claude Code)</th><td>Development and UX/UI, through your Claude plan.</td><td class="cost"><span class="pill unknown">your plan</span><small>not in the bills read for this page</small></td></tr>
-
-          <tr class="group-row"><th colspan="3" scope="colgroup">GitHub · Free plan</th></tr>
-          <tr><th scope="row">Git repository</th><td>Public, about 4 MB.</td><td class="cost"><span class="pill free">€0</span></td></tr>
-          <tr><th scope="row">Actions</th><td>Standard Linux runners; about 465 runs and 1,280 minutes of runs in the last 30 days (each CI run is 3 jobs in parallel).</td><td class="cost"><span class="pill free">€0</span><small>unlimited for a public repository; a private one gets 2,000 free minutes a month, which CI would exceed</small></td></tr>
-          <tr><th scope="row">Projects</th><td>One board, Epics and sub-issues.</td><td class="cost"><span class="pill free">€0</span></td></tr>
-
-          <tr class="group-row"><th colspan="3" scope="colgroup">Scaleway · Paris</th></tr>
-          <tr><th scope="row">Serverless SQL Database</th><td>PostgreSQL 16, 0 to 1 vCPU, about 0.4 GB stored, 7 days of backups included. Awake about 99 vCPU-hours a month (about 3.3 hours a day at full size).</td><td class="cost"><span class="pill cost">≈ €13.82 / month</span><small>€0.1375 per vCPU-hour awake, at least 5 min per wake-up; €0.20 per GB a month. Worst case, awake 24/7: about €100 a month</small></td></tr>
-          <tr><th scope="row">Serverless Container</th><td>One image for the API, the PWA and the admin app. 0.56 vCPU, 1 GB of memory, 0 to 2 instances, scales to zero. About 375 instance-hours a month.</td><td class="cost"><span class="pill cost">≈ €7.47 / month</span><small>€1.00 per 100,000 vCPU-seconds, €0.20 per 100,000 GB-seconds, after a free 200,000 vCPU-s and 400,000 GB-s a month (−€2.80)</small></td></tr>
-          <tr><th scope="row">Container Registry</th><td>Private namespace, about 1 GB of images.</td><td class="cost"><span class="pill small">≈ €0.05 / month</span><small>€0.027 per GB a month; pulls within Paris free</small></td></tr>
-          <tr><th scope="row">Object Storage</th><td>Standard Multi-AZ bucket, about 1 GB of documents, logos, avatars and exports.</td><td class="cost"><span class="pill small">≈ €0.03 / month</span><small>€0.016 per GB a month; 75 GB of downloads free a month</small></td></tr>
-          <tr><th scope="row">Cockpit</th><td>Container logs kept 30 days, under 1 GB retained.</td><td class="cost"><span class="pill small">≈ €0.08 / month</span><small>ingestion free; €0.002 per GB a day beyond 7 days</small></td></tr>
-          <tr><th scope="row">Transactional Email</th><td>Essential plan; 6 to 17 emails a month so far.</td><td class="cost"><span class="pill free">€0</span><small>300 emails a month free, then €0.25 per 1,000</small></td></tr>
-          <tr><th scope="row">Cron trigger</th><td>One call a night (the activity purge).</td><td class="cost"><span class="pill free">€0 itself</span><small>but each call wakes the container and the database (at least 5 minutes, about €0.35 a month)</small></td></tr>
-          <tr><th scope="row">Domains &amp; DNS</th><td><code>coverband.fr</code>, one DNS zone.</td><td class="cost"><span class="pill small">€5.98 / year</span><small>billed in October</small></td></tr>
-
-          <tr class="group-row"><th colspan="3" scope="colgroup">On the Internet</th></tr>
-          <tr><th scope="row">Band members' phones</th><td>Their own devices, with the installed app.</td><td class="cost"><span class="pill free">€0 to us</span></td></tr>
-          <tr><th scope="row">Browsers' push services</th><td>Google, Mozilla, Apple, Microsoft; reached with our own VAPID key.</td><td class="cost"><span class="pill free">€0</span><small>no account; payloads up to 4 KB; ours wait a day at most</small></td></tr>
-          <tr><th scope="row">LRCLIB</th><td>Lyrics search, no key.</td><td class="cost"><span class="pill free">€0</span><small>no published quota; the app allows 30 searches an hour per member</small></td></tr>
-          <tr><th scope="row">Deezer</th><td>Song details for "Search and add", no key.</td><td class="cost"><span class="pill free">€0</span><small>about 50 requests per 5 seconds per address</small></td></tr>
-          <tr><th scope="row">YouTube Data API</th><td>Videos for "Search and add", our Google Cloud key.</td><td class="cost"><span class="pill free">€0</span><small>10,000 units a day for the whole app (about 99 searches); no paid tier; the app allows 15 a day per band</small></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
 
   <section aria-labelledby="summary">
     <h2 id="summary">Average cost</h2>
@@ -315,9 +252,43 @@
       <div class="legend"><span><i style="background: var(--cost)"></i>Database 64%</span><span><i style="background: color-mix(in srgb, var(--cost) 55%, var(--surface))"></i>Container 35%</span><span><i style="background: var(--line)"></i>Everything else 1%</span></div>
       <ul class="points">
         <li class="alert">The budget alert is set at €20 a month: November is on course to pass it.</li>
-        <li>Not included: your Claude plan and your laptop. GitHub and every outside service cost nothing.</li>
+        <li>GitHub and every outside service cost nothing.</li>
         <li>The bill follows how long the database and the container stay awake, not how much data there is: about 3.3 hours a day for the database and 12.5 instance-hours a day for the container at today's use.</li>
       </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="services">
+    <h2 id="services">Every service</h2>
+    <div class="table-wrap">
+      <table>
+        <caption>Monthly figures for Scaleway are November projected to 30 days, before VAT.</caption>
+        <thead>
+          <tr><th scope="col">Service</th><th scope="col">Characteristics</th><th scope="col">Cost or limitation</th></tr>
+        </thead>
+        <tbody>
+          <tr class="group-row"><th colspan="3" scope="colgroup">GitHub · Free plan</th></tr>
+          <tr><th scope="row">Git repository</th><td>Public, about 4 MB.</td><td class="cost"><span class="pill free">€0</span></td></tr>
+          <tr><th scope="row">Actions</th><td>Standard Linux runners; about 465 runs and 1,280 minutes of runs in the last 30 days (each CI run is 3 jobs in parallel).</td><td class="cost"><span class="pill free">€0</span><small>unlimited for a public repository; a private one gets 2,000 free minutes a month, which CI would exceed</small></td></tr>
+          <tr><th scope="row">Projects</th><td>One board, Epics and sub-issues.</td><td class="cost"><span class="pill free">€0</span></td></tr>
+
+          <tr class="group-row"><th colspan="3" scope="colgroup">Scaleway · Paris</th></tr>
+          <tr><th scope="row">Serverless SQL Database</th><td>PostgreSQL 16, 0 to 1 vCPU, about 0.4 GB stored, 7 days of backups included. Awake about 99 vCPU-hours a month (about 3.3 hours a day at full size).</td><td class="cost"><span class="pill cost">≈ €13.82 / month</span><small>€0.1375 per vCPU-hour awake, at least 5 min per wake-up; €0.20 per GB a month. Worst case, awake 24/7: about €100 a month</small></td></tr>
+          <tr><th scope="row">Serverless Container</th><td>One image for the API, the PWA and the admin app. 0.56 vCPU, 1 GB of memory, 0 to 2 instances, scales to zero. About 375 instance-hours a month.</td><td class="cost"><span class="pill cost">≈ €7.47 / month</span><small>€1.00 per 100,000 vCPU-seconds, €0.20 per 100,000 GB-seconds, after a free 200,000 vCPU-s and 400,000 GB-s a month (−€2.80)</small></td></tr>
+          <tr><th scope="row">Container Registry</th><td>Private namespace, about 1 GB of images.</td><td class="cost"><span class="pill small">≈ €0.05 / month</span><small>€0.027 per GB a month; pulls within Paris free</small></td></tr>
+          <tr><th scope="row">Object Storage</th><td>Standard Multi-AZ bucket, about 1 GB of documents, logos, avatars and exports.</td><td class="cost"><span class="pill small">≈ €0.03 / month</span><small>€0.016 per GB a month; 75 GB of downloads free a month</small></td></tr>
+          <tr><th scope="row">Cockpit</th><td>Container logs kept 30 days, under 1 GB retained.</td><td class="cost"><span class="pill small">≈ €0.08 / month</span><small>ingestion free; €0.002 per GB a day beyond 7 days</small></td></tr>
+          <tr><th scope="row">Transactional Email</th><td>Essential plan; 6 to 17 emails a month so far.</td><td class="cost"><span class="pill free">€0</span><small>300 emails a month free, then €0.25 per 1,000</small></td></tr>
+          <tr><th scope="row">Cron trigger</th><td>One call a night (the activity purge).</td><td class="cost"><span class="pill free">€0 itself</span><small>but each call wakes the container and the database (at least 5 minutes, about €0.35 a month)</small></td></tr>
+          <tr><th scope="row">Domains &amp; DNS</th><td><code>coverband.fr</code>, one DNS zone.</td><td class="cost"><span class="pill small">€5.98 / year</span><small>billed in October</small></td></tr>
+
+          <tr class="group-row"><th colspan="3" scope="colgroup">Third-party services</th></tr>
+          <tr><th scope="row">Browsers' push services</th><td>Google, Mozilla, Apple, Microsoft; reached with our own VAPID key.</td><td class="cost"><span class="pill free">€0</span><small>no account; payloads up to 4 KB; ours wait a day at most</small></td></tr>
+          <tr><th scope="row">LRCLIB</th><td>Lyrics search, no key.</td><td class="cost"><span class="pill free">€0</span><small>no published quota; the app allows 30 searches an hour per member</small></td></tr>
+          <tr><th scope="row">Deezer</th><td>Song details for "Search and add", no key.</td><td class="cost"><span class="pill free">€0</span><small>about 50 requests per 5 seconds per address</small></td></tr>
+          <tr><th scope="row">YouTube Data API</th><td>Videos for "Search and add", our Google Cloud key.</td><td class="cost"><span class="pill free">€0</span><small>10,000 units a day for the whole app (about 99 searches); no paid tier; the app allows 15 a day per band</small></td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 </main>

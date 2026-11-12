@@ -12,7 +12,7 @@ Two pages, kept in the repository and published to fixed artifact URLs:
 | Architecture | `doc/diagrams/architecture.html` | https://claude.ai/artifact/PxD1bMuYLdTpSo2CTipAR7 | `doc/briefs/vince/032_archi-diagram.md` |
 | Running costs | `doc/diagrams/costs.html` | https://claude.ai/artifact/CYttxpfv4ni2rjqydDb8pm | `doc/briefs/vince/033_cost-diagram.md` |
 
-The cost page is the architecture page with the same boxes and arrows, each box's text replaced by its cost: **a box added to one is added to the other.**
+The cost page is the architecture page with the same boxes and arrows, each box's text replaced by its cost: **a box added to one is added to the other.** Except what costs the app nothing by nature, left out of the cost page (diagram, table and notes; Vince's decision, v1.1): the Development group (Vince's laptop, Claude) and the band members' phones.
 
 ## Versions
 
@@ -30,7 +30,7 @@ Always from the source, never from memory or the previous page:
 - **GitHub:** `gh repo view --json visibility,diskUsage`; CI volume over 30 days with `gh run list --limit 1000 --created ">=<date>" --json workflowName,createdAt,updatedAt,status`. A public repository's Actions are free; a private one gets 2,000 minutes a month on the Free plan.
 - **Real costs:** `.claude/skills/infra-diagrams/scaleway-costs.sh <YYYY-MM>...` prints the consumption by product, from Scaleway's billing API (read-only). It uses `infra/.env` (Vince's admin key; if it's gone, ask Vince for a key that can read billing). Amounts are before VAT (20%).
 - **Prices and free tiers:** Scaleway's pricing pages, last summarized in `doc/briefs/claude/007_scaleway-products.md`. Check them again when a figure depends on a price, and say on the page when a price couldn't be confirmed.
-- **Claude:** Vince's Claude plan isn't in any bill you can read: ask him, or leave the row as "your plan" and out of the totals.
+- **Claude:** not on the cost page (above).
 
 ## 2. Compute the costs (cost page)
 
