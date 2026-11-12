@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { PDF_EXAMPLES } from "./pdf-examples";
 import { fitText, layoutScale, layoutSetlist, MIN_SCALE, PAGE, partHeight } from "./pdf-layout";
 
 /** Where each part went: its page and columns. */
@@ -84,4 +85,23 @@ describe("fitText", () => {
   test("nothing when not even a letter fits", () => {
     expect(fitText("Linger", 15, measure)).toBe("");
   });
+});
+
+describe("the PDF examples (#299, doc/setlist-exports/)", () => {
+  for (const example of PDF_EXAMPLES) {
+    test(`${example.name}: every part once, in order, whole within its page`, () => {
+      const counts = example.source.parts.map((part) => part.songs.length);
+      const { scale, pages } = layoutSetlist(counts);
+      expect(pages.flat().map((part) => part.part)).toEqual(counts.map((_, i) => i));
+      for (const page of pages) {
+        expect(page.length).toBeGreaterThan(0);
+        for (const part of page) {
+          const bottom = part.top + partHeight(counts[part.part] ?? 0, part.columns, scale);
+          expect(bottom).toBeLessThanOrEqual(PAGE.height - PAGE.margin - PAGE.footer);
+        }
+      }
+      // Only the 50-song part needs everything smaller.
+      expect(scale < 1).toBe(example.name === "05-fifty-songs");
+    });
+  }
 });

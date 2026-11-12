@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import sharp from "sharp";
 import { exportDocument } from "./export-document";
-import { renderPdf } from "./pdf";
+import { printableKey, renderPdf } from "./pdf";
 
 const song = (i: number) => ({
   title: `Song ${i} with Élan, Ørsted and Ψ`,
@@ -52,4 +52,10 @@ test("parts that don't share a page: as many pages, a logo on the first", async 
   });
   expect(pagesOf(bytes)).toBe(3);
   expect(new TextDecoder("latin1").decode(bytes)).toContain("/Subtype /Image");
+});
+
+test("printableKey: sharps and flats the font can write", () => {
+  expect(printableKey("F♯m")).toBe("F#m");
+  expect(printableKey("D♭")).toBe("Db");
+  expect(printableKey("Em")).toBe("Em");
 });
