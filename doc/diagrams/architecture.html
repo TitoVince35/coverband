@@ -1,0 +1,292 @@
+<title>Coverband Architecture</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+  /* Layout: one wide diagram (scrolls sideways on a phone), then two short reference sections. */
+  :root {
+    --bg: #f6f7f6;
+    --surface: #ffffff;
+    --fg: #17201c;
+    --muted: #5b6862;
+    --line: #8c9892;
+    --accent: #007a55;      /* the app's brand emerald: the path to production */
+    --github: #57606a;
+    --scaleway: #6b4fd8;
+    --outside: #b4690e;
+    --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101513; --surface: #18201c; --fg: #e6ece9; --muted: #9aa8a1; --line: #6f7d76;
+      --accent: #34c08f; --github: #9aa4ae; --scaleway: #a48df5; --outside: #e3a148;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101513; --surface: #18201c; --fg: #e6ece9; --muted: #9aa8a1; --line: #6f7d76;
+    --accent: #34c08f; --github: #9aa4ae; --scaleway: #a48df5; --outside: #e3a148;
+    color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.5; }
+  main {
+    max-width: 1180px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 32px 56px;
+    display: grid; gap: 40px;
+  }
+  header { display: grid; gap: 8px; max-width: 70ch; }
+  h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.8rem, 4vw, 2.4rem); line-height: 1.1; margin: 0; text-wrap: balance; }
+  h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; margin: 0; text-wrap: balance; }
+  h3 { font-family: var(--font-display); font-weight: 500; font-size: 1rem; margin: 0; }
+  p { margin: 0; }
+  .lead { color: var(--muted); }
+  .eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+  figure { margin: 0; display: grid; gap: 12px; }
+  .scroll { overflow-x: auto; background: var(--surface); border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); border-radius: 12px; }
+  svg { display: block; width: 100%; min-width: 1000px; height: auto; font-family: var(--font-body); }
+  figcaption { color: var(--muted); font-size: 0.9rem; max-width: 80ch; }
+  .key { display: inline-block; width: 22px; height: 0; border-top: 2.5px solid var(--accent); vertical-align: middle; margin-right: 6px; }
+
+  /* Diagram styles, through the theme tokens. */
+  .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+  .group { fill: none; stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .g-github { stroke: var(--github); }
+  .g-scaleway { stroke: var(--scaleway); }
+  .g-outside { stroke: var(--outside); }
+  .glabel { font-family: var(--font-display); font-weight: 700; font-size: 14px; }
+  .t-github { fill: var(--github); }
+  .t-scaleway { fill: var(--scaleway); }
+  .t-outside { fill: var(--outside); }
+  .t-dev { fill: var(--muted); }
+  .inner { fill: color-mix(in srgb, var(--scaleway) 8%, var(--surface)); stroke: var(--scaleway); stroke-width: 1; }
+  .name { fill: var(--fg); font-size: 13px; font-weight: 600; text-anchor: middle; }
+  .name-l { fill: var(--fg); font-size: 13px; font-weight: 600; }
+  .sub { fill: var(--muted); font-size: 11px; text-anchor: middle; }
+  .edge { fill: none; stroke: var(--line); stroke-width: 1.4; }
+  .edge.hot { stroke: var(--accent); stroke-width: 2.2; }
+  .elabel { fill: var(--muted); font-size: 11px; }
+  .elabel.hot { fill: var(--accent); font-weight: 600; }
+  .mk { fill: var(--line); }
+  .mk-hot { fill: var(--accent); }
+
+  .pieces { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+  .piece { background: var(--surface); border-radius: 10px; padding: 16px; display: grid; gap: 8px; align-content: start; border-top: 3px solid var(--line); }
+  .piece.github { border-top-color: var(--github); }
+  .piece.scaleway { border-top-color: var(--scaleway); }
+  .piece.outside { border-top-color: var(--outside); }
+  .piece ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; font-size: 0.92rem; }
+  .piece li { min-width: 0; }
+  .piece b { font-weight: 600; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; }
+
+  ol.steps { margin: 0; padding-left: 1.4em; display: grid; gap: 8px; max-width: 75ch; }
+  ol.steps li::marker { color: var(--accent); font-weight: 700; }
+  section { display: grid; gap: 16px; }
+</style>
+
+<main>
+  <header>
+    <span class="eyebrow">v1.0 · Thursday 2026/11/12 · brief 032 · app version 0.13.0</span>
+    <h1>Coverband architecture</h1>
+    <p class="lead">Where the code lives, how a merge reaches production, and what the one production container talks to. Checked against <code>infra/</code> (OpenTofu) and the deploy workflow.</p>
+  </header>
+
+  <figure>
+    <div class="scroll">
+      <svg viewBox="0 0 1400 590" role="img" aria-label="Vince briefs Claude Code, which commits to the GitHub repository and manages the Projects board. GitHub Actions builds an image into Scaleway's Container Registry, migrates the Serverless SQL database and rolls out the Serverless Container, which serves the REST API, the PWA and the admin app. The container uses PostgreSQL, Object Storage, Transactional Email and Cockpit; band members' phones reach it over HTTPS, it sends push notifications through the browsers' push services, and it searches LRCLIB, Deezer and YouTube.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="mk"/>
+          </marker>
+          <marker id="arrow-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="mk-hot"/>
+          </marker>
+        </defs>
+
+        <!-- Development -->
+        <text x="20" y="62" class="glabel t-dev">Development</text>
+        <rect x="20" y="80" width="210" height="100" rx="8" class="box"/>
+        <text x="125" y="110" class="name">Vince's laptop</text>
+        <text x="125" y="132" class="sub">Product design, briefs</text>
+        <text x="125" y="150" class="sub">Prompting, reviews</text>
+        <rect x="20" y="260" width="210" height="120" rx="8" class="box"/>
+        <text x="125" y="292" class="name">Claude (Claude Code)</text>
+        <text x="125" y="314" class="sub">Full-stack developer</text>
+        <text x="125" y="332" class="sub">UX/UI consultant</text>
+
+        <!-- GitHub -->
+        <rect x="290" y="60" width="240" height="420" rx="12" class="group g-github"/>
+        <text x="305" y="84" class="glabel t-github">GitHub</text>
+        <rect x="320" y="100" width="180" height="60" rx="8" class="box"/>
+        <text x="410" y="126" class="name">Git repository</text>
+        <text x="410" y="145" class="sub">dev, then main</text>
+        <rect x="320" y="280" width="180" height="70" rx="8" class="box"/>
+        <text x="410" y="304" class="name">Actions</text>
+        <text x="410" y="322" class="sub">CI: checks, end-to-end</text>
+        <text x="410" y="339" class="sub">CD: deploys main</text>
+        <rect x="320" y="400" width="180" height="60" rx="8" class="box"/>
+        <text x="410" y="426" class="name">Projects</text>
+        <text x="410" y="445" class="sub">Kanban board, issues</text>
+
+        <!-- Scaleway -->
+        <rect x="565" y="40" width="580" height="450" rx="12" class="group g-scaleway"/>
+        <text x="580" y="64" class="glabel t-scaleway">Scaleway · Paris</text>
+        <rect x="580" y="80" width="140" height="60" rx="8" class="box"/>
+        <text x="650" y="105" class="name">Container Registry</text>
+        <text x="650" y="124" class="sub">the app's images</text>
+        <rect x="760" y="80" width="140" height="60" rx="8" class="box"/>
+        <text x="830" y="105" class="name">Cron trigger</text>
+        <text x="830" y="124" class="sub">every night</text>
+        <rect x="940" y="80" width="140" height="60" rx="8" class="box"/>
+        <text x="1010" y="105" class="name">Domains &amp; DNS</text>
+        <text x="1010" y="124" class="sub">coverband.fr</text>
+
+        <rect x="580" y="190" width="550" height="140" rx="10" class="box"/>
+        <text x="598" y="214" class="name-l">Serverless Container · one image</text>
+        <rect x="600" y="228" width="160" height="84" rx="8" class="inner"/>
+        <text x="680" y="262" class="name">REST API</text>
+        <text x="680" y="282" class="sub">Hono on Bun, /api</text>
+        <rect x="775" y="228" width="160" height="84" rx="8" class="inner"/>
+        <text x="855" y="262" class="name">Coverband PWA</text>
+        <text x="855" y="282" class="sub">beta.coverband.fr</text>
+        <rect x="950" y="228" width="160" height="84" rx="8" class="inner"/>
+        <text x="1030" y="262" class="name">Admin back office</text>
+        <text x="1030" y="282" class="sub">admin-beta.coverband.fr</text>
+
+        <rect x="580" y="400" width="130" height="60" rx="8" class="box"/>
+        <text x="645" y="425" class="name">Serverless SQL</text>
+        <text x="645" y="444" class="sub">PostgreSQL</text>
+        <rect x="725" y="400" width="130" height="60" rx="8" class="box"/>
+        <text x="790" y="425" class="name">Object Storage</text>
+        <text x="790" y="444" class="sub">documents, logos</text>
+        <rect x="870" y="400" width="130" height="60" rx="8" class="box"/>
+        <text x="935" y="425" class="name">Email (TEM)</text>
+        <text x="935" y="444" class="sub">SMTP</text>
+        <rect x="1015" y="400" width="115" height="60" rx="8" class="box"/>
+        <text x="1072" y="425" class="name">Cockpit</text>
+        <text x="1072" y="444" class="sub">logs</text>
+
+        <!-- Outside -->
+        <text x="1190" y="182" class="glabel t-outside">On the Internet</text>
+        <rect x="1190" y="200" width="180" height="80" rx="8" class="box" style="stroke: var(--outside)"/>
+        <text x="1280" y="230" class="name">Band members' phones</text>
+        <text x="1280" y="250" class="sub">the installed PWA,</text>
+        <text x="1280" y="266" class="sub">offline when needed</text>
+        <rect x="1190" y="370" width="180" height="80" rx="8" class="box" style="stroke: var(--outside)"/>
+        <text x="1280" y="398" class="name">Browsers' push services</text>
+        <text x="1280" y="418" class="sub">Google · Mozilla</text>
+        <text x="1280" y="434" class="sub">Apple · Microsoft</text>
+        <rect x="1190" y="490" width="180" height="70" rx="8" class="box" style="stroke: var(--outside)"/>
+        <text x="1280" y="518" class="name">Music &amp; lyrics APIs</text>
+        <text x="1280" y="538" class="sub">LRCLIB · Deezer · YouTube</text>
+
+        <!-- Development edges -->
+        <line x1="125" y1="180" x2="125" y2="258" class="edge" marker-end="url(#arrow)"/>
+        <text x="133" y="224" class="elabel">briefs, prompts</text>
+        <line x1="230" y1="125" x2="318" y2="125" class="edge" marker-end="url(#arrow)"/>
+        <text x="274" y="117" class="elabel" text-anchor="middle">reviews, merges</text>
+        <polyline points="230,290 270,290 270,145 318,145" class="edge" marker-end="url(#arrow)"/>
+        <text x="276" y="218" class="elabel">commits, PRs</text>
+        <polyline points="230,350 270,350 270,430 318,430" class="edge" marker-end="url(#arrow)"/>
+        <text x="276" y="394" class="elabel">issues, board</text>
+
+        <!-- The path to production (highlighted) -->
+        <line x1="410" y1="160" x2="410" y2="278" class="edge hot" marker-end="url(#arrow-hot)"/>
+        <text x="418" y="224" class="elabel hot">push, PR</text>
+        <polyline points="500,288 545,288 545,110 578,110" class="edge hot" marker-end="url(#arrow-hot)"/>
+        <text x="553" y="176" class="elabel hot">pushes image</text>
+        <line x1="500" y1="312" x2="578" y2="312" class="edge hot" marker-end="url(#arrow-hot)"/>
+        <text x="540" y="304" class="elabel hot" text-anchor="middle">rolls out</text>
+        <polyline points="500,340 555,340 555,430 578,430" class="edge hot" marker-end="url(#arrow-hot)"/>
+        <text x="561" y="392" class="elabel hot">migrates</text>
+        <line x1="650" y1="140" x2="650" y2="188" class="edge hot" marker-end="url(#arrow-hot)"/>
+        <text x="656" y="168" class="elabel hot">image</text>
+
+        <!-- Into the container -->
+        <line x1="830" y1="140" x2="830" y2="188" class="edge" marker-end="url(#arrow)"/>
+        <text x="836" y="168" class="elabel">purges activity</text>
+        <line x1="1010" y1="140" x2="1010" y2="188" class="edge" marker-end="url(#arrow)"/>
+        <text x="1016" y="168" class="elabel">hostnames</text>
+
+        <!-- From the container to its services -->
+        <line x1="645" y1="330" x2="645" y2="398" class="edge" marker-end="url(#arrow)"/>
+        <text x="651" y="368" class="elabel">SQL</text>
+        <line x1="790" y1="330" x2="790" y2="398" class="edge" marker-end="url(#arrow)"/>
+        <text x="796" y="368" class="elabel">files</text>
+        <line x1="935" y1="330" x2="935" y2="398" class="edge" marker-end="url(#arrow)"/>
+        <text x="941" y="368" class="elabel">emails</text>
+        <line x1="1072" y1="330" x2="1072" y2="398" class="edge" marker-end="url(#arrow)"/>
+        <text x="1078" y="368" class="elabel">logs</text>
+
+        <!-- To the outside -->
+        <line x1="1132" y1="240" x2="1188" y2="240" class="edge" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+        <text x="1160" y="232" class="elabel" text-anchor="middle">HTTPS</text>
+        <polyline points="1130,288 1160,288 1160,405 1188,405" class="edge" marker-end="url(#arrow)"/>
+        <text x="1166" y="352" class="elabel">pushes</text>
+        <text x="1166" y="366" class="elabel">(VAPID)</text>
+        <line x1="1280" y1="370" x2="1280" y2="282" class="edge" marker-end="url(#arrow)"/>
+        <text x="1286" y="330" class="elabel">delivers</text>
+        <polyline points="1130,318 1148,318 1148,525 1188,525" class="edge" marker-end="url(#arrow)"/>
+        <text x="1154" y="482" class="elabel">searches</text>
+      </svg>
+    </div>
+    <figcaption><span class="key" aria-hidden="true"></span>The highlighted path is the one every release takes: a merge to <code>main</code> starts Actions, which builds the image, migrates the database while the previous release still serves, then rolls out the container. Everything users see comes from that one container; on a phone the diagram scrolls sideways.</figcaption>
+  </figure>
+
+  <section aria-labelledby="pieces">
+    <h2 id="pieces">What each piece does</h2>
+    <div class="pieces">
+      <article class="piece">
+        <h3>Development</h3>
+        <ul>
+          <li><b>Vince's laptop:</b> product design and briefs (<code>doc/briefs/</code>), prompting, reviewing and merging pull requests. Runs the whole stack locally with Docker (Postgres, Mailpit, Garage).</li>
+          <li><b>Claude Code:</b> full-stack developer and UX/UI consultant: studies, code, tests, issues and pull requests.</li>
+        </ul>
+      </article>
+      <article class="piece github">
+        <h3>GitHub</h3>
+        <ul>
+          <li><b>Git repository:</b> <code>dev</code> for features, <code>main</code> for production, changed only by a release pull request.</li>
+          <li><b>Actions:</b> CI on every pull request (audit, lint, typecheck, tests, build, end-to-end, production image); the deploy workflow on every push to <code>main</code>.</li>
+          <li><b>Projects:</b> the Kanban board (Backlog, Todo, In progress, In review, Done), Epics with their sub-issues.</li>
+        </ul>
+      </article>
+      <article class="piece scaleway">
+        <h3>Scaleway, in Paris</h3>
+        <ul>
+          <li><b>Serverless Container:</b> one image, where the API (Hono on Bun) also serves the PWA and, on its own hostname, the admin app. Stateless: it keeps nothing in memory or on disk.</li>
+          <li><b>Serverless SQL Database:</b> PostgreSQL, through Scaleway's connection pooler.</li>
+          <li><b>Object Storage:</b> documents, band logos, avatars and setlist exports, served only through the API.</li>
+          <li><b>Transactional Email:</b> invitations and password resets, over SMTP.</li>
+          <li><b>Domains &amp; DNS:</b> <code>coverband.fr</code>, its app and admin hostnames, and the email records.</li>
+          <li><b>Cockpit:</b> the container's logs. <b>Cron trigger:</b> the nightly activity purge. <b>Container Registry:</b> the images Actions builds.</li>
+          <li>All of it is code in <code>infra/</code> (OpenTofu), with a monthly budget alert.</li>
+        </ul>
+      </article>
+      <article class="piece outside">
+        <h3>On the Internet</h3>
+        <ul>
+          <li><b>Band members' phones:</b> the installed app, which keeps setlists, lyrics and photos for offline use.</li>
+          <li><b>Browsers' push services:</b> no provider account. The server signs each notification with our own VAPID key and sends it to the push service of the phone's browser, which delivers it.</li>
+          <li><b>Music &amp; lyrics APIs:</b> LRCLIB for lyrics, Deezer and YouTube for "Search and add".</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="release">
+    <h2 id="release">From a brief to production</h2>
+    <ol class="steps">
+      <li>Vince writes a brief; once it's settled, Claude plans it as an Epic and issues on the Projects board.</li>
+      <li>Claude develops each issue on its own branch and opens a pull request to <code>dev</code>; CI runs every check, end-to-end tests included.</li>
+      <li>Once green, the pull requests are merged into <code>dev</code>.</li>
+      <li>A release bumps the version on <code>dev</code> and opens a pull request from <code>dev</code> to <code>main</code>; its CI must pass again.</li>
+      <li>The merge to <code>main</code> deploys: Actions builds the image into the Container Registry, migrates the database, rolls out the container, checks that the new build answers, and tags the version.</li>
+    </ol>
+  </section>
+</main>
