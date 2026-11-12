@@ -4,7 +4,7 @@ import { BASE_URL } from "./playwright.config";
 import { addSetlist, addSong, type Band, newBand } from "./support";
 
 // Setlists live (brief 031): the live mode page (#307), the lyrics with previous and next song
-// (#308), the photos for my instruments (#309).
+// (#308); the photos for my instruments (#309) are off for now (#315).
 test.describe.configure({ mode: "serial" });
 
 let band: Band;
@@ -34,7 +34,7 @@ test.beforeAll(async ({ browser }) => {
     notes: LONG_NOTES,
   });
   // The band leader plays the bass; Africa has photos for the bass, the guitar and everyone, and
-  // a PDF (no button in this first version).
+  // a PDF: none gets a button for now (#315).
   const api = leader.request;
   expect(
     (
@@ -153,40 +153,19 @@ test("a song's lyrics from live mode, then the next and previous songs (#308)", 
   await leader.getByRole("link", { name: "Leave live mode" }).click();
 });
 
-test("a song's photos for my instruments, all of them on demand, full screen (#309)", async () => {
+// The photos (#309) are off for now (#315): only the lyrics button stays. When they come back,
+// bring back this test from #315's parent commit.
+test("no document buttons in live mode for now, only the lyrics (#315)", async () => {
   await leader.getByRole("link", { name: "Live" }).click();
   const live = leader.getByRole("dialog", { name: "Wedding" });
   const africa = live.getByRole("region", { name: "Set 1" }).getByRole("listitem").first();
-  // Mine (the bass) and the untagged one; no PDF.
-  await expect(africa.getByRole("button", { name: /^Photo:/ })).toHaveCount(2);
-  await expect(africa.getByRole("button", { name: "Photo: Bass guitar" })).toBeVisible();
-  await expect(africa.getByRole("button", { name: "Photo: Stage plan" })).toBeVisible();
-
-  // Every instrument's, remembered on the phone.
-  const all = live.getByRole("button", { name: "All instruments" });
-  await all.click();
-  await expect(all).toHaveAttribute("aria-pressed", "true");
-  await expect(africa.getByRole("button", { name: "Photo: Guitar" })).toBeVisible();
-  await leader.getByRole("link", { name: "Leave live mode" }).click();
-  await leader.getByRole("link", { name: "Live" }).click();
-  await expect(africa.getByRole("button", { name: "Photo: Guitar" })).toBeVisible();
-  await all.click();
-  await expect(africa.getByRole("button", { name: "Photo: Guitar" })).toHaveCount(0);
-
-  // Full screen inside the app, then back to the list.
-  await africa.getByRole("button", { name: "Photo: Bass guitar" }).click();
-  const photo = leader.getByRole("dialog", { name: "Bass line" });
-  await expect(photo.getByRole("img", { name: "Bass line" })).toBeVisible();
-  await expect
-    .poll(() => photo.getByRole("img").evaluate((img: HTMLImageElement) => img.naturalWidth))
-    .toBeGreaterThan(0);
-  await photo.getByRole("button", { name: "Close" }).click();
-  await expect(photo).toHaveCount(0);
-  await expect(africa).toBeVisible();
+  await expect(africa.getByRole("button", { name: "Lyrics" })).toBeVisible();
+  await expect(africa.getByRole("button", { name: /^Photo:/ })).toHaveCount(0);
+  await expect(live.getByRole("button", { name: "All instruments" })).toHaveCount(0);
   await leader.getByRole("link", { name: "Leave live mode" }).click();
 });
 
-test("live mode works offline (#307, #308, #309)", async () => {
+test("live mode works offline (#307, #308)", async () => {
   await leader.context().setOffline(true);
   const button = leader.getByRole("link", { name: "Live" });
   await expect(button).toBeVisible();
@@ -198,13 +177,6 @@ test("live mode works offline (#307, #308, #309)", async () => {
   await expect(leader.getByRole("dialog", { name: "Africa" })).toContainText("drums echoing");
   await leader.keyboard.press("Escape");
   await expect(leader.getByRole("dialog", { name: "Africa" })).toHaveCount(0);
-  // The photos saved on the phone open offline.
-  await live.getByRole("button", { name: "Photo: Bass guitar" }).click();
-  const photo = leader.getByRole("dialog", { name: "Bass line" });
-  await expect
-    .poll(() => photo.getByRole("img").evaluate((img: HTMLImageElement) => img.naturalWidth))
-    .toBeGreaterThan(0);
-  await photo.getByRole("button", { name: "Close" }).click();
   await leader.goBack();
   await expect(live).toHaveCount(0);
   await leader.context().setOffline(false);
