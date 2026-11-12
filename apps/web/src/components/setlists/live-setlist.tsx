@@ -1,15 +1,17 @@
 import { keyShort } from "@coverband/shared";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { XIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, MicVocal, XIcon } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BandLogo } from "@/components/band/band-logo";
 import { ListSkeleton } from "@/components/loading";
 import { songsDuration } from "@/components/setlists/setlist-duration";
+import { LyricsView } from "@/components/songs/lyrics-view";
+import { Button } from "@/components/ui/button";
 import { bandQuery } from "@/lib/bands";
 import { errorMessage, replacesData } from "@/lib/errors";
-import { useLeaveFullscreenOnClose } from "@/lib/live";
+import { playingOrder, useLeaveFullscreenOnClose } from "@/lib/live";
 import { useWakeLock } from "@/lib/lyrics-view";
 import { type Setlist, setlistQuery } from "@/lib/setlists";
 import { songQuery } from "@/lib/songs";
@@ -73,9 +75,15 @@ function LiveContent({
   const details = useQueries({
     queries: [...new Set(songs.map((song) => song.id))].map((id) => songQuery(bandSlug, id)),
   });
-  const notesOf = new Map(
-    details.flatMap((query) => (query.data ? [[query.data.id, query.data.notes] as const] : [])),
+  const detailsOf = new Map(
+    details.flatMap((query) => (query.data ? [[query.data.id, query.data] as const] : [])),
   );
+  const order = playingOrder(setlist.parts);
+  // The song whose lyrics show, by its place in the playing order (#308).
+  const [lyricsAt, setLyricsAt] = useState<number | null>(null);
+  const shown = lyricsAt === null ? null : order[lyricsAt];
+  // Where each part starts in the playing order.
+  const starts = setlist.parts.map((_, p) => order.findIndex((place) => place.part === p));
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -116,26 +124,95 @@ function LiveContent({
                   key={`${song.id}-${i}`}
                   index={i + 1}
                   song={song}
-                  notes={notesOf.get(song.id) ?? null}
+                  notes={detailsOf.get(song.id)?.notes ?? null}
+                  hasLyrics={Boolean(detailsOf.get(song.id)?.lyrics)}
+                  onLyrics={() => setLyricsAt((starts[p] ?? 0) + i)}
                 />
               ))}
             </ol>
           </section>
         );
       })}
+      {shown && lyricsAt !== null && (
+        <LyricsView
+          title={shown.song.title}
+          lyrics={detailsOf.get(shown.song.id)?.lyrics ?? null}
+          open
+          onOpenChange={(open) => !open && setLyricsAt(null)}
+          footer={
+            <LyricsSteps
+              previous={order[lyricsAt - 1]?.song.title ?? null}
+              next={order[lyricsAt + 1]?.song.title ?? null}
+              onStep={(step) => setLyricsAt(lyricsAt + step)}
+            />
+          }
+        />
+      )}
     </div>
   );
 }
 
-/** One song: its index, title and artist, then its tempo and key; its notes under it. */
+/** The lyrics view's way to the previous and next song, each named; none past the ends. */
+function LyricsSteps({
+  previous,
+  next,
+  onStep,
+}: {
+  previous: string | null;
+  next: string | null;
+  onStep: (step: 1 | -1) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex gap-2">
+      {previous !== null ? (
+        <Button
+          variant="outline"
+          size="lg"
+          className="h-12 min-w-0 flex-1 justify-start"
+          aria-label={t("setlists.live.previous", { title: previous })}
+          onClick={() => onStep(-1)}
+        >
+          <ChevronLeft />
+          <span className="truncate">{previous}</span>
+        </Button>
+      ) : (
+        <div className="flex-1" />
+      )}
+      {next !== null ? (
+        <Button
+          variant="outline"
+          size="lg"
+          className="h-12 min-w-0 flex-1 justify-end"
+          aria-label={t("setlists.live.next", { title: next })}
+          onClick={() => onStep(1)}
+        >
+          <span className="truncate">{next}</span>
+          <ChevronRight />
+        </Button>
+      ) : (
+        <div className="flex-1" />
+      )}
+    </div>
+  );
+}
+
+/**
+ * One song: its index, title and artist, then its tempo and key and its buttons (lyrics, #308);
+ * its notes under it.
+ */
 function LiveSongRow({
   index,
   song,
   notes,
+  hasLyrics,
+  onLyrics,
 }: {
   index: number;
   song: LiveSong;
   notes: string | null;
+  hasLyrics: boolean;
+  onLyrics: () => void;
 }) {
   const { t } = useTranslation();
   const key = song.bandKey ?? song.key;
@@ -152,7 +229,21 @@ function LiveSongRow({
           <span className="font-bold">{song.title}</span>
           <span className="text-base text-muted-foreground"> · {song.artist}</span>
         </p>
-        {details && <p className="text-muted-foreground">{details}</p>}
+        {(details || hasLyrics) && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            {details && <span className="text-muted-foreground">{details}</span>}
+            {hasLyrics && (
+              <Button
+                variant="outline"
+                className="size-11"
+                aria-label={t("setlists.live.lyrics")}
+                onClick={onLyrics}
+              >
+                <MicVocal className="size-5" />
+              </Button>
+            )}
+          </div>
+        )}
         {notes && <LiveNotes notes={notes} />}
       </div>
     </li>
