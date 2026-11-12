@@ -35,7 +35,7 @@ test("a member exports a setlist to docx; offline, the button is turned off (#29
     .getByRole("list", { name: "Setlists" })
     .getByRole("link", { name: /Wedding/ })
     .click();
-  const button = leader.getByRole("button", { name: "Export to docx" });
+  const button = leader.getByRole("button", { name: "docx" });
 
   const [download] = await Promise.all([leader.waitForEvent("download"), button.click()]);
   expect(download.suggestedFilename()).toBe("Wedding.docx");

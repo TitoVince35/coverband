@@ -1,9 +1,11 @@
 /**
  * Where each part of a printed setlist goes (brief 030, #298): pure logic, in points, so it is
- * tested apart from drawing. A4, every part whole on one page: on one column when it fits, else
- * on two (each song's details then on a small second line), else on the next page; several parts share a page when they fit. When a part fits
- * nowhere even on two columns, every size gets smaller (one scale for the whole document, so
- * every page reads the same).
+ * tested apart from drawing. A4, the main header at the top of every page, every part whole on
+ * one page: on one column when it fits, else on two (each song's details then on a small second
+ * line), else on the next page; several parts share a page when they fit, a few lines apart when
+ * there is room (`partSpace`), else closer (`partGap`). When a part fits nowhere even on two
+ * columns, every size gets smaller (one scale for the whole document, so every page reads the
+ * same).
  */
 
 /** A4 in points, its margins, and the footer's band at the bottom. */
@@ -15,7 +17,7 @@ export const CONTENT_WIDTH = PAGE.width - 2 * PAGE.margin;
 /** Space between two columns. */
 export const COLUMN_GAP = 24;
 
-/** The main header's height on the first page (logo, title, band), its space after included. */
+/** The main header's height on every page (logo, title, band), its space after included. */
 export const MAIN_HEADER_HEIGHT = 96;
 
 /** Sizes at full scale: a song title is the largest text, the rest smaller. */
@@ -24,8 +26,10 @@ export const SIZES = {
   partDuration: 13,
   /** A part's header: its name and duration, a rule, and the space around. */
   partHeader: 40,
-  /** Space after a part, before the next one on the same page. */
+  /** The least space between two parts on the same page. */
   partGap: 14,
+  /** The space between two parts on the same page when it has room: about two song lines. */
+  partSpace: 56,
   songTitle: 20,
   songDetails: 12,
   /** A song on one column: its title and details on one line. */
@@ -50,20 +54,15 @@ export function partHeight(songs: number, columns: 1 | 2, scale: number) {
   return (SIZES.partHeader + rows * line) * scale;
 }
 
-/** The top of the area parts use on a page, and its bottom. */
-function area(page: number) {
-  return {
-    top: PAGE.margin + (page === 0 ? MAIN_HEADER_HEIGHT : 0),
-    bottom: PAGE.height - PAGE.margin - PAGE.footer,
-  };
-}
+/** The area parts use on every page: under the main header, above the footer. */
+export const AREA = {
+  top: PAGE.margin + MAIN_HEADER_HEIGHT,
+  bottom: PAGE.height - PAGE.margin - PAGE.footer,
+} as const;
 
-/** Whether each part fits a page on two columns at this scale (the first one under the header). */
+/** Whether each part fits a page on two columns at this scale. */
 function fitsAt(songCounts: readonly number[], scale: number) {
-  return songCounts.every((songs, i) => {
-    const { top, bottom } = area(i === 0 ? 0 : 1);
-    return partHeight(songs, 2, scale) <= bottom - top;
-  });
+  return songCounts.every((songs) => partHeight(songs, 2, scale) <= AREA.bottom - AREA.top);
 }
 
 /** The largest scale at which every part fits a page, down to MIN_SCALE. */
@@ -80,18 +79,20 @@ export function layoutSetlist(songCounts: readonly number[]): PdfLayout {
   const scale = layoutScale(songCounts);
   const pages: PlacedPart[][] = [[]];
   let page = 0;
-  let y = area(0).top;
+  // The bottom of the page's last part (its top before the first one).
+  let y = AREA.top;
   songCounts.forEach((songs, part) => {
+    const push = (columns: 1 | 2, top: number) => {
+      pages[page]?.push({ part, top, columns, rows: columns === 1 ? songs : Math.ceil(songs / 2) });
+      y = top + partHeight(songs, columns, scale);
+    };
     const place = (columns: 1 | 2) => {
       const height = partHeight(songs, columns, scale);
-      if (y + height > area(page).bottom) return false;
-      pages[page]?.push({
-        part,
-        top: y,
-        columns,
-        rows: columns === 1 ? songs : Math.ceil(songs / 2),
-      });
-      y += height + SIZES.partGap * scale;
+      // After another part: a few lines apart when there is room, else closer.
+      const gaps = pages[page]?.length ? [SIZES.partSpace, SIZES.partGap] : [0];
+      const gap = gaps.find((space) => y + space * scale + height <= AREA.bottom);
+      if (gap === undefined) return false;
+      push(columns, y + gap * scale);
       return true;
     };
     // Two columns only for a part long enough to need them.
@@ -99,12 +100,11 @@ export function layoutSetlist(songCounts: readonly number[]): PdfLayout {
     if (pages[page]?.length) {
       page += 1;
       pages.push([]);
-      y = area(page).top;
+      y = AREA.top;
     }
     if (place(1) || (songs > 1 && place(2))) return;
     // Too long even at the smallest scale: on two columns anyway, past the page's bottom.
-    pages[page]?.push({ part, top: y, columns: 2, rows: Math.ceil(songs / 2) });
-    y += partHeight(songs, 2, scale) + SIZES.partGap * scale;
+    push(2, y);
   });
   return { scale, pages };
 }

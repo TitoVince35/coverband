@@ -9,6 +9,8 @@ This is a reminder of the briefs to be created.
 - [ ] Functional : The venues, the gigs
 - [ ] Functional : custom ratings, personal ratings, tags (ex: Drop-D)
 - [ ] Communication : a generic homepage with motion design
-- [ ] Functional : The setlists
+- [X] Functional : The setlists
+    - [X] Printing setlists
+    - [] Viewing setlists in live
 - [X] Tech : Push notifications for the events
 - [ ] Feature : internal chat ?

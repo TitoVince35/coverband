@@ -1,0 +1,294 @@
+<title>Coverband Running Costs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+  /* Layout: the architecture diagram with costs instead of roles, the service table, the totals card. */
+  :root {
+    --bg: #f6f7f6;
+    --surface: #ffffff;
+    --fg: #17201c;
+    --muted: #5b6862;
+    --line: #8c9892;
+    --free: #2f7d5b;        /* €0 */
+    --cost: #b4541a;        /* the two services that make the bill */
+    --github: #57606a;
+    --scaleway: #6b4fd8;
+    --outside: #b4690e;
+    --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101513; --surface: #18201c; --fg: #e6ece9; --muted: #9aa8a1; --line: #6f7d76;
+      --free: #4fc48f; --cost: #f08a4b; --github: #9aa4ae; --scaleway: #a48df5; --outside: #e3a148;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101513; --surface: #18201c; --fg: #e6ece9; --muted: #9aa8a1; --line: #6f7d76;
+    --free: #4fc48f; --cost: #f08a4b; --github: #9aa4ae; --scaleway: #a48df5; --outside: #e3a148;
+    color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.5; }
+  main {
+    max-width: 1180px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 32px 56px;
+    display: grid; gap: 40px;
+  }
+  header { display: grid; gap: 8px; max-width: 72ch; }
+  h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.8rem, 4vw, 2.4rem); line-height: 1.1; margin: 0; text-wrap: balance; }
+  h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  .lead { color: var(--muted); }
+  .eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; }
+  section { display: grid; gap: 16px; }
+
+  figure { margin: 0; display: grid; gap: 12px; }
+  .scroll { overflow-x: auto; background: var(--surface); border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); border-radius: 12px; }
+  svg { display: block; width: 100%; min-width: 1000px; height: auto; font-family: var(--font-body); }
+  figcaption { color: var(--muted); font-size: 0.9rem; max-width: 80ch; }
+
+  .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+  .box.costly { stroke: var(--cost); stroke-width: 2.2; fill: color-mix(in srgb, var(--cost) 7%, var(--surface)); }
+  .group { fill: none; stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .g-github { stroke: var(--github); }
+  .g-scaleway { stroke: var(--scaleway); }
+  .glabel { font-family: var(--font-display); font-weight: 700; font-size: 14px; }
+  .t-github { fill: var(--github); }
+  .t-scaleway { fill: var(--scaleway); }
+  .t-outside { fill: var(--outside); }
+  .inner { fill: color-mix(in srgb, var(--cost) 10%, var(--surface)); stroke: var(--cost); stroke-width: 1; }
+  .name { fill: var(--fg); font-size: 13px; font-weight: 600; text-anchor: middle; }
+  .name-l { fill: var(--fg); font-size: 13px; font-weight: 600; }
+  .price { font-size: 12px; font-weight: 600; text-anchor: middle; fill: var(--fg); font-variant-numeric: tabular-nums; }
+  .price.free { fill: var(--free); }
+  .price.big { fill: var(--cost); font-size: 14px; }
+  .sub { fill: var(--muted); font-size: 11px; text-anchor: middle; }
+  .sub-l { fill: var(--muted); font-size: 11px; }
+  .edge { fill: none; stroke: var(--line); stroke-width: 1.4; }
+  .edge.costly { stroke: var(--cost); stroke-width: 2; }
+  .elabel { fill: var(--muted); font-size: 11px; }
+  .elabel.costly { fill: var(--cost); font-weight: 600; }
+  .mk { fill: var(--line); }
+  .mk-cost { fill: var(--cost); }
+  .outside-box { stroke: var(--outside); }
+
+  .table-wrap { overflow-x: auto; background: var(--surface); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.92rem; }
+  caption { text-align: left; padding: 14px 16px 0; color: var(--muted); font-size: 0.85rem; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 16px; border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent); }
+  thead th { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  tbody th { font-weight: 600; white-space: nowrap; }
+  tr.group-row th { background: color-mix(in srgb, var(--line) 10%, var(--surface)); font-family: var(--font-display); font-size: 0.85rem; letter-spacing: 0.04em; }
+  td.cost { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+  .pill.free { color: var(--free); background: color-mix(in srgb, var(--free) 12%, transparent); }
+  .pill.cost { color: var(--cost); background: color-mix(in srgb, var(--cost) 12%, transparent); }
+  .pill.small { color: var(--muted); background: color-mix(in srgb, var(--line) 15%, transparent); }
+  .pill.unknown { color: var(--outside); background: color-mix(in srgb, var(--outside) 14%, transparent); }
+  td small { display: block; color: var(--muted); font-weight: 400; }
+
+  .summary { background: var(--surface); border-radius: 14px; padding: 24px; display: grid; gap: 20px; border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
+  .totals { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+  .total { display: grid; gap: 2px; }
+  .total .label { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .total .value { font-family: var(--font-display); font-weight: 700; font-size: 2.1rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .total .note { color: var(--muted); font-size: 0.88rem; }
+  .bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: color-mix(in srgb, var(--line) 20%, transparent); }
+  .bar span { display: block; height: 100%; }
+  .bar .db { background: var(--cost); width: 64%; }
+  .bar .ct { background: color-mix(in srgb, var(--cost) 55%, var(--surface)); width: 35%; }
+  .bar .rest { background: var(--line); width: 1%; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.88rem; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .points { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 80ch; }
+  .alert { color: var(--cost); font-weight: 600; }
+</style>
+
+<main>
+  <header>
+    <span class="eyebrow">v1.4 · Friday 2026/11/13 · brief 033 · bills to 2026/11/12</span>
+    <h1>Coverband running costs</h1>
+    <p class="lead">The architecture services, with what each costs. Scaleway figures come from the real bills (October, and November up to the 12th, projected to a full month); prices are before VAT unless said otherwise.</p>
+  </header>
+
+  <figure>
+    <div class="scroll">
+      <svg viewBox="270 20 1120 560" role="img" aria-label="The architecture diagram with costs. The Serverless SQL Database, about 13.80 euros a month, and the Serverless Container, about 7.50 euros a month, make almost the whole bill. Every GitHub service, the push services and the music APIs are free; the other Scaleway services cost cents a month, and the domain 5.98 euros a year.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="mk"/>
+          </marker>
+          <marker id="arrow-cost" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="mk-cost"/>
+          </marker>
+        </defs>
+
+        <!-- GitHub -->
+        <rect x="290" y="60" width="240" height="420" rx="12" class="group g-github"/>
+        <text x="305" y="84" class="glabel t-github">GitHub · Free plan</text>
+        <rect x="320" y="100" width="180" height="60" rx="8" class="box"/>
+        <text x="410" y="124" class="name">Git repository</text>
+        <text x="410" y="144" class="price free">€0 · public, 4 MB</text>
+        <rect x="320" y="280" width="180" height="70" rx="8" class="box"/>
+        <text x="410" y="304" class="name">Actions</text>
+        <text x="410" y="323" class="price free">€0 · public repo</text>
+        <text x="410" y="340" class="sub">≈ 465 runs a month</text>
+        <rect x="320" y="400" width="180" height="60" rx="8" class="box"/>
+        <text x="410" y="424" class="name">Projects</text>
+        <text x="410" y="444" class="price free">€0</text>
+
+        <!-- Scaleway -->
+        <rect x="565" y="40" width="580" height="450" rx="12" class="group g-scaleway"/>
+        <text x="580" y="64" class="glabel t-scaleway">Scaleway · Paris · ≈ €21.45 a month</text>
+        <rect x="580" y="80" width="140" height="60" rx="8" class="box"/>
+        <text x="650" y="104" class="name">Container Registry</text>
+        <text x="650" y="124" class="price">≈ €0.05 / month</text>
+        <rect x="760" y="80" width="140" height="60" rx="8" class="box"/>
+        <text x="830" y="104" class="name">Cron trigger</text>
+        <text x="830" y="124" class="price free">€0 itself</text>
+        <rect x="940" y="80" width="140" height="60" rx="8" class="box"/>
+        <text x="1010" y="104" class="name">Domains &amp; DNS</text>
+        <text x="1010" y="124" class="price">€5.98 / year</text>
+
+        <rect x="580" y="190" width="550" height="140" rx="10" class="box costly"/>
+        <text x="598" y="214" class="name-l">Serverless Container · 0.56 vCPU, 1 GB, 0 to 2 instances</text>
+        <text x="1112" y="214" class="price big" text-anchor="end" style="text-anchor: end">≈ €7.47 / month</text>
+        <rect x="600" y="228" width="160" height="84" rx="8" class="inner"/>
+        <text x="680" y="258" class="name">REST API</text>
+        <text x="680" y="278" class="sub">one bill for</text>
+        <text x="680" y="294" class="sub">the three apps</text>
+        <rect x="775" y="228" width="160" height="84" rx="8" class="inner"/>
+        <text x="855" y="258" class="name">Coverband PWA</text>
+        <text x="855" y="278" class="sub">≈ 375 instance-hours</text>
+        <text x="855" y="294" class="sub">a month</text>
+        <rect x="950" y="228" width="160" height="84" rx="8" class="inner"/>
+        <text x="1030" y="258" class="name">Admin back office</text>
+        <text x="1030" y="278" class="sub">free tier: −€2.80</text>
+        <text x="1030" y="294" class="sub">a month</text>
+
+        <rect x="580" y="400" width="130" height="60" rx="8" class="box costly"/>
+        <text x="645" y="422" class="name">Serverless SQL</text>
+        <text x="645" y="443" class="price big">≈ €13.82 / mo</text>
+        <rect x="725" y="400" width="130" height="60" rx="8" class="box"/>
+        <text x="790" y="422" class="name">Object Storage</text>
+        <text x="790" y="443" class="price">≈ €0.03 / month</text>
+        <rect x="870" y="400" width="130" height="60" rx="8" class="box"/>
+        <text x="935" y="422" class="name">Email (TEM)</text>
+        <text x="935" y="443" class="price free">€0 · free tier</text>
+        <rect x="1015" y="400" width="115" height="60" rx="8" class="box"/>
+        <text x="1072" y="422" class="name">Cockpit</text>
+        <text x="1072" y="443" class="price">≈ €0.08 / mo</text>
+
+        <!-- Outside -->
+        <text x="1190" y="352" class="glabel t-outside">Third-party services</text>
+        <rect x="1190" y="370" width="180" height="80" rx="8" class="box outside-box"/>
+        <text x="1280" y="398" class="name">Browsers' push services</text>
+        <text x="1280" y="420" class="price free">€0 · no account</text>
+        <text x="1280" y="436" class="sub">payloads up to 4 KB</text>
+        <rect x="1190" y="490" width="180" height="70" rx="8" class="box outside-box"/>
+        <text x="1280" y="516" class="name">Music &amp; lyrics APIs</text>
+        <text x="1280" y="538" class="price free">€0 · free quotas</text>
+
+        <!-- Deploy path -->
+        <line x1="410" y1="160" x2="410" y2="278" class="edge" marker-end="url(#arrow)"/>
+        <polyline points="500,288 545,288 545,110 578,110" class="edge" marker-end="url(#arrow)"/>
+        <text x="553" y="176" class="elabel">push: free</text>
+        <line x1="500" y1="312" x2="578" y2="312" class="edge" marker-end="url(#arrow)"/>
+        <polyline points="500,340 555,340 555,430 578,430" class="edge" marker-end="url(#arrow)"/>
+        <line x1="650" y1="140" x2="650" y2="188" class="edge" marker-end="url(#arrow)"/>
+        <text x="656" y="168" class="elabel">pulls free in Paris</text>
+
+        <!-- Into the container -->
+        <line x1="830" y1="140" x2="830" y2="188" class="edge costly" marker-end="url(#arrow-cost)"/>
+        <text x="836" y="168" class="elabel costly">wakes it nightly</text>
+        <line x1="1010" y1="140" x2="1010" y2="188" class="edge" marker-end="url(#arrow)"/>
+
+        <!-- From the container -->
+        <line x1="645" y1="330" x2="645" y2="398" class="edge costly" marker-end="url(#arrow-cost)"/>
+        <text x="651" y="360" class="elabel costly">≥ 5 min</text>
+        <text x="651" y="374" class="elabel costly">per wake</text>
+        <line x1="790" y1="330" x2="790" y2="398" class="edge" marker-end="url(#arrow)"/>
+        <text x="796" y="368" class="elabel">75 GB out free</text>
+        <line x1="935" y1="330" x2="935" y2="398" class="edge" marker-end="url(#arrow)"/>
+        <text x="941" y="368" class="elabel">300 / month free</text>
+        <line x1="1072" y1="330" x2="1072" y2="398" class="edge" marker-end="url(#arrow)"/>
+        <text x="1078" y="368" class="elabel">intake free</text>
+
+        <!-- To the outside -->
+        <polyline points="1130,288 1160,288 1160,405 1188,405" class="edge" marker-end="url(#arrow)"/>
+        <polyline points="1130,318 1148,318 1148,525 1188,525" class="edge" marker-end="url(#arrow)"/>
+      </svg>
+    </div>
+    <figcaption>Outlined in orange: the two services that make almost the whole bill. The database is billed by the second while it's awake, at least 5 minutes per wake-up, and the container by the second while an instance runs; everything else is free or costs cents. On a phone, the diagram scrolls sideways.</figcaption>
+  </figure>
+
+  <section aria-labelledby="summary">
+    <h2 id="summary">Average cost</h2>
+    <div class="summary">
+      <div class="totals">
+        <div class="total">
+          <span class="label">Per month</span>
+          <span class="value">≈ €21.45</span>
+          <span class="note">before VAT · ≈ €25.74 with 20% VAT</span>
+        </div>
+        <div class="total">
+          <span class="label">Per year</span>
+          <span class="value">≈ €263</span>
+          <span class="note">before VAT, domain included · ≈ €316 with VAT</span>
+        </div>
+        <div class="total">
+          <span class="label">Billed so far</span>
+          <span class="value">€21.20</span>
+          <span class="note">October €14.37 (from the 19th, domain included), November €6.83 to the 12th</span>
+        </div>
+      </div>
+      <div class="bar" role="img" aria-label="Database 64 percent, container 35 percent, everything else 1 percent of the monthly bill"><span class="db"></span><span class="ct"></span><span class="rest"></span></div>
+      <div class="legend"><span><i style="background: var(--cost)"></i>Database 64%</span><span><i style="background: color-mix(in srgb, var(--cost) 55%, var(--surface))"></i>Container 35%</span><span><i style="background: var(--line)"></i>Everything else 1%</span></div>
+      <ul class="points">
+        <li class="alert">The budget alert is set at €20 a month: November is on course to pass it.</li>
+        <li>GitHub and every outside service cost nothing.</li>
+        <li>The bill follows how long the database and the container stay awake, not how much data there is: about 3.3 hours a day for the database and 12.5 instance-hours a day for the container at today's use.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="services">
+    <h2 id="services">Every service</h2>
+    <div class="table-wrap">
+      <table>
+        <caption>Monthly figures for Scaleway are November projected to 30 days, before VAT.</caption>
+        <thead>
+          <tr><th scope="col">Service</th><th scope="col">Characteristics</th><th scope="col">Cost or limitation</th></tr>
+        </thead>
+        <tbody>
+          <tr class="group-row"><th colspan="3" scope="colgroup">GitHub · Free plan</th></tr>
+          <tr><th scope="row">Git repository</th><td>Public, about 4 MB.</td><td class="cost"><span class="pill free">€0</span></td></tr>
+          <tr><th scope="row">Actions</th><td>Standard Linux runners; about 465 runs and 1,280 minutes of runs in the last 30 days (each CI run is 3 jobs in parallel).</td><td class="cost"><span class="pill free">€0</span><small>unlimited for a public repository; a private one gets 2,000 free minutes a month, which CI would exceed</small></td></tr>
+          <tr><th scope="row">Projects</th><td>One board, Epics and sub-issues.</td><td class="cost"><span class="pill free">€0</span></td></tr>
+
+          <tr class="group-row"><th colspan="3" scope="colgroup">Scaleway · Paris</th></tr>
+          <tr><th scope="row">Serverless SQL Database</th><td>PostgreSQL 16, 0 to 1 vCPU, about 0.4 GB stored, 7 days of backups included. Awake about 99 vCPU-hours a month (about 3.3 hours a day at full size).</td><td class="cost"><span class="pill cost">≈ €13.82 / month</span><small>€0.1375 per vCPU-hour awake, at least 5 min per wake-up; €0.20 per GB a month. Worst case, awake 24/7: about €100 a month</small></td></tr>
+          <tr><th scope="row">Serverless Container</th><td>One image for the API, the PWA and the admin app. 0.56 vCPU, 1 GB of memory, 0 to 2 instances, scales to zero. About 375 instance-hours a month.</td><td class="cost"><span class="pill cost">≈ €7.47 / month</span><small>€1.00 per 100,000 vCPU-seconds, €0.20 per 100,000 GB-seconds, after a free 200,000 vCPU-s and 400,000 GB-s a month (−€2.80)</small></td></tr>
+          <tr><th scope="row">Container Registry</th><td>Private namespace, about 1 GB of images.</td><td class="cost"><span class="pill small">≈ €0.05 / month</span><small>€0.027 per GB a month; pulls within Paris free</small></td></tr>
+          <tr><th scope="row">Object Storage</th><td>Standard Multi-AZ bucket, about 1 GB of documents, logos, avatars and exports.</td><td class="cost"><span class="pill small">≈ €0.03 / month</span><small>€0.016 per GB a month; 75 GB of downloads free a month</small></td></tr>
+          <tr><th scope="row">Cockpit</th><td>Container logs kept 30 days, under 1 GB retained.</td><td class="cost"><span class="pill small">≈ €0.08 / month</span><small>ingestion free; €0.002 per GB a day beyond 7 days</small></td></tr>
+          <tr><th scope="row">Transactional Email</th><td>Essential plan; 6 to 17 emails a month so far.</td><td class="cost"><span class="pill free">€0</span><small>300 emails a month free, then €0.25 per 1,000</small></td></tr>
+          <tr><th scope="row">Cron trigger</th><td>One call a night (the activity purge).</td><td class="cost"><span class="pill free">€0 itself</span><small>but each call wakes the container and the database (at least 5 minutes, about €0.35 a month)</small></td></tr>
+          <tr><th scope="row">Domains &amp; DNS</th><td><code>coverband.fr</code>, one DNS zone.</td><td class="cost"><span class="pill small">€5.98 / year</span><small>billed in October</small></td></tr>
+
+          <tr class="group-row"><th colspan="3" scope="colgroup">Third-party services</th></tr>
+          <tr><th scope="row">Browsers' push services</th><td>Google, Mozilla, Apple, Microsoft; reached with our own VAPID key.</td><td class="cost"><span class="pill free">€0</span><small>no account; payloads up to 4 KB; ours wait a day at most</small></td></tr>
+          <tr><th scope="row">LRCLIB</th><td>Lyrics search, no key.</td><td class="cost"><span class="pill free">€0</span><small>no published quota; the app allows 30 searches an hour per member</small></td></tr>
+          <tr><th scope="row">Deezer</th><td>Song details for "Search and add", no key.</td><td class="cost"><span class="pill free">€0</span><small>about 50 requests per 5 seconds per address</small></td></tr>
+          <tr><th scope="row">YouTube Data API</th><td>Videos for "Search and add", our Google Cloud key.</td><td class="cost"><span class="pill free">€0</span><small>10,000 units a day for the whole app (about 99 searches); no paid tier; the app allows 15 a day per band</small></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>

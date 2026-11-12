@@ -43,16 +43,20 @@ test("a PDF, one page for a short setlist, with the bundled font", async () => {
   expect(text).toContain("NotoSans-Bold");
 });
 
-test("parts that don't share a page: as many pages, a logo on the first", async () => {
+test("parts that don't share a page: as many pages, the logo on each, embedded once", async () => {
   const png = await sharp({ create: { width: 300, height: 600, channels: 4, background: "#08f" } })
     .png()
     .toBuffer();
-  const bytes = await renderPdf(documentOf([20, 20, 50]), {
-    logo: { png: new Uint8Array(png), width: 300, height: 600 },
-    generatedOn: "12 novembre 2026",
-  });
+  const logo = { png: new Uint8Array(png), width: 300, height: 600 };
+  const pdfOf = (songCounts: number[]) =>
+    renderPdf(documentOf(songCounts), { logo, generatedOn: "12 novembre 2026" });
+  const images = (bytes: Uint8Array) =>
+    new TextDecoder("latin1").decode(bytes).match(/\/Subtype \/Image/g)?.length ?? 0;
+  const bytes = await pdfOf([20, 20, 24]);
   expect(pagesOf(bytes)).toBe(3);
-  expect(new TextDecoder("latin1").decode(bytes)).toContain("/Subtype /Image");
+  // The main header on every page, its logo embedded only once (with its transparency mask).
+  expect(images(bytes)).toBeGreaterThan(0);
+  expect(images(bytes)).toBe(images(await pdfOf([8])));
 });
 
 test("printableKey: sharps and flats the font can write", () => {

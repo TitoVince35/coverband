@@ -17,6 +17,7 @@ import { bandQuery } from "@/lib/bands";
 import { errorMessage, replacesData } from "@/lib/errors";
 import { playingOrder, useLeaveFullscreenOnClose } from "@/lib/live";
 import {
+  LIVE_DOCUMENTS_ENABLED,
   type LiveDocument,
   liveDocuments,
   readAllDocuments,
@@ -82,6 +83,7 @@ function useSavedDocuments(online: boolean) {
   const [saved, setSaved] = useState<Set<string>>(new Set());
   // biome-ignore lint/correctness/useExhaustiveDependencies: read again when `online` changes.
   useEffect(() => {
+    if (!LIVE_DOCUMENTS_ENABLED) return;
     let done = false;
     void savedDocumentIds().then((ids) => !done && setSaved(ids));
     return () => {
@@ -122,14 +124,17 @@ function LiveContent({
   const shown = lyricsAt === null ? null : order[lyricsAt];
   // Where each part starts in the playing order.
   const starts = setlist.parts.map((_, p) => order.findIndex((place) => place.part === p));
-  // Each song's photos with a button (#309): online any, offline the saved ones.
+  // Each song's photos with a button (#309): online any, offline the saved ones; none while
+  // documents are off (#315).
   const documentsOf = (songId: string, everyInstrument = all) =>
-    liveDocuments(detailsOf.get(songId)?.documents ?? [], {
-      mine: instruments,
-      all: everyInstrument,
-      canOpen: (id) => online || saved.has(id),
-      language,
-    });
+    !LIVE_DOCUMENTS_ENABLED
+      ? []
+      : liveDocuments(detailsOf.get(songId)?.documents ?? [], {
+          mine: instruments,
+          all: everyInstrument,
+          canOpen: (id) => online || saved.has(id),
+          language,
+        });
   // The switch only when it would change something.
   const someNotMine = songs.some(
     (song) => documentsOf(song.id, true).length > documentsOf(song.id, false).length,
@@ -173,15 +178,15 @@ function LiveContent({
         return (
           // biome-ignore lint/suspicious/noArrayIndexKey: read-only, parts never move here.
           <section key={p} aria-label={name} className="space-y-1">
-            <div className="flex items-baseline justify-between gap-3 border-b pb-1">
-              <h2 className="font-bold font-heading text-xl">{name}</h2>
+            {/* A light separator: the part's name, a thin line, its duration. */}
+            <div className="flex items-center gap-3 text-muted-foreground text-sm">
+              <h2 className="min-w-0 wrap-anywhere font-normal">{name}</h2>
+              <span aria-hidden="true" className="h-px flex-1 bg-border" />
               {part.songs.length > 0 && (
-                <span className="shrink-0 text-muted-foreground text-sm">
-                  {songsDuration(t, part.songs)}
-                </span>
+                <span className="shrink-0">{songsDuration(t, part.songs)}</span>
               )}
             </div>
-            <ol className="divide-y">
+            <ol>
               {part.songs.map((song, i) => (
                 <LiveSongRow
                   // biome-ignore lint/suspicious/noArrayIndexKey: read-only; a song may be played twice.
@@ -265,8 +270,8 @@ function LyricsSteps({
 }
 
 /**
- * One song: its index, title and artist, then its tempo and key and its buttons (lyrics, #308;
- * photos, #309); its notes under it.
+ * One song: its index, title and artist with its lyrics button beside (#308), then its tempo and key
+ * and its photos (#309); its notes under it.
  */
 function LiveSongRow({
   index,
@@ -291,28 +296,28 @@ function LiveSongRow({
     .filter(Boolean)
     .join(" · ");
   return (
-    <li className="flex gap-3 py-3">
-      <span className="w-6 shrink-0 pt-1 text-right text-muted-foreground tabular-nums">
-        {index}
-      </span>
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="break-words text-xl leading-snug">
-          <span className="font-bold">{song.title}</span>
-          <span className="text-base text-muted-foreground"> · {song.artist}</span>
-        </p>
-        {(details || hasLyrics || documents.length > 0) && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <li className="flex gap-2 py-1">
+      <span className="w-5 shrink-0 pt-1 text-muted-foreground tabular-nums">{index}</span>
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <div className="flex items-center gap-2">
+          <p className="min-w-0 flex-1 wrap-anywhere text-xl leading-snug">
+            <span className="font-bold">{song.title}</span>
+            <span className="text-base text-muted-foreground"> · {song.artist}</span>
+          </p>
+          {hasLyrics && (
+            <Button
+              variant="outline"
+              className="-my-2 size-11 shrink-0"
+              aria-label={t("setlists.live.lyrics")}
+              onClick={onLyrics}
+            >
+              <MicVocal className="size-5" />
+            </Button>
+          )}
+        </div>
+        {(details || documents.length > 0) && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {details && <span className="text-muted-foreground">{details}</span>}
-            {hasLyrics && (
-              <Button
-                variant="outline"
-                className="size-11"
-                aria-label={t("setlists.live.lyrics")}
-                onClick={onLyrics}
-              >
-                <MicVocal className="size-5" />
-              </Button>
-            )}
             {documents.map(({ document, instrument, label }) => (
               <Button
                 key={document.id}

@@ -1,6 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { PDF_EXAMPLES } from "./pdf-examples";
-import { fitText, layoutScale, layoutSetlist, MIN_SCALE, PAGE, partHeight } from "./pdf-layout";
+import {
+  AREA,
+  fitText,
+  layoutScale,
+  layoutSetlist,
+  MIN_SCALE,
+  PAGE,
+  partHeight,
+  SIZES,
+} from "./pdf-layout";
 
 /** Where each part went: its page and columns. */
 const placesOf = (songCounts: number[]) => {
@@ -28,8 +37,26 @@ describe("layoutSetlist", () => {
     expect(placesOf([24, 12, 10]).places).toEqual([
       { part: 0, page: 0, columns: 2 },
       { part: 1, page: 1, columns: 1 },
-      { part: 2, page: 1, columns: 1 },
+      { part: 2, page: 1, columns: 2 },
     ]);
+  });
+
+  test("every page starts under the main header", () => {
+    for (const page of layoutSetlist([24, 12, 10]).pages) {
+      expect(page[0]?.top).toBe(AREA.top);
+    }
+  });
+
+  test("parts a few lines apart when the page has room, closer when it hasn't", () => {
+    const gapAfterFirst = (songCounts: number[]) => {
+      const [first, second] = layoutSetlist(songCounts).pages[0] ?? [];
+      if (!first || !second) throw new Error("expected two parts on the first page");
+      return second.top - (first.top + partHeight(songCounts[0] ?? 0, first.columns, 1));
+    };
+    expect(gapAfterFirst([8, 6])).toBe(SIZES.partSpace);
+    // 12 songs then 7: only the smaller gap leaves room for the second part on one column.
+    expect(layoutSetlist([12, 7]).pages[0]?.map((part) => part.columns)).toEqual([1, 1]);
+    expect(gapAfterFirst([12, 7])).toBe(SIZES.partGap);
   });
 
   test("two columns rather than a new page when that keeps the part on this page", () => {
@@ -63,7 +90,8 @@ describe("layoutSetlist", () => {
     expect(scale).toBeLessThan(1);
     expect(scale).toBeGreaterThanOrEqual(MIN_SCALE);
     expect(places).toEqual([{ part: 0, page: 0, columns: 2 }]);
-    expect(layoutScale([12, 50])).toBeGreaterThan(scale);
+    // Every page has the main header: the same scale wherever the part is.
+    expect(layoutScale([12, 50])).toBe(scale);
   });
 
   test("an empty part takes only its header", () => {

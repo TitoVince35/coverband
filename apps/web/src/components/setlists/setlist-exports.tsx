@@ -19,7 +19,7 @@ type Props = {
 
 /**
  * A setlist's live mode (brief 031: Live, offline too) and exports (brief 030): Print opens the PDF in a new tab, where the browser prints it
- * (#298); "Export to docx" downloads a raw document to edit (#297). Made by the server, so turned
+ * (#298); "docx" downloads a raw document to edit (#297). Made by the server, so turned
  * off offline (the offline banner says why), and wait while changes are being saved.
  */
 export function SetlistExports({ bandSlug, setlist, saved = true }: Props) {

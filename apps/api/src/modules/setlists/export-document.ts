@@ -167,7 +167,7 @@ export function headerSummary(document: Pick<ExportDocument, "songCount" | "dura
  * Raised when a renderer's output changes for the same document, so files made before are made
  * again: part of every fingerprint.
  */
-export const RENDERER_VERSIONS: Record<SetlistExportFormat, number> = { pdf: 4, docx: 4 };
+export const RENDERER_VERSIONS: Record<SetlistExportFormat, number> = { pdf: 5, docx: 4 };
 
 /** The hash of everything a file of this format would show: the same one, the same file. */
 export function exportFingerprint(document: ExportDocument, format: SetlistExportFormat) {

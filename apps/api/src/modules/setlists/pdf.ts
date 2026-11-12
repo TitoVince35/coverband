@@ -26,7 +26,7 @@ const INK = "#111111";
 const MUTED = "#555555";
 const RULE = "#999999";
 
-/** The logo's box on the first page: a third of the width at most. */
+/** The logo's box in the main header: a third of the width at most. */
 const LOGO_BOX = { width: CONTENT_WIDTH / 3, height: MAIN_HEADER_HEIGHT - 24 };
 
 type Pdf = PDFKit.PDFDocument;
@@ -102,14 +102,17 @@ function songTwoLines(
   pdf.fillColor(MUTED).text(artist, x + indexWidth, baseline - small, { lineBreak: false });
 }
 
-function mainHeader(pdf: Pdf, document: ExportDocument, logo: ExportLogo | null) {
+/** A logo for the main header: the image as a data URL, which PDFKit embeds once for every page. */
+type HeaderLogo = { src: string; width: number; height: number };
+
+function mainHeader(pdf: Pdf, document: ExportDocument, logo: HeaderLogo | null) {
   const top = PAGE.margin;
   let left = PAGE.margin;
   if (logo) {
     const scale = Math.min(LOGO_BOX.width / logo.width, LOGO_BOX.height / logo.height);
     const width = logo.width * scale;
     const height = logo.height * scale;
-    pdf.image(Buffer.from(logo.png), left, top + (LOGO_BOX.height - height) / 2, {
+    pdf.image(logo.src, left, top + (LOGO_BOX.height - height) / 2, {
       width,
       height,
     });
@@ -130,11 +133,6 @@ function mainHeader(pdf: Pdf, document: ExportDocument, logo: ExportLogo | null)
   // Brief 030's MainHeader: the title and the date, then the band, the songs and the duration.
   line(document.title, document.date, middle - 34, 26, true);
   line(document.band, headerSummary(document), middle + 6, 15, false);
-  pdf
-    .moveTo(PAGE.margin, top + MAIN_HEADER_HEIGHT - 14)
-    .lineTo(right, top + MAIN_HEADER_HEIGHT - 14)
-    .lineWidth(1.2)
-    .stroke(INK);
 }
 
 function partHeader(pdf: Pdf, name: string, duration: string | null, top: number, s: number) {
@@ -162,7 +160,7 @@ function footer(pdf: Pdf, text: string) {
 }
 
 /**
- * The PDF to print (#298): A4, the main header on the first page, each part whole on a page
+ * The PDF to print (#298): A4, the main header on every page, each part whole on a page
  * (`layoutSetlist`), song titles large and bold, a footer on every page saying when it was made.
  */
 export async function renderPdf(
@@ -196,9 +194,14 @@ export async function renderPdf(
   const layout = layoutSetlist(document.parts.map((part) => part.songs.length));
   const s = layout.scale;
   const footerText = EXPORT_TEXTS[document.language].footer(generatedOn);
-  layout.pages.forEach((placed, page) => {
+  const headerLogo = logo && {
+    src: `data:image/png;base64,${Buffer.from(logo.png).toString("base64")}`,
+    width: logo.width,
+    height: logo.height,
+  };
+  for (const placed of layout.pages) {
     pdf.addPage({ size: "A4", margin: 0 });
-    if (page === 0) mainHeader(pdf, document, logo);
+    mainHeader(pdf, document, headerLogo);
     for (const { part: index, top, columns, rows } of placed) {
       const part = document.parts[index];
       if (!part) continue;
@@ -219,7 +222,7 @@ export async function renderPdf(
       }
     }
     footer(pdf, footerText);
-  });
+  }
   pdf.end();
   await ended;
   return new Uint8Array(Buffer.concat(chunks));

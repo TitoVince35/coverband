@@ -45,3 +45,9 @@ Checked against `infra/` and the code:
 ## Result
 
 The diagram: [Coverband architecture](https://claude.ai/artifact/PxD1bMuYLdTpSo2CTipAR7) (a private artifact, shared from its Share menu).
+
+## Versions
+
+The page's source is in `doc/diagrams/`; the `infra-diagrams` skill regenerates and republishes it, adding a line here for each version.
+
+- **v1.0**, Thursday 2026/11/12: first version (app version 0.13.0).
