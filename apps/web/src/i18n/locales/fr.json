@@ -344,7 +344,7 @@
     },
     "export": {
       "print": "Imprimer",
-      "docx": "Exporter en docx"
+      "docx": "docx"
     },
     "byChanged": "Par {{name}} · modifiée le {{date}}",
     "archivedOn": "Archivée le {{date}}",
