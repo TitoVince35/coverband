@@ -195,6 +195,15 @@ describe.skipIf(!databaseUrl)("setlist exports (brief 030, #297)", () => {
     expect((await exportOf("lea")).status).toBe(200);
   });
 
+  test("the PDF opens in the browser (inline), with its own stored file", async () => {
+    const res = await call(`/bands/${slug}/setlists/${setlistId}/exports/pdf?lang=en`, "lea");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/pdf");
+    expect(res.headers.get("content-disposition")).toStartWith('inline; filename="Wedding.pdf"');
+    expect(new TextDecoder().decode((await res.arrayBuffer()).slice(0, 5))).toBe("%PDF-");
+    expect(await exportRows()).toHaveLength(3);
+  });
+
   test("non-members get a 404; an unknown format or setlist too", async () => {
     expect((await exportOf("zoe")).status).toBe(404);
     expect((await call(`/bands/${slug}/setlists/${setlistId}/exports/odt`, "max")).status).toBe(

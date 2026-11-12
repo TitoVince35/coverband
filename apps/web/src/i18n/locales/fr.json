@@ -330,6 +330,7 @@
     "actions": "Actions pour {{title}}",
     "by": "Par {{name}}",
     "export": {
+      "print": "Imprimer",
       "docx": "Exporter en docx"
     },
     "byChanged": "Par {{name}} · modifiée le {{date}}",
