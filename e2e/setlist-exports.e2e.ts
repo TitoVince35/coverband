@@ -58,8 +58,8 @@ test("Print opens the PDF in a new tab; offline, it is turned off (#298)", async
   await expect(print).toHaveAttribute("target", "_blank");
   const href = (await print.getAttribute("href")) ?? "";
   expect(href).toMatch(/\/exports\/pdf\?lang=en&tz=/);
+  // A new tab: what it shows depends on the browser (headless Chromium downloads a PDF instead).
   const [tab] = await Promise.all([leader.context().waitForEvent("page"), print.click()]);
-  await tab.waitForURL(/\/exports\/pdf/, { waitUntil: "commit" });
   const pdf = await leader.request.get(href);
   expect(pdf.headers()["content-type"]).toBe("application/pdf");
   expect(pdf.headers()["content-disposition"]).toContain('inline; filename="Wedding.pdf"');
