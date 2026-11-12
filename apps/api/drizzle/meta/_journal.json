@@ -141,6 +141,13 @@
       "when": 1794351725448,
       "tag": "0019_setlist_parts_songs",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794489666237,
+      "tag": "0020_setlist_exports",
+      "breakpoints": true
     }
   ]
 }

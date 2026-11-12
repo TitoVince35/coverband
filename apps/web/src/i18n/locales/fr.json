@@ -329,6 +329,9 @@
     "back": "Setlists",
     "actions": "Actions pour {{title}}",
     "by": "Par {{name}}",
+    "export": {
+      "docx": "Exporter en docx"
+    },
     "byChanged": "Par {{name}} · modifiée le {{date}}",
     "archivedOn": "Archivée le {{date}}",
     "fields": {

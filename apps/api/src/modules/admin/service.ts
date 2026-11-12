@@ -39,6 +39,7 @@ import { bandJournal, type JournalSource } from "../journal/service";
 import { lineupOf } from "../members/service";
 import { pushDeviceCounts, pushDevicesOf } from "../notifications/service";
 import { ownAvatarKey } from "../profile/service";
+import { bandExportKeys } from "../setlists/service";
 import { bandDocumentKeys, bandRepertoireTotals, repertoireTotals } from "../songs/service";
 
 /** How many of a band's latest events its admin page shows. */
@@ -69,8 +70,8 @@ export async function adminBandDetails(db: Db, id: string, sources: readonly Jou
 
 /**
  * An admin deletes a disabled band for good (#248), its name typed to confirm: the band and
- * everything in it in one transaction, then its files in storage (documents, logo). A file that
- * can't be deleted is only an orphan: logged, the deletion stands.
+ * everything in it in one transaction, then its files in storage (documents, setlist exports,
+ * logo). A file that can't be deleted is only an orphan: logged, the deletion stands.
  */
 export async function deleteBand(
   { db, storage, log }: Pick<AppDeps, "db" | "storage" | "log">,
@@ -80,8 +81,9 @@ export async function deleteBand(
 ) {
   const keys = await db.transaction(async (tx) => {
     const documents = await bandDocumentKeys(tx, id);
+    const exports = await bandExportKeys(tx, id);
     const logo = await deleteDisabledBand(tx, id, name, actorId);
-    return [...documents, ...logo];
+    return [...documents, ...exports, ...logo];
   });
   for (const key of keys) {
     try {
