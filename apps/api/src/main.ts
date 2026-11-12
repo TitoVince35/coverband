@@ -8,7 +8,7 @@ import { createWebPushSender, PUSH_SERVICE_HOSTS, vapidKeys, vapidSubject } from
 import { createS3Storage } from "./adapters/storage";
 import { createYoutubeSearch } from "./adapters/youtube";
 import { createApp } from "./app";
-import { ensureAdmin } from "./bootstrap";
+import { defaultAdminOnce } from "./bootstrap";
 import { createDb } from "./core/db/client";
 import { createLogger } from "./core/log";
 import { loadEnv, logConfig, s3Config, smtpConfig } from "./env";
@@ -28,11 +28,6 @@ const auth = createAuth({
   trustedOrigins: [...env.TRUSTED_ORIGINS, ...(env.ADMIN_URL ? [env.ADMIN_URL] : [])],
   clientIpHeader: env.CLIENT_IP_HEADER,
 });
-
-if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
-  const result = await ensureAdmin(auth, { email: env.ADMIN_EMAIL, password: env.ADMIN_PASSWORD });
-  log.info(result === "created" ? "Default admin created" : "Default admin exists");
-}
 
 const pushKeys =
   env.VAPID_PRIVATE_KEY &&
@@ -71,6 +66,15 @@ const app = createApp({
       },
     }),
     buildInfo: { version: rootPackage.version, build: env.BUILD_SHA },
+    // Not at startup: a container start would wake the database for nothing.
+    ...(env.ADMIN_EMAIL &&
+      env.ADMIN_PASSWORD && {
+        defaultAdmin: defaultAdminOnce(
+          auth,
+          { email: env.ADMIN_EMAIL, password: env.ADMIN_PASSWORD },
+          log,
+        ),
+      }),
     ...(env.BETA_ACCESS_CODE && {
       access: {
         code: env.BETA_ACCESS_CODE,

@@ -33,6 +33,8 @@ export type AppDeps = {
   trustedOrigins?: string[];
   /** Version and build of the running release (`/api/health`). */
   buildInfo: BuildInfo;
+  /** Creates the default admin if missing, before the first login attempt (`defaultAdminOnce`). */
+  defaultAdmin?: () => Promise<void>;
   /** Other hostnames of the container, redirected to appUrl (the bare domain). */
   redirectHosts?: string[];
   /** Secret of the cron jobs' routes (/api/internal); absent: no such routes. */

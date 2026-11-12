@@ -1,10 +1,10 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import { APP_NAME } from "@coverband/shared";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, like } from "drizzle-orm";
 import { Hono } from "hono";
 import { createApp } from "../app";
-import { ensureAdmin } from "../bootstrap";
-import { users, verifications } from "../core/db/schema";
+import { defaultAdminOnce, ensureAdmin } from "../bootstrap";
+import { rateLimits, users, verifications } from "../core/db/schema";
 import { requestLog } from "../core/http/request-log";
 import { loadSession, requireAdmin, requireUser, type SessionEnv } from "../core/http/session";
 import { createMemoryLogger, silentLogger } from "../core/log";
@@ -64,6 +64,69 @@ describe.skipIf(!databaseUrl)("authentication", () => {
     );
     expect((await login(adminEmail, password)).status).toBe(200);
     expect((await login(adminEmail, "another password!")).status).toBe(401);
+  });
+
+  test("the default admin is created before the first login attempt, once, never at startup", async () => {
+    const lazyEmail = `lazy-admin-${run}@test.localhost`;
+    const { log, entries } = createMemoryLogger();
+    const defaultAdmin = defaultAdminOnce(auth, { email: lazyEmail, password }, log);
+    const lazyApp = createApp({ deps: { ...deps, defaultAdmin } });
+    try {
+      // Reading the session or anything else creates nothing: no database wake-up for that.
+      await lazyApp.request("/api/auth/get-session");
+      await lazyApp.request("/api/health");
+      expect(entries.filter((entry) => String(entry.msg).startsWith("Default admin"))).toEqual([]);
+      // The first login attempt creates it, and logs in.
+      const first = await lazyApp.request("/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: "http://localhost:3000" },
+        body: JSON.stringify({ email: lazyEmail, password }),
+      });
+      expect(first.status).toBe(200);
+      await defaultAdmin();
+      expect(entries.map((entry) => entry.msg)).toEqual(["Default admin created"]);
+    } finally {
+      await db.delete(users).where(eq(users.email, lazyEmail));
+    }
+  });
+
+  test("reading the session never writes a rate limit row; logging in still counts", async () => {
+    const limited = createAuth({
+      db,
+      log: silentLogger,
+      mailer,
+      secret: "test-secret-test-secret-test-secret",
+      baseURL: "http://localhost:3000",
+    });
+    // A documentation address (RFC 5737), random so runs don't share counters.
+    const ip = `203.0.113.${Math.floor(Math.random() * 250) + 1}`;
+    const call = (path: string, init: RequestInit = {}) =>
+      limited.handler(
+        new Request(`http://localhost:3000/api/auth${path}`, {
+          ...init,
+          headers: {
+            "content-type": "application/json",
+            origin: "http://localhost:3000",
+            "x-forwarded-for": ip,
+          },
+        }),
+      );
+    const rows = () =>
+      db
+        .select({ key: rateLimits.key })
+        .from(rateLimits)
+        .where(like(rateLimits.key, `${ip}%`));
+    try {
+      for (let i = 0; i < 3; i++) expect((await call("/get-session")).status).toBe(200);
+      expect(await rows()).toEqual([]);
+      await call("/sign-in/email", {
+        method: "POST",
+        body: JSON.stringify({ email: userEmail, password: "wrong password!" }),
+      });
+      expect((await rows()).map((row) => row.key)).toEqual([`${ip}|/sign-in/email`]);
+    } finally {
+      await db.delete(rateLimits).where(like(rateLimits.key, `${ip}|%`));
+    }
   });
 
   test("public sign-up is refused", async () => {

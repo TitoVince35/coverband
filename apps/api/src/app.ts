@@ -147,6 +147,14 @@ export function createApp({ deps, webDistDir, adminDistDir }: AppOptions) {
   // An admin viewing the app as another user changes nothing (#214), Better Auth included.
   app.use("/api/*", impersonationReadOnly(deps.auth));
 
+  // The default admin, created if missing before the first login attempt (never at startup).
+  const { defaultAdmin } = deps;
+  if (defaultAdmin) {
+    app.post("/api/auth/sign-in/*", async (_, next) => {
+      await defaultAdmin();
+      await next();
+    });
+  }
   // Better Auth endpoints (login, logout, session...), called by the web app's auth client.
   app.on(["GET", "POST"], "/api/auth/*", (c) => deps.auth.handler(c.req.raw));
   app.route("/api", createApi(deps));
