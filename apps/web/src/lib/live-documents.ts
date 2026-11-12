@@ -7,6 +7,12 @@ import {
   type Language,
 } from "@coverband/shared";
 
+/**
+ * Whether live mode shows documents at all (#315: off for now, only the lyrics button stays).
+ * Turning it back on brings back the photo buttons and the "All instruments" switch.
+ */
+export const LIVE_DOCUMENTS_ENABLED: boolean = false;
+
 /** A short title: about 12 characters, cut with "…". */
 export const SHORT_TITLE_LENGTH = 12;
 
