@@ -1,5 +1,5 @@
 import { AArrowDown, AArrowUp, CaseUpper, XIcon } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -16,7 +16,10 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   title: string;
-  lyrics: string;
+  /** None: the song has no lyrics, and the view says so (live mode's next song, #308). */
+  lyrics: string | null;
+  /** Under the lyrics: live mode's previous and next song (#308). */
+  footer?: ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -26,7 +29,7 @@ type Props = {
  * text size (−/+) and capitals (#296: shown, never saved, in the lyrics) are remembered on the
  * device.
  */
-export function LyricsView({ title, lyrics, open, onOpenChange }: Props) {
+export function LyricsView({ title, lyrics, footer, open, onOpenChange }: Props) {
   const { t } = useTranslation();
   const [size, setSize] = useState(readLyricsSize);
   const [uppercase, setUppercase] = useState(readLyricsUppercase);
@@ -47,7 +50,7 @@ export function LyricsView({ title, lyrics, open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="inset-0 h-dvh max-w-none translate-x-0 translate-y-0 grid-rows-[auto_minmax(0,1fr)] gap-0 rounded-none bg-background p-0 ring-0 sm:max-w-none"
+        className="inset-0 h-dvh max-w-none translate-x-0 translate-y-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 rounded-none bg-background p-0 ring-0 sm:max-w-none"
       >
         <div className="flex items-center gap-2 border-b px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-2">
           <DialogTitle className="min-w-0 flex-1 truncate font-heading text-base">
@@ -96,14 +99,25 @@ export function LyricsView({ title, lyrics, open, onOpenChange }: Props) {
           </Button>
         </div>
         <div
+          // Another song's lyrics start at the top.
+          key={title}
           className={cn(
             "overflow-y-auto whitespace-pre-wrap break-words px-5 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] leading-snug",
             uppercase && "uppercase",
           )}
           style={{ fontSize: size }}
         >
-          {lyrics}
+          {lyrics ?? (
+            <p className="text-base text-muted-foreground">{t("songs.lyrics.view.none")}</p>
+          )}
         </div>
+        {footer ? (
+          <div className="border-t px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+            {footer}
+          </div>
+        ) : (
+          <div />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -260,7 +260,8 @@
         "description": "Les paroles, en plein écran.",
         "smaller": "Texte plus petit",
         "larger": "Texte plus grand",
-        "uppercase": "Majuscules"
+        "uppercase": "Majuscules",
+        "none": "Pas de paroles pour ce morceau."
       },
       "web": {
         "button": "Chercher sur le web",
@@ -331,6 +332,9 @@
     "actions": "Actions pour {{title}}",
     "by": "Par {{name}}",
     "live": {
+      "lyrics": "Paroles",
+      "previous": "Morceau précédent : {{title}}",
+      "next": "Morceau suivant : {{title}}",
       "button": "Live",
       "exit": "Quitter le mode live",
       "notesMore": "Afficher toutes les notes"
