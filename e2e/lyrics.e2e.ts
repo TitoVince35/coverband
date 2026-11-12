@@ -72,17 +72,27 @@ test("lyrics found online, previewed, used, then edited and viewed full screen",
   // Still credited: fetched, then fixed.
   await expect(leader.getByText("Lyrics from LRCLIB")).toBeVisible();
 
-  // Full screen for the stage: a larger text, remembered on the device.
+  // Full screen for the stage: a larger text in capitals (#296), both remembered on the device.
   await leader.getByRole("button", { name: "View", exact: true }).click();
   const view = leader.getByRole("dialog", { name: "Zombie" });
   const text = view.getByText("And the violence caused such silence");
+  const capitals = view.getByRole("button", { name: "Capitals" });
   await expect(text).toHaveCSS("font-size", "26px");
+  await expect(text).toHaveCSS("text-transform", "none");
+  await expect(capitals).toHaveAttribute("aria-pressed", "false");
   await view.getByRole("button", { name: "Larger text" }).click();
+  await capitals.click();
   await expect(text).toHaveCSS("font-size", "32px");
+  await expect(text).toHaveCSS("text-transform", "uppercase");
   await view.getByRole("button", { name: "Close" }).click();
   await expect(leader.getByRole("dialog")).toHaveCount(0);
   await leader.getByRole("button", { name: "View", exact: true }).click();
   await expect(text).toHaveCSS("font-size", "32px");
+  await expect(text).toHaveCSS("text-transform", "uppercase");
+  await expect(capitals).toHaveAttribute("aria-pressed", "true");
+  // Back to the lyrics as written.
+  await capitals.click();
+  await expect(text).toHaveCSS("text-transform", "none");
   await leader.keyboard.press("Escape");
   await expect(leader.getByRole("dialog")).toHaveCount(0);
 });

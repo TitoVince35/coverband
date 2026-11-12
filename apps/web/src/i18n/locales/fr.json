@@ -259,7 +259,8 @@
         "button": "Afficher",
         "description": "Les paroles, en plein écran.",
         "smaller": "Texte plus petit",
-        "larger": "Texte plus grand"
+        "larger": "Texte plus grand",
+        "uppercase": "Majuscules"
       },
       "web": {
         "button": "Chercher sur le web",
