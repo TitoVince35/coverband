@@ -96,3 +96,30 @@ export const setlistSongs = pgTable(
     index().on(table.songId),
   ],
 );
+
+/**
+ * A setlist's exported files (brief 030, #297): the latest one per format and language, kept in
+ * the band's bucket. `fingerprint` is the hash of everything the file shows: the same one serves
+ * the stored file, another makes a new file, which replaces this one (the old file is deleted).
+ * Deleting the setlist or the band deletes the rows; their service deletes the files.
+ */
+export const setlistExports = pgTable(
+  "setlist_exports",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    bandId: uuid()
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    setlistId: uuid()
+      .notNull()
+      .references(() => setlists.id, { onDelete: "cascade" }),
+    // A SETLIST_EXPORT_FORMATS code, and a LANGUAGES code.
+    format: text().notNull(),
+    language: text().notNull(),
+    fingerprint: text().notNull(),
+    fileKey: text().notNull(),
+    size: integer().notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique().on(table.setlistId, table.format, table.language), index().on(table.bandId)],
+);

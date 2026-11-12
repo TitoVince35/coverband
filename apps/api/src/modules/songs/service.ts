@@ -116,6 +116,8 @@ export async function setlistSongsOf(db: Db | Tx, bandId: string, ids: readonly 
       ownDuration: songs.ownDuration,
       status: songs.status,
       energy: songs.energy,
+      key: songs.key,
+      bandKey: songs.bandKey,
       archivedAt: songs.archivedAt,
     })
     .from(songs)
@@ -131,6 +133,8 @@ export type SetlistSong = {
   ownDuration: number | null;
   status: SongStatus;
   energy: number | null;
+  key: MusicalKey | null;
+  bandKey: MusicalKey | null;
   archivedAt: Date | null;
 };
 

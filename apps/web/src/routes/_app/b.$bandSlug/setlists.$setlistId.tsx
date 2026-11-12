@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ListSkeleton } from "@/components/loading";
 import { SetlistEditor } from "@/components/setlists/setlist-editor";
+import { SetlistExports } from "@/components/setlists/setlist-exports";
 import { SetlistMenu } from "@/components/setlists/setlist-menu";
 import { Button } from "@/components/ui/button";
 import { errorMessage, replacesData } from "@/lib/errors";
@@ -51,6 +52,7 @@ function SetlistPage() {
             </div>
             <SetlistMenu bandSlug={bandSlug} setlist={setlist.data} />
           </div>
+          <SetlistExports bandSlug={bandSlug} setlist={setlist.data} />
           {setlist.data.archivedAt && (
             <ArchivedSetlistBanner bandSlug={bandSlug} setlistId={setlistId} />
           )}

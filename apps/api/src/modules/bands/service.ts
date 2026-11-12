@@ -7,9 +7,14 @@ import { isUniqueViolation } from "../../core/db/pg-errors";
 import { bandMembers, bands, users } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
 import { instrumentsByBand, writeInstruments } from "../instruments/service";
-import { logoOf } from "./logo";
+import { logoOf, ownLogoKey } from "./logo";
 
 export type Band = typeof bands.$inferSelect;
+
+/** The storage key of the band's full-size logo (for print, brief 030), or null. */
+export function bandLogoKey(band: Pick<Band, "id" | "logoKey">): string | null {
+  return ownLogoKey(band.id, band.logoKey);
+}
 
 /** A user's bands by name, with their role and their instruments in each, suspended ones too. */
 export async function bandsOf(db: Db, userId: string) {
