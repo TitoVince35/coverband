@@ -19,6 +19,7 @@ import {
   type ExportDocument,
   type ExportPart,
   type ExportSong,
+  headerSummary,
 } from "./export-document";
 
 /** A logo ready for a document: PNG bytes and their size in pixels. */
@@ -67,11 +68,16 @@ function mainHeader(document: ExportDocument, logo: ExportLogo | null) {
     children: [
       spread(
         [new TextRun({ text: document.title, bold: true, size: 36 })],
-        document.duration,
+        document.date,
         infoWidth - 200,
         24,
       ),
-      spread([new TextRun({ text: document.band, size: 24 })], document.date, infoWidth - 200, 24),
+      spread(
+        [new TextRun({ text: document.band, size: 24 })],
+        headerSummary(document),
+        infoWidth - 200,
+        24,
+      ),
     ],
   });
   const cells = logo
@@ -102,6 +108,7 @@ function songLine(song: ExportSong, document: ExportDocument) {
   const details = [
     song.artist,
     song.energy === null ? null : EXPORT_TEXTS[document.language].energy(song.energy),
+    song.tempo,
     song.key,
     song.duration,
   ].filter((detail): detail is string => detail !== null);

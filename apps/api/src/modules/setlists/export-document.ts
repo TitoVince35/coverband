@@ -17,6 +17,8 @@ import {
 export type ExportDocument = {
   language: Language;
   title: string;
+  /** How many songs it has: "12 songs". */
+  songCount: string;
   /** "1 h 52 min (2 songs without a duration)", or null for a setlist without songs. */
   duration: string | null;
   band: string;
@@ -36,6 +38,8 @@ export type ExportSong = {
   artist: string;
   /** 1 to MAX_ENERGY, or null. */
   energy: number | null;
+  /** "120 BPM", or null. */
+  tempo: string | null;
   /** In chord notation ("Em"): the band's key when it transposes, else the original. */
   key: string | null;
   /** "4:05": the band's own duration, else the original. */
@@ -47,6 +51,7 @@ export const EXPORT_TEXTS: Record<
   Language,
   {
     part: (n: number) => string;
+    songs: (count: number) => string;
     hoursMinutes: (hours: number, minutes: number) => string;
     minutes: (minutes: number) => string;
     withoutDuration: (count: number) => string;
@@ -56,6 +61,7 @@ export const EXPORT_TEXTS: Record<
 > = {
   en: {
     part: (n) => `Part ${n}`,
+    songs: (count) => (count === 1 ? "1 song" : `${count} songs`),
     hoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
     minutes: (minutes) => `${minutes} min`,
     withoutDuration: (count) =>
@@ -65,6 +71,7 @@ export const EXPORT_TEXTS: Record<
   },
   fr: {
     part: (n) => `Partie ${n}`,
+    songs: (count) => (count <= 1 ? `${count} morceau` : `${count} morceaux`),
     hoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
     minutes: (minutes) => `${minutes} min`,
     withoutDuration: (count) =>
@@ -80,6 +87,7 @@ type SourceSong = {
   standardDuration: number | null;
   ownDuration: number | null;
   energy: number | null;
+  tempo: number | null;
   key: MusicalKey | null;
   bandKey: MusicalKey | null;
 };
@@ -121,13 +129,12 @@ function totalDuration(songs: readonly SourceSong[], language: Language) {
 /** What the export of this setlist shows. */
 export function exportDocument(source: ExportSource, options: ExportOptions): ExportDocument {
   const { language } = options;
+  const songs = source.parts.flatMap((part) => part.songs);
   return {
     language,
     title: source.title,
-    duration: totalDuration(
-      source.parts.flatMap((part) => part.songs),
-      language,
-    ),
+    songCount: EXPORT_TEXTS[language].songs(songs.length),
+    duration: totalDuration(songs, language),
     band: source.band.name,
     date: exportDate(source.updatedAt, options),
     logoKey: source.band.logoKey,
@@ -142,6 +149,7 @@ export function exportDocument(source: ExportSource, options: ExportOptions): Ex
           title: song.title,
           artist: song.artist,
           energy: song.energy,
+          tempo: song.tempo === null ? null : `${song.tempo} BPM`,
           key: key ? keyShort(key) : null,
           duration: duration === null ? null : formatDuration(duration),
         };
@@ -150,11 +158,16 @@ export function exportDocument(source: ExportSource, options: ExportOptions): Ex
   };
 }
 
+/** What the main header says beside the band's name: "12 songs · 1 h 52 min". */
+export function headerSummary(document: Pick<ExportDocument, "songCount" | "duration">) {
+  return [document.songCount, document.duration].filter(Boolean).join(" · ");
+}
+
 /**
  * Raised when a renderer's output changes for the same document, so files made before are made
  * again: part of every fingerprint.
  */
-export const RENDERER_VERSIONS: Record<SetlistExportFormat, number> = { pdf: 1, docx: 1 };
+export const RENDERER_VERSIONS: Record<SetlistExportFormat, number> = { pdf: 4, docx: 4 };
 
 /** The hash of everything a file of this format would show: the same one, the same file. */
 export function exportFingerprint(document: ExportDocument, format: SetlistExportFormat) {

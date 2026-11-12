@@ -200,6 +200,7 @@ describe.skipIf(!databaseUrl)("setlist exports (brief 030, #297)", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("application/pdf");
     expect(res.headers.get("content-disposition")).toStartWith('inline; filename="Wedding.pdf"');
+    expect(res.headers.get("cache-control")).toBe("no-store");
     expect(new TextDecoder().decode((await res.arrayBuffer()).slice(0, 5))).toBe("%PDF-");
     expect(await exportRows()).toHaveLength(3);
   });

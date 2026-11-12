@@ -1,6 +1,11 @@
 import PDFDocument from "pdfkit";
 import type { ExportLogo } from "./docx";
-import { EXPORT_TEXTS, type ExportDocument, type ExportSong } from "./export-document";
+import {
+  EXPORT_TEXTS,
+  type ExportDocument,
+  type ExportSong,
+  headerSummary,
+} from "./export-document";
 import {
   COLUMN_GAP,
   CONTENT_WIDTH,
@@ -20,60 +25,32 @@ const FONTS = {
 const INK = "#111111";
 const MUTED = "#555555";
 const RULE = "#999999";
-const PEPPER = "#d62828";
 
 /** The logo's box on the first page: a third of the width at most. */
 const LOGO_BOX = { width: CONTENT_WIDTH / 3, height: MAIN_HEADER_HEIGHT - 24 };
 
 type Pdf = PDFKit.PDFDocument;
 
-/** Draws one pepper (energy) with its top left corner here: a red body and a green stem. */
-function pepper(pdf: Pdf, x: number, y: number, size: number) {
-  const w = size * 0.62;
-  pdf
-    .save()
-    .path(
-      `M ${x + w * 0.35} ${y + size * 0.28}
-       C ${x + w * 1.05} ${y + size * 0.2}, ${x + w * 1.1} ${y + size * 0.75}, ${x + w * 0.2} ${y + size}
-       C ${x + w * 0.55} ${y + size * 0.7}, ${x} ${y + size * 0.45}, ${x + w * 0.35} ${y + size * 0.28} Z`,
-    )
-    .fill(PEPPER)
-    .path(
-      `M ${x + w * 0.4} ${y + size * 0.3} C ${x + w * 0.4} ${y + size * 0.12}, ${x + w * 0.6} ${y}, ${x + w * 0.85} ${y + size * 0.04}`,
-    )
-    .lineWidth(size * 0.1)
-    .lineCap("round")
-    .stroke("#2a9d4b")
-    .restore();
-}
-
 /** A key as printed: Noto Sans has no ♯ nor ♭, written # and b as musicians do ("F#m", "Db"). */
 export const printableKey = (key: string) => key.replace(/♯/g, "#").replace(/♭/g, "b");
 
-/** The width peppers take. */
-const peppersWidth = (energy: number | null, size: number) =>
-  energy ? energy * size * 0.62 + (energy - 1) * size * 0.15 : 0;
-
 /**
- * A song's details drawn right-aligned so they end at `right`: its peppers, key and duration.
- * Returns their left edge.
+ * A song's tempo and key drawn right-aligned so they end at `right`, each in its own column so
+ * they line up from song to song (#298: the PDF shows no song's duration nor energy). Returns
+ * their left edge.
  */
 function details(pdf: Pdf, song: ExportSong, right: number, baseline: number, size: number) {
-  const text = [song.key && printableKey(song.key), song.duration].filter(Boolean).join("   ");
-  pdf.font("regular").fontSize(size);
-  const textWidth = text ? pdf.widthOfString(text) : 0;
-  const gap = text && song.energy ? size * 0.6 : 0;
-  const left = right - textWidth - gap - peppersWidth(song.energy, size);
-  if (text) {
-    pdf.fillColor(INK).text(text, right - textWidth, baseline - size, {
-      lineBreak: false,
-      width: textWidth + 1,
-    });
-  }
-  for (let i = 0; i < (song.energy ?? 0); i++) {
-    pepper(pdf, left + i * size * 0.77, baseline - size * 0.95, size);
-  }
-  return left;
+  if (!song.tempo && !song.key) return right;
+  pdf.font("regular").fontSize(size).fillColor(INK);
+  // The widest key ("C#m", "Bbm"), and the space before it.
+  const keyColumn = pdf.widthOfString("Bbm") + size * 0.8;
+  const draw = (text: string, end: number) => {
+    const width = pdf.widthOfString(text);
+    pdf.text(text, end - width, baseline - size, { lineBreak: false, width: width + 1 });
+    return end - width;
+  };
+  if (song.key) draw(printableKey(song.key), right);
+  return song.tempo ? draw(song.tempo, right - keyColumn) : right - keyColumn;
 }
 
 /** The text of `text` cut to `width` in this font and size. */
@@ -82,7 +59,7 @@ function fit(pdf: Pdf, text: string, width: number, font: "regular" | "bold", si
   return fitText(text, width, (value) => pdf.widthOfString(value));
 }
 
-/** A song on one column: index, title, artist, then its details on the right. */
+/** A song on one column: index, title, artist, then its tempo and key on the right. */
 function songLine(pdf: Pdf, song: ExportSong, x: number, top: number, width: number, s: number) {
   const titleSize = SIZES.songTitle * s;
   const small = SIZES.songDetails * s;
@@ -103,7 +80,7 @@ function songLine(pdf: Pdf, song: ExportSong, x: number, top: number, width: num
   }
 }
 
-/** A song on two columns: index and title, then the artist and details on a small line. */
+/** A song on two columns: index and title, then the artist, tempo and key on a small line. */
 function songTwoLines(
   pdf: Pdf,
   song: ExportSong,
@@ -150,8 +127,9 @@ function mainHeader(pdf: Pdf, document: ExportDocument, logo: ExportLogo | null)
     pdf.fillColor(bold ? INK : MUTED).text(fitted, left, y, { lineBreak: false });
   };
   const middle = top + LOGO_BOX.height / 2;
-  line(document.title, document.duration, middle - 34, 26, true);
-  line(document.band, document.date, middle + 6, 15, false);
+  // Brief 030's MainHeader: the title and the date, then the band, the songs and the duration.
+  line(document.title, document.date, middle - 34, 26, true);
+  line(document.band, headerSummary(document), middle + 6, 15, false);
   pdf
     .moveTo(PAGE.margin, top + MAIN_HEADER_HEIGHT - 14)
     .lineTo(right, top + MAIN_HEADER_HEIGHT - 14)

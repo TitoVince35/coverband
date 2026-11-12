@@ -34,6 +34,8 @@ const exportParam = setlistParam.extend({ format: z.enum(SETLIST_EXPORT_FORMATS)
 const exportQuery = z.object({
   lang: z.string().optional(),
   tz: z.string().max(64).optional(),
+  // The setlist's version, only so the address changes with it (no browser copy is reused).
+  v: z.string().max(12).optional(),
 });
 
 /** Time zone of an export whose request names none, or one the server doesn't know. */
@@ -113,7 +115,8 @@ export function setlistRoutes({ db, storage }: AppDeps) {
           return c.body(body, 200, {
             "content-type": file.type,
             "content-disposition": `${file.disposition}; ${fileName(found.prepared.document.title, file.extension)}`,
-            "cache-control": "private, no-cache",
+            // Never kept by a browser: the same address may give another file once the setlist changes.
+            "cache-control": "no-store",
           });
         },
       )

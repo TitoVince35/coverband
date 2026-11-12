@@ -19,6 +19,7 @@ const document = exportDocument(
             standardDuration: 245,
             ownDuration: null,
             energy: 2,
+            tempo: 96,
             key: "Em",
             bandKey: null,
           },
@@ -41,10 +42,10 @@ describe("renderDocx", () => {
   test("the header, each part with its songs, the footer", async () => {
     const bytes = await renderDocx(document, { logo: null, generatedOn: "November 12, 2026" });
     const body = await textOf(bytes, "word/document.xml");
-    expect(body).toContain("Wedding &amp; party\t4 min");
-    expect(body).toContain("The Covers\tNovember 12, 2026");
+    expect(body).toContain("Wedding &amp; party\tNovember 12, 2026");
+    expect(body).toContain("The Covers\t1 song · 4 min");
     expect(body).toContain("Set 1\t4 min");
-    expect(body).toContain("1. Rock - Band - Energy 2 - Em - 4:05");
+    expect(body).toContain("1. Rock - Band - Energy 2 - 96 BPM - Em - 4:05");
     expect(body).toContain("Part 2");
     const zip = await JSZip.loadAsync(bytes);
     const footers = Object.keys(zip.files).filter((name) => /^word\/footer\d+\.xml$/.test(name));

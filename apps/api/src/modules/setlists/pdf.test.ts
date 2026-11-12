@@ -10,6 +10,7 @@ const song = (i: number) => ({
   ownDuration: null,
   energy: i % 4 || null,
   key: "Em" as const,
+  tempo: 100 + i,
   bandKey: null,
 });
 

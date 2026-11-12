@@ -4,7 +4,9 @@
 
 How the printed setlist (brief 030, #298) handles its edge cases, made from fixed data by `bun run setlist:examples` (`apps/api/src/dev/setlist-examples.ts`, the data in `apps/api/src/modules/setlists/pdf-examples.ts`). Draw them again after changing the PDF: the files only change when the PDF does. The images need `pdftoppm` (`sudo apt install poppler-utils`). The layout's tests check the same setlists (`pdf-layout.test.ts`: every part once, in order, whole within its page; only the 50-song part made smaller).
 
-The rules (`layoutSetlist`, `pdf-layout.ts`): a part goes on one column if it fits what's left of the page, else on two (each song's details then on a second, small line), else on the next page; a part is never split; parts share a page when they fit. Last resort, one smaller scale for the whole document, the largest at which every part fits a page.
+What a page shows (#298, then Vince's review): the main header with the title and the date, then the band, the number of songs and the total duration; each part's name and duration; each song's title, artist, tempo and key, never its own duration nor energy.
+
+The rules (`layoutSetlist`, `pdf-layout.ts`): a part goes on one column if it fits what's left of the page, else on two (each song's artist, tempo and key then on a second, small line), else on the next page; a part is never split; parts share a page when they fit. Last resort, one smaller scale for the whole document, the largest at which every part fits a page.
 
 ## 01: a short setlist
 
@@ -48,7 +50,7 @@ One part of 50 songs (the most a setlist has): it only fits on one page with eve
 
 ## 06: long texts, missing details
 
-Long titles and artists cut with "…" (the setlist's title and a part's name too); songs without a duration (the totals say how many), key or energy; an empty part; no logo.
+Long titles and artists cut with "…" (the setlist's title and a part's name too); songs without a duration (the totals say how many), a tempo or a key; an empty part; no logo.
 
 [PDF](06-long-texts-missing-details.pdf)
 
@@ -56,7 +58,7 @@ Long titles and artists cut with "…" (the setlist's title and a part's name to
 
 ## 07: French, other scripts
 
-In French: accents, and titles in Greek and Cyrillic written by the bundled font (Noto Sans); the band's own key and duration. Keys are printed with `#` and `b` ("F#m", "Db"): the font has no ♯ nor ♭.
+In French: accents, and titles in Greek and Cyrillic written by the bundled font (Noto Sans); the band's own key. Keys are printed with `#` and `b` ("F#m", "Db"): the font has no ♯ nor ♭.
 
 [PDF](07-french-other-scripts.pdf)
 

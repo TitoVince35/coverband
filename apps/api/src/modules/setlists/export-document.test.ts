@@ -3,6 +3,7 @@ import {
   type ExportSource,
   exportDocument,
   exportFingerprint,
+  headerSummary,
   isTimeZone,
 } from "./export-document";
 
@@ -15,6 +16,7 @@ const song = (
   standardDuration: 200,
   ownDuration: null,
   energy: null,
+  tempo: null,
   key: null,
   bandKey: null,
   ...more,
@@ -33,6 +35,7 @@ const source: ExportSource = {
           ownDuration: 245,
           standardDuration: 300,
           energy: 3,
+          tempo: 128,
           key: "C",
           bandKey: "D",
         }),
@@ -51,6 +54,7 @@ describe("exportDocument", () => {
     expect(document).toMatchObject({
       language: "en",
       title: "Wedding",
+      songCount: "3 songs",
       duration: "7 min (1 song without a duration)",
       band: "The Covers",
       date: "November 12, 2026",
@@ -69,17 +73,26 @@ describe("exportDocument", () => {
     expect(first?.name).toBe("Set 1");
     expect(first?.duration).toBe("7 min");
     expect(first?.songs).toEqual([
-      { index: 1, title: "Rock", artist: "Rock artist", energy: 3, key: "D", duration: "4:05" },
+      {
+        index: 1,
+        title: "Rock",
+        artist: "Rock artist",
+        energy: 3,
+        tempo: "128 BPM",
+        key: "D",
+        duration: "4:05",
+      },
       {
         index: 2,
         title: "Ballad",
         artist: "Ballad artist",
         energy: null,
+        tempo: null,
         key: "Em",
         duration: "3:20",
       },
     ]);
-    expect(second?.songs[0]).toMatchObject({ index: 1, key: null, duration: null });
+    expect(second?.songs[0]).toMatchObject({ index: 1, tempo: null, key: null, duration: null });
   });
 
   test("a part without a name is numbered; one without songs has no duration", () => {
@@ -102,6 +115,16 @@ describe("exportDocument", () => {
     expect(exportDocument(source, { language: "fr", timeZone: "Europe/Paris" }).duration).toBe(
       "7 min (1 morceau sans durée)",
     );
+  });
+
+  test("the header's summary: the songs, then the duration", () => {
+    expect(headerSummary(exportDocument(source, paris))).toBe(
+      "3 songs · 7 min (1 song without a duration)",
+    );
+    const empty = exportDocument({ ...source, parts: [{ name: null, songs: [] }] }, paris);
+    expect(headerSummary(empty)).toBe("0 songs");
+    const french = exportDocument(source, { language: "fr", timeZone: "Europe/Paris" });
+    expect(french.songCount).toBe("3 morceaux");
   });
 
   test("a setlist without songs has no duration", () => {

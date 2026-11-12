@@ -66,6 +66,16 @@ test("Print opens the PDF in a new tab; offline, it is turned off (#298)", async
   expect((await pdf.body()).subarray(0, 5).toString()).toBe("%PDF-");
   await tab.close();
 
+  // Two songs swapped: once saved, Print has a new address, and a new PDF (never a kept copy).
+  await leader.locator("button[aria-pressed]").filter({ hasText: "Africa" }).click();
+  await leader.getByRole("button", { name: "Move down" }).click();
+  await expect(leader.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
+  await expect(print).not.toHaveAttribute("href", href);
+  const swapped = (await print.getAttribute("href")) ?? "";
+  const after = await leader.request.get(swapped);
+  expect(after.headers()["cache-control"]).toBe("no-store");
+  expect((await after.body()).equals(await pdf.body())).toBe(false);
+
   await leader.context().setOffline(true);
   await expect(leader.getByRole("button", { name: "Print" })).toBeDisabled();
   await leader.context().setOffline(false);

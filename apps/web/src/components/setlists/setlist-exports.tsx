@@ -8,14 +8,19 @@ import { errorMessage } from "@/lib/errors";
 import { useOnline } from "@/lib/online";
 import { fetchSetlistExport, saveFile, setlistExportUrl } from "@/lib/setlists";
 
-type Props = { bandSlug: string; setlist: { id: string; title: string } };
+type Props = {
+  bandSlug: string;
+  setlist: { id: string; title: string; version: number };
+  /** False while the editor's changes aren't saved: an export would miss them. */
+  saved?: boolean;
+};
 
 /**
  * A setlist's exports (brief 030): Print opens the PDF in a new tab, where the browser prints it
  * (#298); "Export to docx" downloads a raw document to edit (#297). Made by the server, so turned
- * off offline (the offline banner says why).
+ * off offline (the offline banner says why), and wait while changes are being saved.
  */
-export function SetlistExports({ bandSlug, setlist }: Props) {
+export function SetlistExports({ bandSlug, setlist, saved = true }: Props) {
   const { t } = useTranslation();
   const online = useOnline();
   const language = useLanguage();
@@ -29,10 +34,10 @@ export function SetlistExports({ bandSlug, setlist }: Props) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      {online ? (
+      {online && saved ? (
         <Button asChild size="sm">
           <a
-            href={setlistExportUrl(bandSlug, setlist.id, "pdf", language)}
+            href={setlistExportUrl(bandSlug, setlist.id, "pdf", language, setlist.version)}
             target="_blank"
             rel="noopener"
           >
@@ -41,7 +46,7 @@ export function SetlistExports({ bandSlug, setlist }: Props) {
           </a>
         </Button>
       ) : (
-        <Button size="sm" disabled>
+        <Button size="sm" disabled pending={online && !saved}>
           <Printer />
           {t("setlists.export.print")}
         </Button>
@@ -49,7 +54,7 @@ export function SetlistExports({ bandSlug, setlist }: Props) {
       <Button
         variant="outline"
         size="sm"
-        disabled={!online}
+        disabled={!online || !saved}
         pending={docx.isPending}
         onClick={() => docx.mutate()}
       >

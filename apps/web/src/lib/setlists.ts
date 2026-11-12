@@ -168,17 +168,23 @@ export async function fetchSetlistExport(
 
 /**
  * The address of a setlist's export, in the app's language and the device's time zone: the PDF
- * opens there in a new tab, where the browser prints it.
+ * opens there in a new tab, where the browser prints it. It carries the setlist's version, so a
+ * saved change gives a new address that no browser has kept a copy of.
  */
 export function setlistExportUrl(
   bandSlug: string,
   setlistId: string,
   format: SetlistExportFormat,
   language: Language,
+  version: number,
 ) {
   const url = api.bands[":bandSlug"].setlists[":setlistId"].exports[":format"].$url({
     param: { bandSlug, setlistId, format },
-    query: { lang: language, tz: Intl.DateTimeFormat().resolvedOptions().timeZone },
+    query: {
+      lang: language,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      v: String(version),
+    },
   });
   return `${url.pathname}${url.search}`;
 }

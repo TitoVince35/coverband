@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Archive, ArchiveRestore, ChevronLeft } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ListSkeleton } from "@/components/loading";
-import { SetlistEditor } from "@/components/setlists/setlist-editor";
+import { type SaveStatus, SetlistEditor } from "@/components/setlists/setlist-editor";
 import { SetlistExports } from "@/components/setlists/setlist-exports";
 import { SetlistMenu } from "@/components/setlists/setlist-menu";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ function SetlistPage() {
   const { t } = useTranslation();
   const { bandSlug, setlistId } = Route.useParams();
   const setlist = useQuery(setlistQuery(bandSlug, setlistId));
+  // The exports wait until the screen is saved: they show what the server has.
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
 
   return (
     <section className="space-y-4">
@@ -52,11 +55,20 @@ function SetlistPage() {
             </div>
             <SetlistMenu bandSlug={bandSlug} setlist={setlist.data} />
           </div>
-          <SetlistExports bandSlug={bandSlug} setlist={setlist.data} />
+          <SetlistExports
+            bandSlug={bandSlug}
+            setlist={setlist.data}
+            saved={saveStatus === "saved"}
+          />
           {setlist.data.archivedAt && (
             <ArchivedSetlistBanner bandSlug={bandSlug} setlistId={setlistId} />
           )}
-          <SetlistEditor key={setlistId} bandSlug={bandSlug} setlist={setlist.data} />
+          <SetlistEditor
+            key={setlistId}
+            bandSlug={bandSlug}
+            setlist={setlist.data}
+            onStatusChange={setSaveStatus}
+          />
         </>
       )}
     </section>

@@ -45,7 +45,7 @@ const TITLES = [
 
 const KEYS: MusicalKey[] = ["Em", "D", "A", "C", "G", "Bm", "F#m", "E"];
 
-/** `count` songs from the list, starting at `from`, with varied energy, keys and durations. */
+/** `count` songs from the list, starting at `from`, with varied energy, tempos, keys and durations. */
 function songs(count: number, from = 0) {
   return Array.from({ length: count }, (_, i) => {
     const [title, artist] = TITLES[(from + i) % TITLES.length] ?? ["", ""];
@@ -55,6 +55,7 @@ function songs(count: number, from = 0) {
       standardDuration: 170 + (((from + i) * 37) % 140),
       ownDuration: null,
       energy: (from + i) % 4 || null,
+      tempo: (from + i) % 5 === 3 ? null : 80 + (((from + i) * 23) % 90),
       key: KEYS[(from + i) % KEYS.length] ?? null,
       bandKey: null,
     };
@@ -125,7 +126,7 @@ export const PDF_EXAMPLES: PdfExample[] = [
   {
     name: "06-long-texts-missing-details",
     shows:
-      "Long titles and artists, cut with “…”; songs without a duration (the totals say how many), key or energy; no logo.",
+      "Long titles and artists, cut with “…”; songs without a duration (the totals say how many), a tempo or a key; no logo.",
     language: "en",
     logo: null,
     source: {
@@ -141,6 +142,7 @@ export const PDF_EXAMPLES: PdfExample[] = [
               standardDuration: null,
               ownDuration: null,
               energy: 3,
+              tempo: 104,
               key: "G",
               bandKey: null,
             },
@@ -150,6 +152,7 @@ export const PDF_EXAMPLES: PdfExample[] = [
               standardDuration: null,
               ownDuration: null,
               energy: null,
+              tempo: null,
               key: null,
               bandKey: null,
             },
@@ -163,7 +166,7 @@ export const PDF_EXAMPLES: PdfExample[] = [
   {
     name: "07-french-other-scripts",
     shows:
-      "In French: accents, and titles in other scripts (Greek, Cyrillic) written by the bundled font; the band's own key and duration. A tall logo.",
+      "In French: accents, and titles in other scripts (Greek, Cyrillic) written by the bundled font; the band's own key. A tall logo.",
     language: "fr",
     logo: "tall",
     source: {
@@ -178,6 +181,7 @@ export const PDF_EXAMPLES: PdfExample[] = [
               standardDuration: 135,
               ownDuration: 150,
               energy: 3,
+              tempo: 176,
               key: "E",
               bandKey: "D",
             },
@@ -187,6 +191,7 @@ export const PDF_EXAMPLES: PdfExample[] = [
               standardDuration: 286,
               ownDuration: null,
               energy: 2,
+              tempo: 119,
               key: "Am",
               bandKey: null,
             },
@@ -196,6 +201,7 @@ export const PDF_EXAMPLES: PdfExample[] = [
               standardDuration: 180,
               ownDuration: null,
               energy: 3,
+              tempo: 142,
               key: "C",
               bandKey: null,
             },
