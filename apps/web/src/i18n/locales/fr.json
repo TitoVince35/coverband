@@ -330,6 +330,11 @@
     "back": "Setlists",
     "actions": "Actions pour {{title}}",
     "by": "Par {{name}}",
+    "live": {
+      "button": "Live",
+      "exit": "Quitter le mode live",
+      "notesMore": "Afficher toutes les notes"
+    },
     "export": {
       "print": "Imprimer",
       "docx": "Exporter en docx"

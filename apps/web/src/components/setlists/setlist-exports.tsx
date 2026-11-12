@@ -1,10 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import { FileDown, Printer } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { FileDown, MonitorPlay, Printer } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/use-language";
 import { errorMessage } from "@/lib/errors";
+import { enterFullscreen } from "@/lib/live";
 import { useOnline } from "@/lib/online";
 import { fetchSetlistExport, saveFile, setlistExportUrl } from "@/lib/setlists";
 
@@ -16,7 +18,7 @@ type Props = {
 };
 
 /**
- * A setlist's exports (brief 030): Print opens the PDF in a new tab, where the browser prints it
+ * A setlist's live mode (brief 031: Live, offline too) and exports (brief 030): Print opens the PDF in a new tab, where the browser prints it
  * (#298); "Export to docx" downloads a raw document to edit (#297). Made by the server, so turned
  * off offline (the offline banner says why), and wait while changes are being saved.
  */
@@ -34,8 +36,19 @@ export function SetlistExports({ bandSlug, setlist, saved = true }: Props) {
 
   return (
     <div className="flex flex-wrap gap-2">
+      <Button asChild size="sm">
+        <Link
+          to="/b/$bandSlug/setlists/$setlistId/live"
+          params={{ bandSlug, setlistId: setlist.id }}
+          // Real full screen needs the tap itself (Android; an iPhone has none for a page).
+          onClick={enterFullscreen}
+        >
+          <MonitorPlay />
+          {t("setlists.live.button")}
+        </Link>
+      </Button>
       {online && saved ? (
-        <Button asChild size="sm">
+        <Button asChild variant="outline" size="sm">
           <a
             href={setlistExportUrl(bandSlug, setlist.id, "pdf", language, setlist.version)}
             target="_blank"
@@ -46,7 +59,7 @@ export function SetlistExports({ bandSlug, setlist, saved = true }: Props) {
           </a>
         </Button>
       ) : (
-        <Button size="sm" disabled pending={online && !saved}>
+        <Button variant="outline" size="sm" disabled pending={online && !saved}>
           <Printer />
           {t("setlists.export.print")}
         </Button>

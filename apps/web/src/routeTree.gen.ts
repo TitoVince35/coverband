@@ -29,6 +29,7 @@ import { Route as AppBBandSlugSetlistsArchivedRouteImport } from './routes/_app/
 import { Route as AppBBandSlugSongsIndexRouteImport } from './routes/_app/b.$bandSlug/songs.index'
 import { Route as AppBBandSlugSongsSongIdRouteImport } from './routes/_app/b.$bandSlug/songs.$songId'
 import { Route as AppBBandSlugSongsArchivedRouteImport } from './routes/_app/b.$bandSlug/songs.archived'
+import { Route as AppBBandSlugSetlistsSetlistIdLiveRouteImport } from './routes/_app/b.$bandSlug/setlists.$setlistId_.live'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -133,6 +134,12 @@ const AppBBandSlugSongsArchivedRoute =
     path: '/songs/archived',
     getParentRoute: () => AppBBandSlugRoute,
   } as any)
+const AppBBandSlugSetlistsSetlistIdLiveRoute =
+  AppBBandSlugSetlistsSetlistIdLiveRouteImport.update({
+    id: '/setlists/$setlistId_/live',
+    path: '/setlists/$setlistId/live',
+    getParentRoute: () => AppBBandSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
   '/b/$bandSlug/setlists/': typeof AppBBandSlugSetlistsIndexRoute
   '/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
+  '/b/$bandSlug/setlists/$setlistId/live': typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
 export interface FileRoutesByTo {
   '/access': typeof AccessRoute
@@ -174,6 +182,7 @@ export interface FileRoutesByTo {
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
   '/b/$bandSlug/setlists': typeof AppBBandSlugSetlistsIndexRoute
   '/b/$bandSlug/songs': typeof AppBBandSlugSongsIndexRoute
+  '/b/$bandSlug/setlists/$setlistId/live': typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -197,6 +206,7 @@ export interface FileRoutesById {
   '/_app/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
   '/_app/b/$bandSlug/setlists/': typeof AppBBandSlugSetlistsIndexRoute
   '/_app/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
+  '/_app/b/$bandSlug/setlists/$setlistId_/live': typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/songs/archived'
     | '/b/$bandSlug/setlists/'
     | '/b/$bandSlug/songs/'
+    | '/b/$bandSlug/setlists/$setlistId/live'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/access'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/songs/archived'
     | '/b/$bandSlug/setlists'
     | '/b/$bandSlug/songs'
+    | '/b/$bandSlug/setlists/$setlistId/live'
   id:
     | '__root__'
     | '/_app'
@@ -262,6 +274,7 @@ export interface FileRouteTypes {
     | '/_app/b/$bandSlug/songs/archived'
     | '/_app/b/$bandSlug/setlists/'
     | '/_app/b/$bandSlug/songs/'
+    | '/_app/b/$bandSlug/setlists/$setlistId_/live'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugSongsArchivedRouteImport
       parentRoute: typeof AppBBandSlugRoute
     }
+    '/_app/b/$bandSlug/setlists/$setlistId_/live': {
+      id: '/_app/b/$bandSlug/setlists/$setlistId_/live'
+      path: '/setlists/$setlistId/live'
+      fullPath: '/b/$bandSlug/setlists/$setlistId/live'
+      preLoaderRoute: typeof AppBBandSlugSetlistsSetlistIdLiveRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
   }
 }
 
@@ -428,6 +448,7 @@ interface AppBBandSlugRouteChildren {
   AppBBandSlugSongsArchivedRoute: typeof AppBBandSlugSongsArchivedRoute
   AppBBandSlugSetlistsIndexRoute: typeof AppBBandSlugSetlistsIndexRoute
   AppBBandSlugSongsIndexRoute: typeof AppBBandSlugSongsIndexRoute
+  AppBBandSlugSetlistsSetlistIdLiveRoute: typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
 
 const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
@@ -440,6 +461,8 @@ const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
   AppBBandSlugSongsArchivedRoute: AppBBandSlugSongsArchivedRoute,
   AppBBandSlugSetlistsIndexRoute: AppBBandSlugSetlistsIndexRoute,
   AppBBandSlugSongsIndexRoute: AppBBandSlugSongsIndexRoute,
+  AppBBandSlugSetlistsSetlistIdLiveRoute:
+    AppBBandSlugSetlistsSetlistIdLiveRoute,
 }
 
 const AppBBandSlugRouteWithChildren = AppBBandSlugRoute._addFileChildren(
