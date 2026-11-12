@@ -56,8 +56,11 @@ test("a member exports a setlist to docx; offline, the button is turned off (#29
 test("Print opens the PDF in a new tab; offline, it is turned off (#298)", async () => {
   const print = leader.getByRole("link", { name: "Print" });
   await expect(print).toHaveAttribute("target", "_blank");
+  const href = (await print.getAttribute("href")) ?? "";
+  expect(href).toMatch(/\/exports\/pdf\?lang=en&tz=/);
   const [tab] = await Promise.all([leader.context().waitForEvent("page"), print.click()]);
-  const pdf = await tab.request.get(tab.url());
+  await tab.waitForURL(/\/exports\/pdf/, { waitUntil: "commit" });
+  const pdf = await leader.request.get(href);
   expect(pdf.headers()["content-type"]).toBe("application/pdf");
   expect(pdf.headers()["content-disposition"]).toContain('inline; filename="Wedding.pdf"');
   expect((await pdf.body()).subarray(0, 5).toString()).toBe("%PDF-");
