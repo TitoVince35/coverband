@@ -166,6 +166,23 @@ export async function fetchSetlistExport(
   return { blob: await res.blob(), name: downloadName(res.headers.get("content-disposition")) };
 }
 
+/**
+ * The address of a setlist's export, in the app's language and the device's time zone: the PDF
+ * opens there in a new tab, where the browser prints it.
+ */
+export function setlistExportUrl(
+  bandSlug: string,
+  setlistId: string,
+  format: SetlistExportFormat,
+  language: Language,
+) {
+  const url = api.bands[":bandSlug"].setlists[":setlistId"].exports[":format"].$url({
+    param: { bandSlug, setlistId, format },
+    query: { lang: language, tz: Intl.DateTimeFormat().resolvedOptions().timeZone },
+  });
+  return `${url.pathname}${url.search}`;
+}
+
 /** Saves a file on the device, as a download. */
 export function saveFile(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);

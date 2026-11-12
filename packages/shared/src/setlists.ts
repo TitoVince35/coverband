@@ -41,6 +41,6 @@ export function hoursAndMinutes(seconds: number): { hours: number; minutes: numb
  * What a setlist exports to (brief 030): a PDF to print (#298), a docx to edit (#297). Each file
  * is made by the API and kept in the band's bucket until what it shows changes.
  */
-export const SETLIST_EXPORT_FORMATS = ["docx"] as const;
+export const SETLIST_EXPORT_FORMATS = ["pdf", "docx"] as const;
 
 export type SetlistExportFormat = (typeof SETLIST_EXPORT_FORMATS)[number];

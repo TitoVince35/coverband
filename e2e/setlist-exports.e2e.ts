@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { expect, type Page, test } from "@playwright/test";
 import { addSetlist, addSong, type Band, newBand } from "./support";
 
-// Setlist exports (brief 030): the docx (#297).
+// Setlist exports (brief 030): the docx (#297), the PDF to print (#298).
 test.describe.configure({ mode: "serial" });
 
 let band: Band;
@@ -51,4 +51,23 @@ test("a member exports a setlist to docx; offline, the button is turned off (#29
   await expect(button).toBeDisabled();
   await leader.context().setOffline(false);
   await expect(button).toBeEnabled();
+});
+
+test("Print opens the PDF in a new tab; offline, it is turned off (#298)", async () => {
+  const print = leader.getByRole("link", { name: "Print" });
+  await expect(print).toHaveAttribute("target", "_blank");
+  const href = (await print.getAttribute("href")) ?? "";
+  expect(href).toMatch(/\/exports\/pdf\?lang=en&tz=/);
+  // A new tab: what it shows depends on the browser (headless Chromium downloads a PDF instead).
+  const [tab] = await Promise.all([leader.context().waitForEvent("page"), print.click()]);
+  const pdf = await leader.request.get(href);
+  expect(pdf.headers()["content-type"]).toBe("application/pdf");
+  expect(pdf.headers()["content-disposition"]).toContain('inline; filename="Wedding.pdf"');
+  expect((await pdf.body()).subarray(0, 5).toString()).toBe("%PDF-");
+  await tab.close();
+
+  await leader.context().setOffline(true);
+  await expect(leader.getByRole("button", { name: "Print" })).toBeDisabled();
+  await leader.context().setOffline(false);
+  await expect(leader.getByRole("link", { name: "Print" })).toBeVisible();
 });

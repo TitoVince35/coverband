@@ -112,7 +112,7 @@ export function setlistRoutes({ db, storage }: AppDeps) {
           const file = EXPORT_FILES[format];
           return c.body(body, 200, {
             "content-type": file.type,
-            "content-disposition": `attachment; ${fileName(found.prepared.document.title, file.extension)}`,
+            "content-disposition": `${file.disposition}; ${fileName(found.prepared.document.title, file.extension)}`,
             "cache-control": "private, no-cache",
           });
         },

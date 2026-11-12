@@ -154,7 +154,7 @@ export function exportDocument(source: ExportSource, options: ExportOptions): Ex
  * Raised when a renderer's output changes for the same document, so files made before are made
  * again: part of every fingerprint.
  */
-export const RENDERER_VERSIONS: Record<SetlistExportFormat, number> = { docx: 1 };
+export const RENDERER_VERSIONS: Record<SetlistExportFormat, number> = { pdf: 1, docx: 1 };
 
 /** The hash of everything a file of this format would show: the same one, the same file. */
 export function exportFingerprint(document: ExportDocument, format: SetlistExportFormat) {

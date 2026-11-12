@@ -13,15 +13,22 @@ import {
   exportDocument,
   exportFingerprint,
 } from "./export-document";
+import { renderPdf } from "./pdf";
 import { deleteExportFiles, getSetlist, setlistContent } from "./service";
 
 type Deps = Pick<AppDeps, "db" | "storage" | "log">;
 
 /** Each format's file: its media type and extension. */
-export const EXPORT_FILES: Record<SetlistExportFormat, { type: string; extension: string }> = {
+export const EXPORT_FILES: Record<
+  SetlistExportFormat,
+  { type: string; extension: string; disposition: "inline" | "attachment" }
+> = {
+  // Opened by the browser, which prints it.
+  pdf: { type: "application/pdf", extension: "pdf", disposition: "inline" },
   docx: {
     type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     extension: "docx",
+    disposition: "attachment",
   },
 };
 
@@ -97,6 +104,8 @@ async function render(deps: Deps, prepared: PreparedExport, now: Date) {
   const logo = await loadLogo(deps, prepared.document.logoKey);
   const generatedOn = exportDate(now, prepared.options);
   switch (prepared.format) {
+    case "pdf":
+      return renderPdf(prepared.document, { logo, generatedOn });
     case "docx":
       return renderDocx(prepared.document, { logo, generatedOn });
   }
