@@ -30,6 +30,7 @@
     "mail:test": "bun --env-file=.env apps/api/src/adapters/mail/send-test.ts",
     "db:studio": "bun --env-file=.env run --filter @coverband/api db:studio",
     "db:diagram": "bun apps/api/src/dev/db-diagram.ts",
+    "setlist:examples": "bun apps/api/src/dev/setlist-examples.ts",
     "db:diagram:page": "bun apps/api/src/dev/db-diagram-page.ts"
   },
   "devDependencies": {

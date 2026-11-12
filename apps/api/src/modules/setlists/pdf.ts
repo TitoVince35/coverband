@@ -47,6 +47,9 @@ function pepper(pdf: Pdf, x: number, y: number, size: number) {
     .restore();
 }
 
+/** A key as printed: Noto Sans has no ♯ nor ♭, written # and b as musicians do ("F#m", "Db"). */
+export const printableKey = (key: string) => key.replace(/♯/g, "#").replace(/♭/g, "b");
+
 /** The width peppers take. */
 const peppersWidth = (energy: number | null, size: number) =>
   energy ? energy * size * 0.62 + (energy - 1) * size * 0.15 : 0;
@@ -56,7 +59,7 @@ const peppersWidth = (energy: number | null, size: number) =>
  * Returns their left edge.
  */
 function details(pdf: Pdf, song: ExportSong, right: number, baseline: number, size: number) {
-  const text = [song.key, song.duration].filter(Boolean).join("   ");
+  const text = [song.key && printableKey(song.key), song.duration].filter(Boolean).join("   ");
   pdf.font("regular").fontSize(size);
   const textWidth = text ? pdf.widthOfString(text) : 0;
   const gap = text && song.energy ? size * 0.6 : 0;
@@ -186,13 +189,22 @@ function footer(pdf: Pdf, text: string) {
  */
 export async function renderPdf(
   document: ExportDocument,
-  { logo, generatedOn }: { logo: ExportLogo | null; generatedOn: string },
+  {
+    logo,
+    generatedOn,
+    createdAt = new Date(),
+  }: { logo: ExportLogo | null; generatedOn: string; createdAt?: Date },
 ) {
   const pdf = new PDFDocument({
     size: "A4",
     margin: 0,
     autoFirstPage: false,
-    info: { Title: document.title, Author: document.band },
+    info: {
+      Title: document.title,
+      Author: document.band,
+      CreationDate: createdAt,
+      ModDate: createdAt,
+    },
   });
   pdf.registerFont("regular", FONTS.regular);
   pdf.registerFont("bold", FONTS.bold);
