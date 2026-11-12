@@ -89,6 +89,15 @@ export async function savedDocument(id: string) {
   return entry?.blob ?? null;
 }
 
+/** The ids of every document saved on the device (live mode offline, #309). */
+export async function savedDocumentIds(): Promise<Set<string>> {
+  if (!available()) return new Set();
+  const keys = await runOffline<IDBValidKey[]>(DOCUMENT_STORE, "readonly", (store) =>
+    store.getAllKeys(),
+  ).catch(() => []);
+  return new Set(keys.map(String));
+}
+
 /** Forgets every saved document (logout, another account logging in). */
 export async function clearSavedDocuments() {
   if (!available()) return;
