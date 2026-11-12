@@ -259,7 +259,8 @@
         "button": "View",
         "description": "The lyrics, full screen.",
         "smaller": "Smaller text",
-        "larger": "Larger text"
+        "larger": "Larger text",
+        "uppercase": "Capitals"
       },
       "web": {
         "button": "Search the web",

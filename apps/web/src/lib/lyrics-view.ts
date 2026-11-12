@@ -1,5 +1,5 @@
-// The full-screen lyrics view (#131): its text size, remembered on the device, and keeping the
-// screen awake while it's open.
+// The full-screen lyrics view (#131): its text size and case (#296), remembered on the device, and
+// keeping the screen awake while it's open.
 import { useEffect } from "react";
 
 /** Text sizes in pixels, from a phone at arm's length to a music stand. */
@@ -34,6 +34,25 @@ export function storeLyricsSize(size: number) {
     localStorage.setItem(LYRICS_SIZE_STORAGE_KEY, String(size));
   } catch {
     // Storage unavailable (private mode): the size lasts for this page only.
+  }
+}
+
+export const LYRICS_UPPERCASE_STORAGE_KEY = "coverband-lyrics-uppercase";
+
+/** Whether the lyrics show in capitals (#296): only a stored "true" says so. */
+export function readLyricsUppercase(): boolean {
+  try {
+    return localStorage.getItem(LYRICS_UPPERCASE_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function storeLyricsUppercase(uppercase: boolean) {
+  try {
+    localStorage.setItem(LYRICS_UPPERCASE_STORAGE_KEY, String(uppercase));
+  } catch {
+    // Storage unavailable (private mode): the choice lasts for this page only.
   }
 }
 
