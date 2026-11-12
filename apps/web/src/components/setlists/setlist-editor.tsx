@@ -89,7 +89,7 @@ import {
 import { type Setlist, saveSetlistContent, setlistQuery } from "@/lib/setlists";
 import { cn } from "@/lib/utils";
 
-type SaveStatus = "saved" | "saving" | "conflict" | "error";
+export type SaveStatus = "saved" | "saving" | "conflict" | "error";
 
 /**
  * The editor's draft, saved whole at each change (#272): one save at a time, the latest draft
@@ -185,13 +185,23 @@ const usePartLabel = () => {
  * A setlist's parts and songs, edited as designed (#272): each change shows at once and is saved;
  * songs are dragged by their handle (within or across parts), or selected to move them with
  * buttons; parts are added, renamed, moved and removed; songs are added from the repertoire.
- * Read-only when archived or offline.
+ * Read-only when archived or offline. `onStatusChange` tells the page whether the screen is saved
+ * (the exports wait for it).
  */
-export function SetlistEditor({ bandSlug, setlist }: { bandSlug: string; setlist: Setlist }) {
+export function SetlistEditor({
+  bandSlug,
+  setlist,
+  onStatusChange,
+}: {
+  bandSlug: string;
+  setlist: Setlist;
+  onStatusChange?: (status: SaveStatus) => void;
+}) {
   const { t } = useTranslation();
   const online = useOnline();
   const readOnly = setlist.archivedAt !== null || !online;
   const { draft, setDraft, change, status, reload } = useAutosave(bandSlug, setlist);
+  useEffect(() => onStatusChange?.(status), [status, onStatusChange]);
   const partLabel = usePartLabel();
   const [selected, setSelected] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);

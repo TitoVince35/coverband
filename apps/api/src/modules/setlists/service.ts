@@ -3,8 +3,16 @@ import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, sql } from "
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { isUniqueViolation } from "../../core/db/pg-errors";
-import { activity, setlistParts, setlistSongs, setlists, users } from "../../core/db/schema";
+import {
+  activity,
+  setlistExports,
+  setlistParts,
+  setlistSongs,
+  setlists,
+  users,
+} from "../../core/db/schema";
 import { AppError } from "../../core/errors";
+import type { AppDeps } from "../../deps";
 import { type SetlistSong, setlistSongsOf } from "../songs/service";
 
 /** The band already has a setlist with this title, whatever its case. */
@@ -477,16 +485,21 @@ export function setSetlistArchived(db: Db, member: Member, id: string, archived:
 }
 
 /**
- * Deletes a setlist for good: the band leader, or its author. Returns false when the band has no
- * such setlist.
+ * Deletes a setlist for good: the band leader, or its author; then its exports' files (brief
+ * 030). Returns false when the band has no such setlist.
  */
-export function deleteSetlist(db: Db, member: Member & { isLeader: boolean }, id: string) {
-  return db.transaction(async (tx) => {
+export async function deleteSetlist(
+  deps: Pick<AppDeps, "db" | "storage" | "log">,
+  member: Member & { isLeader: boolean },
+  id: string,
+) {
+  const keys = await deps.db.transaction(async (tx) => {
     const current = await lockSetlist(tx, member.bandId, id);
-    if (!current) return false;
+    if (!current) return null;
     if (!member.isLeader && current.createdById !== member.userId) {
       throw new SetlistDeleteForbiddenError();
     }
+    const files = await setlistExportKeys(tx, id);
     await tx.delete(setlists).where(eq(setlists.id, id));
     await recordActivity(tx, {
       action: "setlist.deleted",
@@ -494,6 +507,41 @@ export function deleteSetlist(db: Db, member: Member & { isLeader: boolean }, id
       actorId: member.userId,
       target: { type: "setlist", id },
     });
-    return true;
+    return files;
   });
+  if (!keys) return false;
+  await deleteExportFiles(deps, keys);
+  return true;
+}
+
+/** Deletes export files; one that can't be is only an orphan: logged. */
+export async function deleteExportFiles(
+  { storage, log }: Pick<AppDeps, "storage" | "log">,
+  keys: readonly string[],
+) {
+  for (const key of keys) {
+    try {
+      await storage.delete(key);
+    } catch (error) {
+      log.warn("A setlist export's file was not deleted", { key, err: error });
+    }
+  }
+}
+
+/** The files of a setlist's exports, read before it is deleted. */
+export async function setlistExportKeys(db: Db | Tx, setlistId: string) {
+  const rows = await db
+    .select({ fileKey: setlistExports.fileKey })
+    .from(setlistExports)
+    .where(eq(setlistExports.setlistId, setlistId));
+  return rows.map((row) => row.fileKey);
+}
+
+/** The files of every export of a band's setlists, read before the band is deleted. */
+export async function bandExportKeys(db: Db | Tx, bandId: string) {
+  const rows = await db
+    .select({ fileKey: setlistExports.fileKey })
+    .from(setlistExports)
+    .where(eq(setlistExports.bandId, bandId));
+  return rows.map((row) => row.fileKey);
 }

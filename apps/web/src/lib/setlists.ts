@@ -1,3 +1,4 @@
+import type { Language, SetlistExportFormat } from "@coverband/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ApiRequestError, ensureOk } from "@/lib/errors";
@@ -130,4 +131,73 @@ export async function duplicateSetlist(bandSlug: string, setlistId: string, titl
     json: { title },
   });
   return (await (await ensureOk(res)).json()).setlist;
+}
+
+/** The file name a download's `Content-Disposition` gives (its UTF-8 form first), or null. */
+export function downloadName(disposition: string | null): string | null {
+  if (!disposition) return null;
+  const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
+  if (utf8) {
+    try {
+      return decodeURIComponent(utf8);
+    } catch {
+      // Malformed: fall back to the plain name.
+    }
+  }
+  return /filename="([^"]*)"/i.exec(disposition)?.[1] ?? null;
+}
+
+/**
+ * A setlist's export (brief 030), in the app's language and the device's time zone: the API
+ * serves the stored file while the setlist shows the same, or makes a new one.
+ */
+export async function fetchSetlistExport(
+  bandSlug: string,
+  setlistId: string,
+  format: SetlistExportFormat,
+  language: Language,
+) {
+  const res = await ensureOk(
+    await api.bands[":bandSlug"].setlists[":setlistId"].exports[":format"].$get({
+      param: { bandSlug, setlistId, format },
+      query: { lang: language, tz: Intl.DateTimeFormat().resolvedOptions().timeZone },
+    }),
+  );
+  return { blob: await res.blob(), name: downloadName(res.headers.get("content-disposition")) };
+}
+
+/**
+ * The address of a setlist's export, in the app's language and the device's time zone: the PDF
+ * opens there in a new tab, where the browser prints it. It carries the setlist's version, so a
+ * saved change gives a new address that no browser has kept a copy of.
+ */
+export function setlistExportUrl(
+  bandSlug: string,
+  setlistId: string,
+  format: SetlistExportFormat,
+  language: Language,
+  version: number,
+) {
+  const url = api.bands[":bandSlug"].setlists[":setlistId"].exports[":format"].$url({
+    param: { bandSlug, setlistId, format },
+    query: {
+      lang: language,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      v: String(version),
+    },
+  });
+  return `${url.pathname}${url.search}`;
+}
+
+/** Saves a file on the device, as a download. */
+export function saveFile(blob: Blob, name: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  // After the browser has taken the file.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
