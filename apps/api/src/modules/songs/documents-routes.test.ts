@@ -3,8 +3,8 @@ import { DOCUMENT_LIMITS } from "@coverband/shared";
 import { eq, inArray, like } from "drizzle-orm";
 import { createApp } from "../../app";
 import { activity, bandMembers, bands, songDocuments, songs, users } from "../../core/db/schema";
+import { fileName } from "../../core/http/file-name";
 import { activityOf, createTestDeps, JPEG } from "../../test-deps";
-import { fileName } from "./documents-routes";
 
 // Integration tests: need the local Postgres with migrations applied. Skipped when DATABASE_URL is unset.
 const databaseUrl = process.env.DATABASE_URL;
@@ -268,15 +268,6 @@ describe.skipIf(!databaseUrl)("a song's documents (#238)", () => {
     ).map((row) => row.storageKey);
     expect([...storage.objects.keys()].filter((key) => key.includes(bandId)).sort()).toEqual(
       stored.filter((key) => storage.objects.has(key)).sort(),
-    );
-  });
-
-  test("fileName: ASCII and UTF-8 forms, never quotes", () => {
-    expect(fileName('Grille "Sol"', "pdf")).toBe(
-      `filename="Grille Sol.pdf"; filename*=UTF-8''Grille%20%22Sol%22.pdf`,
-    );
-    expect(fileName("Accords é", "jpg")).toBe(
-      `filename="Accords e.jpg"; filename*=UTF-8''Accords%20%C3%A9.jpg`,
     );
   });
 });
