@@ -107,7 +107,13 @@ export function createAuth({
         },
       },
     },
-    rateLimit: { enabled: rateLimit, storage: "database" },
+    // Counters in Postgres (the server is stateless). Not for reading the session: the app's first
+    // call, logged in or not, which would otherwise write to the database on every app start.
+    rateLimit: {
+      enabled: rateLimit,
+      storage: "database",
+      customRules: { "/get-session": false },
+    },
     advanced: {
       database: { generateId: "uuid" },
       // Rate limits are per client IP, read from one header: X-Real-IP in production (written by

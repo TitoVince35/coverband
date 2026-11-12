@@ -260,7 +260,8 @@
         "description": "Les paroles, en plein écran.",
         "smaller": "Texte plus petit",
         "larger": "Texte plus grand",
-        "uppercase": "Majuscules"
+        "uppercase": "Majuscules",
+        "none": "Pas de paroles pour ce morceau."
       },
       "web": {
         "button": "Chercher sur le web",
@@ -330,6 +331,17 @@
     "back": "Setlists",
     "actions": "Actions pour {{title}}",
     "by": "Par {{name}}",
+    "live": {
+      "allDocuments": "Tous les instruments",
+      "openPhoto": "Photo : {{label}}",
+      "photo": "Une photo du morceau, en plein écran.",
+      "lyrics": "Paroles",
+      "previous": "Morceau précédent : {{title}}",
+      "next": "Morceau suivant : {{title}}",
+      "button": "Live",
+      "exit": "Quitter le mode live",
+      "notesMore": "Afficher toutes les notes"
+    },
     "export": {
       "print": "Imprimer",
       "docx": "Exporter en docx"

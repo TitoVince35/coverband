@@ -260,7 +260,8 @@
         "description": "The lyrics, full screen.",
         "smaller": "Smaller text",
         "larger": "Larger text",
-        "uppercase": "Capitals"
+        "uppercase": "Capitals",
+        "none": "No lyrics for this song."
       },
       "web": {
         "button": "Search the web",
@@ -330,6 +331,17 @@
     "back": "Setlists",
     "actions": "Actions for {{title}}",
     "by": "By {{name}}",
+    "live": {
+      "allDocuments": "All instruments",
+      "openPhoto": "Photo: {{label}}",
+      "photo": "A song's photo, full screen.",
+      "lyrics": "Lyrics",
+      "previous": "Previous song: {{title}}",
+      "next": "Next song: {{title}}",
+      "button": "Live",
+      "exit": "Leave live mode",
+      "notesMore": "Show all the notes"
+    },
     "export": {
       "print": "Print",
       "docx": "Export to docx"
