@@ -1,5 +1,5 @@
 import type { ActivityAction, ActivityTarget } from "@coverband/shared";
-import type { Db, Tx } from "../db/client";
+import { afterCommit, type Db, dbLog, type Tx } from "../db/client";
 import { activity } from "../db/schema";
 
 export type ActivityEvent = {
@@ -16,14 +16,28 @@ export type ActivityEvent = {
 /**
  * Records a functional event. Pass the transaction of the change itself, so there is no event
  * without its change and no change without its event.
+ *
+ * Once the change is committed, the event is also logged (#320, study 026): Cockpit's Grafana
+ * counts events from the logs, without querying the database. A rolled-back change logs nothing.
  */
 export async function recordActivity(tx: Db | Tx, event: ActivityEvent) {
+  const data = event.data ?? null;
   await tx.insert(activity).values({
     action: event.action,
     bandId: event.bandId,
     actorId: event.actorId,
     targetType: event.target.type,
     targetId: event.target.id,
-    data: event.data ?? null,
+    data,
   });
+  afterCommit(tx, () =>
+    dbLog(tx).info("Activity", {
+      action: event.action,
+      bandId: event.bandId,
+      actorId: event.actorId,
+      targetType: event.target.type,
+      targetId: event.target.id,
+      data,
+    }),
+  );
 }
