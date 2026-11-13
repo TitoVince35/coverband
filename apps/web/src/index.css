@@ -125,6 +125,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* A fieldset never shrinks below its content by default (min-width: min-content): a row that
+     should scroll or wrap inside it would widen the page instead (the repertoire's filters). */
+  fieldset {
+    min-width: 0;
+  }
   html {
     @apply font-sans;
   }

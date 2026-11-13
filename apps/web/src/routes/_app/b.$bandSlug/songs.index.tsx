@@ -87,10 +87,10 @@ function RepertoirePage() {
               onChange={(event) => setQuery(event.target.value)}
             />
           </div>
-          {/* The status filters on one line (scrolling sideways if a phone is too narrow), the sort
-              on its own line below. */}
-          <div className="space-y-2">
-            <fieldset className="-m-1 flex gap-2 overflow-x-auto p-1">
+          {/* The status filters on one line (scrolling sideways if a phone is too narrow, with no
+              scrollbar drawn between them and the sort), the sort on its own line below. */}
+          <div className="flex flex-col gap-2">
+            <fieldset className="-m-1 flex gap-2 overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <legend className="sr-only">{t("songs.filter")}</legend>
               {STATUS_FILTERS.map((s) => (
                 <button
