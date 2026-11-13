@@ -1,7 +1,5 @@
 # Coverband sur iPhone et iPad : dépannage
 
-> 🕒 Manuel publié le vendredi 2026/11/13
-
 Coverband est une application web : elle ne s'installe pas depuis l'App Store, mais depuis le navigateur, en l'ajoutant à l'écran d'accueil. Une fois ajoutée, elle s'ouvre en plein écran avec sa propre icône, fonctionne sans connexion pendant le concert et peut recevoir des notifications.
 
 Sur iPhone et iPad, le téléphone ne propose jamais l'installation de lui-même : il faut la faire à la main. Ce guide explique comment, et quoi faire quand ça ne marche pas.
