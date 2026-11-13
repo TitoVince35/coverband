@@ -15,7 +15,7 @@ import { loadEnv, logConfig, s3Config, smtpConfig } from "./env";
 
 const env = loadEnv();
 const log = createLogger(logConfig(env));
-const { db } = createDb(env.DATABASE_URL);
+const { db } = createDb(env.DATABASE_URL, { log });
 const mailer = createSmtpMailer(smtpConfig(env));
 const storage = createS3Storage(s3Config(env));
 const auth = createAuth({
