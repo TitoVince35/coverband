@@ -50,7 +50,9 @@ export function LyricsView({ title, lyrics, footer, open, onOpenChange }: Props)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="inset-0 h-dvh max-w-none translate-x-0 translate-y-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 rounded-none bg-background p-0 ring-0 sm:max-w-none"
+        // The column never wider than the screen: a long title (truncated, so unbroken) would
+        // otherwise widen it, cutting the buttons and every line of the lyrics.
+        className="inset-0 h-dvh max-w-none translate-x-0 translate-y-0 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 rounded-none bg-background p-0 ring-0 sm:max-w-none"
       >
         <div className="flex items-center gap-2 border-b px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-2">
           <DialogTitle className="min-w-0 flex-1 truncate font-heading text-base">
