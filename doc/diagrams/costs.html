@@ -79,7 +79,9 @@
   .outside-box { stroke: var(--outside); }
 
   .table-wrap { overflow-x: auto; background: var(--surface); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
-  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.92rem; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.92rem; table-layout: fixed; }
+  /* The service names keep one line; the two text columns share the rest equally. */
+  col.service { width: 15rem; }
   caption { text-align: left; padding: 14px 16px 0; color: var(--muted); font-size: 0.85rem; }
   th, td { text-align: left; vertical-align: top; padding: 10px 16px; border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent); }
   thead th { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
@@ -91,7 +93,7 @@
   .pill.cost { color: var(--cost); background: color-mix(in srgb, var(--cost) 12%, transparent); }
   .pill.small { color: var(--muted); background: color-mix(in srgb, var(--line) 15%, transparent); }
   .pill.unknown { color: var(--outside); background: color-mix(in srgb, var(--outside) 14%, transparent); }
-  td small { display: block; color: var(--muted); font-weight: 400; }
+  td small { display: block; color: var(--muted); font-weight: 400; white-space: normal; }
 
   .summary { background: var(--surface); border-radius: 14px; padding: 24px; display: grid; gap: 20px; border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
   .totals { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
@@ -112,7 +114,7 @@
 
 <main>
   <header>
-    <span class="eyebrow">v1.4 · Friday 2026/11/13 · brief 033 · bills to 2026/11/12</span>
+    <span class="eyebrow">v1.5 · Friday 2026/11/13 · brief 033 · bills to 2026/11/12</span>
     <h1>Coverband running costs</h1>
     <p class="lead">The architecture services, with what each costs. Scaleway figures come from the real bills (October, and November up to the 12th, projected to a full month); prices are before VAT unless said otherwise.</p>
   </header>
@@ -263,6 +265,7 @@
     <div class="table-wrap">
       <table>
         <caption>Monthly figures for Scaleway are November projected to 30 days, before VAT.</caption>
+        <colgroup><col class="service"><col><col></colgroup>
         <thead>
           <tr><th scope="col">Service</th><th scope="col">Characteristics</th><th scope="col">Cost or limitation</th></tr>
         </thead>
