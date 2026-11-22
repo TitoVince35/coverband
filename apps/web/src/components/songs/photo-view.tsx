@@ -3,13 +3,16 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { useHistoryStep } from "@/lib/history-step";
 import { savedDocument } from "@/lib/offline-documents";
 
 /**
- * A song's photo full screen, inside the app (live mode, #309): no new tab, so the list keeps its
- * place. The copy saved on the phone when there is one (offline, and faster), else the server's.
+ * A song's photo full screen, inside the app, with a big Close (live mode, #309, and the song's
+ * documents): no new tab, so the page keeps its place, and an installed app, which has no Back
+ * button in a new tab, is never left. The phone's Back closes it too (`useHistoryStep`). The copy saved on the phone when there is one (offline, and
+ * faster), else the server's.
  */
-export function LivePhoto({
+export function PhotoView({
   photo,
   onClose,
 }: {
@@ -18,6 +21,8 @@ export function LivePhoto({
 }) {
   const { t } = useTranslation();
   const [src, setSrc] = useState<string | null>(null);
+  // The phone's Back closes it.
+  useHistoryStep(photo !== null, onClose);
 
   useEffect(() => {
     if (!photo) return;
@@ -43,7 +48,9 @@ export function LivePhoto({
       >
         <div className="flex items-center gap-2 px-3 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-2 text-white">
           <DialogTitle className="min-w-0 flex-1 truncate text-base">{photo?.title}</DialogTitle>
-          <DialogDescription className="sr-only">{t("setlists.live.photo")}</DialogDescription>
+          <DialogDescription className="sr-only">
+            {t("songs.documents.photoView")}
+          </DialogDescription>
           <Button
             variant="secondary"
             size="lg"

@@ -318,6 +318,7 @@
       "removeTitle": "Supprimer « {{title}} » ?",
       "removeDescription": "Son fichier est supprimé pour tout le groupe.",
       "needsNetwork": "Nécessite le réseau",
+      "photoView": "Une photo du morceau, en plein écran.",
       "notSaved": "Ce document n'est pas encore enregistré sur cet appareil."
     }
   },
@@ -334,7 +335,6 @@
     "live": {
       "allDocuments": "Tous les instruments",
       "openPhoto": "Photo : {{label}}",
-      "photo": "Une photo du morceau, en plein écran.",
       "lyrics": "Paroles",
       "previous": "Morceau précédent : {{title}}",
       "next": "Morceau suivant : {{title}}",

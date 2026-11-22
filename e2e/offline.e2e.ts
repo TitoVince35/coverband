@@ -87,15 +87,14 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await expect(page.getByRole("button", { name: "Archive" })).toBeDisabled();
   // The chord grid's photo, from the device (#240).
   await page.getByRole("button", { name: "Documents" }).click();
-  const [photo] = await Promise.all([
-    page.waitForEvent("popup"),
-    page
-      .getByRole("list", { name: "Documents" })
-      .getByRole("button", { name: /^Chords/ })
-      .click(),
-  ]);
-  await expect.poll(() => photo.url()).toMatch(/^blob:/);
-  await photo.close();
+  await page
+    .getByRole("list", { name: "Documents" })
+    .getByRole("button", { name: /^Chords/ })
+    .click();
+  const viewer = page.getByRole("dialog", { name: "Chords" });
+  await expect(viewer.getByRole("img", { name: "Chords" })).toHaveAttribute("src", /^blob:/);
+  await viewer.getByRole("button", { name: "Close" }).click();
+  await expect(viewer).toBeHidden();
   // Opening it leaves the browser believing it's online, the server still out of reach (#281):
   // like a venue's Wi-Fi. Every band tab opens anyway, with its saved data.
   await openEveryBandTab(page, "Zombie");

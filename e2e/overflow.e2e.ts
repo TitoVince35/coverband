@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { BASE_URL } from "./playwright.config";
 import { addSetlist, addSong, type Band, newBand } from "./support";
 
 // Nothing wider than a narrow phone's screen: no page scrolling sideways, nothing cut at the edge
@@ -35,6 +38,19 @@ test.beforeAll(async ({ browser }) => {
       "Another invented verse, written only to test how the text wraps on a narrow screen",
     ].join("\n"),
   });
+  // A photo with a long title, for the photo view.
+  const photo = await page.request.post(`/api/bands/${band.slug}/songs/${songId}/documents`, {
+    headers: { origin: BASE_URL },
+    multipart: {
+      file: {
+        name: "photo.jpg",
+        mimeType: "image/jpeg",
+        buffer: readFileSync(fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url))),
+      },
+      title: `${LONG_TITLE} chord grid`,
+    },
+  });
+  expect(photo.ok()).toBe(true);
   const short = await addSong(band, { title: "Short", artist: "Band" });
   await addSetlist(band, `${LONG_TITLE} setlist`, [
     { name: "A part with a long name for the test", songs: [songId, short] },
@@ -159,6 +175,15 @@ test("dialogs and menus fit a narrow phone", async () => {
     ["Add a document", song, (p) => opens(p, "Documents", "Add a document")],
     ["Edit the lyrics", song, (p) => opens(p, "Lyrics", "Edit")],
     ["Lyrics view", song, (p) => opens(p, "Lyrics", "View")],
+    [
+      "Photo view",
+      song,
+      async (p) => {
+        await button(p, "Documents").click();
+        await p.getByRole("button", { name: /^The extraordinarily.*chord grid Photo/ }).click();
+        return p.getByRole("dialog");
+      },
+    ],
     ["Add songs", `${b}/setlists/${setlistId}`, (p) => opens(p, "Add songs")],
     ["New setlist", `${b}/setlists`, (p) => opens(p, "New setlist")],
   ] satisfies [string, string, (p: Page) => Promise<Locator>][]) {

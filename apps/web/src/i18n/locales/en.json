@@ -318,6 +318,7 @@
       "removeTitle": "Delete “{{title}}”?",
       "removeDescription": "Its file is deleted for everyone in the band.",
       "needsNetwork": "Needs the network",
+      "photoView": "A song's photo, full screen.",
       "notSaved": "This document isn't saved on this device yet."
     }
   },
@@ -334,7 +335,6 @@
     "live": {
       "allDocuments": "All instruments",
       "openPhoto": "Photo: {{label}}",
-      "photo": "A song's photo, full screen.",
       "lyrics": "Lyrics",
       "previous": "Previous song: {{title}}",
       "next": "Next song: {{title}}",

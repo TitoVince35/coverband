@@ -57,7 +57,8 @@ export function SongNotes({
   });
 
   const blocker = useBlocker({
-    shouldBlockFn: () => changed,
+    // Leaving the page; never a step on it (a photo full screen, `useHistoryStep`).
+    shouldBlockFn: ({ current, next }) => changed && current.pathname !== next.pathname,
     enableBeforeUnload: () => changed,
     withResolver: true,
   });
