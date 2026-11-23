@@ -90,6 +90,9 @@ export default defineConfig({
       }),
     // The API runs separately in development (`bun run dev:api`).
     // xfwd: the API sees the browser's IP in X-Forwarded-For (Better Auth's rate limits).
-    proxy: { "/api": { target: "http://localhost:3000", xfwd: true } },
+    // The API's port: `PORT` from `.env` when another program has 3000 on this computer.
+    proxy: {
+      "/api": { target: `http://localhost:${process.env.PORT || 3000}`, xfwd: true },
+    },
   },
 });
