@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { GigStatusBadge } from "@/components/gigs/gig-status";
 import { useLanguage } from "@/i18n/use-language";
 import { gigDateParts } from "@/lib/gig-format";
-import { type GigSummary, gigName } from "@/lib/gigs";
+import { gigName } from "@/lib/gig-rules";
+import type { GigSummary } from "@/lib/gigs";
 import { cn } from "@/lib/utils";
 
 /** A gig's date as a calendar tile: weekday, day, month (and the year when it isn't this one). */

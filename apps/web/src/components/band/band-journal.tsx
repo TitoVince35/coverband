@@ -39,6 +39,10 @@ const SENTENCES = {
   "setlist.deleted": "journal.setlistDeleted",
   "setlist.updated": "journal.setlistUpdated",
   "gig.created": "journal.gigCreated",
+  "gig.settled": "journal.gigSettled",
+  "gig.postponed": "journal.gigPostponed",
+  "gig.cancelled": "journal.gigCancelled",
+  "gig.deleted": "journal.gigDeleted",
 } as const satisfies Partial<Record<ActivityAction, string>>;
 
 /** The status a song was given, as a word of the sentence. */

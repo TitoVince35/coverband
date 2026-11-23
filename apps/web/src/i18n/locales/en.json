@@ -537,6 +537,51 @@
     "view": {
       "showTime": "On stage {{time}}",
       "directions": "Directions"
+    },
+    "actions": {
+      "label": "Actions for {{name}}",
+      "createdBy": "Created by {{name}}",
+      "managersOnly": "Postpone, cancel and delete: its creator or the band leader.",
+      "view": "View",
+      "cancelledHint": "Cancelled: it can't be edited any more.",
+      "pastHint": "Past gigs are read-only.",
+      "settledEditHint": "Settled: the date, title and venue stay as they are."
+    },
+    "settle": {
+      "switch": "Settled",
+      "hint": "The date, title and venue are then fixed. The band's members are told."
+    },
+    "settled": {
+      "label": "Settled: fixed details",
+      "hint": "Fixed while settled. Postpone to change them: the gig goes back to proposed."
+    },
+    "postpone": {
+      "button": "Postpone",
+      "hint": "Back to proposed, then choose the new date.",
+      "done": "Gig back to proposed: choose its new date"
+    },
+    "cancel": {
+      "button": "Cancel the gig…",
+      "hint": "Asks for the reason. It can't be edited afterwards.",
+      "title": "Cancel “{{name}}”?",
+      "description": "The gig stays in the list as cancelled and can't be edited any more. You can delete it afterwards.",
+      "reason": "Reason",
+      "reasonHint": "Kept with the gig, shown at its top.",
+      "keep": "Keep the gig",
+      "confirm": "Cancel the gig",
+      "done": "Gig cancelled"
+    },
+    "cancelled": {
+      "byOn": "Cancelled by {{name}} on {{date}}",
+      "readOnly": "Read-only. Its creator or the band leader can delete it."
+    },
+    "delete": {
+      "button": "Delete",
+      "settledHint": "Settled: cancel it first. A proposed gig can be deleted directly.",
+      "title": "Delete “{{name}}”?",
+      "description": "It's deleted for good. Its venue and contacts stay in the band's lists.",
+      "confirm": "Delete the gig",
+      "done": "Gig deleted"
     }
   },
   "login": {
@@ -765,7 +810,10 @@
     "setlist_archived": "This setlist is archived: restore it to change it.",
     "setlist_outdated": "This setlist changed meanwhile: reload it, then make your change again.",
     "venue_taken": "The band already has a venue with this name in this city: choose it from the list.",
-    "gig_outdated": "This gig changed meanwhile: reload it, then make your change again."
+    "gig_outdated": "This gig changed meanwhile: reload it, then make your change again.",
+    "gig_settled": "This gig is settled: postpone it to change its date, title or venue, cancel it before deleting it.",
+    "gig_cancelled": "This gig is cancelled: it can't be changed any more.",
+    "gig_past": "This gig is over: past gigs are read-only."
   },
   "instruments": {
     "picker": {
@@ -823,7 +871,11 @@
     "setlistUpdated": "{{name}} updated {{setlist}}",
     "gigTitle": "the gig “{{title}}”",
     "aGig": "a gig",
-    "gigCreated": "{{name}} created {{gig}}"
+    "gigCreated": "{{name}} created {{gig}}",
+    "gigSettled": "{{name}} settled {{gig}}",
+    "gigPostponed": "{{name}} postponed {{gig}}",
+    "gigCancelled": "{{name}} cancelled {{gig}}",
+    "gigDeleted": "{{name}} deleted {{gig}}"
   },
   "contact": {
     "title": "Contact us",

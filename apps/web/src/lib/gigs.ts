@@ -2,12 +2,10 @@ import type { GigFilter, GigType, WebLink } from "@coverband/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ApiRequestError, ensureOk } from "@/lib/errors";
+import { deviceTimeZone } from "@/lib/gig-rules";
 
 // A band's gigs and venues (brief 034): queries and mutations. Their query keys sit under the
 // band's (["bands", bandSlug, "gigs", …]), so a change invalidates them with the band's other data.
-
-/** The device's time zone: the API decides "A gig's day" in it. */
-export const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 /** A band's gigs: next (today's and upcoming, the default), past, or all. */
 export const gigsQuery = (bandSlug: string, when: GigFilter = "next") =>
@@ -98,25 +96,46 @@ export async function updateGig(
 ) {
   const res = await api.bands[":bandSlug"].gigs[":gigId"].$patch({
     param: { bandSlug, gigId },
+    query: { tz: deviceTimeZone() },
     json,
   });
   return (await (await ensureOk(res)).json()).gig;
 }
 
-/** A gig's name: its title, else its venue's name. */
-export const gigName = (gig: { title: string | null; venue: { name: string } | null }) =>
-  gig.title ?? gig.venue?.name ?? "";
+/** Settles a proposed gig (its creator or a band leader); the band's members get a push. */
+export async function settleGig(bandSlug: string, gigId: string) {
+  const res = await api.bands[":bandSlug"].gigs[":gigId"].settle.$post({
+    param: { bandSlug, gigId },
+    query: { tz: deviceTimeZone() },
+  });
+  return (await (await ensureOk(res)).json()).gig;
+}
 
-/**
- * Directions to a venue in the phone's maps app, from its address (its name without one): Apple
- * Maps on an iPhone, Google Maps elsewhere (its app on Android). Works offline too: the app opens.
- */
-export function directionsUrl(
-  venue: { name: string; address: string | null; city: string },
-  ios: boolean,
-) {
-  const destination = encodeURIComponent([venue.address ?? venue.name, venue.city].join(", "));
-  return ios
-    ? `https://maps.apple.com/?daddr=${destination}`
-    : `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+/** Brings a settled gig back to proposed, to change its date, title or venue. */
+export async function postponeGig(bandSlug: string, gigId: string) {
+  const res = await api.bands[":bandSlug"].gigs[":gigId"].postpone.$post({
+    param: { bandSlug, gigId },
+    query: { tz: deviceTimeZone() },
+  });
+  return (await (await ensureOk(res)).json()).gig;
+}
+
+/** Cancels a gig with its reason; it is read-only afterwards. */
+export async function cancelGig(bandSlug: string, gigId: string, reason: string) {
+  const res = await api.bands[":bandSlug"].gigs[":gigId"].cancel.$post({
+    param: { bandSlug, gigId },
+    query: { tz: deviceTimeZone() },
+    json: { reason },
+  });
+  return (await (await ensureOk(res)).json()).gig;
+}
+
+/** Deletes a gig for good (a proposed, cancelled or past one); its venue stays. */
+export async function deleteGig(bandSlug: string, gigId: string) {
+  await ensureOk(
+    await api.bands[":bandSlug"].gigs[":gigId"].$delete({
+      param: { bandSlug, gigId },
+      query: { tz: deviceTimeZone() },
+    }),
+  );
 }

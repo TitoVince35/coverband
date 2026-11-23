@@ -3,17 +3,24 @@
 import { inArray, like } from "drizzle-orm";
 import { createApp } from "./app";
 import { activity, bandMembers, bands, users } from "./core/db/schema";
+import type { AppDeps } from "./deps";
 import { createTestDeps } from "./test-deps";
 
 type Role = "leader" | "musician";
 
 /**
  * Two bands: `slug` with `members` (name → role), `otherSlug` led by `outsider`. `call(path, who)`
- * sends a JSON request under /api as that member. `cleanUp()` deletes everything made.
+ * sends a JSON request under /api as that member. `cleanUp()` deletes everything made. `overrides`
+ * replaces dependencies (push, storage…).
  */
-export function testBand(prefix: string, databaseUrl: string | undefined) {
+export function testBand(
+  prefix: string,
+  databaseUrl: string | undefined,
+  overrides: Partial<AppDeps> = {},
+) {
   const testDeps = createTestDeps(databaseUrl);
-  const { deps, db, sql, auth } = testDeps;
+  const { db, sql, auth } = testDeps;
+  const deps = { ...testDeps.deps, ...overrides };
   const app = createApp({ deps });
   const run = crypto.randomUUID().slice(0, 8);
   const email = (name: string) => `${name}-${run}@test.localhost`;
@@ -89,5 +96,5 @@ export function testBand(prefix: string, databaseUrl: string | undefined) {
   const errorOf = async (res: Response) =>
     ((await res.json()) as { error: { code: string } }).error.code;
 
-  return { ...testDeps, app, call, setUp, cleanUp, errorOf, ids, slug, otherSlug, band };
+  return { ...testDeps, deps, app, call, setUp, cleanUp, errorOf, ids, slug, otherSlug, band };
 }

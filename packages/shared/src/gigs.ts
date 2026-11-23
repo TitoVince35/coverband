@@ -9,7 +9,7 @@ export const GIG_STATUSES = ["proposed", "settled", "cancelled"] as const;
 export type GigStatus = (typeof GIG_STATUSES)[number];
 
 /** Length limits for a gig's and a venue's texts, shared by the API and the forms. */
-export const GIG_MAX_LENGTH = { title: 100 } as const;
+export const GIG_MAX_LENGTH = { title: 100, cancelReason: 500 } as const;
 export const VENUE_MAX_LENGTH = {
   name: 100,
   city: 100,

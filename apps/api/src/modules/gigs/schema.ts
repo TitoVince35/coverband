@@ -74,6 +74,10 @@ export const gigs = pgTable(
     venueId: uuid().references(() => venues.id, { onDelete: "no action" }),
     // Who created it: they settle, postpone, cancel and delete it, as the band leader does.
     createdById: uuid().references(() => users.id, { onDelete: "set null" }),
+    // Cancelled (#327): why, who and when, shown at the top of the gig. Null otherwise.
+    cancelledReason: text(),
+    cancelledById: uuid().references(() => users.id, { onDelete: "set null" }),
+    cancelledAt: timestamp({ withTimezone: true }),
     // Raised by each save: a save made on an older version is refused.
     version: integer().default(1).notNull(),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),

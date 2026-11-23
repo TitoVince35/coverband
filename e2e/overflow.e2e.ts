@@ -208,6 +208,26 @@ test("dialogs and menus fit a narrow phone", async () => {
     ["Add songs", `${b}/setlists/${setlistId}`, (p) => opens(p, "Add songs")],
     ["New setlist", `${b}/setlists`, (p) => opens(p, "New setlist")],
     [
+      "A gig's actions",
+      `${b}/gigs`,
+      async (p) => {
+        await p
+          .getByRole("button", { name: /^Actions for / })
+          .first()
+          .click();
+        return p.getByRole("menu");
+      },
+    ],
+    [
+      "Cancel a gig",
+      `${b}/gigs/${gigId}`,
+      async (p) => {
+        await p.getByRole("button", { name: /^Actions for / }).click();
+        await p.getByRole("menuitem", { name: /Cancel the gig/ }).click();
+        return p.getByRole("alertdialog");
+      },
+    ],
+    [
       "New gig: venue search",
       `${b}/gigs/new`,
       async (p) => {
