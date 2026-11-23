@@ -3,6 +3,8 @@
 > 🕒 Brief posted on Monday 2026/11/23 18:28
 >
 > 🕒 Brief settled on Monday 2026/11/23 18:30
+>
+> 🕒 Issues completed on Monday 2026/11/23 18:42
 
 Follow-up to [brief 025](025_notifications.md): today, notifications are turned on only from the "Notifications" card on the Account page (#261), where few users go. Most never turn them on, so they miss the push alerts.
 
