@@ -38,6 +38,15 @@ const SENTENCES = {
   "setlist.restored": "journal.setlistRestored",
   "setlist.deleted": "journal.setlistDeleted",
   "setlist.updated": "journal.setlistUpdated",
+  "gig.created": "journal.gigCreated",
+  "gig.settled": "journal.gigSettled",
+  "gig.postponed": "journal.gigPostponed",
+  "gig.cancelled": "journal.gigCancelled",
+  "gig.deleted": "journal.gigDeleted",
+  "gig.program_link_added": "journal.gigProgramLinkAdded",
+  "gig.program_updated": "journal.gigProgramUpdated",
+  "gig.contact_added": "journal.gigContactAdded",
+  "gig.poster_added": "journal.gigPosterAdded",
 } as const satisfies Partial<Record<ActivityAction, string>>;
 
 /** The status a song was given, as a word of the sentence. */
@@ -140,11 +149,14 @@ export function JournalList({
         // The song's or setlist's current title; "a song" once it's gone.
         const songTitle = "song" in entry ? entry.song : null;
         const setlistTitle = "setlist" in entry ? entry.setlist : null;
+        const gigTitle = "gig" in entry ? entry.gig : null;
         const linkText = songTitle
           ? t("journal.songTitle", { title: songTitle })
           : setlistTitle
             ? t("journal.setlistTitle", { title: setlistTitle })
-            : null;
+            : gigTitle
+              ? t("journal.gigTitle", { title: gigTitle })
+              : null;
         // Linked when it still exists (an archived one too): the marker stands in its place.
         const linked = linkText !== null && entry.target !== null;
         const song = songTitle
@@ -157,6 +169,11 @@ export function JournalList({
             ? LINK_MARKER
             : t("journal.setlistTitle", { title: setlistTitle })
           : t("journal.aSetlist");
+        const gig = gigTitle
+          ? linked && entry.target?.type === "gig"
+            ? LINK_MARKER
+            : t("journal.gigTitle", { title: gigTitle })
+          : t("journal.aGig");
         const sentence =
           entry.action === "band.genre_changed" && !("genre" in entry && entry.genre)
             ? t("journal.genreRemoved", { name })
@@ -167,6 +184,7 @@ export function JournalList({
                   genre: "genre" in entry ? entry.genre : "",
                   song,
                   setlist,
+                  gig,
                   status: statusWord(entry),
                 });
         const parts = splitAtMarker(sentence);
@@ -181,10 +199,18 @@ export function JournalList({
               >
                 {linkText}
               </Link>
-            ) : (
+            ) : entry.target.type === "setlist" ? (
               <Link
                 to="/b/$bandSlug/setlists/$setlistId"
                 params={{ bandSlug, setlistId: entry.target.id }}
+                className="font-medium underline decoration-muted-foreground/50 underline-offset-4 hover:decoration-foreground"
+              >
+                {linkText}
+              </Link>
+            ) : (
+              <Link
+                to="/b/$bandSlug/gigs/$gigId"
+                params={{ bandSlug, gigId: entry.target.id }}
                 className="font-medium underline decoration-muted-foreground/50 underline-offset-4 hover:decoration-foreground"
               >
                 {linkText}

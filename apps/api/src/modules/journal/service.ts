@@ -27,6 +27,9 @@ export type JournalDetails = {
   song?: string | null;
   /** A setlist's current title (null once deleted). */
   setlist?: string | null;
+  /** A gig's current title, else its venue's name (null once deleted), and its date. */
+  gig?: string | null;
+  gigDate?: string | null;
   status?: string | null;
   genre?: string | null;
   /** A logo change: removed, or anything else (added, replaced, another background). */
@@ -101,9 +104,9 @@ export async function bandJournal(
 }
 
 /** A target the web app has a page for (#285): the journal links to it. */
-type PageTarget = { type: "song" | "setlist"; id: string };
+type PageTarget = { type: "song" | "setlist" | "gig"; id: string };
 
 /** An entry's target when it has a page, else null: never another kind's id (users, invitations). */
 function pageTarget(type: ActivityTarget, id: string): PageTarget | null {
-  return type === "song" || type === "setlist" ? { type, id } : null;
+  return type === "song" || type === "setlist" || type === "gig" ? { type, id } : null;
 }

@@ -37,8 +37,9 @@ bun test             # tests only (DB integration tests are skipped when DATABAS
 bun run e2e          # end-to-end tests (Playwright): builds and serves the app on :3100, needs db:up
 
 cp .env.example .env # first time only
-bun run db:up        # start local Postgres (port 5432), Mailpit (SMTP 1025, emails at http://localhost:8025)
+bun run db:up        # start local Postgres (port 5433), Mailpit (SMTP 1025, emails at http://localhost:8025)
                      # and Garage (S3 storage on http://localhost:3900, bucket and dev key created; web UI on :3909)
+                     # (all published on 127.0.0.1 only, never on the local network)
 bun run db:generate  # generate a SQL migration from apps/api/src/core/db/schema.ts
 bun run db:migrate   # apply pending migrations
 bun run db:studio    # browse the database
@@ -87,10 +88,11 @@ bun run db:down      # stop Postgres (add -v to docker compose down to wipe data
 
 ## End-to-end tests
 
-- In `e2e/` (Playwright), files `*.e2e.ts` (so `bun test` skips them). They run against the production build served by the API on port 3100, never the dev servers, with the local Postgres, Mailpit and Garage, a fake LRCLIB (`e2e/fake-lrclib.ts`, port 3101) for lyrics searches, fake music services (`e2e/fake-music.ts`, port 3103: Deezer, YouTube's API and thumbnails) for "Search and add", and a fake push service (`e2e/fake-push.ts`, port 3104, HTTPS with a self-signed certificate made by openssl, `push-certificate.ts`, which the API trusts through `NODE_EXTRA_CA_CERTS`; the browser's subscriptions are replaced by ones to it, `push.e2e.ts`); CI runs them after the other checks.
+- In `e2e/` (Playwright), files `*.e2e.ts` (so `bun test` skips them). They run against the production build served by the API on port 3100, never the dev servers, with the local Postgres, Mailpit and Garage, a fake LRCLIB (`e2e/fake-lrclib.ts`, port 3101) for lyrics searches, fake music services (`e2e/fake-music.ts`, port 3103: Deezer, YouTube's API and thumbnails) for "Search and add", a fake Nominatim (`e2e/fake-nominatim.ts`, port 3105) for venues' maps (OpenStreetMap's tiles answered by `page.route` in the test), and a fake push service (`e2e/fake-push.ts`, port 3104, HTTPS with a self-signed certificate made by openssl, `push-certificate.ts`, which the API trusts through `NODE_EXTRA_CA_CERTS`; the browser's subscriptions are replaced by ones to it, `push.e2e.ts`); CI runs them after the other checks.
 - A phone in Chromium (the system Chrome locally: Playwright's own doesn't install on Ubuntu 26.04 yet), English, no retries. Three workers (more takes a developer's computer over 70% CPU, and is slower on CI's runners): the files run in parallel, the tests inside each file in order, so a file never relies on another's data: each sets up its own band with `newBand()` (`support.ts`: the admin invites a band leader, who creates the band, through the API), and adds what it needs with `addSong()` and `addSetlist()` unless those screens are what it tests. The invitation screens themselves: `onboarding.e2e.ts`. A story whose steps build on each other is a `serial` describe. The files that send notes from the team to every user (`notifications.e2e.ts`, `push.e2e.ts`) run after all the others, one at a time (the "phone notes" project): running one of them alone runs the rest first, unless `--no-deps`. Log in with `login()`: each login comes from its own client IP, so the suite stays under the login rate limit.
 - Test data comes from the real flows: the global setup creates this run's admin, who invites; links are read from Mailpit (`invitationLink()`). Everything created is marked (`@e2e.localhost` emails, "E2E " band names) and the teardown deletes it from the database and Mailpit, leftovers of interrupted runs included. Only an avatar file can stay in the local bucket, if the avatar test fails between upload and removal.
 - Select by role and visible text, in English, like a user would.
+- Nothing wider than a narrow phone (`overflow.e2e.ts`): every page and the main dialogs and menus at 320 px, with the longest names a band would type, fail when the page scrolls sideways or something goes past the screen's edge unclipped (a row meant to scroll sideways inside itself has `overflow-x-auto`). A new page or dialog goes there too.
 
 ## Briefs
 

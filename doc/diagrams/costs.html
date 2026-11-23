@@ -79,7 +79,9 @@
   .outside-box { stroke: var(--outside); }
 
   .table-wrap { overflow-x: auto; background: var(--surface); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
-  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.92rem; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.92rem; table-layout: fixed; }
+  /* The service names keep one line; the two text columns share the rest equally. */
+  col.service { width: 15rem; }
   caption { text-align: left; padding: 14px 16px 0; color: var(--muted); font-size: 0.85rem; }
   th, td { text-align: left; vertical-align: top; padding: 10px 16px; border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent); }
   thead th { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
@@ -91,7 +93,7 @@
   .pill.cost { color: var(--cost); background: color-mix(in srgb, var(--cost) 12%, transparent); }
   .pill.small { color: var(--muted); background: color-mix(in srgb, var(--line) 15%, transparent); }
   .pill.unknown { color: var(--outside); background: color-mix(in srgb, var(--outside) 14%, transparent); }
-  td small { display: block; color: var(--muted); font-weight: 400; }
+  td small { display: block; color: var(--muted); font-weight: 400; white-space: normal; }
 
   .summary { background: var(--surface); border-radius: 14px; padding: 24px; display: grid; gap: 20px; border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
   .totals { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
@@ -112,14 +114,14 @@
 
 <main>
   <header>
-    <span class="eyebrow">v1.4 · Friday 2026/11/13 · brief 033 · bills to 2026/11/12</span>
+    <span class="eyebrow">v1.6 · Monday 2026/11/23 · brief 033 · bills to 2026/11/12</span>
     <h1>Coverband running costs</h1>
     <p class="lead">The architecture services, with what each costs. Scaleway figures come from the real bills (October, and November up to the 12th, projected to a full month); prices are before VAT unless said otherwise.</p>
   </header>
 
   <figure>
     <div class="scroll">
-      <svg viewBox="270 20 1120 560" role="img" aria-label="The architecture diagram with costs. The Serverless SQL Database, about 13.80 euros a month, and the Serverless Container, about 7.50 euros a month, make almost the whole bill. Every GitHub service, the push services and the music APIs are free; the other Scaleway services cost cents a month, and the domain 5.98 euros a year.">
+      <svg viewBox="270 20 1120 680" role="img" aria-label="The architecture diagram with costs. The Serverless SQL Database, about 13.80 euros a month, and the Serverless Container, about 7.50 euros a month, make almost the whole bill. Every GitHub service, the push services, the music APIs and OpenStreetMap (its map tiles and its Nominatim geocoding) are free; the other Scaleway services cost cents a month, and the domain 5.98 euros a year.">
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" class="mk"/>
@@ -186,7 +188,11 @@
         <text x="1072" y="443" class="price">≈ €0.08 / mo</text>
 
         <!-- Outside -->
-        <text x="1190" y="352" class="glabel t-outside">Third-party services</text>
+        <text x="1190" y="182" class="glabel t-outside">Third-party services</text>
+        <rect x="1190" y="200" width="180" height="80" rx="8" class="box outside-box"/>
+        <text x="1280" y="228" class="name">OpenStreetMap tiles</text>
+        <text x="1280" y="250" class="price free">€0 · no key</text>
+        <text x="1280" y="266" class="sub">loaded by the phones</text>
         <rect x="1190" y="370" width="180" height="80" rx="8" class="box outside-box"/>
         <text x="1280" y="398" class="name">Browsers' push services</text>
         <text x="1280" y="420" class="price free">€0 · no account</text>
@@ -194,6 +200,9 @@
         <rect x="1190" y="490" width="180" height="70" rx="8" class="box outside-box"/>
         <text x="1280" y="516" class="name">Music &amp; lyrics APIs</text>
         <text x="1280" y="538" class="price free">€0 · free quotas</text>
+        <rect x="1190" y="606" width="180" height="70" rx="8" class="box outside-box"/>
+        <text x="1280" y="632" class="name">Nominatim</text>
+        <text x="1280" y="654" class="price free">€0 · no key</text>
 
         <!-- Deploy path -->
         <line x1="410" y1="160" x2="410" y2="278" class="edge" marker-end="url(#arrow)"/>
@@ -221,8 +230,11 @@
         <text x="1078" y="368" class="elabel">intake free</text>
 
         <!-- To the outside -->
-        <polyline points="1130,288 1160,288 1160,405 1188,405" class="edge" marker-end="url(#arrow)"/>
-        <polyline points="1130,318 1148,318 1148,525 1188,525" class="edge" marker-end="url(#arrow)"/>
+        <polyline points="1130,286 1172,286 1172,405 1188,405" class="edge" marker-end="url(#arrow)"/>
+        <polyline points="1130,304 1160,304 1160,525 1188,525" class="edge" marker-end="url(#arrow)"/>
+        <polyline points="1130,322 1148,322 1148,641 1188,641" class="edge" marker-end="url(#arrow)"/>
+        <text x="1154" y="579" class="elabel">≤ 1 request a second,</text>
+        <text x="1154" y="593" class="elabel">once per address</text>
       </svg>
     </div>
     <figcaption>Outlined in orange: the two services that make almost the whole bill. The database is billed by the second while it's awake, at least 5 minutes per wake-up, and the container by the second while an instance runs; everything else is free or costs cents. On a phone, the diagram scrolls sideways.</figcaption>
@@ -263,6 +275,7 @@
     <div class="table-wrap">
       <table>
         <caption>Monthly figures for Scaleway are November projected to 30 days, before VAT.</caption>
+        <colgroup><col class="service"><col><col></colgroup>
         <thead>
           <tr><th scope="col">Service</th><th scope="col">Characteristics</th><th scope="col">Cost or limitation</th></tr>
         </thead>
@@ -287,6 +300,8 @@
           <tr><th scope="row">LRCLIB</th><td>Lyrics search, no key.</td><td class="cost"><span class="pill free">€0</span><small>no published quota; the app allows 30 searches an hour per member</small></td></tr>
           <tr><th scope="row">Deezer</th><td>Song details for "Search and add", no key.</td><td class="cost"><span class="pill free">€0</span><small>about 50 requests per 5 seconds per address</small></td></tr>
           <tr><th scope="row">YouTube Data API</th><td>Videos for "Search and add", our Google Cloud key.</td><td class="cost"><span class="pill free">€0</span><small>10,000 units a day for the whole app (about 99 searches); no paid tier; the app allows 15 a day per band</small></td></tr>
+          <tr><th scope="row">Nominatim</th><td>OpenStreetMap's geocoding: a venue's address into coordinates, kept with the venue; no key.</td><td class="cost"><span class="pill free">€0</span><small>usage policy: at most 1 request a second, the app named in its User-Agent; the app asks once per address saved</small></td></tr>
+          <tr><th scope="row">OpenStreetMap tiles</th><td>The venue maps' tiles, loaded by the phones straight from <code>tile.openstreetmap.org</code>, credited "© OpenStreetMap"; no key.</td><td class="cost"><span class="pill free">€0</span><small>tile usage policy: fair use, no heavy or bulk downloading</small></td></tr>
         </tbody>
       </table>
     </div>

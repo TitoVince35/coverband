@@ -318,6 +318,7 @@
       "removeTitle": "Supprimer « {{title}} » ?",
       "removeDescription": "Son fichier est supprimé pour tout le groupe.",
       "needsNetwork": "Nécessite le réseau",
+      "photoView": "Une photo du morceau, en plein écran.",
       "notSaved": "Ce document n'est pas encore enregistré sur cet appareil."
     }
   },
@@ -334,7 +335,6 @@
     "live": {
       "allDocuments": "Tous les instruments",
       "openPhoto": "Photo : {{label}}",
-      "photo": "Une photo du morceau, en plein écran.",
       "lyrics": "Paroles",
       "previous": "Morceau précédent : {{title}}",
       "next": "Morceau suivant : {{title}}",
@@ -450,6 +450,290 @@
       "button": "Dupliquer",
       "copyTitle": "{{title}} (copie)",
       "done": "Setlist dupliquée : voici la copie"
+    }
+  },
+  "gigs": {
+    "title": "Concerts",
+    "back": "Concerts",
+    "optional": "(facultatif)",
+    "pastReadOnly": "Les concerts passés sont en lecture seule.",
+    "empty": {
+      "next": "Aucun concert à venir. Ajoutez le prochain : une date, et un titre ou un lieu.",
+      "past": "Pas encore de concert passé.",
+      "all": "Pas encore de concert. Ajoutez le premier : une date, et un titre ou un lieu."
+    },
+    "filter": {
+      "label": "Quels concerts",
+      "next": "À venir",
+      "past": "Passés",
+      "all": "Tous"
+    },
+    "status": {
+      "proposed": "Proposé",
+      "settled": "Confirmé",
+      "cancelled": "Annulé"
+    },
+    "type": {
+      "public": "Concert public",
+      "private": "Événement privé",
+      "recording": "Enregistrement"
+    },
+    "new": {
+      "button": "Nouveau concert",
+      "title": "Nouveau concert"
+    },
+    "edit": {
+      "button": "Modifier",
+      "title": "Modifier le concert"
+    },
+    "form": {
+      "intro": "Une date, et un titre ou un lieu (ou les deux). Tout le reste peut attendre.",
+      "date": "Date",
+      "showTime": "Heure du concert",
+      "title": "Titre",
+      "titlePlaceholder": "Fête de la musique, mariage de Claire et Tom…",
+      "type": "Type",
+      "types": {
+        "public": "Public",
+        "private": "Privé",
+        "recording": "Enregistrement"
+      },
+      "created": "Concert créé",
+      "saved": "Concert enregistré",
+      "missing": {
+        "date": "Choisissez une date",
+        "titleOrVenue": "Ajoutez un titre ou un lieu",
+        "venueName": "Ajoutez le nom du lieu",
+        "venueCity": "Ajoutez la ville du lieu",
+        "pay": "Vérifiez le cachet : un montant en euros"
+      }
+    },
+    "venue": {
+      "title": "Lieu",
+      "new": "nouveau",
+      "list": "Les lieux du groupe",
+      "searchPlaceholder": "Les lieux du groupe…",
+      "newButton": "Nouveau lieu",
+      "newNamed": "Nouveau lieu « {{name}} »",
+      "gigCount_zero": "Aucun concert",
+      "gigCount_one": "{{count}} concert",
+      "gigCount_other": "{{count}} concerts",
+      "usedBy_zero": "Un lieu du groupe",
+      "usedBy_one": "Un lieu du groupe, utilisé par {{count}} concert",
+      "usedBy_other": "Un lieu du groupe, utilisé par {{count}} concerts",
+      "chooseExisting": "Choisir un lieu existant",
+      "change": "Changer",
+      "name": "Nom",
+      "city": "Ville",
+      "address": "Adresse",
+      "links": "Liens web",
+      "description": "Description",
+      "descriptionPlaceholder": "Petite scène, déchargement par la porte de derrière…",
+      "sharedHint": "Les modifications ici changent ce lieu pour tous les concerts du groupe qui s'y tiennent."
+    },
+    "links": {
+      "addButton": "Ajouter un lien",
+      "add": "Ajouter",
+      "url": "Adresse web",
+      "urlPlaceholder": "lapeniche-spectacle.fr",
+      "title": "Titre du lien",
+      "titlePlaceholder": "Titre (facultatif)",
+      "remove": "Retirer le lien {{link}}"
+    },
+    "view": {
+      "showTime": "Sur scène à {{time}}",
+      "directions": "Itinéraire",
+      "getIn": "Arrivée {{time}}"
+    },
+    "actions": {
+      "label": "Actions pour {{name}}",
+      "createdBy": "Créé par {{name}}",
+      "managersOnly": "Reporter, annuler et supprimer : la personne qui l'a créé ou le band leader.",
+      "view": "Voir",
+      "cancelledHint": "Annulé : il ne peut plus être modifié.",
+      "pastHint": "Les concerts passés sont en lecture seule.",
+      "settledEditHint": "Confirmé : la date, le titre et le lieu restent tels quels."
+    },
+    "settle": {
+      "switch": "Confirmé",
+      "hint": "La date, le titre et le lieu sont alors fixés. Les membres du groupe sont prévenus."
+    },
+    "settled": {
+      "label": "Confirmé : informations fixées",
+      "hint": "Fixés tant qu'il est confirmé. Reportez-le pour les changer : le concert redevient proposé."
+    },
+    "postpone": {
+      "button": "Reporter",
+      "hint": "Redevient proposé, puis choisissez la nouvelle date.",
+      "done": "Concert de nouveau proposé : choisissez sa nouvelle date"
+    },
+    "cancel": {
+      "button": "Annuler le concert…",
+      "hint": "Demande la raison. Il ne peut plus être modifié ensuite.",
+      "title": "Annuler « {{name}} » ?",
+      "description": "Le concert reste dans la liste, annulé, et ne peut plus être modifié. Vous pourrez le supprimer ensuite.",
+      "reason": "Raison",
+      "reasonHint": "Gardée avec le concert, affichée en haut.",
+      "keep": "Garder le concert",
+      "confirm": "Annuler le concert",
+      "done": "Concert annulé"
+    },
+    "cancelled": {
+      "byOn": "Annulé par {{name}} le {{date}}",
+      "readOnly": "Lecture seule. La personne qui l'a créé ou le band leader peut le supprimer."
+    },
+    "delete": {
+      "button": "Supprimer",
+      "settledHint": "Confirmé : annulez-le d'abord. Un concert proposé se supprime directement.",
+      "title": "Supprimer « {{name}} » ?",
+      "description": "Il est supprimé définitivement. Son lieu et ses contacts restent dans les listes du groupe.",
+      "confirm": "Supprimer le concert",
+      "done": "Concert supprimé"
+    },
+    "setlist": {
+      "title": "Setlist",
+      "none": "Pas encore de setlist",
+      "archived": "{{title}} (archivée)",
+      "create": "Créer une setlist",
+      "hint": "Les setlists en cours du groupe (pas les archivées). Une nouvelle s'ouvre dans l'éditeur, puis revient ici.",
+      "backHint": "Cette setlist a été créée pour un concert : retour à son formulaire, avec cette setlist choisie.",
+      "back": "Retour au concert"
+    },
+    "program": {
+      "title": "Programme",
+      "links": "Liens vers la promo du concert",
+      "notes": "Ordre de passage, occasion",
+      "notesPlaceholder": "20:00 La première partie, 21:15 nous…"
+    },
+    "extras": {
+      "title": "Infos pratiques",
+      "goodToKnow": "Bon à savoir",
+      "getIn": "Arrivée",
+      "pay": "Cachet (€)",
+      "payNotes": "À propos du cachet",
+      "sharedBackline": "Backline partagé",
+      "backlineNotes": "Ce que comprend le backline partagé",
+      "backlinePlaceholder": "Batterie, ampli basse",
+      "technicians": "Techniciens fournis",
+      "notes": "Notes"
+    },
+    "contacts": {
+      "title": "Contacts",
+      "fromVenue": "Du lieu ({{venue}})",
+      "thisGig": "Ce concert",
+      "add": "Ajouter un contact",
+      "edit": "Modifier le contact",
+      "addButton": "Ajouter",
+      "addButtonLong": "Ajouter un contact",
+      "type": "Type",
+      "types": {
+        "organizer": "Orga",
+        "technical": "Technique",
+        "musician": "Zicos"
+      },
+      "name": "Nom",
+      "known": "Les contacts du groupe",
+      "suggestHint": "Les contacts du groupe sont suggérés : une personne, les mêmes coordonnées sur chaque concert.",
+      "sharedHint": "Un contact du groupe : les modifications ici s'appliquent à chaque concert et lieu où il figure.",
+      "phone": "Téléphone",
+      "email": "E-mail",
+      "notes": "Notes",
+      "alsoVenue": "Aussi un contact du lieu",
+      "alsoVenueHint": "{{venue}} : affiché aussi sur ses prochains concerts",
+      "removeGig": "Retirer du concert",
+      "removeVenue": "Retirer du lieu",
+      "gigCount_one": "{{count}} concert",
+      "gigCount_other": "{{count}} concerts",
+      "unused": "Sur aucun concert ni lieu",
+      "call": "Appeler {{name}}",
+      "mail": "Écrire à {{name}}",
+      "pageTitle": "Contacts",
+      "new": "Nouveau contact",
+      "search": "Chercher un nom, un téléphone, un e-mail",
+      "empty": "Pas encore de contact : ajoutez-en un ici, ou sur un concert.",
+      "actions": "Actions pour {{name}}",
+      "merge": "Fusionner avec…",
+      "mergeTitle": "Fusionner « {{name}} » avec…",
+      "mergeHint": "La même personne saisie deux fois : un seul contact reste, partout où était l'autre.",
+      "other": "L'autre contact",
+      "chooseOther": "Choisissez un contact",
+      "keep": "À garder, pour chaque information",
+      "details": {
+        "name": "Nom",
+        "type": "Type",
+        "phone": "Téléphone",
+        "email": "E-mail",
+        "notes": "Notes"
+      },
+      "none": "aucun",
+      "mergeResult": "Un seul contact reste, sur leurs concerts et lieux ({{gigs}} concerts, {{venues}} lieux). L'autre est supprimé.",
+      "mergeConfirm": "Fusionner",
+      "merged": "Contacts fusionnés",
+      "delete": "Supprimer",
+      "deleteTitle": "Supprimer « {{name}} » ?",
+      "deleteDescription": "Ce contact est retiré de partout où il figure ({{where}}). Son téléphone, son e-mail et ses notes sont supprimés définitivement, pour tout le groupe.",
+      "deleteMergeHint": "La même personne saisie deux fois ? Fusionnez plutôt : rien n'est perdu.",
+      "deleteConfirm": "Supprimer le contact",
+      "deleted": "Contact supprimé"
+    },
+    "posters": {
+      "title": "Affiches",
+      "count": "{{count}} sur {{max}} · {{mb}} Mo maximum",
+      "afterSave": "Les affiches s'ajoutent une fois le concert enregistré.",
+      "add": "Ajouter une affiche",
+      "addTitle": "Ajouter une affiche",
+      "addHint": "Une image à partager sur les réseaux sociaux : elle est allégée avant l'envoi.",
+      "posterTitle": "Titre",
+      "addButton": "Ajouter",
+      "sending": "Envoi de l'affiche",
+      "added": "Affiche ajoutée",
+      "open": "Ouvrir l'affiche {{title}}",
+      "remove": "Retirer l'affiche {{title}}",
+      "removeTitle": "Retirer « {{title}} » ?",
+      "removeDescription": "L'affiche est supprimée pour tous les membres du groupe.",
+      "removeConfirm": "Retirer",
+      "removed": "Affiche retirée",
+      "download": "Télécharger {{title}}",
+      "share": "Partager {{title}}",
+      "offline": "Les affiches ont besoin du réseau."
+    },
+    "home": {
+      "today_one": "Concert du jour",
+      "today_other": "Concerts du jour",
+      "setlist": "Setlist : {{title}} · {{duration}}",
+      "view": "Voir le concert",
+      "live": "Setlist en live",
+      "upcoming_one": "{{count}} concert à venir",
+      "upcoming_other": "{{count}} concerts à venir",
+      "upcomingList": "Concerts à venir",
+      "all": "Tous les concerts"
+    },
+    "map": {
+      "label": "Carte : {{place}}",
+      "pin": "L'épingle du lieu : faites-la glisser, ou déplacez-la avec les flèches",
+      "dragHint": "Placée d'après l'adresse. Faites glisser l'épingle si elle est à côté.",
+      "afterSave": "La carte s'affiche une fois le lieu enregistré avec son adresse."
+    },
+    "venues": {
+      "title": "Lieux",
+      "pages": "Concerts, lieux et contacts",
+      "search": "Chercher un lieu ou une ville",
+      "empty": "Pas encore de lieu : ajoutez-en un ici, ou avec un concert.",
+      "contactCount_zero": "aucun contact",
+      "contactCount_one": "{{count}} contact",
+      "contactCount_other": "{{count}} contacts",
+      "sharedHint": "Les modifications s'appliquent à tous les concerts dans ce lieu.",
+      "noContact": "Aucun pour l'instant. Affichés sur chaque concert dans ce lieu.",
+      "gigsHere": "Concerts ici",
+      "noGig": "Pas encore de concert ici.",
+      "inUse_one": "Utilisé par {{count}} concert : il ne peut pas être supprimé.",
+      "inUse_other": "Utilisé par {{count}} concerts : il ne peut pas être supprimé.",
+      "saved": "Lieu enregistré",
+      "delete": "Supprimer",
+      "deleteTitle": "Supprimer « {{name}} » ?",
+      "deleteDescription": "Le lieu quitte la liste du groupe. Ses contacts restent dans les contacts du groupe.",
+      "deleteConfirm": "Supprimer le lieu",
+      "deleted": "Lieu supprimé"
     }
   },
   "login": {
@@ -676,7 +960,14 @@
     "setlist_title_taken": "Le groupe a déjà une setlist avec ce titre.",
     "too_many_setlists": "Le groupe a autant de setlists que possible : archivez-en une pour faire de la place.",
     "setlist_archived": "Cette setlist est archivée : restaurez-la pour la modifier.",
-    "setlist_outdated": "Cette setlist a changé entre-temps : rechargez-la, puis refaites votre changement."
+    "setlist_outdated": "Cette setlist a changé entre-temps : rechargez-la, puis refaites votre changement.",
+    "venue_taken": "Le groupe a déjà un lieu de ce nom dans cette ville : choisissez-le dans la liste.",
+    "gig_outdated": "Ce concert a été modifié entre-temps : rechargez-le, puis refaites votre modification.",
+    "gig_settled": "Ce concert est confirmé : reportez-le pour changer sa date, son titre ou son lieu, annulez-le avant de le supprimer.",
+    "gig_cancelled": "Ce concert est annulé : il ne peut plus être modifié.",
+    "gig_past": "Ce concert est passé : les concerts passés sont en lecture seule.",
+    "too_many_posters": "Ce concert a déjà toutes ses affiches : retirez-en une d'abord.",
+    "venue_in_use": "Des concerts ont lieu ici : ce lieu ne peut pas être supprimé."
   },
   "instruments": {
     "picker": {
@@ -689,8 +980,7 @@
     "songs": "Morceaux",
     "setlists": "Setlists",
     "members": "Membres",
-    "gigs": "Concerts à venir",
-    "soon": "(bientôt)"
+    "gigs": "Concerts à venir"
   },
   "journal": {
     "title": "Activité récente",
@@ -731,7 +1021,18 @@
     "setlistArchived": "{{name}} a archivé {{setlist}}",
     "setlistRestored": "{{name}} a restauré {{setlist}}",
     "setlistDeleted": "{{name}} a supprimé {{setlist}}",
-    "setlistUpdated": "{{name}} a modifié {{setlist}}"
+    "setlistUpdated": "{{name}} a modifié {{setlist}}",
+    "gigTitle": "le concert « {{title}} »",
+    "aGig": "un concert",
+    "gigCreated": "{{name}} a créé {{gig}}",
+    "gigSettled": "{{name}} a confirmé {{gig}}",
+    "gigPostponed": "{{name}} a reporté {{gig}}",
+    "gigCancelled": "{{name}} a annulé {{gig}}",
+    "gigDeleted": "{{name}} a supprimé {{gig}}",
+    "gigProgramLinkAdded": "{{name}} a ajouté un lien au programme de {{gig}}",
+    "gigProgramUpdated": "{{name}} a modifié le programme de {{gig}}",
+    "gigContactAdded": "{{name}} a ajouté un contact à {{gig}}",
+    "gigPosterAdded": "{{name}} a ajouté une affiche à {{gig}}"
   },
   "contact": {
     "title": "Nous contacter",

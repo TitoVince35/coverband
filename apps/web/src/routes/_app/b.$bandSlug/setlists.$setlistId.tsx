@@ -16,18 +16,25 @@ import { setlistQuery, setSetlistArchived } from "@/lib/setlists";
 // One setlist (brief 026): its title, its author and its actions, then its parts and songs in the
 // editor (#272); an archived one is read-only.
 export const Route = createFileRoute("/_app/b/$bandSlug/setlists/$setlistId")({
+  // Made from a gig's form (#328): "new", or the gig's id, to go back to it.
+  validateSearch: (search: Record<string, unknown>): { gig?: string } =>
+    typeof search.gig === "string" && /^(new|[0-9a-f-]{36})$/.test(search.gig)
+      ? { gig: search.gig }
+      : {},
   component: SetlistPage,
 });
 
 function SetlistPage() {
   const { t } = useTranslation();
   const { bandSlug, setlistId } = Route.useParams();
+  const { gig } = Route.useSearch();
   const setlist = useQuery(setlistQuery(bandSlug, setlistId));
   // The exports wait until the screen is saved: they show what the server has.
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
 
   return (
     <section className="space-y-4">
+      {gig && <BackToGig bandSlug={bandSlug} gig={gig} setlistId={setlistId} />}
       <Link
         to="/b/$bandSlug/setlists"
         params={{ bandSlug }}
@@ -108,6 +115,39 @@ function ArchivedSetlistBanner({ bandSlug, setlistId }: { bandSlug: string; setl
           {errorMessage(t, restore.error)}
         </p>
       )}
+    </div>
+  );
+}
+
+/** A setlist made from a gig's form (#328): back to the form, the setlist chosen. */
+function BackToGig({
+  bandSlug,
+  gig,
+  setlistId,
+}: {
+  bandSlug: string;
+  gig: string;
+  setlistId: string;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 p-3">
+      <p className="min-w-0 flex-1 text-sm">{t("gigs.setlist.backHint")}</p>
+      <Button asChild size="sm">
+        {gig === "new" ? (
+          <Link to="/b/$bandSlug/gigs/new" params={{ bandSlug }} search={{ setlist: setlistId }}>
+            {t("gigs.setlist.back")}
+          </Link>
+        ) : (
+          <Link
+            to="/b/$bandSlug/gigs/$gigId/edit"
+            params={{ bandSlug, gigId: gig }}
+            search={{ setlist: setlistId }}
+          >
+            {t("gigs.setlist.back")}
+          </Link>
+        )}
+      </Button>
     </div>
   );
 }

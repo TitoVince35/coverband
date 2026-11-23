@@ -8,6 +8,18 @@ import { FIELD_MAX_LENGTH } from "./bands";
 import { CONTACT_MESSAGE, CONTACT_SUBJECTS } from "./contact";
 import { DOCUMENT_LIMITS } from "./documents";
 import { MAX_SONG_DURATION } from "./duration";
+import {
+  BAND_CONTACT_MAX_LENGTH,
+  BAND_CONTACT_TYPES,
+  GIG_LIMITS,
+  GIG_MAX_LENGTH,
+  GIG_POSTER_LIMITS,
+  GIG_TYPES,
+  isGigDate,
+  isTimeOfDay,
+  VENUE_LIMITS,
+  VENUE_MAX_LENGTH,
+} from "./gigs";
 import { MAX_INSTRUMENTS } from "./instruments";
 import { MUSICAL_KEYS } from "./keys";
 import { LANGUAGES, type Language } from "./languages";
@@ -234,3 +246,113 @@ export const setlistContentBody = z.object({
       { message: `At most ${SETLIST_LIMITS.songs} songs in a setlist` },
     ),
 });
+
+/** A web link (a venue's, a gig's program): an http(s) address and an optional title. */
+export const webLinkInput = z.object({
+  url: z
+    .string()
+    .trim()
+    .max(VENUE_MAX_LENGTH.url)
+    .refine((value) => parseMediaUrl(value) !== null, { message: "Not a web address" }),
+  title: optionalText(VENUE_MAX_LENGTH.linkTitle).default(null),
+});
+
+/** Contacts linked to a gig or a venue (#329): the band's contacts' ids; absent, unchanged. */
+const contactIds = z.array(z.uuid()).max(GIG_LIMITS.contacts).optional();
+
+/** A venue's details (brief 034): name and city required, unique within the band. */
+export const venueBody = z.object({
+  name: text(VENUE_MAX_LENGTH.name),
+  city: text(VENUE_MAX_LENGTH.city),
+  address: optionalText(VENUE_MAX_LENGTH.address).default(null),
+  links: z.array(webLinkInput).max(VENUE_LIMITS.links).default([]),
+  description: optionalText(VENUE_MAX_LENGTH.description).default(null),
+  // Its usual people (#329), shown on every gig there.
+  contactIds,
+  // Its pin dragged on the map (#333): kept for its address. Absent: found from the address.
+  coordinates: z
+    .object({ latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180) })
+    .optional(),
+});
+
+/** A band's contact (#329): name and type required; phone, email and notes optional. */
+export const bandContactBody = z.object({
+  name: text(BAND_CONTACT_MAX_LENGTH.name),
+  type: z.enum(BAND_CONTACT_TYPES),
+  phone: optionalText(BAND_CONTACT_MAX_LENGTH.phone).default(null),
+  email: z
+    .string()
+    .trim()
+    .max(BAND_CONTACT_MAX_LENGTH.email)
+    .refine((value) => value === "" || z.email().safeParse(value).success, {
+      message: "Not an email address",
+    })
+    .nullable()
+    .default(null)
+    .transform((value) => value || null),
+  notes: optionalText(BAND_CONTACT_MAX_LENGTH.notes).default(null),
+});
+
+/** A date as `YYYY-MM-DD`. */
+const gigDate = z.string().refine(isGigDate, { message: "Not a date" });
+/** A time of day as `HH:MM`, or none. */
+const timeOfDay = z
+  .string()
+  .refine((value) => value === "" || isTimeOfDay(value), { message: "Not a time" })
+  .nullable()
+  .transform((value) => value || null);
+
+/**
+ * A gig's venue in its form: the band's venue (`id`, its details as edited: they change for
+ * every gig there), or a new one (no `id`), saved with the gig.
+ */
+export const gigVenueInput = venueBody.extend({ id: z.uuid().optional() });
+
+/** A gig's main details (brief 034): a date, and a title or a venue, or both. */
+const gigFields = z.object({
+  date: gigDate,
+  title: optionalText(GIG_MAX_LENGTH.title).default(null),
+  type: z.enum(GIG_TYPES).default("public"),
+  showTime: timeOfDay.default(null),
+  venue: gigVenueInput.nullable().default(null),
+  // Its setlist, program and extra info (#328).
+  setlistId: z.uuid().nullable().default(null),
+  getInTime: timeOfDay.default(null),
+  programLinks: z.array(webLinkInput).max(GIG_LIMITS.programLinks).default([]),
+  programNotes: optionalText(GIG_MAX_LENGTH.programNotes).default(null),
+  payCents: z.number().int().min(0).max(GIG_LIMITS.payCents).nullable().default(null),
+  payNotes: optionalText(GIG_MAX_LENGTH.payNotes).default(null),
+  sharedBackline: z.boolean().default(false),
+  backlineNotes: optionalText(GIG_MAX_LENGTH.backlineNotes).default(null),
+  techniciansProvided: z.boolean().default(false),
+  notes: optionalText(GIG_MAX_LENGTH.notes).default(null),
+  // Its own contacts (#329), after its venue's.
+  contactIds,
+});
+
+const titleOrVenue = (gig: { title: string | null; venue: unknown }) =>
+  gig.title !== null || gig.venue !== null;
+const titleOrVenueMessage = { message: "A gig needs a title or a venue", path: ["title"] };
+
+/** A new gig. */
+export const gigBody = gigFields.refine(titleOrVenue, titleOrVenueMessage);
+
+/** A gig's changes, read at `version`: a save on an older one is refused (409 gig_outdated). */
+export const gigUpdateBody = gigFields
+  .extend({ version: z.number().int().min(1) })
+  .refine(titleOrVenue, titleOrVenueMessage);
+
+/** A gig's new poster (#330), a multipart form: the image (its type read from its bytes), a title. */
+export const addPosterBody = z.object({
+  file: z.instanceof(File),
+  title: text(GIG_POSTER_LIMITS.title),
+});
+
+/**
+ * Merging two of the band's contacts (#334), the same person entered twice: `from` is deleted,
+ * its gigs and venues listing the kept contact instead, whose details become `details`.
+ */
+export const mergeContactsBody = z.object({ from: z.uuid(), details: bandContactBody });
+
+/** Cancelling a gig (#327): the reason, kept with the gig and shown at its top. */
+export const gigCancelBody = z.object({ reason: text(GIG_MAX_LENGTH.cancelReason) });

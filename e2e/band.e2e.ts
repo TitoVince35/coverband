@@ -21,10 +21,10 @@ test("the band's sections: a bottom bar on a phone, tabs on a large screen (#223
   await leader.goto("/");
   await leader.getByRole("link", { name: band.name }).first().click();
   const sections = leader.getByRole("navigation", { name: "Band sections" });
-  // Five items: Gigs there already, not a link yet.
-  await expect(sections.getByRole("link")).toHaveCount(4);
+  // Five items, Gigs the last (#326).
+  await expect(sections.getByRole("link")).toHaveCount(5);
   await expect(sections.getByRole("link", { name: "Setlists" })).toBeVisible();
-  await expect(sections.getByText("Gigs")).toBeVisible();
+  await expect(sections.getByRole("link", { name: "Gigs" })).toBeVisible();
   // At the bottom of the screen.
   const phone = leader.viewportSize() ?? { width: 393, height: 727 };
   const bar = await sections.boundingBox();
@@ -50,7 +50,7 @@ test("the band's sections: a bottom bar on a phone, tabs on a large screen (#223
   await leader.setViewportSize({ width: 1024, height: 768 });
   const tabs = await sections.boundingBox();
   expect(tabs?.y ?? 768).toBeLessThan(300);
-  await expect(sections.getByRole("link")).toHaveCount(4);
+  await expect(sections.getByRole("link")).toHaveCount(5);
   await leader.setViewportSize(phone);
 });
 

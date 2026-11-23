@@ -165,6 +165,24 @@ export async function addSetlist(
   expect(saved.ok()).toBe(true);
 }
 
+/**
+ * Adds a gig through the API (the screens that do it: `gigs.e2e.ts`): a date (`YYYY-MM-DD`), and a
+ * title or a venue. Returns the gig's id.
+ */
+export async function addGig(band: Band, gig: { date: string } & Record<string, unknown>) {
+  const res = await band.leader.request.post(`/api/bands/${band.slug}/gigs`, { data: gig });
+  expect(res.ok()).toBe(true);
+  return ((await res.json()) as { gig: { id: string } }).gig.id;
+}
+
+/** A local date (`YYYY-MM-DD`) some days from today, in the browser's time zone (the test's). */
+export function dateIn(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 /** How many items of a store the app saved on the device for offline use (#178, #240). */
 export function savedCount(page: Page, name: "logos" | "documents") {
   return page.evaluate(

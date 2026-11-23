@@ -20,6 +20,10 @@ import { bandJournalSource } from "./modules/bands/journal";
 import { LOGO_UPLOAD_MAX_SIZE } from "./modules/bands/logo";
 import { bandRoutes } from "./modules/bands/routes";
 import { contactRoutes } from "./modules/contact/routes";
+import { bandContactRoutes } from "./modules/gigs/contacts-routes";
+import { gigJournalSource } from "./modules/gigs/journal";
+import { gigRoutes, POSTER_UPLOAD_MAX_SIZE } from "./modules/gigs/routes";
+import { venueRoutes } from "./modules/gigs/venues-routes";
 import { instrumentRoutes } from "./modules/instruments/routes";
 import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
 import { journalRoutes, songHistoryRoutes } from "./modules/journal/routes";
@@ -47,7 +51,12 @@ export type AppOptions = {
 };
 
 /** Each module's part of the band journal. */
-const JOURNAL_SOURCES = [bandJournalSource, songJournalSource, setlistJournalSource];
+const JOURNAL_SOURCES = [
+  bandJournalSource,
+  songJournalSource,
+  setlistJournalSource,
+  gigJournalSource,
+];
 
 // REST API, mounted under /api. Chained so that AppType carries every route for the typed client.
 // Routes read the logged-in user from `c.var.user` and guard with requireUser / requireAdmin.
@@ -70,6 +79,9 @@ function createApi(deps: AppDeps) {
       .route("/bands/:bandSlug/songs/:songId/documents", documentRoutes(deps))
       .route("/bands/:bandSlug/songs/:songId/activity", songHistoryRoutes(deps, JOURNAL_SOURCES))
       .route("/bands/:bandSlug/setlists", setlistRoutes(deps))
+      .route("/bands/:bandSlug/gigs", gigRoutes(deps))
+      .route("/bands/:bandSlug/venues", venueRoutes(deps))
+      .route("/bands/:bandSlug/contacts", bandContactRoutes(deps))
       .route("/bands/:bandSlug/autofill", autofillRoutes(deps))
       .route("/bands/:bandSlug/invitations", bandInvitationRoutes(deps))
       .route("/me", meRoutes(deps))
@@ -134,6 +146,11 @@ export function createApp({ deps, webDistDir, adminDistDir }: AppOptions) {
           method: "POST",
           path: /^\/api\/bands\/[^/]+\/songs\/[^/]+\/documents$/,
           maxSize: DOCUMENT_UPLOAD_MAX_SIZE,
+        },
+        {
+          method: "POST",
+          path: /^\/api\/bands\/[^/]+\/gigs\/[^/]+\/posters$/,
+          maxSize: POSTER_UPLOAD_MAX_SIZE,
         },
       ],
     ),

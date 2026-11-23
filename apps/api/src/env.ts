@@ -90,6 +90,9 @@ const envSchema = z
     BUILD_SHA: z.string().min(1).default("dev"),
     // Where song lyrics are searched (#130). The end-to-end tests point it at a fake.
     LRCLIB_URL: z.url({ protocol: /^https?$/ }).default("https://lrclib.net"),
+    // Where venues' addresses are placed on the map (#333, Nominatim). The end-to-end tests point
+    // it at a fake.
+    NOMINATIM_URL: z.url({ protocol: /^https?$/ }).default("https://nominatim.openstreetmap.org"),
     // Where a new song's details are looked up (#199). The end-to-end tests point it at a fake.
     DEEZER_URL: z.url({ protocol: /^https?$/ }).default("https://api.deezer.com"),
     // VAPID private key for push notifications (#261): a P-256 key in PEM, OpenTofu's in production,

@@ -219,41 +219,38 @@ export function pushBody(text: string) {
   return `${(space > PUSH_BODY_MAX_LENGTH / 2 ? cut.slice(0, space) : cut).trimEnd()}…`;
 }
 
+type PushDeps = {
+  db: Db;
+  log: Logger;
+  push: { sender: PushSender; serviceHosts: readonly string[] };
+};
+type Target = { endpoint: string; p256dh: string; auth: string; language: Language };
+
 /**
- * Pushes a team note to every subscribed device (#262), during the admin's request: each push
- * service gets it within seconds, opening the app shows the note. One delivery row per device;
- * devices their push service says are gone are deleted; failures are logged (the note itself is
- * already sent: the app shows it anyway). Returns how many devices it reached and missed.
+ * Sends a push to each device, PUSH_CONCURRENCY at once, its payload in the device's language;
+ * failures are logged with `context` (the push service's host, never the endpoint). Devices their
+ * push service says are gone are deleted. Returns each device's result.
  */
-export async function pushTeamNote(
-  deps: { db: Db; log: Logger; push: { sender: PushSender; serviceHosts: readonly string[] } },
-  note: { id: string; text: string },
+async function sendPushes(
+  { db, log, push }: PushDeps,
+  subscriptions: readonly Target[],
+  payloadOf: (language: Language) => string,
+  context: Record<string, string>,
 ) {
-  const { db, log, push } = deps;
-  const subscriptions = await db
-    .select({
-      endpoint: pushSubscriptions.endpoint,
-      p256dh: pushSubscriptions.p256dh,
-      auth: pushSubscriptions.auth,
-      language: pushSubscriptions.language,
-    })
-    .from(pushSubscriptions);
   // Only the push services allowed now (a fake one's leftovers in development stay out).
   const targets = subscriptions.filter((target) =>
     isPushService(target.endpoint, push.serviceHosts),
   );
-  const body = pushBody(note.text);
   const results: { endpoint: string; status: PushResult }[] = [];
   let next = 0;
   async function worker() {
     while (next < targets.length) {
       const target = targets[next++];
       if (!target) return;
-      const payload = JSON.stringify({ title: TEAM_SIGNATURE[target.language], body, url: "/" });
-      const { result, error } = await push.sender.send(target, payload);
+      const { result, error } = await push.sender.send(target, payloadOf(target.language));
       if (result === "failed") {
         log.error("Push failed", {
-          notificationId: note.id,
+          ...context,
           pushService: URL.parse(target.endpoint)?.hostname,
           err: error,
         });
@@ -262,24 +259,81 @@ export async function pushTeamNote(
     }
   }
   await Promise.all(Array.from({ length: Math.min(PUSH_CONCURRENCY, targets.length) }, worker));
-  if (results.length) {
-    await db.transaction(async (tx) => {
-      await tx
-        .insert(pushDeliveries)
-        .values(results.map((delivery) => ({ notificationId: note.id, ...delivery })));
-      const gone = results.filter((delivery) => delivery.status === "gone");
-      if (gone.length) {
-        await tx.delete(pushSubscriptions).where(
-          inArray(
-            pushSubscriptions.endpoint,
-            gone.map((delivery) => delivery.endpoint),
-          ),
-        );
-      }
-    });
+  const gone = results.filter((delivery) => delivery.status === "gone");
+  if (gone.length) {
+    await db.delete(pushSubscriptions).where(
+      inArray(
+        pushSubscriptions.endpoint,
+        gone.map((delivery) => delivery.endpoint),
+      ),
+    );
   }
-  return {
-    reached: results.filter((delivery) => delivery.status === "sent").length,
-    failed: results.filter((delivery) => delivery.status === "failed").length,
-  };
+  return results;
+}
+
+const targetColumns = {
+  endpoint: pushSubscriptions.endpoint,
+  p256dh: pushSubscriptions.p256dh,
+  auth: pushSubscriptions.auth,
+  language: pushSubscriptions.language,
+};
+
+/** How many devices a push reached and missed. */
+const tally = (results: readonly { status: PushResult }[]) => ({
+  reached: results.filter((delivery) => delivery.status === "sent").length,
+  failed: results.filter((delivery) => delivery.status === "failed").length,
+});
+
+/**
+ * Pushes a team note to every subscribed device (#262), during the admin's request: each push
+ * service gets it within seconds, opening the app shows the note. One delivery row per device;
+ * devices their push service says are gone are deleted; failures are logged (the note itself is
+ * already sent: the app shows it anyway). Returns how many devices it reached and missed.
+ */
+export async function pushTeamNote(deps: PushDeps, note: { id: string; text: string }) {
+  const subscriptions = await deps.db.select(targetColumns).from(pushSubscriptions);
+  const body = pushBody(note.text);
+  const results = await sendPushes(
+    deps,
+    subscriptions,
+    (language) => JSON.stringify({ title: TEAM_SIGNATURE[language], body, url: "/" }),
+    { notificationId: note.id },
+  );
+  if (results.length) {
+    await deps.db
+      .insert(pushDeliveries)
+      .values(results.map((delivery) => ({ notificationId: note.id, ...delivery })));
+  }
+  return tally(results);
+}
+
+/** A push's words in one language: its title and body, and the app's page it opens. */
+export type PushMessage = { title: string; body: string; url: string };
+
+/**
+ * Pushes a message to every device of these users (a band's members, brief 034: a gig settled or
+ * cancelled), each in its device's language, during the request. Nothing is stored: the app shows
+ * the change anyway. Returns how many devices it reached and missed.
+ */
+export async function pushToUsers(
+  deps: PushDeps,
+  userIds: readonly string[],
+  message: (language: Language) => PushMessage,
+  context: Record<string, string>,
+) {
+  if (userIds.length === 0) return { reached: 0, failed: 0 };
+  const subscriptions = await deps.db
+    .select(targetColumns)
+    .from(pushSubscriptions)
+    .where(inArray(pushSubscriptions.userId, [...userIds]));
+  const results = await sendPushes(
+    deps,
+    subscriptions,
+    (language) => {
+      const { title, body, url } = message(language);
+      return JSON.stringify({ title, body: pushBody(body), url });
+    },
+    context,
+  );
+  return tally(results);
 }

@@ -12,6 +12,7 @@ type Section = {
     | "/b/$bandSlug/songs"
     | "/b/$bandSlug/lineup"
     | "/b/$bandSlug/setlists"
+    | "/b/$bandSlug/gigs"
     | null;
   label: string;
   icon: LucideIcon;
@@ -19,8 +20,8 @@ type Section = {
 
 /**
  * The band's sections (#223), each with its icon and label: tabs under the band's name on a large
- * screen, a bottom bar on a phone (hidden while its keyboard is up). Gigs are there already,
- * disabled until they exist: five items, which fit a phone with their labels.
+ * screen, a bottom bar on a phone (hidden while its keyboard is up): five items, which fit a
+ * phone with their labels. A section not there yet would show disabled (`to: null`).
  */
 export function BandNav({ bandSlug }: { bandSlug: string }) {
   const { t } = useTranslation();
@@ -30,7 +31,7 @@ export function BandNav({ bandSlug }: { bandSlug: string }) {
     { to: "/b/$bandSlug/songs", label: t("songs.title"), icon: ListMusic },
     { to: "/b/$bandSlug/lineup", label: t("lineup.title"), icon: Users },
     { to: "/b/$bandSlug/setlists", label: t("band.nav.setlists"), icon: ListOrdered },
-    { to: null, label: t("band.nav.gigs"), icon: CalendarDays },
+    { to: "/b/$bandSlug/gigs", label: t("band.nav.gigs"), icon: CalendarDays },
   ];
 
   const item = (section: Section, className: string) => {

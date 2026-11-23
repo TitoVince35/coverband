@@ -148,6 +148,48 @@
       "when": 1794489666237,
       "tag": "0020_setlist_exports",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795391619890,
+      "tag": "0021_gigs_venues",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795392400457,
+      "tag": "0022_gig_cancellation",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795392935477,
+      "tag": "0023_gig_setlist_program",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795393703096,
+      "tag": "0024_gig_contacts",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795394097494,
+      "tag": "0025_gig_posters",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795394907953,
+      "tag": "0026_venue_coordinates",
+      "breakpoints": true
     }
   ]
 }

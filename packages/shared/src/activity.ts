@@ -41,6 +41,24 @@ export const ACTIVITY_ACTIONS = [
   "setlist.restored",
   "setlist.deleted",
   "setlist.updated",
+  "gig.created",
+  "gig.updated",
+  "venue.created",
+  "venue.updated",
+  "gig.settled",
+  "gig.postponed",
+  "gig.cancelled",
+  "gig.deleted",
+  "gig.program_link_added",
+  "gig.program_updated",
+  "gig.contact_added",
+  "band_contact.created",
+  "band_contact.updated",
+  "gig.poster_added",
+  "gig.poster_removed",
+  "venue.deleted",
+  "band_contact.deleted",
+  "band_contact.merged",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];
@@ -53,6 +71,9 @@ export const ACTIVITY_TARGETS = [
   "song",
   "notification",
   "setlist",
+  "gig",
+  "venue",
+  "band_contact",
 ] as const;
 
 export type ActivityTarget = (typeof ACTIVITY_TARGETS)[number];

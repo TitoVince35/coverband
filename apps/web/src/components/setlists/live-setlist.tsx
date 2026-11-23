@@ -7,9 +7,9 @@ import { useTranslation } from "react-i18next";
 import { BandLogo } from "@/components/band/band-logo";
 import { InstrumentIcon } from "@/components/instrument-icon";
 import { ListSkeleton } from "@/components/loading";
-import { LivePhoto } from "@/components/setlists/live-photo";
 import { songsDuration } from "@/components/setlists/setlist-duration";
 import { LyricsView } from "@/components/songs/lyrics-view";
+import { PhotoView } from "@/components/songs/photo-view";
 import type { SongDocument } from "@/components/songs/song-documents";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/use-language";
@@ -17,7 +17,6 @@ import { bandQuery } from "@/lib/bands";
 import { errorMessage, replacesData } from "@/lib/errors";
 import { playingOrder, useLeaveFullscreenOnClose } from "@/lib/live";
 import {
-  LIVE_DOCUMENTS_ENABLED,
   type LiveDocument,
   liveDocuments,
   readAllDocuments,
@@ -83,7 +82,6 @@ function useSavedDocuments(online: boolean) {
   const [saved, setSaved] = useState<Set<string>>(new Set());
   // biome-ignore lint/correctness/useExhaustiveDependencies: read again when `online` changes.
   useEffect(() => {
-    if (!LIVE_DOCUMENTS_ENABLED) return;
     let done = false;
     void savedDocumentIds().then((ids) => !done && setSaved(ids));
     return () => {
@@ -124,17 +122,14 @@ function LiveContent({
   const shown = lyricsAt === null ? null : order[lyricsAt];
   // Where each part starts in the playing order.
   const starts = setlist.parts.map((_, p) => order.findIndex((place) => place.part === p));
-  // Each song's photos with a button (#309): online any, offline the saved ones; none while
-  // documents are off (#315).
+  // Each song's photos with a button (#309): online any, offline the saved ones.
   const documentsOf = (songId: string, everyInstrument = all) =>
-    !LIVE_DOCUMENTS_ENABLED
-      ? []
-      : liveDocuments(detailsOf.get(songId)?.documents ?? [], {
-          mine: instruments,
-          all: everyInstrument,
-          canOpen: (id) => online || saved.has(id),
-          language,
-        });
+    liveDocuments(detailsOf.get(songId)?.documents ?? [], {
+      mine: instruments,
+      all: everyInstrument,
+      canOpen: (id) => online || saved.has(id),
+      language,
+    });
   // The switch only when it would change something.
   const someNotMine = songs.some(
     (song) => documentsOf(song.id, true).length > documentsOf(song.id, false).length,
@@ -204,7 +199,7 @@ function LiveContent({
           </section>
         );
       })}
-      <LivePhoto photo={photo} onClose={() => setPhoto(null)} />
+      <PhotoView photo={photo} onClose={() => setPhoto(null)} />
       {shown && lyricsAt !== null && (
         <LyricsView
           title={shown.song.title}

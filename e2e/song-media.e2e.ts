@@ -93,11 +93,34 @@ test("documents: a photo made smaller, a PDF, edited and deleted (#239)", async 
   await expect(documents).toHaveCount(1);
   await expect(documents.first()).toContainText("Chords");
   await expect(documents.first()).toContainText("Photo · added by Lea Leader");
-  const photoLink = documents.first().getByRole("link");
-  await expect(photoLink).toHaveAttribute("target", "_blank");
-  const photo = await leader.request.get((await photoLink.getAttribute("href")) ?? "");
+  // It opens full screen inside the app, never in a new tab (an installed app has no way back
+  // from one), and its Close button leads back to the song.
+  await documents
+    .first()
+    .getByRole("button", { name: /^Chords/ })
+    .click();
+  const viewer = leader.getByRole("dialog", { name: "Chords" });
+  const image = viewer.getByRole("img", { name: "Chords" });
+  await expect
+    .poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+  const photo = await leader.request.get((await image.getAttribute("src")) ?? "");
   expect(photo.headers()["content-type"]).toMatch(/^image\/(webp|jpeg)$/);
   expect((await photo.body()).length).toBeLessThan(600_000);
+  await viewer.getByRole("button", { name: "Close" }).click();
+  await expect(viewer).toBeHidden();
+  await expect(documents.first()).toContainText("Chords");
+  // The phone's Back closes it too, and the song stays.
+  const songUrl = leader.url();
+  await documents
+    .first()
+    .getByRole("button", { name: /^Chords/ })
+    .click();
+  await expect(viewer.getByRole("img", { name: "Chords" })).toBeVisible();
+  await leader.goBack();
+  await expect(viewer).toBeHidden();
+  expect(leader.url()).toBe(songUrl);
+  await expect(documents.first()).toContainText("Chords");
 
   // The horns' part as a PDF, for the trumpet: a progress bar while it's sent.
   await leader.getByRole("button", { name: "Add a document" }).click();

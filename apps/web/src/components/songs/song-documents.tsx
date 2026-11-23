@@ -8,6 +8,7 @@ import { CollapsibleCard } from "@/components/collapsible-card";
 import { InstrumentListEditor, withAdded } from "@/components/instruments/instrument-list-editor";
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { DocumentIcon } from "@/components/songs/document-icon";
+import { PhotoView } from "@/components/songs/photo-view";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,7 +63,7 @@ type Props = {
 
 /**
  * A song's documents (#239): scores, chord grids' photos, Guitar Pro and MuseScore files, in a
- * closed accordion. Photos and PDFs open in a new tab, the others download. Any member adds them
+ * closed accordion. Photos open full screen in the app, PDFs in a new tab, the others download. Any member adds them
  * and edits their title and instruments; who added one, or the band leader, deletes it.
  */
 export function SongDocuments({ bandSlug, songId, documents, userId, isLeader }: Props) {
@@ -93,7 +94,7 @@ export function SongDocuments({ bandSlug, songId, documents, userId, isLeader }:
                             ? t("songs.documents.addedBy", { name: document.addedBy, date })
                             : t("songs.documents.addedOn", { date })}
                         </span>
-                        {online && (
+                        {online && document.kind !== "photo" && (
                           <span className="sr-only">
                             {inApp ? t("songs.media.newTab") : t("songs.documents.downloads")}
                           </span>
@@ -145,16 +146,35 @@ export function SongDocuments({ bandSlug, songId, documents, userId, isLeader }:
 }
 
 /**
- * A document's title, opening it: online, its file (photos and PDFs in a new tab, the others
- * downloaded); offline (#240), the photo or PDF saved on the device, and the others say they need
- * the network.
+ * A document's title, opening it. A photo full screen in the app, with a Close button
+ * (`PhotoView`): in a new tab, an installed app on a phone has no way back to the song. Online, the
+ * other files: a PDF in a new tab, the others downloaded; offline (#240), the photo or PDF saved on
+ * the device, and the others say they need the network.
  */
 function DocumentLink({ document, children }: { document: SongDocument; children: ReactNode }) {
   const { t } = useTranslation();
   const online = useOnline();
+  const [viewing, setViewing] = useState(false);
   const inApp = opensInApp(document.kind);
   const className =
     "flex min-w-0 items-start gap-3 rounded-lg text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring";
+  if (document.kind === "photo") {
+    async function view() {
+      if (!online && !(await savedDocument(document.id))) {
+        toast.error(t("songs.documents.notSaved"));
+        return;
+      }
+      setViewing(true);
+    }
+    return (
+      <>
+        <button type="button" onClick={() => void view()} className={className}>
+          {children}
+        </button>
+        <PhotoView photo={viewing ? document : null} onClose={() => setViewing(false)} />
+      </>
+    );
+  }
   if (online) {
     return (
       <a

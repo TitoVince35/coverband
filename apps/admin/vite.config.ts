@@ -32,6 +32,9 @@ export default defineConfig({
         },
       }),
     // The API keeps the browser's Host (the admin host): it serves the admin routes there.
-    proxy: { "/api": { target: "http://localhost:3000", xfwd: true } },
+    // The API's port: `PORT` from `.env` when another program has 3000 on this computer.
+    proxy: {
+      "/api": { target: `http://localhost:${process.env.PORT || 3000}`, xfwd: true },
+    },
   },
 });

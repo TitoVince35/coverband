@@ -1,5 +1,7 @@
 # Local development services. Production uses Scaleway Serverless SQL Database, Scaleway TEM and
 # Scaleway Object Storage.
+# Ports are published on 127.0.0.1 only: the API (run on the host by Bun) and you reach them, the
+# local network does not (not even with dev:lan, where the phone only talks to the API).
 services:
   db:
     image: postgres:16-alpine
@@ -7,8 +9,9 @@ services:
       POSTGRES_USER: coverband
       POSTGRES_PASSWORD: coverband
       POSTGRES_DB: coverband
+    # 5433 on the host: 5432 is often taken by another project's Postgres.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -21,14 +24,14 @@ services:
   mailpit:
     image: axllent/mailpit:v1.31
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
 
   # S3-compatible object storage on http://localhost:3900. Bucket and key: docker/garage/init.sh.
   garage:
     image: dxflrs/garage:v2.4.1
     ports:
-      - "3900:3900"
+      - "127.0.0.1:3900:3900"
     volumes:
       - ./docker/garage/garage.toml:/etc/garage.toml:ro
       - garage-data:/var/lib/garage
@@ -43,7 +46,7 @@ services:
   garage-webui:
     image: khairul169/garage-webui:1.1.0
     ports:
-      - "3909:3909"
+      - "127.0.0.1:3909:3909"
     volumes:
       - ./docker/garage/garage.toml:/etc/garage.toml:ro
     environment:
