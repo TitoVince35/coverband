@@ -91,14 +91,14 @@
 
 <main>
   <header>
-    <span class="eyebrow">v1.1 · Monday 2026/11/23 · brief 032 · app version 0.13.0</span>
+    <span class="eyebrow">v1.3 · Monday 2026/11/23 · brief 032 · app version 0.16.0</span>
     <h1>Coverband architecture</h1>
     <p class="lead">Where the code lives, how a merge reaches production, and what the one production container talks to. Checked against <code>infra/</code> (OpenTofu) and the deploy workflow.</p>
   </header>
 
   <figure>
     <div class="scroll">
-      <svg viewBox="0 0 1400 700" role="img" aria-label="Vince briefs Claude Code, which commits to the GitHub repository and manages the Projects board. GitHub Actions builds an image into Scaleway's Container Registry, migrates the Serverless SQL database and rolls out the Serverless Container, which serves the REST API, the PWA and the admin app. The container uses PostgreSQL, Object Storage, Transactional Email and Cockpit; band members' phones reach it over HTTPS and load map tiles from OpenStreetMap, it sends push notifications through the browsers' push services, searches LRCLIB, Deezer and YouTube, and turns venue addresses into coordinates with OpenStreetMap's Nominatim, at most one request a second.">
+      <svg viewBox="0 0 1410 700" role="img" aria-label="Vince briefs Claude Code, which commits to the GitHub repository and manages the Projects board. GitHub Actions builds an image into Scaleway's Container Registry, migrates the Serverless SQL database and rolls out the Serverless Container, which serves the REST API, the PWA and the admin app. The container uses PostgreSQL, Object Storage, Transactional Email and Cockpit; band members' phones reach it over HTTPS and load map tiles from OpenStreetMap, it sends push notifications through the browsers' push services, searches LRCLIB, Deezer and YouTube, and turns venue addresses into coordinates with OpenStreetMap's Nominatim, at most one request a second.">
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" class="mk"/>
@@ -172,10 +172,7 @@
         <text x="1072" y="444" class="sub">logs</text>
 
         <!-- Outside -->
-        <text x="1190" y="72" class="glabel t-outside">On the Internet</text>
-        <rect x="1190" y="86" width="180" height="60" rx="8" class="box" style="stroke: var(--outside)"/>
-        <text x="1280" y="111" class="name">OpenStreetMap tiles</text>
-        <text x="1280" y="130" class="sub">tile.openstreetmap.org</text>
+        <text x="1190" y="182" class="glabel t-outside">On the Internet</text>
         <rect x="1190" y="200" width="180" height="80" rx="8" class="box" style="stroke: var(--outside)"/>
         <text x="1280" y="230" class="name">Band members' phones</text>
         <text x="1280" y="250" class="sub">the installed PWA,</text>
@@ -187,9 +184,15 @@
         <rect x="1190" y="490" width="180" height="70" rx="8" class="box" style="stroke: var(--outside)"/>
         <text x="1280" y="518" class="name">Music &amp; lyrics APIs</text>
         <text x="1280" y="538" class="sub">LRCLIB · Deezer · YouTube</text>
+        <!-- OpenStreetMap: geocoding and tiles, side by side -->
+        <text x="990" y="592" class="glabel t-outside">OpenStreetMap</text>
+        <rect x="990" y="606" width="180" height="70" rx="8" class="box" style="stroke: var(--outside)"/>
+        <text x="1080" y="631" class="name">Nominatim</text>
+        <text x="1080" y="650" class="sub">geocoding</text>
+        <text x="1080" y="666" class="sub">free, no key</text>
         <rect x="1190" y="606" width="180" height="70" rx="8" class="box" style="stroke: var(--outside)"/>
-        <text x="1280" y="631" class="name">Nominatim</text>
-        <text x="1280" y="650" class="sub">OpenStreetMap's geocoding</text>
+        <text x="1280" y="631" class="name">OpenStreetMap tiles</text>
+        <text x="1280" y="650" class="sub">tile.openstreetmap.org</text>
         <text x="1280" y="666" class="sub">free, no key</text>
 
         <!-- Development edges -->
@@ -233,8 +236,8 @@
         <!-- To the outside -->
         <line x1="1132" y1="240" x2="1188" y2="240" class="edge" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
         <text x="1160" y="232" class="elabel" text-anchor="middle">HTTPS</text>
-        <line x1="1280" y1="200" x2="1280" y2="148" class="edge" marker-end="url(#arrow)"/>
-        <text x="1286" y="178" class="elabel">map tiles</text>
+        <polyline points="1370,240 1390,240 1390,641 1372,641" class="edge" marker-end="url(#arrow)"/>
+        <text x="1394" y="325" class="elabel" text-anchor="middle" transform="rotate(90 1394 325)">map tiles</text>
         <polyline points="1130,286 1172,286 1172,405 1188,405" class="edge" marker-end="url(#arrow)"/>
         <text x="1178" y="352" class="elabel">pushes</text>
         <text x="1178" y="366" class="elabel">(VAPID)</text>
@@ -242,9 +245,9 @@
         <text x="1286" y="330" class="elabel">delivers</text>
         <polyline points="1130,304 1160,304 1160,525 1188,525" class="edge" marker-end="url(#arrow)"/>
         <text x="1166" y="482" class="elabel">searches</text>
-        <polyline points="1130,322 1148,322 1148,641 1188,641" class="edge" marker-end="url(#arrow)"/>
-        <text x="1154" y="579" class="elabel">venue address →</text>
-        <text x="1154" y="593" class="elabel">coordinates, ≤ 1/s</text>
+        <polyline points="1130,322 1148,322 1148,604" class="edge" marker-end="url(#arrow)"/>
+        <text x="1142" y="525" class="elabel" text-anchor="end">venue address →</text>
+        <text x="1142" y="539" class="elabel" text-anchor="end">coordinates, ≤ 1/s</text>
       </svg>
     </div>
     <figcaption><span class="key" aria-hidden="true"></span>The highlighted path is the one every release takes: a merge to <code>main</code> starts Actions, which builds the image, migrates the database while the previous release still serves, then rolls out the container. Everything users see comes from that one container; on a phone the diagram scrolls sideways.</figcaption>
@@ -273,7 +276,7 @@
         <ul>
           <li><b>Serverless Container:</b> one image, where the API (Hono on Bun) also serves the PWA and, on its own hostname, the admin app. Stateless: it keeps nothing in memory or on disk.</li>
           <li><b>Serverless SQL Database:</b> PostgreSQL, through Scaleway's connection pooler.</li>
-          <li><b>Object Storage:</b> documents, band logos, avatars and setlist exports, served only through the API.</li>
+          <li><b>Object Storage:</b> documents, band logos, avatars, setlist exports and gig posters, served only through the API.</li>
           <li><b>Transactional Email:</b> invitations and password resets, over SMTP.</li>
           <li><b>Domains &amp; DNS:</b> <code>coverband.fr</code>, its app and admin hostnames, and the email records.</li>
           <li><b>Cockpit:</b> the container's logs. <b>Cron trigger:</b> the nightly activity purge. <b>Container Registry:</b> the images Actions builds.</li>
@@ -283,7 +286,7 @@
       <article class="piece outside">
         <h3>On the Internet</h3>
         <ul>
-          <li><b>Band members' phones:</b> the installed app, which keeps setlists, lyrics and photos for offline use.</li>
+          <li><b>Band members' phones:</b> the installed app, which keeps setlists, lyrics, photos and gigs for offline use.</li>
           <li><b>Browsers' push services:</b> no provider account. The server signs each notification with our own VAPID key and sends it to the push service of the phone's browser, which delivers it.</li>
           <li><b>Music &amp; lyrics APIs:</b> LRCLIB for lyrics, Deezer and YouTube for "Search and add".</li>
           <li><b>OpenStreetMap:</b> Nominatim turns a venue's address into coordinates, once per address saved, at most one request a second, the app named in its User-Agent; the coordinates are kept with the venue. The phones load the venue map's tiles straight from <code>tile.openstreetmap.org</code>, credited "© OpenStreetMap". Free, no key, no account.</li>
