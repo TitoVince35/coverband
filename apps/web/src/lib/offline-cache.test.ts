@@ -16,6 +16,11 @@ describe("isKeptOffline", () => {
       ["bands", "the-rockers", "songs", "6f1c0d1e-0000-4000-8000-000000000000"],
       // A song's history (#286).
       ["bands", "the-rockers", "songs", "6f1c0d1e-0000-4000-8000-000000000000", "activity"],
+      // Gigs (#332): a gig, its lists, the band's venues and contacts.
+      ["bands", "the-rockers", "gigs", "6f1c0d1e-0000-4000-8000-000000000000"],
+      ["bands", "the-rockers", "gigs", "list", "next"],
+      ["bands", "the-rockers", "gigs", "list", "past"],
+      ["bands", "the-rockers", "gigs", "details"],
     ]) {
       expect(isKeptOffline(key)).toBe(true);
     }

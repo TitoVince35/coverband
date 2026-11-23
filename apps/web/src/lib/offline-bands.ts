@@ -1,8 +1,11 @@
+import { GIG_FILTERS, inGigFilter } from "@coverband/shared";
 import { type QueryClient, queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { api } from "@/lib/api";
 import { bandJournalQuery, bandQuery, membersQuery, myBandsQuery } from "@/lib/bands";
 import { ensureOk } from "@/lib/errors";
+import { deviceTimeZone } from "@/lib/gig-rules";
+import { gigQuery, gigsQuery } from "@/lib/gigs";
 import { keepDocumentsOffline } from "@/lib/offline-documents";
 import { keepLogoOffline } from "@/lib/offline-logos";
 import { useOnline } from "@/lib/online";
@@ -56,8 +59,42 @@ export const setlistDetailsQuery = (bandSlug: string) =>
   });
 
 /**
+ * Every gig of the band (#332), with its venue and contacts, so gigs never opened are there
+ * offline (the venue's network is often poor): it fills each gig's query (never with an older
+ * version than the one there) and the lists (next, past, all, by "A gig's day" now), and only
+ * keeps how many there were. A query, like the repertoire's details.
+ */
+export const gigDetailsQuery = (bandSlug: string) =>
+  queryOptions({
+    queryKey: ["bands", bandSlug, "gigs", "details"],
+    queryFn: async ({ client }) => {
+      const res = await api.bands[":bandSlug"].gigs.$get({
+        param: { bandSlug },
+        query: { when: "all", tz: deviceTimeZone() },
+      });
+      const { gigs } = await (await ensureOk(res)).json();
+      for (const gig of gigs) {
+        const key = gigQuery(bandSlug, gig.id).queryKey;
+        if ((client.getQueryData(key)?.version ?? 0) <= gig.version) {
+          client.setQueryData(key, gig);
+        }
+      }
+      const now = new Date();
+      for (const when of GIG_FILTERS) {
+        const list = gigs.filter((gig) => inGigFilter(gig.date, when, now, deviceTimeZone()));
+        // Past gigs, the latest first; the others in date order, as the API gives them.
+        client.setQueryData(
+          gigsQuery(bandSlug, when).queryKey,
+          when === "past" ? list.reverse() : list,
+        );
+      }
+      return gigs.length;
+    },
+  });
+
+/**
  * Loads what a band needs offline (#165): its page, journal, lineup, repertoire and every song,
- * its setlists with their songs (#274), each only if no longer fresh: every load wakes the database. And its logo (#178), downloaded
+ * its setlists with their songs (#274), its gigs (#332), each only if no longer fresh: every load wakes the database. And its logo (#178), downloaded
  * only when it changed.
  */
 export async function keepBandOffline(queryClient: QueryClient, bandSlug: string) {
@@ -76,6 +113,7 @@ export async function keepBandOffline(queryClient: QueryClient, bandSlug: string
     queryClient.prefetchQuery(setlistsQuery(bandSlug)),
     queryClient.prefetchQuery(archivedSetlistsQuery(bandSlug)),
     queryClient.prefetchQuery(setlistDetailsQuery(bandSlug)),
+    queryClient.prefetchQuery(gigDetailsQuery(bandSlug)),
   ]);
 }
 

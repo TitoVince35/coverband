@@ -3,9 +3,11 @@ import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
 import { BASE_URL } from "./playwright.config";
 import {
+  addGig,
   addSetlist,
   addSong,
   type Band,
+  dateIn,
   login,
   newBand,
   PASSWORD,
@@ -47,6 +49,18 @@ test.beforeAll(async ({ browser }) => {
     { songs: [africa] },
     { name: "Encore", songs: [blackHoleSun] },
   ]);
+  // A gig with its venue and a contact (#332).
+  const yann = await band.leader.request.post(`/api/bands/${band.slug}/contacts`, {
+    data: { name: "Yann", type: "organizer", phone: "06 12 34 56 78" },
+  });
+  expect(yann.ok()).toBe(true);
+  const { contact } = (await yann.json()) as { contact: { id: string } };
+  await addGig(band, {
+    date: dateIn(3),
+    title: "Le Ty Anna",
+    venue: { name: "Le Ty Anna", city: "Rennes", address: "19 place Sainte-Anne" },
+    contactIds: [contact.id],
+  });
   await band.leader.context().close();
 });
 
@@ -64,6 +78,8 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await expect.poll(() => savedCount(page, "documents")).toBe(1);
   // The setlists too, with their songs, though this device never opened them (#274).
   await expect.poll(() => savedCopy(page)).toContain("Wedding");
+  // And the gigs, with their venues and contacts (#332).
+  await expect.poll(() => savedCopy(page)).toContain("19 place Sainte-Anne");
 
   await context.setOffline(true);
   await page.reload();
@@ -125,6 +141,27 @@ test("offline: the saved bands, repertoire and lyrics, read-only (#165)", async 
   await expect(page.getByRole("region", { name: "Encore" })).toContainText("Black Hole Sun");
   await expect(page.getByRole("button", { name: "Add songs" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /^Drag / })).toHaveCount(0);
+  // A gig never opened on this device, offline and read-only (#332): its address, Directions
+  // and its contact's Call button still work.
+  await page
+    .getByRole("navigation", { name: "Band sections" })
+    .getByRole("link", { name: "Gigs" })
+    .click();
+  await expect(page.getByRole("button", { name: "New gig" })).toBeDisabled();
+  await page
+    .getByRole("list", { name: "Gigs" })
+    .getByRole("link", { name: /Le Ty Anna/ })
+    .click();
+  await expect(page.getByText("19 place Sainte-Anne, Rennes")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Directions" })).toHaveAttribute(
+    "href",
+    /Sainte-Anne/,
+  );
+  await expect(page.getByRole("link", { name: "Call Yann" })).toHaveAttribute(
+    "href",
+    "tel:0612345678",
+  );
+  await expect(page.getByRole("button", { name: "Edit" })).toBeDisabled();
   // Offline for the browser too: every band tab opens, from a song's page and the band's home (#281).
   await openSong(page, "Zombie");
   await openEveryBandTab(page, "Zombie");
@@ -157,6 +194,7 @@ async function openEveryBandTab(page: Page, song: string) {
     ["Repertoire", page.getByRole("list", { name: "Repertoire" })],
     ["Lineup", page.getByRole("list", { name: "Lineup" })],
     ["Setlists", page.getByRole("list", { name: "Setlists" })],
+    ["Gigs", page.getByRole("list", { name: "Gigs" })],
   ] as const;
   const from = page.url();
   for (const start of [from, "home"]) {

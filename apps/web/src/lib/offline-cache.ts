@@ -29,6 +29,8 @@ export function isKeptOffline(queryKey: QueryKey) {
   // A song's history (#286) is kept; lyrics searches (["bands", slug, "songs", id,
   // "lyrics-search", ...]) and invitations stay out.
   if (section === "songs" && extra === "activity" && queryKey.length === 5) return true;
+  // The gigs' lists (#332): next, past, all.
+  if (section === "gigs" && queryKey[3] === "list" && queryKey.length === 5) return true;
   return section !== "invitations" && extra === undefined;
 }
 
