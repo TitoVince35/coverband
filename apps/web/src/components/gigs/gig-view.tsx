@@ -34,6 +34,9 @@ export function GigView({
   const cancelled = gig.status === "cancelled";
   const times = [
     gig.getInTime ? t("gigs.view.getIn", { time: formatTimeOfDay(gig.getInTime, language) }) : null,
+    gig.soundcheckTime
+      ? t("gigs.view.soundcheck", { time: formatTimeOfDay(gig.soundcheckTime, language) })
+      : null,
     gig.showTime
       ? t("gigs.view.showTime", { time: formatTimeOfDay(gig.showTime, language) })
       : null,

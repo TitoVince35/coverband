@@ -75,6 +75,9 @@ test.beforeAll(async ({ browser }) => {
     date: dateIn(12),
     title: "The Extraordinarily-Long-Festival-Name-Of-Somewhere-Very-Far-Away",
     type: "private",
+    // Every time of the day: the compact view's times line at its longest.
+    getInTime: "17:30",
+    soundcheckTime: "18:45",
     showTime: "21:30",
     venue: {
       name: "Salle-Polyvalente-Du-Mont-Saint-Michel-Et-Des-Environs",

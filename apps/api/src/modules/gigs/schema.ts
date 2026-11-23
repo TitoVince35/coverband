@@ -88,6 +88,8 @@ export const gigs = pgTable(
     setlistId: uuid().references(() => setlists.id, { onDelete: "set null" }),
     // `HH:MM`, local time.
     getInTime: text(),
+    // The soundcheck (#348), `HH:MM`, local time.
+    soundcheckTime: text(),
     // The program (#328): web links to the show's advertising, free text (running order, occasion).
     programLinks: jsonb().$type<WebLink[]>().default([]).notNull(),
     programNotes: text(),

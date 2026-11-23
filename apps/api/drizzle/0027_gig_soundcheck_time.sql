@@ -1,0 +1,1 @@
+ALTER TABLE "gigs" ADD COLUMN "soundcheck_time" text;

@@ -102,6 +102,7 @@ export type GigInput = {
 export type GigExtras = {
   setlistId: string | null;
   getInTime: string | null;
+  soundcheckTime: string | null;
   programLinks: WebLink[];
   programNotes: string | null;
   payCents: number | null;
@@ -117,6 +118,7 @@ export type GigExtras = {
 const extraColumns = {
   setlistId: gigs.setlistId,
   getInTime: gigs.getInTime,
+  soundcheckTime: gigs.soundcheckTime,
   programLinks: gigs.programLinks,
   programNotes: gigs.programNotes,
   payCents: gigs.payCents,
@@ -131,6 +133,7 @@ const extraColumns = {
 const extrasOf = (input: GigExtras): Omit<GigExtras, "contactIds"> => ({
   setlistId: input.setlistId,
   getInTime: input.getInTime,
+  soundcheckTime: input.soundcheckTime,
   programLinks: input.programLinks,
   programNotes: input.programNotes,
   payCents: input.payCents,

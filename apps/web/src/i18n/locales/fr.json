@@ -543,7 +543,8 @@
     "view": {
       "showTime": "Sur scène à {{time}}",
       "directions": "Itinéraire",
-      "getIn": "Arrivée {{time}}"
+      "getIn": "Arrivée {{time}}",
+      "soundcheck": "Balances {{time}}"
     },
     "actions": {
       "label": "Actions pour {{name}}",
@@ -609,6 +610,7 @@
       "title": "Infos pratiques",
       "goodToKnow": "Bon à savoir",
       "getIn": "Arrivée",
+      "soundcheck": "Balances",
       "pay": "Cachet (€)",
       "payNotes": "À propos du cachet",
       "sharedBackline": "Backline partagé",

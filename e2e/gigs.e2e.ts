@@ -166,6 +166,7 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   await leader.getByRole("button", { name: "Add", exact: true }).click();
   await leader.getByLabel("Running order, occasion").fill("20:00 The Lunatics, 21:15 us");
   await leader.getByLabel("Get in").fill("18:30");
+  await leader.getByLabel("Soundcheck").fill("19:15");
   await leader.getByLabel("Pay (€)").fill("abc");
   await expect(leader.getByText("Check the pay: an amount in euros")).toBeVisible();
   await leader.getByLabel("Pay (€)").fill("400");
@@ -178,7 +179,7 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
 
   // The compact view: times, setlist, program, good to know.
   await expect(leader.getByRole("heading", { name: "Rock night #12" })).toBeVisible();
-  await expect(leader.getByText("Get in 6:30 PM")).toBeVisible();
+  await expect(leader.getByText("Get in 6:30 PM · Soundcheck 7:15 PM")).toBeVisible();
   await expect(leader.getByRole("link", { name: /Rock night set/ })).toContainText("1 song");
   await expect(leader.getByRole("link", { name: "Facebook event" })).toHaveAttribute(
     "href",
@@ -294,6 +295,7 @@ test("the band home shows today's gig and the upcoming ones (#331)", async ({ br
       date: dateIn(0),
       title: "Tonight at Le Ty Anna",
       getInTime: "18:30",
+      soundcheckTime: "19:00",
       showTime: "21:00",
       venue: { name: "Le Ty Anna", city: "Rennes" },
     });
@@ -312,7 +314,9 @@ test("the band home shows today's gig and the upcoming ones (#331)", async ({ br
 
     const card = page.getByRole("region", { name: "Today's gig" });
     await expect(card).toContainText("Tonight at Le Ty Anna");
-    await expect(card).toContainText("Rennes · Get in 6:30 PM · On stage 9:00 PM");
+    await expect(card).toContainText(
+      "Rennes · Get in 6:30 PM · Soundcheck 7:00 PM · On stage 9:00 PM",
+    );
     await card.getByRole("link", { name: "View the gig" }).click();
     await expect(page).toHaveURL(new RegExp(`/gigs/${today}$`));
     await page.getByRole("link", { name: "Home" }).first().click();

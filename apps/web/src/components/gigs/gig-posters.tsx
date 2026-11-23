@@ -4,6 +4,7 @@ import { Download, ImagePlus, Share2, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { GigBlock } from "@/components/gigs/gig-blocks";
 import { PhotoView } from "@/components/songs/photo-view";
 import {
   AlertDialog,
@@ -293,8 +294,7 @@ export function PostersList({ bandSlug, gig }: { bandSlug: string; gig: Gig }) {
   });
   if (gig.posters.length === 0) return null;
   return (
-    <section className="space-y-2">
-      <h3 className="font-heading font-semibold">{t("gigs.posters.title")}</h3>
+    <GigBlock title={t("gigs.posters.title")}>
       {!online && <p className="text-muted-foreground text-sm">{t("gigs.posters.offline")}</p>}
       <ul>
         {gig.posters.map((poster) => {
@@ -353,6 +353,6 @@ export function PostersList({ bandSlug, gig }: { bandSlug: string; gig: Gig }) {
         photo={open ? viewed(bandSlug, gig.id, open) : null}
         onClose={() => setOpen(null)}
       />
-    </section>
+    </GigBlock>
   );
 }

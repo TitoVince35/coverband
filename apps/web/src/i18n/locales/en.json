@@ -543,7 +543,8 @@
     "view": {
       "showTime": "On stage {{time}}",
       "directions": "Directions",
-      "getIn": "Get in {{time}}"
+      "getIn": "Get in {{time}}",
+      "soundcheck": "Soundcheck {{time}}"
     },
     "actions": {
       "label": "Actions for {{name}}",
@@ -609,6 +610,7 @@
       "title": "Extra info",
       "goodToKnow": "Good to know",
       "getIn": "Get in",
+      "soundcheck": "Soundcheck",
       "pay": "Pay (€)",
       "payNotes": "About the pay",
       "sharedBackline": "Shared backline",
