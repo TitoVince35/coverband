@@ -80,6 +80,16 @@ export type GigInput = {
   type: GigType;
   showTime: string | null;
   venue: VenueInput | null;
+  setlistId: string | null;
+  getInTime: string | null;
+  programLinks: WebLink[];
+  programNotes: string | null;
+  payCents: number | null;
+  payNotes: string | null;
+  sharedBackline: boolean;
+  backlineNotes: string | null;
+  techniciansProvided: boolean;
+  notes: string | null;
 };
 
 /** Creates a gig, with a new venue saved along; throws `venue_taken`. */

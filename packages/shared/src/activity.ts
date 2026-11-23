@@ -49,6 +49,8 @@ export const ACTIVITY_ACTIONS = [
   "gig.postponed",
   "gig.cancelled",
   "gig.deleted",
+  "gig.program_link_added",
+  "gig.program_updated",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];

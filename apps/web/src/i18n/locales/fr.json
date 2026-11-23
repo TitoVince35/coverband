@@ -499,7 +499,8 @@
         "date": "Choisissez une date",
         "titleOrVenue": "Ajoutez un titre ou un lieu",
         "venueName": "Ajoutez le nom du lieu",
-        "venueCity": "Ajoutez la ville du lieu"
+        "venueCity": "Ajoutez la ville du lieu",
+        "pay": "Vérifiez le cachet : un montant en euros"
       }
     },
     "venue": {
@@ -530,13 +531,14 @@
       "add": "Ajouter",
       "url": "Adresse web",
       "urlPlaceholder": "lapeniche-spectacle.fr",
-      "title": "Titre",
+      "title": "Titre du lien",
       "titlePlaceholder": "Titre (facultatif)",
       "remove": "Retirer le lien {{link}}"
     },
     "view": {
       "showTime": "Sur scène à {{time}}",
-      "directions": "Itinéraire"
+      "directions": "Itinéraire",
+      "getIn": "Arrivée {{time}}"
     },
     "actions": {
       "label": "Actions pour {{name}}",
@@ -582,6 +584,34 @@
       "description": "Il est supprimé définitivement. Son lieu et ses contacts restent dans les listes du groupe.",
       "confirm": "Supprimer le concert",
       "done": "Concert supprimé"
+    },
+    "setlist": {
+      "title": "Setlist",
+      "none": "Pas encore de setlist",
+      "archived": "{{title}} (archivée)",
+      "create": "Créer une setlist",
+      "hint": "Les setlists en cours du groupe (pas les archivées). Une nouvelle s'ouvre dans l'éditeur, puis revient ici.",
+      "backHint": "Cette setlist a été créée pour un concert : retour à son formulaire, avec cette setlist choisie.",
+      "back": "Retour au concert"
+    },
+    "program": {
+      "title": "Programme",
+      "links": "Liens vers la promo du concert",
+      "notes": "Ordre de passage, occasion",
+      "notesPlaceholder": "20:00 La première partie, 21:15 nous…"
+    },
+    "extras": {
+      "title": "Infos pratiques",
+      "goodToKnow": "Bon à savoir",
+      "getIn": "Arrivée",
+      "pay": "Cachet (€)",
+      "payNotes": "À propos du cachet",
+      "sharedBackline": "Backline partagé",
+      "sharedBacklineWith": "Backline partagé : {{what}}",
+      "backlineNotes": "Ce que comprend le backline partagé",
+      "backlinePlaceholder": "Batterie, ampli basse",
+      "technicians": "Techniciens fournis",
+      "notes": "Notes"
     }
   },
   "login": {
@@ -875,7 +905,9 @@
     "gigSettled": "{{name}} a confirmé {{gig}}",
     "gigPostponed": "{{name}} a reporté {{gig}}",
     "gigCancelled": "{{name}} a annulé {{gig}}",
-    "gigDeleted": "{{name}} a supprimé {{gig}}"
+    "gigDeleted": "{{name}} a supprimé {{gig}}",
+    "gigProgramLinkAdded": "{{name}} a ajouté un lien au programme de {{gig}}",
+    "gigProgramUpdated": "{{name}} a modifié le programme de {{gig}}"
   },
   "contact": {
     "title": "Nous contacter",

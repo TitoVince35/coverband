@@ -67,7 +67,7 @@ function GigPage() {
           {errorMessage(t, gig.error)}
         </p>
       ) : (
-        <GigView gig={gig.data} />
+        <GigView bandSlug={bandSlug} gig={gig.data} />
       )}
     </section>
   );

@@ -499,7 +499,8 @@
         "date": "Choose a date",
         "titleOrVenue": "Add a title or a venue",
         "venueName": "Add the venue's name",
-        "venueCity": "Add the venue's city"
+        "venueCity": "Add the venue's city",
+        "pay": "Check the pay: an amount in euros"
       }
     },
     "venue": {
@@ -530,13 +531,14 @@
       "add": "Add",
       "url": "Web address",
       "urlPlaceholder": "lapeniche-spectacle.fr",
-      "title": "Title",
+      "title": "Link title",
       "titlePlaceholder": "Title (optional)",
       "remove": "Remove the link {{link}}"
     },
     "view": {
       "showTime": "On stage {{time}}",
-      "directions": "Directions"
+      "directions": "Directions",
+      "getIn": "Get in {{time}}"
     },
     "actions": {
       "label": "Actions for {{name}}",
@@ -582,6 +584,34 @@
       "description": "It's deleted for good. Its venue and contacts stay in the band's lists.",
       "confirm": "Delete the gig",
       "done": "Gig deleted"
+    },
+    "setlist": {
+      "title": "Setlist",
+      "none": "No setlist yet",
+      "archived": "{{title}} (archived)",
+      "create": "Create setlist",
+      "hint": "The band's current setlists (not archived). A new one opens in the editor, then comes back here.",
+      "backHint": "This setlist was made for a gig: back to its form, with this setlist chosen.",
+      "back": "Back to the gig"
+    },
+    "program": {
+      "title": "Program",
+      "links": "Links to the show's advertising",
+      "notes": "Running order, occasion",
+      "notesPlaceholder": "20:00 The opening band, 21:15 us…"
+    },
+    "extras": {
+      "title": "Extra info",
+      "goodToKnow": "Good to know",
+      "getIn": "Get in",
+      "pay": "Pay (€)",
+      "payNotes": "About the pay",
+      "sharedBackline": "Shared backline",
+      "sharedBacklineWith": "Shared backline: {{what}}",
+      "backlineNotes": "What the shared backline has",
+      "backlinePlaceholder": "Drum kit, bass amp",
+      "technicians": "Technicians provided",
+      "notes": "Notes"
     }
   },
   "login": {
@@ -875,7 +905,9 @@
     "gigSettled": "{{name}} settled {{gig}}",
     "gigPostponed": "{{name}} postponed {{gig}}",
     "gigCancelled": "{{name}} cancelled {{gig}}",
-    "gigDeleted": "{{name}} deleted {{gig}}"
+    "gigDeleted": "{{name}} deleted {{gig}}",
+    "gigProgramLinkAdded": "{{name}} added a link to the program of {{gig}}",
+    "gigProgramUpdated": "{{name}} updated the program of {{gig}}"
   },
   "contact": {
     "title": "Contact us",

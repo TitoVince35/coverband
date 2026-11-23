@@ -4,6 +4,7 @@ import {
   type GigStatus,
   type GigType,
   gigDay,
+  type WebLink,
 } from "@coverband/shared";
 import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
@@ -11,6 +12,7 @@ import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { gigs, users, venues } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
+import { getSetlist } from "../setlists/service";
 import {
   insertVenue,
   type Member,
@@ -26,6 +28,13 @@ export type { Member } from "./venues.service";
 export class GigOutdatedError extends AppError {
   constructor() {
     super("gig_outdated", "The gig changed since it was read: reload it");
+  }
+}
+
+/** A setlist that isn't one of the band's current ones. */
+export class UnknownSetlistError extends AppError {
+  constructor() {
+    super("bad_request", "Unknown setlist");
   }
 }
 
@@ -81,7 +90,63 @@ export type GigInput = {
   showTime: string | null;
   /** The band's venue (`id`, its details as edited), a new one (no `id`), or none. */
   venue: (VenueInput & { id?: string | undefined }) | null;
+} & GigExtras;
+
+/** A gig's setlist, program and extra info (#328), as its form sends them. */
+export type GigExtras = {
+  setlistId: string | null;
+  getInTime: string | null;
+  programLinks: WebLink[];
+  programNotes: string | null;
+  payCents: number | null;
+  payNotes: string | null;
+  sharedBackline: boolean;
+  backlineNotes: string | null;
+  techniciansProvided: boolean;
+  notes: string | null;
 };
+
+const extraColumns = {
+  setlistId: gigs.setlistId,
+  getInTime: gigs.getInTime,
+  programLinks: gigs.programLinks,
+  programNotes: gigs.programNotes,
+  payCents: gigs.payCents,
+  payNotes: gigs.payNotes,
+  sharedBackline: gigs.sharedBackline,
+  backlineNotes: gigs.backlineNotes,
+  techniciansProvided: gigs.techniciansProvided,
+  notes: gigs.notes,
+};
+
+/** The extras of a form's input, as stored. */
+const extrasOf = (input: GigExtras): GigExtras => ({
+  setlistId: input.setlistId,
+  getInTime: input.getInTime,
+  programLinks: input.programLinks,
+  programNotes: input.programNotes,
+  payCents: input.payCents,
+  payNotes: input.payNotes,
+  sharedBackline: input.sharedBackline,
+  backlineNotes: input.backlineNotes,
+  techniciansProvided: input.techniciansProvided,
+  notes: input.notes,
+});
+
+/**
+ * Refuses a setlist newly chosen for a gig that isn't one of the band's current setlists (an
+ * archived one stays linked, but isn't chosen anew).
+ */
+async function checkSetlist(
+  tx: Tx,
+  bandId: string,
+  setlistId: string | null,
+  current?: string | null,
+) {
+  if (!setlistId || setlistId === current) return;
+  const setlist = await getSetlist(tx, bandId, setlistId);
+  if (!setlist || setlist.archivedAt) throw new UnknownSetlistError();
+}
 
 const cancellers = alias(users, "cancellers");
 
@@ -92,6 +157,7 @@ const gigColumns = {
   type: gigs.type,
   showTime: gigs.showTime,
   status: gigs.status,
+  ...extraColumns,
   version: gigs.version,
   createdById: gigs.createdById,
   createdAt: gigs.createdAt,
@@ -200,6 +266,7 @@ export function createGig(db: Db, member: Member, input: GigInput) {
   return venueChecked(() =>
     db.transaction(async (tx) => {
       const venueId = await venueOf(tx, member, input.venue);
+      await checkSetlist(tx, member.bandId, input.setlistId);
       const [gig] = await tx
         .insert(gigs)
         .values({
@@ -209,6 +276,7 @@ export function createGig(db: Db, member: Member, input: GigInput) {
           type: input.type,
           showTime: input.showTime,
           venueId,
+          ...extrasOf(input),
           createdById: member.userId,
         })
         .returning({ id: gigs.id });
@@ -234,6 +302,7 @@ export async function lockGig(tx: Tx, bandId: string, id: string) {
       showTime: gigs.showTime,
       status: gigs.status,
       venueId: gigs.venueId,
+      ...extraColumns,
       version: gigs.version,
       createdById: gigs.createdById,
     })
@@ -271,29 +340,43 @@ export function updateGig(
         throw new GigSettledError();
       }
       const venueId = await venueOf(tx, member, input.venue);
+      await checkSetlist(tx, member.bandId, input.setlistId, current.setlistId);
       const next = {
         date: input.date,
         title: input.title,
         type: input.type,
         showTime: input.showTime,
         venueId,
+        ...extrasOf(input),
       };
-      const fields = (Object.keys(next) as (keyof typeof next)[]).filter(
-        (key) => next[key] !== current[key],
+      const fields = (Object.keys(next) as (keyof typeof next)[]).filter((key) =>
+        key === "programLinks"
+          ? JSON.stringify(next.programLinks) !== JSON.stringify(current.programLinks)
+          : next[key] !== current[key],
       );
       await tx
         .update(gigs)
         .set({ ...next, version: sql`${gigs.version} + 1` })
         .where(eq(gigs.id, id));
-      if (fields.length > 0) {
-        await recordActivity(tx, {
-          action: "gig.updated",
+      const event = (
+        action: "gig.updated" | "gig.program_link_added" | "gig.program_updated",
+        data?: Record<string, string | number>,
+      ) =>
+        recordActivity(tx, {
+          action,
           bandId: member.bandId,
           actorId: member.userId,
           target: { type: "gig", id },
-          data: { fields: fields.join(",") },
+          ...(data ? { data } : {}),
         });
-      }
+      // The program's own events (#328): a link added, its text changed.
+      const added = next.programLinks.filter(
+        (link) => !current.programLinks.some((old) => old.url === link.url),
+      ).length;
+      if (added > 0) await event("gig.program_link_added", { count: added });
+      if (next.programNotes !== current.programNotes) await event("gig.program_updated");
+      const others = fields.filter((field) => field !== "programLinks" && field !== "programNotes");
+      if (others.length > 0) await event("gig.updated", { fields: others.join(",") });
       return getGig(tx, member.bandId, id);
     }),
   );

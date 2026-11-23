@@ -9,7 +9,17 @@ export const GIG_STATUSES = ["proposed", "settled", "cancelled"] as const;
 export type GigStatus = (typeof GIG_STATUSES)[number];
 
 /** Length limits for a gig's and a venue's texts, shared by the API and the forms. */
-export const GIG_MAX_LENGTH = { title: 100, cancelReason: 500 } as const;
+export const GIG_MAX_LENGTH = {
+  title: 100,
+  cancelReason: 500,
+  programNotes: 2000,
+  payNotes: 200,
+  backlineNotes: 500,
+  notes: 4000,
+} as const;
+
+/** How many program links a gig keeps, and the highest pay it takes, in euro cents. */
+export const GIG_LIMITS = { programLinks: 10, payCents: 100_000_000 } as const;
 export const VENUE_MAX_LENGTH = {
   name: 100,
   city: 100,

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { type Band, dateIn, newBand } from "./support";
+import { addSong, type Band, dateIn, newBand } from "./support";
 
 // Gigs (brief 034): create, list and edit a gig, with its venue (#326).
 test.describe.configure({ mode: "serial" });
@@ -29,7 +29,7 @@ test("a member creates a gig with a new venue, then one at that venue, and edits
   await expect(leader.getByText("Add a title or a venue")).toBeVisible();
 
   // A new venue, from what's typed in the venue box.
-  await leader.getByRole("combobox").fill("Le Mondo Bizarro");
+  await leader.getByRole("combobox", { name: "Venue" }).fill("Le Mondo Bizarro");
   await leader.getByRole("option", { name: "New venue “Le Mondo Bizarro”" }).click();
   await expect(leader.getByText("Add the venue's city")).toBeVisible();
   await leader.getByLabel("City").fill("Rennes");
@@ -52,7 +52,7 @@ test("a member creates a gig with a new venue, then one at that venue, and edits
   await leader.getByRole("link", { name: "New gig" }).click();
   await leader.getByLabel("Date", { exact: true }).fill(dateIn(20));
   await leader.getByLabel("Title", { exact: true }).fill("Release party");
-  await leader.getByRole("combobox").fill("mondo");
+  await leader.getByRole("combobox", { name: "Venue" }).fill("mondo");
   await leader.getByRole("option", { name: /Le Mondo Bizarro/ }).click();
   await expect(leader.getByText("The band's venue, used by 1 gig")).toBeVisible();
   await expect(leader.getByLabel("City")).toHaveValue("Rennes");
@@ -130,4 +130,67 @@ test("its creator settles, postpones, cancels and deletes a gig (#327)", async (
   await leader.getByRole("link", { name: "Home" }).first().click();
   await expect(leader.getByText("Lea Leader cancelled a gig")).toBeVisible();
   await expect(leader.getByText("Lea Leader deleted a gig")).toBeVisible();
+});
+
+test("a gig with its setlist, program and extra info, then Live (#328)", async () => {
+  await addSong(band, {
+    title: "Hey Joe",
+    artist: "Jimi Hendrix",
+    standardDuration: 210,
+    status: "ready",
+  });
+  await leader.goto(`/b/${band.slug}/gigs/new`);
+  await leader.getByLabel("Date", { exact: true }).fill(dateIn(40));
+  await leader.getByLabel("Title", { exact: true }).fill("Rock night #12");
+
+  // A new setlist, made from the form: it opens in the editor, then leads back to the gig.
+  await leader.getByRole("button", { name: "Create setlist" }).click();
+  await leader.getByRole("dialog").getByLabel("Title").fill("Rock night set");
+  await leader.getByRole("dialog").getByRole("button", { name: "New setlist" }).click();
+  await expect(leader.getByRole("heading", { name: "Rock night set" })).toBeVisible();
+  await leader.getByRole("button", { name: "Add songs" }).click();
+  const songs = leader.getByRole("dialog").getByRole("list", { name: "Songs to add" });
+  await songs.getByRole("button", { name: /^Hey Joe/ }).click();
+  await leader.getByRole("dialog").getByRole("button", { name: "Add 1 song to Part 1" }).click();
+  await expect(leader.getByText("Saved", { exact: true })).toBeVisible();
+  await leader.getByRole("link", { name: "Back to the gig" }).click();
+  // The form as it was, the new setlist chosen.
+  await expect(leader.getByLabel("Title", { exact: true })).toHaveValue("Rock night #12");
+  await expect(leader.getByRole("combobox", { name: "Setlist" })).toHaveValue(/.+/);
+
+  // Program and extra info.
+  await leader.getByRole("button", { name: "Add a link" }).click();
+  await leader.getByLabel("Web address").fill("example.com/rock-night");
+  await leader.getByLabel("Link title").fill("Facebook event");
+  await leader.getByRole("button", { name: "Add", exact: true }).click();
+  await leader.getByLabel("Running order, occasion").fill("20:00 The Lunatics, 21:15 us");
+  await leader.getByLabel("Get in").fill("18:30");
+  await leader.getByLabel("Pay (€)").fill("abc");
+  await expect(leader.getByText("Check the pay: an amount in euros")).toBeVisible();
+  await leader.getByLabel("Pay (€)").fill("400");
+  await leader.getByLabel(/^About the pay/).fill("cash on the night");
+  await leader.getByLabel("Shared backline").check();
+  await leader.getByLabel("What the shared backline has").fill("drums, bass amp");
+  await leader.getByLabel("Technicians provided").check();
+  await leader.getByLabel("Notes").fill("Parking behind the bar");
+  await leader.getByRole("button", { name: "Save" }).click();
+
+  // The compact view: times, setlist, program, good to know.
+  await expect(leader.getByRole("heading", { name: "Rock night #12" })).toBeVisible();
+  await expect(leader.getByText("Get in 6:30 PM")).toBeVisible();
+  await expect(leader.getByRole("link", { name: /Rock night set/ })).toContainText("1 song");
+  await expect(leader.getByRole("link", { name: "Facebook event" })).toHaveAttribute(
+    "href",
+    "https://example.com/rock-night",
+  );
+  await expect(leader.getByText("20:00 The Lunatics, 21:15 us")).toBeVisible();
+  await expect(leader.getByText("€400 · cash on the night")).toBeVisible();
+  await expect(leader.getByText("Shared backline: drums, bass amp")).toBeVisible();
+  await expect(leader.getByText("Technicians provided")).toBeVisible();
+  await expect(leader.getByText("Parking behind the bar")).toBeVisible();
+
+  // Live opens the setlist's live mode.
+  await leader.getByRole("link", { name: "Live" }).click();
+  await expect(leader).toHaveURL(/\/setlists\/[^/]+\/live$/);
+  await expect(leader.getByText("Hey Joe")).toBeVisible();
 });

@@ -162,6 +162,13 @@
       "when": 1795392400457,
       "tag": "0022_gig_cancellation",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795392935477,
+      "tag": "0023_gig_setlist_program",
+      "breakpoints": true
     }
   ]
 }
