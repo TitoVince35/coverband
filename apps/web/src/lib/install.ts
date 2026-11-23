@@ -79,15 +79,24 @@ function snapshot(): InstallMode {
   });
 }
 
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 /** What the install card should offer right now. */
 export function useInstallMode() {
+  return useSyncExternalStore(subscribe, snapshot, () => null);
+}
+
+/** Whether the app is installed: opened from the home screen, or just installed from this tab. */
+export function useInstalled() {
   return useSyncExternalStore(
-    (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    snapshot,
-    () => null,
+    subscribe,
+    () => installed,
+    () => false,
   );
 }
 

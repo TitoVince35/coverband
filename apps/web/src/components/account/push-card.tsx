@@ -17,32 +17,41 @@ import { useOnline } from "@/lib/online";
 import { disablePush, enablePush, PushDeniedError, pushKeyQuery, pushStateQuery } from "@/lib/push";
 
 /**
+ * Turns push notifications on for this device, with the public key: the account page's card and
+ * the home page's offer (#353).
+ */
+export function useEnablePush() {
+  const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (key: string) =>
+      enablePush(key, isLanguage(i18n.language) ? i18n.language : DEFAULT_LANGUAGE),
+    onSuccess: () => toast.success(t("account.push.enabled")),
+    // Refused at the prompt: the account page's card says they're blocked.
+    onError: (error) => {
+      if (!(error instanceof PushDeniedError)) toast.error(errorMessage(t, error));
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: pushStateQuery.queryKey }),
+  });
+}
+
+/**
  * Push notifications on this device (#261): turned on or off here. Hidden where they can't work
  * (no push in this browser, the dev server, push off on the server).
  */
 export function PushCard() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   // Offline, the app is read-only (#165).
   const online = useOnline();
   const queryClient = useQueryClient();
   const { data: publicKey } = useQuery(pushKeyQuery);
   const { data: state } = useQuery(pushStateQuery);
-  const onSettled = () => queryClient.invalidateQueries({ queryKey: pushStateQuery.queryKey });
-  const enable = useMutation({
-    mutationFn: (key: string) =>
-      enablePush(key, isLanguage(i18n.language) ? i18n.language : DEFAULT_LANGUAGE),
-    onSuccess: () => toast.success(t("account.push.enabled")),
-    // Refused at the prompt: the card says they're blocked.
-    onError: (error) => {
-      if (!(error instanceof PushDeniedError)) toast.error(errorMessage(t, error));
-    },
-    onSettled,
-  });
+  const enable = useEnablePush();
   const disable = useMutation({
     mutationFn: disablePush,
     onSuccess: () => toast.success(t("account.push.disabled")),
     onError: (error) => toast.error(errorMessage(t, error)),
-    onSettled,
+    onSettled: () => queryClient.invalidateQueries({ queryKey: pushStateQuery.queryKey }),
   });
 
   if (!publicKey || !state || state === "unsupported") return null;

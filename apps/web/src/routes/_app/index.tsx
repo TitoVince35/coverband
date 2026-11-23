@@ -6,6 +6,7 @@ import { BandLogo } from "@/components/band/band-logo";
 import { InstallCard } from "@/components/install-card";
 import { InstrumentTags } from "@/components/instruments/instrument-tags";
 import { ListSkeleton } from "@/components/loading";
+import { PushOfferCard } from "@/components/push-offer-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { myBandsQuery } from "@/lib/bands";
 import { errorMessage, replacesData } from "@/lib/errors";
@@ -69,6 +70,7 @@ function HomePage() {
         </CardContent>
       </Card>
       <InstallCard />
+      <PushOfferCard />
     </section>
   );
 }
