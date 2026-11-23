@@ -59,6 +59,18 @@ test.beforeAll(async ({ browser }) => {
   ]);
   const res = await page.request.get(`/api/bands/${band.slug}/setlists`);
   setlistId = ((await res.json()) as { setlists: { id: string }[] }).setlists[0]?.id ?? "";
+  const contact = await page.request.post(`/api/bands/${band.slug}/contacts`, {
+    data: {
+      name: "Marie-Josephine Extraordinarily-Long-Name of the Festival",
+      type: "organizer",
+      phone: "+33 6 12 34 56 78",
+      email: "marie-josephine.extraordinarily-long@a-very-long-festival-domain.example.com",
+    },
+  });
+  expect(contact.ok()).toBe(true);
+  await page.request.post(`/api/bands/${band.slug}/contacts`, {
+    data: { name: "Another contact with a long name too", type: "technical" },
+  });
   gigId = await addGig(band, {
     date: dateIn(12),
     title: "The Extraordinarily-Long-Festival-Name-Of-Somewhere-Very-Far-Away",
@@ -153,6 +165,9 @@ test("pages fit a narrow phone", async () => {
     ["New gig", `${b}/gigs/new`],
     ["Gig", `${b}/gigs/${gigId}`],
     ["Edit the gig", `${b}/gigs/${gigId}/edit`],
+    ["Venues", `${b}/venues`],
+    ["New venue", `${b}/venues/new`],
+    ["Contacts", `${b}/contacts`],
   ] as const) {
     await test.step(name, () => check(url));
   }
@@ -233,6 +248,18 @@ test("dialogs and menus fit a narrow phone", async () => {
       async (p) => {
         await button(p, "Add contact").click();
         await p.getByRole("dialog").getByRole("combobox", { name: "Name" }).fill("A");
+        return p.getByRole("dialog");
+      },
+    ],
+    [
+      "Merge contacts",
+      `${b}/contacts`,
+      async (p) => {
+        await p
+          .getByRole("button", { name: /^Actions for / })
+          .first()
+          .click();
+        await p.getByRole("menuitem", { name: "Merge with…" }).click();
         return p.getByRole("dialog");
       },
     ],

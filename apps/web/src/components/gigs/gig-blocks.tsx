@@ -99,14 +99,12 @@ export function GoodToKnow({ gig }: { gig: Gig }) {
     gig.payCents !== null
       ? [formatPay(gig.payCents, language), gig.payNotes].filter(Boolean).join(" · ")
       : gig.payNotes,
-    gig.sharedBackline
-      ? gig.backlineNotes
-        ? t("gigs.extras.sharedBacklineWith", { what: gig.backlineNotes })
-        : t("gigs.extras.sharedBackline")
-      : null,
+    // With what it has: on its own lines below, as typed.
+    gig.sharedBackline && !gig.backlineNotes ? t("gigs.extras.sharedBackline") : null,
     gig.techniciansProvided ? t("gigs.extras.technicians") : null,
   ].filter((fact): fact is string => Boolean(fact));
-  if (facts.length === 0 && !gig.notes) return null;
+  const backline = gig.sharedBackline ? gig.backlineNotes : null;
+  if (facts.length === 0 && !backline && !gig.notes) return null;
   return (
     <GigBlock title={t("gigs.extras.goodToKnow")}>
       {facts.length > 0 && (
@@ -117,6 +115,12 @@ export function GoodToKnow({ gig }: { gig: Gig }) {
             </li>
           ))}
         </ul>
+      )}
+      {backline && (
+        <div className="space-y-0.5 text-sm">
+          <p className="font-medium">{t("gigs.extras.sharedBackline")}</p>
+          <p className="whitespace-pre-line break-words text-muted-foreground">{backline}</p>
+        </div>
       )}
       {gig.notes && (
         <p className="whitespace-pre-line break-words text-muted-foreground text-sm">{gig.notes}</p>

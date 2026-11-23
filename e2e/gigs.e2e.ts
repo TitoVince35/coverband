@@ -35,7 +35,7 @@ test("a member creates a gig with a new venue, then one at that venue, and edits
   await expect(leader.getByText("Add the venue's city")).toBeVisible();
   await leader.getByLabel("City").fill("Rennes");
   await leader.getByLabel(/^Address/).fill("264 avenue du Général Patton");
-  await leader.getByLabel("Private event").check({ force: true });
+  await leader.getByLabel("Private", { exact: true }).check({ force: true });
   await save.click();
 
   // The compact view: status, type, venue, Directions.
@@ -171,7 +171,7 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   await leader.getByLabel("Pay (€)").fill("400");
   await leader.getByLabel(/^About the pay/).fill("cash on the night");
   await leader.getByLabel("Shared backline").check();
-  await leader.getByLabel("What the shared backline has").fill("drums, bass amp");
+  await leader.getByLabel("What the shared backline has").fill("Drum kit\nBass amp");
   await leader.getByLabel("Technicians provided").check();
   await leader.getByLabel("Notes").fill("Parking behind the bar");
   await leader.getByRole("button", { name: "Save" }).click();
@@ -186,7 +186,10 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   );
   await expect(leader.getByText("20:00 The Lunatics, 21:15 us")).toBeVisible();
   await expect(leader.getByText("€400 · cash on the night")).toBeVisible();
-  await expect(leader.getByText("Shared backline: drums, bass amp")).toBeVisible();
+  // The shared backline on its own lines, as typed.
+  const backline = leader.getByText("Drum kit Bass amp");
+  await expect(backline).toBeVisible();
+  expect(await backline.innerText()).toBe("Drum kit\nBass amp");
   await expect(leader.getByText("Technicians provided")).toBeVisible();
   await expect(leader.getByText("Parking behind the bar")).toBeVisible();
 
@@ -378,4 +381,56 @@ test("the venue on a map, its pin dragged to correct it (#333)", async () => {
   await leader.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByRole("link", { name: "Directions" })).toBeVisible();
   await expect(leader.getByRole("img", { name: /^Map:/ })).toHaveCount(0);
+});
+
+test("the band's venues and contacts: a duplicate merged, another deleted (#334)", async () => {
+  const api = `/api/bands/${band.slug}`;
+  const contact = async (data: Record<string, unknown>) => {
+    const res = await leader.request.post(`${api}/contacts`, { data });
+    return ((await res.json()) as { contact: { id: string } }).contact.id;
+  };
+  const marc = await contact({ name: "Marc", type: "organizer", email: "marc@example.com" });
+  const twin = await contact({ name: "Marc Dubois", type: "organizer", phone: "06 99 88 77 66" });
+  await contact({ name: "Claire Martin", type: "organizer", phone: "07 11 22 33 44" });
+  await addGig(band, { date: dateIn(90), title: "Merge night", contactIds: [marc, twin] });
+
+  // The contacts page, from the band's menu.
+  await leader.goto(`/b/${band.slug}`);
+  await leader.getByRole("button", { name: "Band menu" }).click();
+  await leader.getByRole("menuitem", { name: "Contacts" }).click();
+  const list = leader.getByRole("list", { name: "Contacts" });
+  await expect(list.getByText("Claire Martin")).toBeVisible();
+
+  // Merged: the twin's phone kept with Marc's email, one contact left on the gig.
+  await list.getByRole("button", { name: "Actions for Marc", exact: true }).click();
+  await leader.getByRole("menuitem", { name: "Merge with…" }).click();
+  const dialog = leader.getByRole("dialog");
+  // The likely same person is chosen already.
+  await expect(dialog.getByLabel("The other contact")).toHaveValue(twin);
+  await dialog.getByText("Marc Dubois", { exact: true }).click();
+  await dialog.getByRole("button", { name: "Merge" }).click();
+  await expect(
+    list.getByRole("button", {
+      name: /^Organizer Marc Dubois 06 99 88 77 66 · marc@example\.com/,
+    }),
+  ).toBeVisible();
+  await expect(list.getByText("Marc", { exact: true })).toBeHidden();
+
+  // Deleted, confirmed.
+  await list.getByRole("button", { name: "Actions for Claire Martin" }).click();
+  await leader.getByRole("menuitem", { name: "Delete" }).click();
+  await leader.getByRole("alertdialog").getByRole("button", { name: "Delete the contact" }).click();
+  await expect(list.getByText("Claire Martin")).toBeHidden();
+
+  // The venues page: a venue with a gig can't be deleted.
+  await leader.getByRole("link", { name: "Venues" }).first().click();
+  await leader
+    .getByRole("list", { name: "Venues" })
+    .getByRole("link", { name: /Le Mondo Bizarro/ })
+    .click();
+  await expect(leader.getByText(/^Used by \d+ gigs?: can't be deleted\.$/)).toBeVisible();
+  await expect(leader.getByRole("button", { name: "Delete" })).toBeDisabled();
+  await expect(leader.getByRole("region", { name: "Gigs here" }).getByRole("link")).not.toHaveCount(
+    0,
+  );
 });

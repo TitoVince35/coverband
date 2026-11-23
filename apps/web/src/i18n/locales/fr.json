@@ -493,6 +493,11 @@
       "title": "Titre",
       "titlePlaceholder": "Fête de la musique, mariage de Claire et Tom…",
       "type": "Type",
+      "types": {
+        "public": "Public",
+        "private": "Privé",
+        "recording": "Enregistrement"
+      },
       "created": "Concert créé",
       "saved": "Concert enregistré",
       "missing": {
@@ -607,7 +612,6 @@
       "pay": "Cachet (€)",
       "payNotes": "À propos du cachet",
       "sharedBackline": "Backline partagé",
-      "sharedBacklineWith": "Backline partagé : {{what}}",
       "backlineNotes": "Ce que comprend le backline partagé",
       "backlinePlaceholder": "Batterie, ampli basse",
       "technicians": "Techniciens fournis",
@@ -642,7 +646,35 @@
       "gigCount_other": "{{count}} concerts",
       "unused": "Sur aucun concert ni lieu",
       "call": "Appeler {{name}}",
-      "mail": "Écrire à {{name}}"
+      "mail": "Écrire à {{name}}",
+      "pageTitle": "Contacts",
+      "new": "Nouveau contact",
+      "search": "Chercher un nom, un téléphone, un e-mail",
+      "empty": "Pas encore de contact : ajoutez-en un ici, ou sur un concert.",
+      "actions": "Actions pour {{name}}",
+      "merge": "Fusionner avec…",
+      "mergeTitle": "Fusionner « {{name}} » avec…",
+      "mergeHint": "La même personne saisie deux fois : un seul contact reste, partout où était l'autre.",
+      "other": "L'autre contact",
+      "chooseOther": "Choisissez un contact",
+      "keep": "À garder, pour chaque information",
+      "details": {
+        "name": "Nom",
+        "type": "Type",
+        "phone": "Téléphone",
+        "email": "E-mail",
+        "notes": "Notes"
+      },
+      "none": "aucun",
+      "mergeResult": "Un seul contact reste, sur leurs concerts et lieux ({{gigs}} concerts, {{venues}} lieux). L'autre est supprimé.",
+      "mergeConfirm": "Fusionner",
+      "merged": "Contacts fusionnés",
+      "delete": "Supprimer",
+      "deleteTitle": "Supprimer « {{name}} » ?",
+      "deleteDescription": "Ce contact est retiré de partout où il figure ({{where}}). Son téléphone, son e-mail et ses notes sont supprimés définitivement, pour tout le groupe.",
+      "deleteMergeHint": "La même personne saisie deux fois ? Fusionnez plutôt : rien n'est perdu.",
+      "deleteConfirm": "Supprimer le contact",
+      "deleted": "Contact supprimé"
     },
     "posters": {
       "title": "Affiches",
@@ -681,6 +713,27 @@
       "pin": "L'épingle du lieu : faites-la glisser, ou déplacez-la avec les flèches",
       "dragHint": "Placée d'après l'adresse. Faites glisser l'épingle si elle est à côté.",
       "afterSave": "La carte s'affiche une fois le lieu enregistré avec son adresse."
+    },
+    "venues": {
+      "title": "Lieux",
+      "pages": "Concerts, lieux et contacts",
+      "search": "Chercher un lieu ou une ville",
+      "empty": "Pas encore de lieu : ajoutez-en un ici, ou avec un concert.",
+      "contactCount_zero": "aucun contact",
+      "contactCount_one": "{{count}} contact",
+      "contactCount_other": "{{count}} contacts",
+      "sharedHint": "Les modifications s'appliquent à tous les concerts dans ce lieu.",
+      "noContact": "Aucun pour l'instant. Affichés sur chaque concert dans ce lieu.",
+      "gigsHere": "Concerts ici",
+      "noGig": "Pas encore de concert ici.",
+      "inUse_one": "Utilisé par {{count}} concert : il ne peut pas être supprimé.",
+      "inUse_other": "Utilisé par {{count}} concerts : il ne peut pas être supprimé.",
+      "saved": "Lieu enregistré",
+      "delete": "Supprimer",
+      "deleteTitle": "Supprimer « {{name}} » ?",
+      "deleteDescription": "Le lieu quitte la liste du groupe. Ses contacts restent dans les contacts du groupe.",
+      "deleteConfirm": "Supprimer le lieu",
+      "deleted": "Lieu supprimé"
     }
   },
   "login": {
@@ -913,7 +966,8 @@
     "gig_settled": "Ce concert est confirmé : reportez-le pour changer sa date, son titre ou son lieu, annulez-le avant de le supprimer.",
     "gig_cancelled": "Ce concert est annulé : il ne peut plus être modifié.",
     "gig_past": "Ce concert est passé : les concerts passés sont en lecture seule.",
-    "too_many_posters": "Ce concert a déjà toutes ses affiches : retirez-en une d'abord."
+    "too_many_posters": "Ce concert a déjà toutes ses affiches : retirez-en une d'abord.",
+    "venue_in_use": "Des concerts ont lieu ici : ce lieu ne peut pas être supprimé."
   },
   "instruments": {
     "picker": {

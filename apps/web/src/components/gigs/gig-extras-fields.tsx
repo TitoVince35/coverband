@@ -202,7 +202,8 @@ export function GigExtraInfoFields({
           {t("gigs.extras.sharedBackline")}
         </label>
         {value.sharedBackline && (
-          <Input
+          <Textarea
+            rows={3}
             aria-label={t("gigs.extras.backlineNotes")}
             placeholder={t("gigs.extras.backlinePlaceholder")}
             value={value.backlineNotes}

@@ -30,3 +30,4 @@ The page's source is in `doc/diagrams/`; the `infra-diagrams` skill regenerates 
 - **v1.3**, Friday 2026/11/13: a shorter first sentence ("The architecture services, with what each costs.").
 - **v1.4**, Friday 2026/11/13: "On the Internet" renamed "Third-party services".
 - **v1.5**, Friday 2026/11/13: in the "Every service" table, "Characteristics" and "Cost or limitation" as wide as each other (the cost notes wrap); same figures.
+- **v1.6**, Monday 2026/11/23: Nominatim (geocoding) and OpenStreetMap's tiles for the venue maps (#333).
