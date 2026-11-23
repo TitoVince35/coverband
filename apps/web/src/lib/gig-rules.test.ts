@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { addDays, localDateTime } from "@coverband/shared";
-import { deviceTimeZone, directionsUrl, gigRights } from "./gig-rules";
+import {
+  deviceTimeZone,
+  directionsUrl,
+  formatPay,
+  gigRights,
+  parsePay,
+  payText,
+} from "./gig-rules";
 
 const today = localDateTime(new Date(), deviceTimeZone()).date;
 const creator = { userId: "u1", isLeader: false };
@@ -66,5 +73,22 @@ describe("directionsUrl", () => {
     expect(directionsUrl({ ...venue, address: null }, false)).toBe(
       "https://www.google.com/maps/dir/?api=1&destination=Le%20Ty%20Anna%2C%20Rennes",
     );
+  });
+});
+
+describe("pay", () => {
+  test("typed in euros, kept in cents", () => {
+    expect(parsePay("")).toBeNull();
+    expect(parsePay("400")).toBe(40000);
+    expect(parsePay("400,5")).toBe(40050);
+    expect(parsePay("1 200.25 €")).toBe(120025);
+    expect(parsePay("abc")).toBeUndefined();
+    expect(parsePay("12.345")).toBeUndefined();
+    expect(payText(40050)).toBe("400.50");
+    expect(payText(40000)).toBe("400");
+  });
+  test("shown in the language's way", () => {
+    expect(formatPay(40000, "en")).toBe("€400");
+    expect(formatPay(40050, "fr")).toBe("400,50 €");
   });
 });

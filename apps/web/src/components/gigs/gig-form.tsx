@@ -6,6 +6,12 @@ import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useGigRights } from "@/components/gigs/gig-actions";
+import {
+  type ExtrasDraft,
+  GigExtraInfoFields,
+  GigProgramFields,
+  GigSetlistField,
+} from "@/components/gigs/gig-extras-fields";
 import { GigStatusBadge } from "@/components/gigs/gig-status";
 import {
   VenueField,
@@ -19,7 +25,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/i18n/use-language";
 import { errorMessage } from "@/lib/errors";
+import { keepGigDraft, takeGigDraft } from "@/lib/gig-draft";
 import { formatGigDate, formatShortGigDate } from "@/lib/gig-format";
+import { parsePay, payText } from "@/lib/gig-rules";
 import {
   createGig,
   type Gig,
@@ -40,7 +48,7 @@ type Draft = {
   title: string;
   type: GigType;
   venue: VenueState;
-};
+} & ExtrasDraft;
 
 const draftOf = (gig: Gig | undefined): Draft => ({
   date: gig?.date ?? "",
@@ -50,7 +58,24 @@ const draftOf = (gig: Gig | undefined): Draft => ({
   venue: gig?.venue
     ? { mode: "existing", id: gig.venue.id, gigs: 0, fields: venueFields(gig.venue) }
     : { mode: "none", search: "" },
+  setlistId: gig?.setlistId ?? null,
+  getInTime: gig?.getInTime ?? "",
+  programLinks: gig?.programLinks ?? [],
+  programNotes: gig?.programNotes ?? "",
+  pay: payText(gig?.payCents ?? null),
+  payNotes: gig?.payNotes ?? "",
+  sharedBackline: gig?.sharedBackline ?? false,
+  backlineNotes: gig?.backlineNotes ?? "",
+  techniciansProvided: gig?.techniciansProvided ?? false,
+  notes: gig?.notes ?? "",
 });
+
+/** The form's first values: the gig's, or the draft kept while a new setlist was made, with it. */
+function firstDraft(gig: Gig | undefined, newSetlist: string | undefined): Draft {
+  if (!newSetlist) return draftOf(gig);
+  const kept = takeGigDraft<Draft>(gig?.id ?? "new");
+  return { ...(kept ?? draftOf(gig)), setlistId: newSetlist };
+}
 
 /** What the gig still needs before Save, in the order the form asks for it; null when ready. */
 export function missingOf(draft: Draft) {
@@ -59,6 +84,7 @@ export function missingOf(draft: Draft) {
   const venue = venueMissing(draft.venue);
   if (venue === "name") return "venueName" as const;
   if (venue === "city") return "venueCity" as const;
+  if (parsePay(draft.pay) === undefined) return "pay" as const;
   return null;
 }
 
@@ -71,11 +97,14 @@ export function GigForm({
   bandSlug,
   gig,
   focus,
+  newSetlist,
 }: {
   bandSlug: string;
   gig?: Gig;
   /** The field to start on: the date, after Postpone. */
   focus?: "date" | undefined;
+  /** A setlist just made from this form (#328): its kept draft again, with that setlist. */
+  newSetlist?: string | undefined;
 }) {
   const { t } = useTranslation();
   const language = useLanguage();
@@ -85,7 +114,7 @@ export function GigForm({
   const navigate = useNavigate();
   const keyboardUp = useKeyboardUp();
   const venues = useQuery(venuesQuery(bandSlug)).data ?? [];
-  const [draft, setDraft] = useState(() => draftOf(gig));
+  const [draft, setDraft] = useState(() => firstDraft(gig, newSetlist));
   const set = (patch: Partial<Draft>) => setDraft((current) => ({ ...current, ...patch }));
   const missing = missingOf(draft);
   const rights = useGigRights(
@@ -131,6 +160,16 @@ export function GigForm({
         type: draft.type,
         showTime: draft.showTime || null,
         venue: venueInput(draft.venue),
+        setlistId: draft.setlistId,
+        getInTime: draft.getInTime || null,
+        programLinks: draft.programLinks,
+        programNotes: draft.programNotes.trim() || null,
+        payCents: parsePay(draft.pay) ?? null,
+        payNotes: draft.payNotes.trim() || null,
+        sharedBackline: draft.sharedBackline,
+        backlineNotes: draft.sharedBackline ? draft.backlineNotes.trim() || null : null,
+        techniciansProvided: draft.techniciansProvided,
+        notes: draft.notes.trim() || null,
       };
       const saved = gig
         ? await updateGig(bandSlug, gig.id, { ...input, version: gig.version })
@@ -166,6 +205,8 @@ export function GigForm({
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
+        // A dialog's own form (a new setlist, a contact) reaches here through its portal.
+        if (event.target !== event.currentTarget) return;
         if (!missing) save.mutate();
       }}
     >
@@ -262,6 +303,15 @@ export function GigForm({
           </span>
         </label>
       )}
+      <GigSetlistField
+        bandSlug={bandSlug}
+        gigKey={gig?.id ?? "new"}
+        value={draft.setlistId}
+        onChange={(setlistId) => set({ setlistId })}
+        onCreateSetlist={() => keepGigDraft(gig?.id ?? "new", draft)}
+      />
+      <GigProgramFields value={draft} onChange={set} />
+      <GigExtraInfoFields value={draft} onChange={set} payInvalid={missing === "pay"} />
 
       {/* Save stays at the bottom of the screen, above the band's bar on a phone. */}
       <div

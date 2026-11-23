@@ -231,7 +231,7 @@ test("dialogs and menus fit a narrow phone", async () => {
       "New gig: venue search",
       `${b}/gigs/new`,
       async (p) => {
-        await p.getByRole("combobox").fill("Salle");
+        await p.getByRole("combobox", { name: "Venue" }).fill("Salle");
         return p.getByRole("listbox");
       },
     ],

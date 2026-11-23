@@ -57,3 +57,29 @@ export function gigRights(
     delete: manager && (gig.status !== "settled" || past),
   };
 }
+
+/**
+ * A pay typed in euros ("400", "400,50", "1 200.5") as cents: null when blank, undefined when it
+ * isn't an amount.
+ */
+export function parsePay(text: string): number | null | undefined {
+  const cleaned = text.replace(/[\s  €]/g, "").replace(",", ".");
+  if (cleaned === "") return null;
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return undefined;
+  return Math.round(Number(cleaned) * 100);
+}
+
+/** Cents as a form shows them: "400", "400.5" stays "400.50". */
+export function payText(cents: number | null) {
+  if (cents === null) return "";
+  return cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2);
+}
+
+/** A pay in the language's way: "€400.00", "400,00 €". */
+export function formatPay(cents: number, language: string) {
+  return new Intl.NumberFormat(language, {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+  }).format(cents / 100);
+}

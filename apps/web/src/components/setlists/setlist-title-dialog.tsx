@@ -28,10 +28,19 @@ type Props = {
   trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Created from a gig's form (#328): the gig's id, or "new"; the setlist then leads back to it. */
+  forGig?: string;
 };
 
 /** A new setlist's title, or a setlist's new one: unique within the band (#271). */
-export function SetlistTitleDialog({ bandSlug, setlist, trigger, open, onOpenChange }: Props) {
+export function SetlistTitleDialog({
+  bandSlug,
+  setlist,
+  trigger,
+  open,
+  onOpenChange,
+  forGig,
+}: Props) {
   const { t } = useTranslation();
   const online = useOnline();
   const queryClient = useQueryClient();
@@ -54,6 +63,7 @@ export function SetlistTitleDialog({ bandSlug, setlist, trigger, open, onOpenCha
         await navigate({
           to: "/b/$bandSlug/setlists/$setlistId",
           params: { bandSlug, setlistId: saved.id },
+          search: forGig ? { gig: forGig } : {},
         });
       }
     },

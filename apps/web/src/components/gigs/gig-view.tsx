@@ -1,6 +1,7 @@
 import { Ban, MapPin, Navigation } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { GigProgram, GigSetlistCard, GoodToKnow } from "@/components/gigs/gig-blocks";
 import { GigStatusBadge } from "@/components/gigs/gig-status";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/use-language";
@@ -16,11 +17,20 @@ import { cn } from "@/lib/utils";
  * type, name, date and times, then its venue with a Directions link; `children` adds the blocks
  * that follow.
  */
-export function GigView({ gig, children }: { gig: Gig; children?: ReactNode }) {
+export function GigView({
+  bandSlug,
+  gig,
+  children,
+}: {
+  bandSlug: string;
+  gig: Gig;
+  children?: ReactNode;
+}) {
   const { t } = useTranslation();
   const language = useLanguage();
   const cancelled = gig.status === "cancelled";
   const times = [
+    gig.getInTime ? t("gigs.view.getIn", { time: formatTimeOfDay(gig.getInTime, language) }) : null,
     gig.showTime
       ? t("gigs.view.showTime", { time: formatTimeOfDay(gig.showTime, language) })
       : null,
@@ -46,7 +56,10 @@ export function GigView({ gig, children }: { gig: Gig; children?: ReactNode }) {
         {times.length > 0 && <p className="text-muted-foreground text-sm">{times.join(" · ")}</p>}
       </div>
       {gig.venue && <VenueCard venue={gig.venue} />}
+      {gig.setlistId && <GigSetlistCard bandSlug={bandSlug} setlistId={gig.setlistId} />}
       {children}
+      <GigProgram gig={gig} />
+      <GoodToKnow gig={gig} />
     </div>
   );
 }

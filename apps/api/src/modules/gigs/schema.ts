@@ -1,6 +1,7 @@
 import { GIG_STATUSES, GIG_TYPES, type WebLink } from "@coverband/shared";
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   date,
   index,
@@ -15,6 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "../../adapters/auth-schema";
 import { bands } from "../bands/schema";
+import { setlists } from "../setlists/schema";
 
 export const gigType = pgEnum("gig_type", GIG_TYPES);
 export const gigStatus = pgEnum("gig_status", GIG_STATUSES);
@@ -74,6 +76,21 @@ export const gigs = pgTable(
     venueId: uuid().references(() => venues.id, { onDelete: "no action" }),
     // Who created it: they settle, postpone, cancel and delete it, as the band leader does.
     createdById: uuid().references(() => users.id, { onDelete: "set null" }),
+    // Its setlist (#328), one of the band's; a deleted setlist leaves the gig without one.
+    setlistId: uuid().references(() => setlists.id, { onDelete: "set null" }),
+    // `HH:MM`, local time.
+    getInTime: text(),
+    // The program (#328): web links to the show's advertising, free text (running order, occasion).
+    programLinks: jsonb().$type<WebLink[]>().default([]).notNull(),
+    programNotes: text(),
+    // Extra info (#328): the pay in euro cents and its free text, the shared backline, whether
+    // technicians are provided, and the gig's notes.
+    payCents: integer(),
+    payNotes: text(),
+    sharedBackline: boolean().default(false).notNull(),
+    backlineNotes: text(),
+    techniciansProvided: boolean().default(false).notNull(),
+    notes: text(),
     // Cancelled (#327): why, who and when, shown at the top of the gig. Null otherwise.
     cancelledReason: text(),
     cancelledById: uuid().references(() => users.id, { onDelete: "set null" }),
@@ -89,6 +106,7 @@ export const gigs = pgTable(
   (table) => [
     index().on(table.bandId, table.date),
     index().on(table.venueId),
+    index().on(table.setlistId),
     check("gigs_title_or_venue", sql`${table.title} is not null or ${table.venueId} is not null`),
   ],
 );

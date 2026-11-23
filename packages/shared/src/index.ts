@@ -31,6 +31,7 @@ export {
   firstCurrentGigDate,
   GIG_DAY_END_HOUR,
   GIG_FILTERS,
+  GIG_LIMITS,
   GIG_MAX_LENGTH,
   GIG_STATUSES,
   GIG_TYPES,

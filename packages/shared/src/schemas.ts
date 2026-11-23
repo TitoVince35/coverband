@@ -9,6 +9,7 @@ import { CONTACT_MESSAGE, CONTACT_SUBJECTS } from "./contact";
 import { DOCUMENT_LIMITS } from "./documents";
 import { MAX_SONG_DURATION } from "./duration";
 import {
+  GIG_LIMITS,
   GIG_MAX_LENGTH,
   GIG_TYPES,
   isGigDate,
@@ -284,6 +285,17 @@ const gigFields = z.object({
   type: z.enum(GIG_TYPES).default("public"),
   showTime: timeOfDay.default(null),
   venue: gigVenueInput.nullable().default(null),
+  // Its setlist, program and extra info (#328).
+  setlistId: z.uuid().nullable().default(null),
+  getInTime: timeOfDay.default(null),
+  programLinks: z.array(webLinkInput).max(GIG_LIMITS.programLinks).default([]),
+  programNotes: optionalText(GIG_MAX_LENGTH.programNotes).default(null),
+  payCents: z.number().int().min(0).max(GIG_LIMITS.payCents).nullable().default(null),
+  payNotes: optionalText(GIG_MAX_LENGTH.payNotes).default(null),
+  sharedBackline: z.boolean().default(false),
+  backlineNotes: optionalText(GIG_MAX_LENGTH.backlineNotes).default(null),
+  techniciansProvided: z.boolean().default(false),
+  notes: optionalText(GIG_MAX_LENGTH.notes).default(null),
 });
 
 const titleOrVenue = (gig: { title: string | null; venue: unknown }) =>
