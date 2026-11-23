@@ -15,6 +15,7 @@ const MODULES: Record<string, Record<string, unknown>> = {
   notifications: await import("../modules/notifications/schema"),
   songs: await import("../modules/songs/schema"),
   setlists: await import("../modules/setlists/schema"),
+  gigs: await import("../modules/gigs/schema"),
   activity: await import("../core/activity/schema"),
 };
 
@@ -27,6 +28,7 @@ const COLORS = [
   "#e4f7fb",
   "#fff0e0",
   "#fde7f3",
+  "#eef3e2",
 ];
 
 // The schema relies on `casing: "snake_case"`: columns declared without a name take their key.

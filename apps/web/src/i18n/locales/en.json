@@ -452,6 +452,93 @@
       "done": "Setlist duplicated: this is the copy"
     }
   },
+  "gigs": {
+    "title": "Gigs",
+    "back": "Gigs",
+    "optional": "(optional)",
+    "pastReadOnly": "Past gigs are read-only.",
+    "empty": {
+      "next": "No gig to come. Add the next one: a date, and a title or a venue.",
+      "past": "No past gig yet.",
+      "all": "No gig yet. Add the first one: a date, and a title or a venue."
+    },
+    "filter": {
+      "label": "Which gigs",
+      "next": "Next",
+      "past": "Past",
+      "all": "All"
+    },
+    "status": {
+      "proposed": "Proposed",
+      "settled": "Settled",
+      "cancelled": "Cancelled"
+    },
+    "type": {
+      "public": "Public concert",
+      "private": "Private event",
+      "recording": "Recording"
+    },
+    "new": {
+      "button": "New gig",
+      "title": "New gig"
+    },
+    "edit": {
+      "button": "Edit",
+      "title": "Edit the gig"
+    },
+    "form": {
+      "intro": "A date, and a title or a venue (or both). Everything else can come later.",
+      "date": "Date",
+      "showTime": "Show time",
+      "title": "Title",
+      "titlePlaceholder": "Fête de la musique, Claire & Tom's wedding…",
+      "type": "Type",
+      "created": "Gig created",
+      "saved": "Gig saved",
+      "missing": {
+        "date": "Choose a date",
+        "titleOrVenue": "Add a title or a venue",
+        "venueName": "Add the venue's name",
+        "venueCity": "Add the venue's city"
+      }
+    },
+    "venue": {
+      "title": "Venue",
+      "new": "new",
+      "list": "The band's venues",
+      "searchPlaceholder": "The band's venues…",
+      "newButton": "New venue",
+      "newNamed": "New venue “{{name}}”",
+      "gigCount_zero": "No gig yet",
+      "gigCount_one": "{{count}} gig",
+      "gigCount_other": "{{count}} gigs",
+      "usedBy_zero": "The band's venue",
+      "usedBy_one": "The band's venue, used by {{count}} gig",
+      "usedBy_other": "The band's venue, used by {{count}} gigs",
+      "chooseExisting": "Choose an existing one",
+      "change": "Change",
+      "name": "Name",
+      "city": "City",
+      "address": "Address",
+      "links": "Web links",
+      "description": "Description",
+      "descriptionPlaceholder": "Small stage, load in from the back door…",
+      "sharedHint": "Changes here update the venue for every gig of the band at this venue."
+    },
+    "links": {
+      "addButton": "Add a link",
+      "add": "Add",
+      "url": "Web address",
+      "urlPlaceholder": "lapeniche-spectacle.fr",
+      "title": "Title",
+      "titlePlaceholder": "Title (optional)",
+      "remove": "Remove the link {{link}}"
+    },
+    "view": {
+      "showTime": "On stage {{time}}",
+      "directions": "Directions"
+    }
+  },
   "login": {
     "title": "Log in",
     "description": "Welcome back to {{appName}}.",
@@ -676,7 +763,9 @@
     "setlist_title_taken": "The band already has a setlist with this title.",
     "too_many_setlists": "The band has as many setlists as it can: archive one to make room.",
     "setlist_archived": "This setlist is archived: restore it to change it.",
-    "setlist_outdated": "This setlist changed meanwhile: reload it, then make your change again."
+    "setlist_outdated": "This setlist changed meanwhile: reload it, then make your change again.",
+    "venue_taken": "The band already has a venue with this name in this city: choose it from the list.",
+    "gig_outdated": "This gig changed meanwhile: reload it, then make your change again."
   },
   "instruments": {
     "picker": {
@@ -731,7 +820,10 @@
     "setlistArchived": "{{name}} archived {{setlist}}",
     "setlistRestored": "{{name}} restored {{setlist}}",
     "setlistDeleted": "{{name}} deleted {{setlist}}",
-    "setlistUpdated": "{{name}} updated {{setlist}}"
+    "setlistUpdated": "{{name}} updated {{setlist}}",
+    "gigTitle": "the gig “{{title}}”",
+    "aGig": "a gig",
+    "gigCreated": "{{name}} created {{gig}}"
   },
   "contact": {
     "title": "Contact us",

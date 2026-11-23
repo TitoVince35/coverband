@@ -41,6 +41,8 @@ export const ERROR_CODES = [
   "too_many_setlists",
   "setlist_archived",
   "setlist_outdated",
+  "venue_taken",
+  "gig_outdated",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
