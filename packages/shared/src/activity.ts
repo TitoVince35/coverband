@@ -45,6 +45,10 @@ export const ACTIVITY_ACTIONS = [
   "gig.updated",
   "venue.created",
   "venue.updated",
+  "gig.settled",
+  "gig.postponed",
+  "gig.cancelled",
+  "gig.deleted",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];

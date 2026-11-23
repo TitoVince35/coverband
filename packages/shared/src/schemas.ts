@@ -297,3 +297,6 @@ export const gigBody = gigFields.refine(titleOrVenue, titleOrVenueMessage);
 export const gigUpdateBody = gigFields
   .extend({ version: z.number().int().min(1) })
   .refine(titleOrVenue, titleOrVenueMessage);
+
+/** Cancelling a gig (#327): the reason, kept with the gig and shown at its top. */
+export const gigCancelBody = z.object({ reason: text(GIG_MAX_LENGTH.cancelReason) });

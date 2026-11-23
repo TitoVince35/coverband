@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { GigActions, useGigRights } from "@/components/gigs/gig-actions";
 import { GigView } from "@/components/gigs/gig-view";
 import { ListSkeleton } from "@/components/loading";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,11 @@ function GigPage() {
   const { bandSlug, gigId } = Route.useParams();
   const gig = useQuery(gigQuery(bandSlug, gigId));
   const online = useOnline();
+  const navigate = useNavigate();
+  const rights = useGigRights(
+    bandSlug,
+    gig.data ?? { status: "cancelled", date: "1970-01-01", createdById: null },
+  );
 
   return (
     <section className="space-y-4">
@@ -32,7 +38,7 @@ function GigPage() {
           {t("gigs.back")}
         </Link>
         {gig.data &&
-          gig.data.status !== "cancelled" &&
+          rights.edit &&
           (online ? (
             <Button asChild variant="outline" size="sm">
               <Link to="/b/$bandSlug/gigs/$gigId/edit" params={{ bandSlug, gigId }}>
@@ -46,6 +52,13 @@ function GigPage() {
               {t("gigs.edit.button")}
             </Button>
           ))}
+        {gig.data && (
+          <GigActions
+            bandSlug={bandSlug}
+            gig={gig.data}
+            onDeleted={() => navigate({ to: "/b/$bandSlug/gigs", params: { bandSlug } })}
+          />
+        )}
       </div>
       {gig.isPending ? (
         <ListSkeleton rows={3} />

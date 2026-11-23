@@ -54,6 +54,9 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   setlist_outdated: 409,
   venue_taken: 409,
   gig_outdated: 409,
+  gig_settled: 409,
+  gig_cancelled: 409,
+  gig_past: 409,
 };
 
 /**

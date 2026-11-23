@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { GigActions } from "@/components/gigs/gig-actions";
 import { GigList } from "@/components/gigs/gig-list";
 import { ListSkeleton } from "@/components/loading";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,11 @@ function GigsPage() {
       ) : gigs.data.length === 0 ? (
         <p className="text-muted-foreground text-sm">{t(`gigs.empty.${when}`)}</p>
       ) : (
-        <GigList bandSlug={bandSlug} gigs={gigs.data} />
+        <GigList
+          bandSlug={bandSlug}
+          gigs={gigs.data}
+          actions={(gig) => <GigActions bandSlug={bandSlug} gig={gig} withView />}
+        />
       )}
     </section>
   );

@@ -155,6 +155,13 @@
       "when": 1795391619890,
       "tag": "0021_gigs_venues",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795392400457,
+      "tag": "0022_gig_cancellation",
+      "breakpoints": true
     }
   ]
 }

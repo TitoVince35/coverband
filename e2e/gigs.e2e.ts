@@ -25,7 +25,7 @@ test("a member creates a gig with a new venue, then one at that venue, and edits
   const save = leader.getByRole("button", { name: "Save" });
   await expect(leader.getByText("Choose a date")).toBeVisible();
   await expect(save).toBeDisabled();
-  await leader.getByLabel("Date").fill(dateIn(10));
+  await leader.getByLabel("Date", { exact: true }).fill(dateIn(10));
   await expect(leader.getByText("Add a title or a venue")).toBeVisible();
 
   // A new venue, from what's typed in the venue box.
@@ -50,8 +50,8 @@ test("a member creates a gig with a new venue, then one at that venue, and edits
   // A second gig at the band's venue, found by searching it.
   await leader.getByRole("link", { name: "Gigs" }).first().click();
   await leader.getByRole("link", { name: "New gig" }).click();
-  await leader.getByLabel("Date").fill(dateIn(20));
-  await leader.getByLabel("Title").fill("Release party");
+  await leader.getByLabel("Date", { exact: true }).fill(dateIn(20));
+  await leader.getByLabel("Title", { exact: true }).fill("Release party");
   await leader.getByRole("combobox").fill("mondo");
   await leader.getByRole("option", { name: /Le Mondo Bizarro/ }).click();
   await expect(leader.getByText("The band's venue, used by 1 gig")).toBeVisible();
@@ -69,7 +69,7 @@ test("a member creates a gig with a new venue, then one at that venue, and edits
   // Edited: a new title and show time; the venue's change shows on both gigs.
   await gigs.getByRole("link", { name: /Release party/ }).click();
   await leader.getByRole("link", { name: "Edit" }).click();
-  await leader.getByLabel("Title").fill("Release party, second night");
+  await leader.getByLabel("Title", { exact: true }).fill("Release party, second night");
   await leader.getByLabel(/^Show time/).fill("21:30");
   await leader.getByLabel(/^Address/).fill("264 av. du Général Patton");
   await leader.getByRole("button", { name: "Save" }).click();
@@ -84,4 +84,50 @@ test("a member creates a gig with a new venue, then one at that venue, and edits
   await expect(
     leader.getByText("Lea Leader created the gig “Release party, second night”"),
   ).toBeVisible();
+});
+
+test("its creator settles, postpones, cancels and deletes a gig (#327)", async () => {
+  await leader.goto(`/b/${band.slug}/gigs/new`);
+  await leader.getByLabel("Date", { exact: true }).fill(dateIn(30));
+  await leader.getByLabel("Title", { exact: true }).fill("Wedding: Claire & Tom");
+  // Settled through the form's status switch.
+  await leader.getByRole("switch", { name: /Settled/ }).check();
+  await leader.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByRole("heading", { name: "Wedding: Claire & Tom" })).toBeVisible();
+  await expect(leader.getByText("Settled", { exact: true })).toBeVisible();
+
+  // Settled: the date and title are fixed in the form; Postpone brings it back on the date.
+  await leader.getByRole("link", { name: "Edit" }).click();
+  await expect(leader.getByLabel("Date", { exact: true })).toBeHidden();
+  await expect(leader.getByText("Fixed while settled.")).toBeVisible();
+  await leader.getByRole("button", { name: "Postpone" }).click();
+  await expect(leader.getByLabel("Date", { exact: true })).toBeFocused();
+  await leader.getByLabel("Date", { exact: true }).fill(dateIn(31));
+  await leader.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Proposed", { exact: true })).toBeVisible();
+
+  // Cancelled with its reason: read-only, the reason at its top.
+  await leader.getByRole("button", { name: "Actions for Wedding: Claire & Tom" }).click();
+  await leader.getByRole("menuitem", { name: /Cancel the gig/ }).click();
+  const dialog = leader.getByRole("alertdialog");
+  await expect(dialog.getByRole("button", { name: "Cancel the gig" })).toBeDisabled();
+  await dialog.getByLabel("Reason").fill("The couple postponed the wedding to next summer.");
+  await dialog.getByRole("button", { name: "Cancel the gig" }).click();
+  await expect(leader.getByText(/^Cancelled by Lea Leader on /)).toBeVisible();
+  await expect(leader.getByText("The couple postponed the wedding to next summer.")).toBeVisible();
+  await expect(leader.getByRole("link", { name: "Edit" })).toBeHidden();
+
+  // Crossed out in the list, then deleted from its menu there.
+  await leader.getByRole("link", { name: "Gigs" }).first().click();
+  const gigs = leader.getByRole("list", { name: "Gigs" });
+  await expect(gigs.getByText("Wedding: Claire & Tom")).toHaveClass(/line-through/);
+  await gigs.getByRole("button", { name: "Actions for Wedding: Claire & Tom" }).click();
+  await leader.getByRole("menuitem", { name: "Delete" }).click();
+  await leader.getByRole("alertdialog").getByRole("button", { name: "Delete the gig" }).click();
+  await expect(gigs.getByText("Wedding: Claire & Tom")).toBeHidden();
+
+  // The journal tells each step.
+  await leader.getByRole("link", { name: "Home" }).first().click();
+  await expect(leader.getByText("Lea Leader cancelled a gig")).toBeVisible();
+  await expect(leader.getByText("Lea Leader deleted a gig")).toBeVisible();
 });

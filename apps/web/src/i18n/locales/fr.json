@@ -537,6 +537,51 @@
     "view": {
       "showTime": "Sur scène à {{time}}",
       "directions": "Itinéraire"
+    },
+    "actions": {
+      "label": "Actions pour {{name}}",
+      "createdBy": "Créé par {{name}}",
+      "managersOnly": "Reporter, annuler et supprimer : la personne qui l'a créé ou le band leader.",
+      "view": "Voir",
+      "cancelledHint": "Annulé : il ne peut plus être modifié.",
+      "pastHint": "Les concerts passés sont en lecture seule.",
+      "settledEditHint": "Confirmé : la date, le titre et le lieu restent tels quels."
+    },
+    "settle": {
+      "switch": "Confirmé",
+      "hint": "La date, le titre et le lieu sont alors fixés. Les membres du groupe sont prévenus."
+    },
+    "settled": {
+      "label": "Confirmé : informations fixées",
+      "hint": "Fixés tant qu'il est confirmé. Reportez-le pour les changer : le concert redevient proposé."
+    },
+    "postpone": {
+      "button": "Reporter",
+      "hint": "Redevient proposé, puis choisissez la nouvelle date.",
+      "done": "Concert de nouveau proposé : choisissez sa nouvelle date"
+    },
+    "cancel": {
+      "button": "Annuler le concert…",
+      "hint": "Demande la raison. Il ne peut plus être modifié ensuite.",
+      "title": "Annuler « {{name}} » ?",
+      "description": "Le concert reste dans la liste, annulé, et ne peut plus être modifié. Vous pourrez le supprimer ensuite.",
+      "reason": "Raison",
+      "reasonHint": "Gardée avec le concert, affichée en haut.",
+      "keep": "Garder le concert",
+      "confirm": "Annuler le concert",
+      "done": "Concert annulé"
+    },
+    "cancelled": {
+      "byOn": "Annulé par {{name}} le {{date}}",
+      "readOnly": "Lecture seule. La personne qui l'a créé ou le band leader peut le supprimer."
+    },
+    "delete": {
+      "button": "Supprimer",
+      "settledHint": "Confirmé : annulez-le d'abord. Un concert proposé se supprime directement.",
+      "title": "Supprimer « {{name}} » ?",
+      "description": "Il est supprimé définitivement. Son lieu et ses contacts restent dans les listes du groupe.",
+      "confirm": "Supprimer le concert",
+      "done": "Concert supprimé"
     }
   },
   "login": {
@@ -765,7 +810,10 @@
     "setlist_archived": "Cette setlist est archivée : restaurez-la pour la modifier.",
     "setlist_outdated": "Cette setlist a changé entre-temps : rechargez-la, puis refaites votre changement.",
     "venue_taken": "Le groupe a déjà un lieu de ce nom dans cette ville : choisissez-le dans la liste.",
-    "gig_outdated": "Ce concert a été modifié entre-temps : rechargez-le, puis refaites votre modification."
+    "gig_outdated": "Ce concert a été modifié entre-temps : rechargez-le, puis refaites votre modification.",
+    "gig_settled": "Ce concert est confirmé : reportez-le pour changer sa date, son titre ou son lieu, annulez-le avant de le supprimer.",
+    "gig_cancelled": "Ce concert est annulé : il ne peut plus être modifié.",
+    "gig_past": "Ce concert est passé : les concerts passés sont en lecture seule."
   },
   "instruments": {
     "picker": {
@@ -823,7 +871,11 @@
     "setlistUpdated": "{{name}} a modifié {{setlist}}",
     "gigTitle": "le concert « {{title}} »",
     "aGig": "un concert",
-    "gigCreated": "{{name}} a créé {{gig}}"
+    "gigCreated": "{{name}} a créé {{gig}}",
+    "gigSettled": "{{name}} a confirmé {{gig}}",
+    "gigPostponed": "{{name}} a reporté {{gig}}",
+    "gigCancelled": "{{name}} a annulé {{gig}}",
+    "gigDeleted": "{{name}} a supprimé {{gig}}"
   },
   "contact": {
     "title": "Nous contacter",

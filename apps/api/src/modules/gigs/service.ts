@@ -1,5 +1,12 @@
-import { firstCurrentGigDate, type GigFilter, type GigType } from "@coverband/shared";
+import {
+  firstCurrentGigDate,
+  type GigFilter,
+  type GigStatus,
+  type GigType,
+  gigDay,
+} from "@coverband/shared";
 import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { gigs, users, venues } from "../../core/db/schema";
@@ -22,6 +29,50 @@ export class GigOutdatedError extends AppError {
   }
 }
 
+/** A cancelled gig is read-only (it can still be deleted). */
+export class GigCancelledError extends AppError {
+  constructor() {
+    super("gig_cancelled", "This gig is cancelled: it can't be changed");
+  }
+}
+
+/** A gig whose day is over is read-only (it can still be deleted). */
+export class GigPastError extends AppError {
+  constructor() {
+    super("gig_past", "This gig is over: it can't be changed");
+  }
+}
+
+/** A settled gig keeps its date, title and venue (postpone it first), and is cancelled before deleting. */
+export class GigSettledError extends AppError {
+  constructor(message = "This gig is settled: postpone it to change its date, title or venue") {
+    super("gig_settled", message);
+  }
+}
+
+/** Settle, postpone, cancel and delete: the gig's creator or a band leader. */
+export class GigForbiddenError extends AppError {
+  constructor() {
+    super("forbidden", "Only the gig's creator or a band leader can do this");
+  }
+}
+
+/** The moment and time zone that decide "A gig's day" for a request. */
+export type When = { now: Date; timeZone: string };
+
+/** A member and their rights on the band's gigs. */
+export type GigMember = Member & { isLeader: boolean };
+
+/** Whether this member settles, postpones, cancels and deletes the gig: its creator or a band leader. */
+export const canManageGig = (gig: { createdById: string | null }, member: GigMember) =>
+  member.isLeader || gig.createdById === member.userId;
+
+/** Refuses a change to a cancelled gig, or to one whose day is over. */
+function checkEditable(gig: { status: GigStatus; date: string }, when: When) {
+  if (gig.status === "cancelled") throw new GigCancelledError();
+  if (gigDay(gig.date, when.now, when.timeZone) === "past") throw new GigPastError();
+}
+
 /** A gig's main details, as its form sends them. */
 export type GigInput = {
   date: string;
@@ -31,6 +82,8 @@ export type GigInput = {
   /** The band's venue (`id`, its details as edited), a new one (no `id`), or none. */
   venue: (VenueInput & { id?: string | undefined }) | null;
 };
+
+const cancellers = alias(users, "cancellers");
 
 const gigColumns = {
   id: gigs.id,
@@ -45,6 +98,10 @@ const gigColumns = {
   updatedAt: gigs.updatedAt,
   // Who created it: their current display name, null once their account is deleted.
   createdBy: users.name,
+  cancelledReason: gigs.cancelledReason,
+  cancelledAt: gigs.cancelledAt,
+  // Who cancelled it, null once their account is deleted.
+  cancelledBy: cancellers.name,
   venueId: venues.id,
   venueName: venues.name,
   venueCity: venues.city,
@@ -88,7 +145,8 @@ const selectGigs = (db: Db | Tx) =>
     .select(gigColumns)
     .from(gigs)
     .leftJoin(venues, eq(venues.id, gigs.venueId))
-    .leftJoin(users, eq(users.id, gigs.createdById));
+    .leftJoin(users, eq(users.id, gigs.createdById))
+    .leftJoin(cancellers, eq(cancellers.id, gigs.cancelledById));
 
 /**
  * A band's gigs (brief 034) by "A gig's day" at `now` in the member's time zone: next (today's
@@ -187,20 +245,31 @@ export async function lockGig(tx: Tx, bandId: string, id: string) {
 
 /**
  * A member changes a gig's main details, read at `version` (GigOutdatedError when someone saved
- * since); its venue's details change for every gig there. Raises the version; `gig.updated` with
- * the changed fields. Null when the band has no such gig.
+ * since); its venue's details change for every gig there. Refused on a cancelled or past gig; a
+ * settled one keeps its date, title and venue. Raises the version; `gig.updated` with the changed
+ * fields. Null when the band has no such gig.
  */
 export function updateGig(
   db: Db,
   member: Member,
   id: string,
   { version, ...input }: GigInput & { version: number },
+  when: When,
 ) {
   return venueChecked(() =>
     db.transaction(async (tx) => {
       const current = await lockGig(tx, member.bandId, id);
       if (!current) return null;
+      checkEditable(current, when);
       if (current.version !== version) throw new GigOutdatedError();
+      if (
+        current.status === "settled" &&
+        (input.date !== current.date ||
+          input.title !== current.title ||
+          (input.venue?.id ?? null) !== current.venueId)
+      ) {
+        throw new GigSettledError();
+      }
       const venueId = await venueOf(tx, member, input.venue);
       const next = {
         date: input.date,
@@ -228,4 +297,106 @@ export function updateGig(
       return getGig(tx, member.bandId, id);
     }),
   );
+}
+
+/** Locks a gig for a status change by its creator or a band leader; null when there's none. */
+async function lockForManager(tx: Tx, member: GigMember, id: string) {
+  const current = await lockGig(tx, member.bandId, id);
+  if (!current) return null;
+  if (!canManageGig(current, member)) throw new GigForbiddenError();
+  return current;
+}
+
+/** Sets a gig's status, raises its version and records the event; returns the gig. */
+async function writeStatus(
+  tx: Tx,
+  member: Member,
+  id: string,
+  action: "gig.settled" | "gig.postponed" | "gig.cancelled",
+  changes: Partial<typeof gigs.$inferInsert>,
+) {
+  await tx
+    .update(gigs)
+    .set({ ...changes, version: sql`${gigs.version} + 1` })
+    .where(eq(gigs.id, id));
+  await recordActivity(tx, {
+    action,
+    bandId: member.bandId,
+    actorId: member.userId,
+    target: { type: "gig", id },
+  });
+  return getGig(tx, member.bandId, id);
+}
+
+/**
+ * Its creator or a band leader settles a proposed gig (#327): its date, title and venue are then
+ * fixed. `changed` says whether it was proposed (a settled one stays as it is). Null when the band
+ * has no such gig.
+ */
+export function settleGig(db: Db, member: GigMember, id: string, when: When) {
+  return db.transaction(async (tx) => {
+    const current = await lockForManager(tx, member, id);
+    if (!current) return null;
+    checkEditable(current, when);
+    if (current.status === "settled") {
+      return { gig: await getGig(tx, member.bandId, id), changed: false };
+    }
+    return {
+      gig: await writeStatus(tx, member, id, "gig.settled", { status: "settled" }),
+      changed: true,
+    };
+  });
+}
+
+/** Its creator or a band leader brings a settled gig back to proposed, to change its date (#327). */
+export function postponeGig(db: Db, member: GigMember, id: string, when: When) {
+  return db.transaction(async (tx) => {
+    const current = await lockForManager(tx, member, id);
+    if (!current) return null;
+    checkEditable(current, when);
+    if (current.status === "proposed") return getGig(tx, member.bandId, id);
+    return writeStatus(tx, member, id, "gig.postponed", { status: "proposed" });
+  });
+}
+
+/**
+ * Its creator or a band leader cancels a gig (#327), with the reason; who and when are kept. It
+ * is read-only afterwards.
+ */
+export function cancelGig(db: Db, member: GigMember, id: string, reason: string, when: When) {
+  return db.transaction(async (tx) => {
+    const current = await lockForManager(tx, member, id);
+    if (!current) return null;
+    checkEditable(current, when);
+    return writeStatus(tx, member, id, "gig.cancelled", {
+      status: "cancelled",
+      cancelledReason: reason,
+      cancelledById: member.userId,
+      cancelledAt: new Date(),
+    });
+  });
+}
+
+/**
+ * Its creator or a band leader deletes a gig (#327): a proposed or cancelled one, or a past one
+ * whatever its status (a mistake can be removed); a settled one is cancelled first. Its venue
+ * stays in the band's list. False when the band has no such gig.
+ */
+export function deleteGig(db: Db, member: GigMember, id: string, when: When) {
+  return db.transaction(async (tx) => {
+    const current = await lockForManager(tx, member, id);
+    if (!current) return false;
+    const past = gigDay(current.date, when.now, when.timeZone) === "past";
+    if (current.status === "settled" && !past) {
+      throw new GigSettledError("This gig is settled: cancel it before deleting it");
+    }
+    await tx.delete(gigs).where(eq(gigs.id, id));
+    await recordActivity(tx, {
+      action: "gig.deleted",
+      bandId: member.bandId,
+      actorId: member.userId,
+      target: { type: "gig", id },
+    });
+    return true;
+  });
 }
