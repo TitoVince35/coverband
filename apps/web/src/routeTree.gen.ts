@@ -21,6 +21,7 @@ import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppBBandSlugRouteImport } from './routes/_app/b.$bandSlug'
 import { Route as AppImpersonateUserIdRouteImport } from './routes/_app/impersonate.$userId'
 import { Route as AppBBandSlugIndexRouteImport } from './routes/_app/b.$bandSlug/index'
+import { Route as AppBBandSlugContactsRouteImport } from './routes/_app/b.$bandSlug/contacts'
 import { Route as AppBBandSlugLineupRouteImport } from './routes/_app/b.$bandSlug/lineup'
 import { Route as AppBBandSlugSettingsRouteImport } from './routes/_app/b.$bandSlug/settings'
 import { Route as AppBBandSlugGigsIndexRouteImport } from './routes/_app/b.$bandSlug/gigs.index'
@@ -32,6 +33,9 @@ import { Route as AppBBandSlugSetlistsArchivedRouteImport } from './routes/_app/
 import { Route as AppBBandSlugSongsIndexRouteImport } from './routes/_app/b.$bandSlug/songs.index'
 import { Route as AppBBandSlugSongsSongIdRouteImport } from './routes/_app/b.$bandSlug/songs.$songId'
 import { Route as AppBBandSlugSongsArchivedRouteImport } from './routes/_app/b.$bandSlug/songs.archived'
+import { Route as AppBBandSlugVenuesIndexRouteImport } from './routes/_app/b.$bandSlug/venues.index'
+import { Route as AppBBandSlugVenuesVenueIdRouteImport } from './routes/_app/b.$bandSlug/venues.$venueId'
+import { Route as AppBBandSlugVenuesNewRouteImport } from './routes/_app/b.$bandSlug/venues.new'
 import { Route as AppBBandSlugGigsGigIdEditRouteImport } from './routes/_app/b.$bandSlug/gigs.$gigId_.edit'
 import { Route as AppBBandSlugSetlistsSetlistIdLiveRouteImport } from './routes/_app/b.$bandSlug/setlists.$setlistId_.live'
 
@@ -94,6 +98,11 @@ const AppBBandSlugIndexRoute = AppBBandSlugIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppBBandSlugRoute,
 } as any)
+const AppBBandSlugContactsRoute = AppBBandSlugContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
 const AppBBandSlugLineupRoute = AppBBandSlugLineupRouteImport.update({
   id: '/lineup',
   path: '/lineup',
@@ -153,6 +162,22 @@ const AppBBandSlugSongsArchivedRoute =
     path: '/songs/archived',
     getParentRoute: () => AppBBandSlugRoute,
   } as any)
+const AppBBandSlugVenuesIndexRoute = AppBBandSlugVenuesIndexRouteImport.update({
+  id: '/venues/',
+  path: '/venues/',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
+const AppBBandSlugVenuesVenueIdRoute =
+  AppBBandSlugVenuesVenueIdRouteImport.update({
+    id: '/venues/$venueId',
+    path: '/venues/$venueId',
+    getParentRoute: () => AppBBandSlugRoute,
+  } as any)
+const AppBBandSlugVenuesNewRoute = AppBBandSlugVenuesNewRouteImport.update({
+  id: '/venues/new',
+  path: '/venues/new',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
 const AppBBandSlugGigsGigIdEditRoute =
   AppBBandSlugGigsGigIdEditRouteImport.update({
     id: '/gigs/$gigId_/edit',
@@ -177,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
   '/impersonate/$userId': typeof AppImpersonateUserIdRoute
+  '/b/$bandSlug/contacts': typeof AppBBandSlugContactsRoute
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug/': typeof AppBBandSlugIndexRoute
@@ -186,9 +212,12 @@ export interface FileRoutesByFullPath {
   '/b/$bandSlug/setlists/archived': typeof AppBBandSlugSetlistsArchivedRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
+  '/b/$bandSlug/venues/$venueId': typeof AppBBandSlugVenuesVenueIdRoute
+  '/b/$bandSlug/venues/new': typeof AppBBandSlugVenuesNewRoute
   '/b/$bandSlug/gigs/': typeof AppBBandSlugGigsIndexRoute
   '/b/$bandSlug/setlists/': typeof AppBBandSlugSetlistsIndexRoute
   '/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
+  '/b/$bandSlug/venues/': typeof AppBBandSlugVenuesIndexRoute
   '/b/$bandSlug/gigs/$gigId/edit': typeof AppBBandSlugGigsGigIdEditRoute
   '/b/$bandSlug/setlists/$setlistId/live': typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
@@ -202,6 +231,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AppIndexRoute
   '/impersonate/$userId': typeof AppImpersonateUserIdRoute
+  '/b/$bandSlug/contacts': typeof AppBBandSlugContactsRoute
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug': typeof AppBBandSlugIndexRoute
@@ -211,9 +241,12 @@ export interface FileRoutesByTo {
   '/b/$bandSlug/setlists/archived': typeof AppBBandSlugSetlistsArchivedRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
+  '/b/$bandSlug/venues/$venueId': typeof AppBBandSlugVenuesVenueIdRoute
+  '/b/$bandSlug/venues/new': typeof AppBBandSlugVenuesNewRoute
   '/b/$bandSlug/gigs': typeof AppBBandSlugGigsIndexRoute
   '/b/$bandSlug/setlists': typeof AppBBandSlugSetlistsIndexRoute
   '/b/$bandSlug/songs': typeof AppBBandSlugSongsIndexRoute
+  '/b/$bandSlug/venues': typeof AppBBandSlugVenuesIndexRoute
   '/b/$bandSlug/gigs/$gigId/edit': typeof AppBBandSlugGigsGigIdEditRoute
   '/b/$bandSlug/setlists/$setlistId/live': typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
@@ -230,6 +263,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/b/$bandSlug': typeof AppBBandSlugRouteWithChildren
   '/_app/impersonate/$userId': typeof AppImpersonateUserIdRoute
+  '/_app/b/$bandSlug/contacts': typeof AppBBandSlugContactsRoute
   '/_app/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/_app/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/_app/b/$bandSlug/': typeof AppBBandSlugIndexRoute
@@ -239,9 +273,12 @@ export interface FileRoutesById {
   '/_app/b/$bandSlug/setlists/archived': typeof AppBBandSlugSetlistsArchivedRoute
   '/_app/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/_app/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
+  '/_app/b/$bandSlug/venues/$venueId': typeof AppBBandSlugVenuesVenueIdRoute
+  '/_app/b/$bandSlug/venues/new': typeof AppBBandSlugVenuesNewRoute
   '/_app/b/$bandSlug/gigs/': typeof AppBBandSlugGigsIndexRoute
   '/_app/b/$bandSlug/setlists/': typeof AppBBandSlugSetlistsIndexRoute
   '/_app/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
+  '/_app/b/$bandSlug/venues/': typeof AppBBandSlugVenuesIndexRoute
   '/_app/b/$bandSlug/gigs/$gigId_/edit': typeof AppBBandSlugGigsGigIdEditRoute
   '/_app/b/$bandSlug/setlists/$setlistId_/live': typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
@@ -258,6 +295,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/b/$bandSlug'
     | '/impersonate/$userId'
+    | '/b/$bandSlug/contacts'
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug/settings'
     | '/b/$bandSlug/'
@@ -267,9 +305,12 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/setlists/archived'
     | '/b/$bandSlug/songs/$songId'
     | '/b/$bandSlug/songs/archived'
+    | '/b/$bandSlug/venues/$venueId'
+    | '/b/$bandSlug/venues/new'
     | '/b/$bandSlug/gigs/'
     | '/b/$bandSlug/setlists/'
     | '/b/$bandSlug/songs/'
+    | '/b/$bandSlug/venues/'
     | '/b/$bandSlug/gigs/$gigId/edit'
     | '/b/$bandSlug/setlists/$setlistId/live'
   fileRoutesByTo: FileRoutesByTo
@@ -283,6 +324,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/'
     | '/impersonate/$userId'
+    | '/b/$bandSlug/contacts'
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug/settings'
     | '/b/$bandSlug'
@@ -292,9 +334,12 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/setlists/archived'
     | '/b/$bandSlug/songs/$songId'
     | '/b/$bandSlug/songs/archived'
+    | '/b/$bandSlug/venues/$venueId'
+    | '/b/$bandSlug/venues/new'
     | '/b/$bandSlug/gigs'
     | '/b/$bandSlug/setlists'
     | '/b/$bandSlug/songs'
+    | '/b/$bandSlug/venues'
     | '/b/$bandSlug/gigs/$gigId/edit'
     | '/b/$bandSlug/setlists/$setlistId/live'
   id:
@@ -310,6 +355,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/b/$bandSlug'
     | '/_app/impersonate/$userId'
+    | '/_app/b/$bandSlug/contacts'
     | '/_app/b/$bandSlug/lineup'
     | '/_app/b/$bandSlug/settings'
     | '/_app/b/$bandSlug/'
@@ -319,9 +365,12 @@ export interface FileRouteTypes {
     | '/_app/b/$bandSlug/setlists/archived'
     | '/_app/b/$bandSlug/songs/$songId'
     | '/_app/b/$bandSlug/songs/archived'
+    | '/_app/b/$bandSlug/venues/$venueId'
+    | '/_app/b/$bandSlug/venues/new'
     | '/_app/b/$bandSlug/gigs/'
     | '/_app/b/$bandSlug/setlists/'
     | '/_app/b/$bandSlug/songs/'
+    | '/_app/b/$bandSlug/venues/'
     | '/_app/b/$bandSlug/gigs/$gigId_/edit'
     | '/_app/b/$bandSlug/setlists/$setlistId_/live'
   fileRoutesById: FileRoutesById
@@ -421,6 +470,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugIndexRouteImport
       parentRoute: typeof AppBBandSlugRoute
     }
+    '/_app/b/$bandSlug/contacts': {
+      id: '/_app/b/$bandSlug/contacts'
+      path: '/contacts'
+      fullPath: '/b/$bandSlug/contacts'
+      preLoaderRoute: typeof AppBBandSlugContactsRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
     '/_app/b/$bandSlug/lineup': {
       id: '/_app/b/$bandSlug/lineup'
       path: '/lineup'
@@ -498,6 +554,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugSongsArchivedRouteImport
       parentRoute: typeof AppBBandSlugRoute
     }
+    '/_app/b/$bandSlug/venues/': {
+      id: '/_app/b/$bandSlug/venues/'
+      path: '/venues'
+      fullPath: '/b/$bandSlug/venues/'
+      preLoaderRoute: typeof AppBBandSlugVenuesIndexRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
+    '/_app/b/$bandSlug/venues/$venueId': {
+      id: '/_app/b/$bandSlug/venues/$venueId'
+      path: '/venues/$venueId'
+      fullPath: '/b/$bandSlug/venues/$venueId'
+      preLoaderRoute: typeof AppBBandSlugVenuesVenueIdRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
+    '/_app/b/$bandSlug/venues/new': {
+      id: '/_app/b/$bandSlug/venues/new'
+      path: '/venues/new'
+      fullPath: '/b/$bandSlug/venues/new'
+      preLoaderRoute: typeof AppBBandSlugVenuesNewRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
     '/_app/b/$bandSlug/gigs/$gigId_/edit': {
       id: '/_app/b/$bandSlug/gigs/$gigId_/edit'
       path: '/gigs/$gigId/edit'
@@ -516,6 +593,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppBBandSlugRouteChildren {
+  AppBBandSlugContactsRoute: typeof AppBBandSlugContactsRoute
   AppBBandSlugLineupRoute: typeof AppBBandSlugLineupRoute
   AppBBandSlugSettingsRoute: typeof AppBBandSlugSettingsRoute
   AppBBandSlugIndexRoute: typeof AppBBandSlugIndexRoute
@@ -525,14 +603,18 @@ interface AppBBandSlugRouteChildren {
   AppBBandSlugSetlistsArchivedRoute: typeof AppBBandSlugSetlistsArchivedRoute
   AppBBandSlugSongsSongIdRoute: typeof AppBBandSlugSongsSongIdRoute
   AppBBandSlugSongsArchivedRoute: typeof AppBBandSlugSongsArchivedRoute
+  AppBBandSlugVenuesVenueIdRoute: typeof AppBBandSlugVenuesVenueIdRoute
+  AppBBandSlugVenuesNewRoute: typeof AppBBandSlugVenuesNewRoute
   AppBBandSlugGigsIndexRoute: typeof AppBBandSlugGigsIndexRoute
   AppBBandSlugSetlistsIndexRoute: typeof AppBBandSlugSetlistsIndexRoute
   AppBBandSlugSongsIndexRoute: typeof AppBBandSlugSongsIndexRoute
+  AppBBandSlugVenuesIndexRoute: typeof AppBBandSlugVenuesIndexRoute
   AppBBandSlugGigsGigIdEditRoute: typeof AppBBandSlugGigsGigIdEditRoute
   AppBBandSlugSetlistsSetlistIdLiveRoute: typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
 
 const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
+  AppBBandSlugContactsRoute: AppBBandSlugContactsRoute,
   AppBBandSlugLineupRoute: AppBBandSlugLineupRoute,
   AppBBandSlugSettingsRoute: AppBBandSlugSettingsRoute,
   AppBBandSlugIndexRoute: AppBBandSlugIndexRoute,
@@ -542,9 +624,12 @@ const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
   AppBBandSlugSetlistsArchivedRoute: AppBBandSlugSetlistsArchivedRoute,
   AppBBandSlugSongsSongIdRoute: AppBBandSlugSongsSongIdRoute,
   AppBBandSlugSongsArchivedRoute: AppBBandSlugSongsArchivedRoute,
+  AppBBandSlugVenuesVenueIdRoute: AppBBandSlugVenuesVenueIdRoute,
+  AppBBandSlugVenuesNewRoute: AppBBandSlugVenuesNewRoute,
   AppBBandSlugGigsIndexRoute: AppBBandSlugGigsIndexRoute,
   AppBBandSlugSetlistsIndexRoute: AppBBandSlugSetlistsIndexRoute,
   AppBBandSlugSongsIndexRoute: AppBBandSlugSongsIndexRoute,
+  AppBBandSlugVenuesIndexRoute: AppBBandSlugVenuesIndexRoute,
   AppBBandSlugGigsGigIdEditRoute: AppBBandSlugGigsGigIdEditRoute,
   AppBBandSlugSetlistsSetlistIdLiveRoute:
     AppBBandSlugSetlistsSetlistIdLiveRoute,

@@ -348,5 +348,11 @@ export const addPosterBody = z.object({
   title: text(GIG_POSTER_LIMITS.title),
 });
 
+/**
+ * Merging two of the band's contacts (#334), the same person entered twice: `from` is deleted,
+ * its gigs and venues listing the kept contact instead, whose details become `details`.
+ */
+export const mergeContactsBody = z.object({ from: z.uuid(), details: bandContactBody });
+
 /** Cancelling a gig (#327): the reason, kept with the gig and shown at its top. */
 export const gigCancelBody = z.object({ reason: text(GIG_MAX_LENGTH.cancelReason) });

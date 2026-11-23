@@ -56,6 +56,9 @@ export const ACTIVITY_ACTIONS = [
   "band_contact.updated",
   "gig.poster_added",
   "gig.poster_removed",
+  "venue.deleted",
+  "band_contact.deleted",
+  "band_contact.merged",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];

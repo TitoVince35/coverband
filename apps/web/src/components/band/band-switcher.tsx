@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Check, ChevronsUpDown, Settings } from "lucide-react";
+import { Check, ChevronsUpDown, Contact, MapPin, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
@@ -52,6 +52,19 @@ export function BandSwitcher({
             {t("band.settings")}
           </DropdownMenuItem>
         )}
+        {/* The band's venues and contacts (#334), every member's. */}
+        <DropdownMenuItem asChild>
+          <Link to="/b/$bandSlug/venues" params={{ bandSlug: current.slug }}>
+            <MapPin />
+            {t("gigs.venues.title")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/b/$bandSlug/contacts" params={{ bandSlug: current.slug }}>
+            <Contact />
+            {t("gigs.contacts.pageTitle")}
+          </Link>
+        </DropdownMenuItem>
         {others.length > 0 && (
           <>
             <DropdownMenuSeparator />

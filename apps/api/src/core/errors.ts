@@ -58,6 +58,7 @@ export const ERROR_STATUS: Record<ErrorCode, ContentfulStatusCode> = {
   gig_cancelled: 409,
   gig_past: 409,
   too_many_posters: 409,
+  venue_in_use: 409,
 };
 
 /**

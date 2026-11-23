@@ -162,85 +162,12 @@ export function VenueField({
             {t("gigs.venue.usedBy", { count: state.gigs })}
           </p>
         )}
-        <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
-          <div className="min-w-0 space-y-1.5">
-            <Label htmlFor={`${id}-name`}>{t("gigs.venue.name")}</Label>
-            <Input
-              id={`${id}-name`}
-              value={fields.name}
-              maxLength={VENUE_MAX_LENGTH.name}
-              disabled={disabled}
-              autoFocus={state.mode === "new" && !fields.name}
-              onChange={(event) => set({ name: event.target.value })}
-            />
-          </div>
-          <div className="min-w-0 space-y-1.5">
-            <Label htmlFor={`${id}-city`}>{t("gigs.venue.city")}</Label>
-            <Input
-              id={`${id}-city`}
-              value={fields.city}
-              maxLength={VENUE_MAX_LENGTH.city}
-              disabled={disabled}
-              autoFocus={state.mode === "new" && fields.name !== "" && !fields.city}
-              onChange={(event) => set({ city: event.target.value })}
-            />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor={`${id}-address`}>
-            {t("gigs.venue.address")}{" "}
-            <span className="font-normal text-muted-foreground">{t("gigs.optional")}</span>
-          </Label>
-          <Input
-            id={`${id}-address`}
-            value={fields.address}
-            maxLength={VENUE_MAX_LENGTH.address}
-            disabled={disabled}
-            autoComplete="street-address"
-            onChange={(event) => set({ address: event.target.value })}
-          />
-        </div>
-        {fields.latitude !== null && fields.longitude !== null ? (
-          <div className="space-y-1">
-            <VenueMap
-              className="rounded-lg"
-              point={{ latitude: fields.latitude, longitude: fields.longitude }}
-              label={[fields.name, fields.address, fields.city].filter(Boolean).join(", ")}
-              onMove={
-                disabled
-                  ? undefined
-                  : ({ latitude, longitude }) => set({ latitude, longitude, pinMoved: true })
-              }
-            />
-            <p className="text-muted-foreground text-xs">{t("gigs.map.dragHint")}</p>
-          </div>
-        ) : (
-          fields.address.trim() && (
-            <p className="text-muted-foreground text-xs">{t("gigs.map.afterSave")}</p>
-          )
-        )}
-        <WebLinksEditor
-          label={t("gigs.venue.links")}
-          links={fields.links}
-          max={VENUE_LIMITS.links}
+        <VenueDetailsFields
+          fields={fields}
+          onChange={set}
           disabled={disabled}
-          onChange={(links) => set({ links })}
+          isNew={state.mode === "new"}
         />
-        <div className="space-y-1.5">
-          <Label htmlFor={`${id}-description`}>
-            {t("gigs.venue.description")}{" "}
-            <span className="font-normal text-muted-foreground">{t("gigs.optional")}</span>
-          </Label>
-          <Textarea
-            id={`${id}-description`}
-            rows={2}
-            value={fields.description}
-            maxLength={VENUE_MAX_LENGTH.description}
-            disabled={disabled}
-            placeholder={t("gigs.venue.descriptionPlaceholder")}
-            onChange={(event) => set({ description: event.target.value })}
-          />
-        </div>
         {extra}
         {state.mode === "existing" && (
           <p className="text-muted-foreground text-xs">{t("gigs.venue.sharedHint")}</p>
@@ -399,5 +326,109 @@ function VenueSearch({
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * A venue's details, editable (#326, #334): name and city, address, its map (#333, the pin
+ * dragged), web links, description. The gig form's venue block and the venue's own page.
+ */
+export function VenueDetailsFields({
+  fields,
+  onChange,
+  disabled,
+  isNew = false,
+}: {
+  fields: VenueFields;
+  onChange: (patch: Partial<VenueFields>) => void;
+  disabled?: boolean | undefined;
+  /** A new venue: the first empty field gets the focus. */
+  isNew?: boolean;
+}) {
+  const { t } = useTranslation();
+  const id = useId();
+  const set = onChange;
+  return (
+    <>
+      <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
+        <div className="min-w-0 space-y-1.5">
+          <Label htmlFor={`${id}-name`}>{t("gigs.venue.name")}</Label>
+          <Input
+            id={`${id}-name`}
+            value={fields.name}
+            maxLength={VENUE_MAX_LENGTH.name}
+            disabled={disabled}
+            autoFocus={isNew && !fields.name}
+            onChange={(event) => set({ name: event.target.value })}
+          />
+        </div>
+        <div className="min-w-0 space-y-1.5">
+          <Label htmlFor={`${id}-city`}>{t("gigs.venue.city")}</Label>
+          <Input
+            id={`${id}-city`}
+            value={fields.city}
+            maxLength={VENUE_MAX_LENGTH.city}
+            disabled={disabled}
+            autoFocus={isNew && fields.name !== "" && !fields.city}
+            onChange={(event) => set({ city: event.target.value })}
+          />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={`${id}-address`}>
+          {t("gigs.venue.address")}{" "}
+          <span className="font-normal text-muted-foreground">{t("gigs.optional")}</span>
+        </Label>
+        <Input
+          id={`${id}-address`}
+          value={fields.address}
+          maxLength={VENUE_MAX_LENGTH.address}
+          disabled={disabled}
+          autoComplete="street-address"
+          onChange={(event) => set({ address: event.target.value })}
+        />
+      </div>
+      {fields.latitude !== null && fields.longitude !== null ? (
+        <div className="space-y-1">
+          <VenueMap
+            className="rounded-lg"
+            point={{ latitude: fields.latitude, longitude: fields.longitude }}
+            label={[fields.name, fields.address, fields.city].filter(Boolean).join(", ")}
+            onMove={
+              disabled
+                ? undefined
+                : ({ latitude, longitude }) => set({ latitude, longitude, pinMoved: true })
+            }
+          />
+          <p className="text-muted-foreground text-xs">{t("gigs.map.dragHint")}</p>
+        </div>
+      ) : (
+        fields.address.trim() && (
+          <p className="text-muted-foreground text-xs">{t("gigs.map.afterSave")}</p>
+        )
+      )}
+      <WebLinksEditor
+        label={t("gigs.venue.links")}
+        links={fields.links}
+        max={VENUE_LIMITS.links}
+        disabled={disabled}
+        onChange={(links) => set({ links })}
+      />
+      <div className="space-y-1.5">
+        <Label htmlFor={`${id}-description`}>
+          {t("gigs.venue.description")}{" "}
+          <span className="font-normal text-muted-foreground">{t("gigs.optional")}</span>
+        </Label>
+        <Textarea
+          id={`${id}-description`}
+          rows={2}
+          value={fields.description}
+          maxLength={VENUE_MAX_LENGTH.description}
+          disabled={disabled}
+          placeholder={t("gigs.venue.descriptionPlaceholder")}
+          onChange={(event) => set({ description: event.target.value })}
+        />
+      </div>
+    </>
   );
 }

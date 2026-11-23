@@ -1,5 +1,5 @@
 import type { WebLink } from "@coverband/shared";
-import { and, asc, count, eq, ilike, max, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, max, or, sql } from "drizzle-orm";
 import type { Coordinates, Geocoder } from "../../adapters/geocoder";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
@@ -13,6 +13,13 @@ import { contactsOfVenues, setVenueContacts } from "./contacts.service";
 export class VenueTakenError extends AppError {
   constructor() {
     super("venue_taken", "The band already has a venue with this name in this city");
+  }
+}
+
+/** A venue some gig uses: it stays (#334). */
+export class VenueInUseError extends AppError {
+  constructor() {
+    super("venue_in_use", "Gigs take place at this venue: it can't be deleted");
   }
 }
 
@@ -182,6 +189,47 @@ export async function insertVenue(
     target: { type: "venue", id: venue.id },
   });
   return venue.id;
+}
+
+/** The gigs at a venue (#334), the latest first: date, name and status. */
+export function venueGigs(db: Db, bandId: string, venueId: string) {
+  return db
+    .select({ id: gigs.id, date: gigs.date, title: gigs.title, status: gigs.status })
+    .from(gigs)
+    .where(and(eq(gigs.bandId, bandId), eq(gigs.venueId, venueId)))
+    .orderBy(desc(gigs.date), desc(gigs.createdAt));
+}
+
+/** A member adds a venue to the band from its venues page (#334). */
+export function createVenue(db: Db, member: Member, input: VenueInput) {
+  return venueChecked(() =>
+    db.transaction(async (tx) => getVenue(tx, member.bandId, await insertVenue(tx, member, input))),
+  );
+}
+
+/**
+ * A member deletes a venue no gig uses (#334; VenueInUseError otherwise): its contacts stay in the
+ * band's list. `venue.deleted`. False when the band has no such venue.
+ */
+export function deleteVenue(db: Db, member: Member, id: string) {
+  return db.transaction(async (tx) => {
+    const [venue] = await tx
+      .select({ id: venues.id })
+      .from(venues)
+      .where(and(eq(venues.bandId, member.bandId), eq(venues.id, id)))
+      .for("update");
+    if (!venue) return false;
+    const [used] = await tx.select({ n: count() }).from(gigs).where(eq(gigs.venueId, id));
+    if ((used?.n ?? 0) > 0) throw new VenueInUseError();
+    await tx.delete(venues).where(eq(venues.id, id));
+    await recordActivity(tx, {
+      action: "venue.deleted",
+      bandId: member.bandId,
+      actorId: member.userId,
+      target: { type: "venue", id },
+    });
+    return true;
+  });
 }
 
 /** A member changes a venue's details. Returns it, or null when there's none. */

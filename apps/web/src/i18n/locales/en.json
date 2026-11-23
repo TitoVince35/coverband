@@ -642,7 +642,35 @@
       "gigCount_other": "{{count}} gigs",
       "unused": "Not on any gig or venue",
       "call": "Call {{name}}",
-      "mail": "Email {{name}}"
+      "mail": "Email {{name}}",
+      "pageTitle": "Contacts",
+      "new": "New contact",
+      "search": "Search a name, a phone, an email",
+      "empty": "No contact yet: add one here, or on a gig.",
+      "actions": "Actions for {{name}}",
+      "merge": "Merge with…",
+      "mergeTitle": "Merge “{{name}}” with…",
+      "mergeHint": "The same person entered twice: one contact remains, everywhere the other was.",
+      "other": "The other contact",
+      "chooseOther": "Choose a contact",
+      "keep": "Keep, for each detail",
+      "details": {
+        "name": "Name",
+        "type": "Type",
+        "phone": "Phone",
+        "email": "Email",
+        "notes": "Notes"
+      },
+      "none": "none",
+      "mergeResult": "One contact remains, on their gigs and venues ({{gigs}} gigs, {{venues}} venues). The other is deleted.",
+      "mergeConfirm": "Merge",
+      "merged": "Contacts merged",
+      "delete": "Delete",
+      "deleteTitle": "Delete “{{name}}”?",
+      "deleteDescription": "Removed from where they're listed ({{where}}). Their phone, email and notes are deleted for good, for everyone in the band.",
+      "deleteMergeHint": "The same person entered twice? Merge them instead: nothing is lost.",
+      "deleteConfirm": "Delete the contact",
+      "deleted": "Contact deleted"
     },
     "posters": {
       "title": "Posters",
@@ -681,6 +709,27 @@
       "pin": "The venue's pin: drag it, or move it with the arrow keys",
       "dragHint": "Placed from the address. Drag the pin if it's off.",
       "afterSave": "The map shows once the venue is saved with its address."
+    },
+    "venues": {
+      "title": "Venues",
+      "pages": "Gigs, venues and contacts",
+      "search": "Search a venue or a city",
+      "empty": "No venue yet: add one here, or with a gig.",
+      "contactCount_zero": "no contact",
+      "contactCount_one": "{{count}} contact",
+      "contactCount_other": "{{count}} contacts",
+      "sharedHint": "Changes apply to every gig at this venue.",
+      "noContact": "None yet. Shown on every gig at this venue.",
+      "gigsHere": "Gigs here",
+      "noGig": "No gig here yet.",
+      "inUse_one": "Used by {{count}} gig: can't be deleted.",
+      "inUse_other": "Used by {{count}} gigs: can't be deleted.",
+      "saved": "Venue saved",
+      "delete": "Delete",
+      "deleteTitle": "Delete “{{name}}”?",
+      "deleteDescription": "The venue leaves the band's list. Its contacts stay in the band's contacts.",
+      "deleteConfirm": "Delete the venue",
+      "deleted": "Venue deleted"
     }
   },
   "login": {
@@ -913,7 +962,8 @@
     "gig_settled": "This gig is settled: postpone it to change its date, title or venue, cancel it before deleting it.",
     "gig_cancelled": "This gig is cancelled: it can't be changed any more.",
     "gig_past": "This gig is over: past gigs are read-only.",
-    "too_many_posters": "This gig has as many posters as it can: remove one first."
+    "too_many_posters": "This gig has as many posters as it can: remove one first.",
+    "venue_in_use": "Gigs take place at this venue: it can't be deleted."
   },
   "instruments": {
     "picker": {

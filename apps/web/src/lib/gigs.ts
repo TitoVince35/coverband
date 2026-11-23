@@ -249,3 +249,66 @@ export async function removePoster(bandSlug: string, gigId: string, posterId: st
     }),
   );
 }
+
+/** One venue of the band (#334), with its contacts and its gigs, the latest first. */
+export const venueQuery = (bandSlug: string, venueId: string) =>
+  queryOptions({
+    queryKey: ["bands", bandSlug, "venues", venueId],
+    retry: (failures, error) =>
+      !(error instanceof ApiRequestError && error.code === "not_found") && failures < 3,
+    queryFn: async () =>
+      (
+        await (
+          await ensureOk(
+            await api.bands[":bandSlug"].venues[":venueId"].$get({ param: { bandSlug, venueId } }),
+          )
+        ).json()
+      ).venue,
+  });
+
+export type VenueDetails = Awaited<ReturnType<ReturnType<typeof venueQuery>["queryFn"] & {}>>;
+
+/** Adds a venue from the venues page; throws `venue_taken`. */
+export async function createVenue(bandSlug: string, json: Omit<VenueInput, "id">) {
+  const res = await api.bands[":bandSlug"].venues.$post({ param: { bandSlug }, json });
+  return (await (await ensureOk(res)).json()).venue;
+}
+
+/** Saves a venue's details: every gig there shows them; throws `venue_taken`. */
+export async function updateVenue(bandSlug: string, venueId: string, json: Omit<VenueInput, "id">) {
+  const res = await api.bands[":bandSlug"].venues[":venueId"].$patch({
+    param: { bandSlug, venueId },
+    json,
+  });
+  return (await (await ensureOk(res)).json()).venue;
+}
+
+/** Deletes a venue no gig uses; throws `venue_in_use`. */
+export async function deleteVenue(bandSlug: string, venueId: string) {
+  await ensureOk(
+    await api.bands[":bandSlug"].venues[":venueId"].$delete({ param: { bandSlug, venueId } }),
+  );
+}
+
+/** Deletes a contact: gone from every gig and venue. */
+export async function deleteBandContact(bandSlug: string, contactId: string) {
+  await ensureOk(
+    await api.bands[":bandSlug"].contacts[":contactId"].$delete({
+      param: { bandSlug, contactId },
+    }),
+  );
+}
+
+/** Merges `from` into a contact (the same person twice), with the details kept. */
+export async function mergeBandContacts(
+  bandSlug: string,
+  contactId: string,
+  from: string,
+  details: BandContactInput,
+) {
+  const res = await api.bands[":bandSlug"].contacts[":contactId"].merge.$post({
+    param: { bandSlug, contactId },
+    json: { from, details },
+  });
+  return (await (await ensureOk(res)).json()).contact;
+}

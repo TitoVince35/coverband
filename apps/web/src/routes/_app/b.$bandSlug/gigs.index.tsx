@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { GigActions } from "@/components/gigs/gig-actions";
 import { GigList } from "@/components/gigs/gig-list";
+import { GigPagesNav } from "@/components/gigs/gig-pages-nav";
 import { ListSkeleton } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { errorMessage, replacesData } from "@/lib/errors";
@@ -48,6 +49,7 @@ function GigsPage() {
           </Button>
         )}
       </div>
+      <GigPagesNav bandSlug={bandSlug} />
       <GigFilterTabs bandSlug={bandSlug} current={when} />
       {when === "past" && (
         <p className="text-center text-muted-foreground text-xs">{t("gigs.pastReadOnly")}</p>

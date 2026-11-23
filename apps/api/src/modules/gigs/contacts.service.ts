@@ -150,6 +150,72 @@ export function updateBandContact(db: Db, member: Member, id: string, input: Ban
   });
 }
 
+/**
+ * A member deletes a contact (#334): other people's personal details, so the band can remove
+ * them: gone from every gig and venue (the links cascade). `band_contact.deleted`. False when the
+ * band has no such contact.
+ */
+export function deleteBandContact(db: Db, member: Member, id: string) {
+  return db.transaction(async (tx) => {
+    const rows = await tx
+      .delete(contacts)
+      .where(and(eq(contacts.bandId, member.bandId), eq(contacts.id, id)))
+      .returning({ id: contacts.id });
+    if (rows.length === 0) return false;
+    await recordActivity(tx, {
+      action: "band_contact.deleted",
+      bandId: member.bandId,
+      actorId: member.userId,
+      target: { type: "band_contact", id },
+    });
+    return true;
+  });
+}
+
+/**
+ * A member merges two contacts, the same person entered twice (#334): `keptId` takes `details`
+ * and every gig and venue `fromId` was on (once each, after its own), then `fromId` is deleted.
+ * `band_contact.merged` (data: the deleted one's id). Null when either isn't the band's.
+ */
+export function mergeBandContacts(
+  db: Db,
+  member: Member,
+  keptId: string,
+  fromId: string,
+  details: BandContactInput,
+) {
+  return db.transaction(async (tx) => {
+    if (keptId === fromId) throw new AppError("bad_request", "A contact can't merge with itself");
+    const found = await tx
+      .select({ id: contacts.id })
+      .from(contacts)
+      .where(and(eq(contacts.bandId, member.bandId), inArray(contacts.id, [keptId, fromId])))
+      .for("update");
+    if (found.length !== 2) return null;
+    // Its gigs and venues, at the end of each list, unless already there.
+    await tx.execute(sql`
+      insert into gig_contacts (gig_id, contact_id, band_id, position)
+      select gig_id, ${keptId}, band_id, position + 1000
+      from gig_contacts where contact_id = ${fromId}
+      on conflict do nothing`);
+    await tx.execute(sql`
+      insert into venue_contacts (venue_id, contact_id, band_id, position)
+      select venue_id, ${keptId}, band_id, position + 1000
+      from venue_contacts where contact_id = ${fromId}
+      on conflict do nothing`);
+    await tx.delete(contacts).where(eq(contacts.id, fromId));
+    await tx.update(contacts).set(details).where(eq(contacts.id, keptId));
+    await recordActivity(tx, {
+      action: "band_contact.merged",
+      bandId: member.bandId,
+      actorId: member.userId,
+      target: { type: "band_contact", id: keptId },
+      data: { from: fromId },
+    });
+    return getBandContact(tx, member.bandId, keptId);
+  });
+}
+
 /** Refuses contacts that aren't the band's. */
 async function checkContacts(tx: Tx, bandId: string, ids: readonly string[]) {
   if (ids.length === 0) return;
