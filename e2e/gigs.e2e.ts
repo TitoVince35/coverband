@@ -194,3 +194,58 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   await expect(leader).toHaveURL(/\/setlists\/[^/]+\/live$/);
   await expect(leader.getByText("Hey Joe")).toBeVisible();
 });
+
+test("a contact added to the venue appears on the next gig there (#329)", async () => {
+  await leader.goto(`/b/${band.slug}/gigs/new`);
+  await leader.getByLabel("Date", { exact: true }).fill(dateIn(50));
+  await leader.getByRole("combobox", { name: "Venue" }).fill("La Péniche");
+  await leader.getByRole("option", { name: "New venue “La Péniche”" }).click();
+  await leader.getByLabel("City").fill("Rennes");
+
+  // Added to the venue, from the gig's contact dialog.
+  await leader.getByRole("button", { name: "Add contact" }).click();
+  const dialog = leader.getByRole("dialog");
+  await dialog.getByText("Organizer", { exact: true }).click();
+  await dialog.getByRole("combobox", { name: "Name" }).fill("Yann Le Goff");
+  await dialog.getByLabel("Phone").fill("06 12 34 56 78");
+  await dialog.getByLabel("Email").fill("yann@example.com");
+  await dialog.getByLabel("Also a contact of the venue").check();
+  await dialog.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(leader.getByText("From the venue (La Péniche)")).toBeVisible();
+
+  // One of the gig's own.
+  await leader.getByRole("button", { name: "Add contact" }).click();
+  await dialog.getByText("Technical", { exact: true }).click();
+  await dialog.getByRole("combobox", { name: "Name" }).fill("Nico");
+  await dialog.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(leader.getByText("This gig")).toBeVisible();
+  await leader.getByRole("button", { name: "Save" }).click();
+
+  // The compact view: Call and Email.
+  await expect(leader.getByRole("link", { name: "Call Yann Le Goff" })).toHaveAttribute(
+    "href",
+    "tel:0612345678",
+  );
+  await expect(leader.getByRole("link", { name: "Email Yann Le Goff" })).toHaveAttribute(
+    "href",
+    "mailto:yann@example.com",
+  );
+  await expect(leader.getByText("Nico")).toBeVisible();
+
+  // The next gig at the venue lists the venue's contact, not the other gig's.
+  await leader.goto(`/b/${band.slug}/gigs/new`);
+  await leader.getByLabel("Date", { exact: true }).fill(dateIn(60));
+  await leader.getByRole("combobox", { name: "Venue" }).fill("peniche");
+  await leader.getByRole("option", { name: /La Péniche/ }).click();
+  await expect(leader.getByText("From the venue (La Péniche)")).toBeVisible();
+  await expect(leader.getByRole("button", { name: /Yann Le Goff/ })).toBeVisible();
+  // The band's contacts are suggested by name.
+  await leader.getByRole("button", { name: "Add contact" }).click();
+  await dialog.getByRole("combobox", { name: "Name" }).fill("ni");
+  await dialog.getByRole("option", { name: /Nico/ }).click();
+  await expect(dialog.getByText(/One of the band's contacts/)).toBeVisible();
+  await dialog.getByRole("button", { name: "Add", exact: true }).click();
+  await leader.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByRole("link", { name: "Call Yann Le Goff" })).toBeVisible();
+  await expect(leader.getByText("Nico")).toBeVisible();
+});

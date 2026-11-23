@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { VenueInput, VenueSummary } from "@/lib/gigs";
+import type { BandContact, VenueInput, VenueSummary } from "@/lib/gigs";
 import { cn } from "@/lib/utils";
 import { searchVenues } from "@/lib/venue-search";
 
@@ -18,6 +18,8 @@ export type VenueFields = {
   address: string;
   links: WebLink[];
   description: string;
+  /** Its usual people (#329), shown on every gig there. */
+  contacts: BandContact[];
 };
 
 /**
@@ -35,6 +37,7 @@ export const emptyVenueFields = (name = ""): VenueFields => ({
   address: "",
   links: [],
   description: "",
+  contacts: [],
 });
 
 /** A venue as the API gives it, as form fields. */
@@ -44,12 +47,14 @@ export const venueFields = (venue: {
   address: string | null;
   links: WebLink[];
   description: string | null;
+  contacts?: BandContact[];
 }): VenueFields => ({
   name: venue.name,
   city: venue.city,
   address: venue.address ?? "",
   links: venue.links,
   description: venue.description ?? "",
+  contacts: venue.contacts ?? [],
 });
 
 /** What a venue state saves: null without a venue; never an incomplete one (see `venueMissing`). */
@@ -63,6 +68,7 @@ export function venueInput(state: VenueState): VenueInput | null {
     address: fields.address.trim() || null,
     links: fields.links,
     description: fields.description.trim() || null,
+    contactIds: fields.contacts.map((contact) => contact.id),
   };
 }
 

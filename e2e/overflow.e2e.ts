@@ -228,6 +228,15 @@ test("dialogs and menus fit a narrow phone", async () => {
       },
     ],
     [
+      "Add a gig's contact",
+      `${b}/gigs/${gigId}/edit`,
+      async (p) => {
+        await button(p, "Add contact").click();
+        await p.getByRole("dialog").getByRole("combobox", { name: "Name" }).fill("A");
+        return p.getByRole("dialog");
+      },
+    ],
+    [
       "New gig: venue search",
       `${b}/gigs/new`,
       async (p) => {

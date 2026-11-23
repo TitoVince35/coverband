@@ -18,8 +18,21 @@ export const GIG_MAX_LENGTH = {
   notes: 4000,
 } as const;
 
-/** How many program links a gig keeps, and the highest pay it takes, in euro cents. */
-export const GIG_LIMITS = { programLinks: 10, payCents: 100_000_000 } as const;
+/**
+ * How many program links a gig keeps, the highest pay it takes (in euro cents), and how many
+ * contacts a gig or a venue has.
+ */
+export const GIG_LIMITS = { programLinks: 10, payCents: 100_000_000, contacts: 20 } as const;
+
+/** What a band's contact (#329) is for a gig: organizer, technical, musician. */
+export const BAND_CONTACT_TYPES = ["organizer", "technical", "musician"] as const;
+export type BandContactType = (typeof BAND_CONTACT_TYPES)[number];
+
+/** Length limits for a band's contact. */
+export const BAND_CONTACT_MAX_LENGTH = { name: 100, phone: 40, email: 254, notes: 1000 } as const;
+
+/** A phone number as a `tel:` link wants it: digits and a leading +, nothing else. */
+export const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
 export const VENUE_MAX_LENGTH = {
   name: 100,
   city: 100,

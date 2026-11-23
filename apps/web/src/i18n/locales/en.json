@@ -612,6 +612,37 @@
       "backlinePlaceholder": "Drum kit, bass amp",
       "technicians": "Technicians provided",
       "notes": "Notes"
+    },
+    "contacts": {
+      "title": "Contacts",
+      "fromVenue": "From the venue ({{venue}})",
+      "thisGig": "This gig",
+      "add": "Add a contact",
+      "edit": "Edit the contact",
+      "addButton": "Add",
+      "addButtonLong": "Add contact",
+      "type": "Type",
+      "types": {
+        "organizer": "Organizer",
+        "technical": "Technical",
+        "musician": "Musician"
+      },
+      "name": "Name",
+      "known": "The band's contacts",
+      "suggestHint": "The band's contacts are suggested: one person, the same details on every gig.",
+      "sharedHint": "One of the band's contacts: changes here show on every gig and venue listing them.",
+      "phone": "Phone",
+      "email": "Email",
+      "notes": "Notes",
+      "alsoVenue": "Also a contact of the venue",
+      "alsoVenueHint": "{{venue}}: shown on its next gigs too",
+      "removeGig": "Remove from the gig",
+      "removeVenue": "Remove from the venue",
+      "gigCount_one": "{{count}} gig",
+      "gigCount_other": "{{count}} gigs",
+      "unused": "Not on any gig or venue",
+      "call": "Call {{name}}",
+      "mail": "Email {{name}}"
     }
   },
   "login": {
@@ -907,7 +938,8 @@
     "gigCancelled": "{{name}} cancelled {{gig}}",
     "gigDeleted": "{{name}} deleted {{gig}}",
     "gigProgramLinkAdded": "{{name}} added a link to the program of {{gig}}",
-    "gigProgramUpdated": "{{name}} updated the program of {{gig}}"
+    "gigProgramUpdated": "{{name}} updated the program of {{gig}}",
+    "gigContactAdded": "{{name}} added a contact to {{gig}}"
   },
   "contact": {
     "title": "Contact us",

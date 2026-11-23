@@ -13,6 +13,7 @@ import type { Db, Tx } from "../../core/db/client";
 import { gigs, users, venues } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
 import { getSetlist } from "../setlists/service";
+import { contactsOfGigs, contactsOfVenues, setGigContacts } from "./contacts.service";
 import {
   insertVenue,
   type Member,
@@ -104,6 +105,8 @@ export type GigExtras = {
   backlineNotes: string | null;
   techniciansProvided: boolean;
   notes: string | null;
+  /** Its own contacts (#329), in order; absent, unchanged. */
+  contactIds?: string[] | undefined;
 };
 
 const extraColumns = {
@@ -120,7 +123,7 @@ const extraColumns = {
 };
 
 /** The extras of a form's input, as stored. */
-const extrasOf = (input: GigExtras): GigExtras => ({
+const extrasOf = (input: GigExtras): Omit<GigExtras, "contactIds"> => ({
   setlistId: input.setlistId,
   getInTime: input.getInTime,
   programLinks: input.programLinks,
@@ -204,7 +207,29 @@ function shaped({
   };
 }
 
-export type Gig = ReturnType<typeof shaped>;
+/**
+ * Gigs with their contacts (#329): the venue's (`venue.contacts`), shown first, and their own
+ * (`contacts`): linked, never copied.
+ */
+async function withContacts(db: Db | Tx, bandId: string, rows: ReturnType<typeof shaped>[]) {
+  const own = await contactsOfGigs(
+    db,
+    bandId,
+    rows.map((gig) => gig.id),
+  );
+  const ofVenues = await contactsOfVenues(
+    db,
+    bandId,
+    rows.flatMap((gig) => (gig.venue ? [gig.venue.id] : [])),
+  );
+  return rows.map((gig) => ({
+    ...gig,
+    contacts: own.get(gig.id) ?? [],
+    venue: gig.venue ? { ...gig.venue, contacts: ofVenues.get(gig.venue.id) ?? [] } : null,
+  }));
+}
+
+export type Gig = Awaited<ReturnType<typeof withContacts>>[number];
 
 const selectGigs = (db: Db | Tx) =>
   db
@@ -242,13 +267,13 @@ export async function listGigs(
       asc(gigs.createdAt),
       asc(gigs.id),
     );
-  return rows.map(shaped);
+  return withContacts(db, bandId, rows.map(shaped));
 }
 
 /** One gig of a band, or null. */
 export async function getGig(db: Db | Tx, bandId: string, id: string) {
   const [row] = await selectGigs(db).where(and(eq(gigs.bandId, bandId), eq(gigs.id, id)));
-  return row ? shaped(row) : null;
+  return row ? ((await withContacts(db, bandId, [shaped(row)]))[0] ?? null) : null;
 }
 
 /** The gig's venue: the band's (its details saved as edited), a new one, or none. */
@@ -287,6 +312,16 @@ export function createGig(db: Db, member: Member, input: GigInput) {
         actorId: member.userId,
         target: { type: "gig", id: gig.id },
       });
+      if (input.contactIds?.length) {
+        await setGigContacts(tx, member.bandId, gig.id, input.contactIds);
+        await recordActivity(tx, {
+          action: "gig.contact_added",
+          bandId: member.bandId,
+          actorId: member.userId,
+          target: { type: "gig", id: gig.id },
+          data: { count: new Set(input.contactIds).size },
+        });
+      }
       return getGig(tx, member.bandId, gig.id);
     }),
   );
@@ -359,7 +394,11 @@ export function updateGig(
         .set({ ...next, version: sql`${gigs.version} + 1` })
         .where(eq(gigs.id, id));
       const event = (
-        action: "gig.updated" | "gig.program_link_added" | "gig.program_updated",
+        action:
+          | "gig.updated"
+          | "gig.program_link_added"
+          | "gig.program_updated"
+          | "gig.contact_added",
         data?: Record<string, string | number>,
       ) =>
         recordActivity(tx, {
@@ -375,6 +414,10 @@ export function updateGig(
       ).length;
       if (added > 0) await event("gig.program_link_added", { count: added });
       if (next.programNotes !== current.programNotes) await event("gig.program_updated");
+      if (input.contactIds !== undefined) {
+        const contactsAdded = await setGigContacts(tx, member.bandId, id, input.contactIds);
+        if (contactsAdded > 0) await event("gig.contact_added", { count: contactsAdded });
+      }
       const others = fields.filter((field) => field !== "programLinks" && field !== "programNotes");
       if (others.length > 0) await event("gig.updated", { fields: others.join(",") });
       return getGig(tx, member.bandId, id);
