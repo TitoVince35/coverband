@@ -17,6 +17,12 @@
       "add": "then Add to Home Screen."
     }
   },
+  "pushOffer": {
+    "title": "Stay in the loop",
+    "dismiss": "Don't show again",
+    "later": "You can turn them on later from",
+    "account": "your account."
+  },
   "offline": {
     "banner": "You're offline: showing saved data. Changes are turned off until the connection is back."
   },

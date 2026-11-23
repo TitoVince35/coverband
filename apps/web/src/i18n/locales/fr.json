@@ -17,6 +17,12 @@
       "add": "puis Sur l'écran d'accueil."
     }
   },
+  "pushOffer": {
+    "title": "Restez au courant",
+    "dismiss": "Ne plus afficher",
+    "later": "Vous pourrez les activer plus tard depuis",
+    "account": "votre compte."
+  },
   "offline": {
     "banner": "Vous êtes hors ligne : affichage des données enregistrées. Les modifications reviennent avec la connexion."
   },
