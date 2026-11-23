@@ -294,6 +294,7 @@ export function GigForm({
       {!fixed && (
         <VenueField state={venueState} venues={venues} onChange={(venue) => set({ venue })} />
       )}
+      <GigProgramFields value={draft} onChange={set} />
       {canSettle && (
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3">
           <input
@@ -317,7 +318,6 @@ export function GigForm({
         onChange={(setlistId) => set({ setlistId })}
         onCreateSetlist={() => keepGigDraft(gig?.id ?? "new", draft)}
       />
-      <GigProgramFields value={draft} onChange={set} />
       <GigContactsField
         bandSlug={bandSlug}
         venueName={draft.venue.mode === "none" ? null : draft.venue.fields.name.trim() || null}

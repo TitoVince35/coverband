@@ -73,6 +73,7 @@ export function GigView({
           }
         />
       )}
+      <GigProgram gig={gig} />
       {gig.setlistId && <GigSetlistCard bandSlug={bandSlug} setlistId={gig.setlistId} />}
       <GigContactsList
         venueName={gig.venue?.name ?? null}
@@ -80,7 +81,6 @@ export function GigView({
         gigContacts={gig.contacts}
       />
       {children}
-      <GigProgram gig={gig} />
       <GoodToKnow gig={gig} />
       <PostersList bandSlug={bandSlug} gig={gig} />
     </div>

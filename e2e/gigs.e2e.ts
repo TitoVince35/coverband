@@ -433,4 +433,19 @@ test("the band's venues and contacts: a duplicate merged, another deleted (#334)
   await expect(leader.getByRole("region", { name: "Gigs here" }).getByRole("link")).not.toHaveCount(
     0,
   );
+
+  // A contact added from the venue's page stays in its form, then is saved with the venue.
+  const contacts = leader.getByRole("region", { name: "Contacts" });
+  await contacts.getByRole("button", { name: "Add contact" }).click();
+  const added = leader.getByRole("dialog");
+  await added.getByRole("combobox", { name: "Name" }).fill("Yann the sound tech");
+  await added.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(added).toBeHidden();
+  await expect(contacts.getByText("Yann the sound tech")).toBeVisible();
+  await leader.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByText("Venue saved")).toBeVisible();
+  await leader.reload();
+  await expect(
+    leader.getByRole("region", { name: "Contacts" }).getByText("Yann the sound tech"),
+  ).toBeVisible();
 });

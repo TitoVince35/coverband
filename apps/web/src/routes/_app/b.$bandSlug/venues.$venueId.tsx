@@ -35,8 +35,10 @@ function VenuePage() {
       ) : (
         <>
           <h2 className="break-words font-heading font-semibold text-xl">{venue.data.name}</h2>
-          {/* Saved since: a fresh form on its new details. */}
-          <VenueEditor key={`${venue.dataUpdatedAt}`} bandSlug={bandSlug} venue={venue.data} />
+          {/* A fresh form once its details change (saved, or newer than the offline copy), never
+              on a refetch giving the same ones: adding a contact refreshes the band's data before
+              the contact joins the draft. */}
+          <VenueEditor key={JSON.stringify(venue.data)} bandSlug={bandSlug} venue={venue.data} />
         </>
       )}
     </section>
