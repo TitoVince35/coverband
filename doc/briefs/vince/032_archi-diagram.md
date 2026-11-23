@@ -51,3 +51,4 @@ The diagram: [Coverband architecture](https://claude.ai/artifact/PxD1bMuYLdTpSo2
 The page's source is in `doc/diagrams/`; the `infra-diagrams` skill regenerates and republishes it, adding a line here for each version.
 
 - **v1.0**, Thursday 2026/11/12: first version (app version 0.13.0).
+- **v1.1**, Monday 2026/11/23: Nominatim (geocoding) and OpenStreetMap's tiles for the venue maps (#333).
