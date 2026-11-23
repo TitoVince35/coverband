@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { BASE_URL } from "./playwright.config";
-import { addSetlist, addSong, type Band, newBand } from "./support";
+import { addGig, addSetlist, addSong, type Band, dateIn, newBand } from "./support";
 
 // Nothing wider than a narrow phone's screen: no page scrolling sideways, nothing cut at the edge
 // (the lyrics view's buttons and lines, cut by a long title; the repertoire's filters widening the
@@ -14,6 +14,7 @@ let band: Band;
 let page: Page;
 let songId: string;
 let setlistId: string;
+let gigId: string;
 
 const LONG_TITLE =
   "The extraordinarily long and winding title of an imaginary song played by our band";
@@ -58,6 +59,21 @@ test.beforeAll(async ({ browser }) => {
   ]);
   const res = await page.request.get(`/api/bands/${band.slug}/setlists`);
   setlistId = ((await res.json()) as { setlists: { id: string }[] }).setlists[0]?.id ?? "";
+  gigId = await addGig(band, {
+    date: dateIn(12),
+    title: "The Extraordinarily-Long-Festival-Name-Of-Somewhere-Very-Far-Away",
+    type: "private",
+    showTime: "21:30",
+    venue: {
+      name: "Salle-Polyvalente-Du-Mont-Saint-Michel-Et-Des-Environs",
+      city: "Saint-Germain-sur-Moine-Et-Ailleurs",
+      address: "A very long address: 1234 boulevard du Général de Gaulle, bâtiment C, escalier 4",
+      links: [
+        { url: "https://example.com/a-very-long-link-that-never-ends/and-goes-on", title: null },
+      ],
+      description: "A description long enough to wrap on a narrow phone screen, at least twice.",
+    },
+  });
 });
 
 /**
@@ -132,6 +148,11 @@ test("pages fit a narrow phone", async () => {
     ["Archived setlists", `${b}/setlists/archived`],
     ["Setlist", `${b}/setlists/${setlistId}`],
     ["Live", `${b}/setlists/${setlistId}/live`],
+    ["Gigs", `${b}/gigs`],
+    ["All gigs", `${b}/gigs?when=all`],
+    ["New gig", `${b}/gigs/new`],
+    ["Gig", `${b}/gigs/${gigId}`],
+    ["Edit the gig", `${b}/gigs/${gigId}/edit`],
   ] as const) {
     await test.step(name, () => check(url));
   }
@@ -186,6 +207,23 @@ test("dialogs and menus fit a narrow phone", async () => {
     ],
     ["Add songs", `${b}/setlists/${setlistId}`, (p) => opens(p, "Add songs")],
     ["New setlist", `${b}/setlists`, (p) => opens(p, "New setlist")],
+    [
+      "New gig: venue search",
+      `${b}/gigs/new`,
+      async (p) => {
+        await p.getByRole("combobox").fill("Salle");
+        return p.getByRole("listbox");
+      },
+    ],
+    [
+      "New gig: a new venue",
+      `${b}/gigs/new`,
+      async (p) => {
+        await button(p, "New venue").click();
+        await button(p, "Add a link").click();
+        return p.getByLabel("Web address");
+      },
+    ],
   ] satisfies [string, string, (p: Page) => Promise<Locator>][]) {
     await test.step(name, () => check(url, open));
   }

@@ -23,12 +23,16 @@ import { Route as AppImpersonateUserIdRouteImport } from './routes/_app/imperson
 import { Route as AppBBandSlugIndexRouteImport } from './routes/_app/b.$bandSlug/index'
 import { Route as AppBBandSlugLineupRouteImport } from './routes/_app/b.$bandSlug/lineup'
 import { Route as AppBBandSlugSettingsRouteImport } from './routes/_app/b.$bandSlug/settings'
+import { Route as AppBBandSlugGigsIndexRouteImport } from './routes/_app/b.$bandSlug/gigs.index'
+import { Route as AppBBandSlugGigsGigIdRouteImport } from './routes/_app/b.$bandSlug/gigs.$gigId'
+import { Route as AppBBandSlugGigsNewRouteImport } from './routes/_app/b.$bandSlug/gigs.new'
 import { Route as AppBBandSlugSetlistsIndexRouteImport } from './routes/_app/b.$bandSlug/setlists.index'
 import { Route as AppBBandSlugSetlistsSetlistIdRouteImport } from './routes/_app/b.$bandSlug/setlists.$setlistId'
 import { Route as AppBBandSlugSetlistsArchivedRouteImport } from './routes/_app/b.$bandSlug/setlists.archived'
 import { Route as AppBBandSlugSongsIndexRouteImport } from './routes/_app/b.$bandSlug/songs.index'
 import { Route as AppBBandSlugSongsSongIdRouteImport } from './routes/_app/b.$bandSlug/songs.$songId'
 import { Route as AppBBandSlugSongsArchivedRouteImport } from './routes/_app/b.$bandSlug/songs.archived'
+import { Route as AppBBandSlugGigsGigIdEditRouteImport } from './routes/_app/b.$bandSlug/gigs.$gigId_.edit'
 import { Route as AppBBandSlugSetlistsSetlistIdLiveRouteImport } from './routes/_app/b.$bandSlug/setlists.$setlistId_.live'
 
 const AppRoute = AppRouteImport.update({
@@ -100,6 +104,21 @@ const AppBBandSlugSettingsRoute = AppBBandSlugSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppBBandSlugRoute,
 } as any)
+const AppBBandSlugGigsIndexRoute = AppBBandSlugGigsIndexRouteImport.update({
+  id: '/gigs/',
+  path: '/gigs/',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
+const AppBBandSlugGigsGigIdRoute = AppBBandSlugGigsGigIdRouteImport.update({
+  id: '/gigs/$gigId',
+  path: '/gigs/$gigId',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
+const AppBBandSlugGigsNewRoute = AppBBandSlugGigsNewRouteImport.update({
+  id: '/gigs/new',
+  path: '/gigs/new',
+  getParentRoute: () => AppBBandSlugRoute,
+} as any)
 const AppBBandSlugSetlistsIndexRoute =
   AppBBandSlugSetlistsIndexRouteImport.update({
     id: '/setlists/',
@@ -134,6 +153,12 @@ const AppBBandSlugSongsArchivedRoute =
     path: '/songs/archived',
     getParentRoute: () => AppBBandSlugRoute,
   } as any)
+const AppBBandSlugGigsGigIdEditRoute =
+  AppBBandSlugGigsGigIdEditRouteImport.update({
+    id: '/gigs/$gigId_/edit',
+    path: '/gigs/$gigId/edit',
+    getParentRoute: () => AppBBandSlugRoute,
+  } as any)
 const AppBBandSlugSetlistsSetlistIdLiveRoute =
   AppBBandSlugSetlistsSetlistIdLiveRouteImport.update({
     id: '/setlists/$setlistId_/live',
@@ -155,12 +180,16 @@ export interface FileRoutesByFullPath {
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug/': typeof AppBBandSlugIndexRoute
+  '/b/$bandSlug/gigs/$gigId': typeof AppBBandSlugGigsGigIdRoute
+  '/b/$bandSlug/gigs/new': typeof AppBBandSlugGigsNewRoute
   '/b/$bandSlug/setlists/$setlistId': typeof AppBBandSlugSetlistsSetlistIdRoute
   '/b/$bandSlug/setlists/archived': typeof AppBBandSlugSetlistsArchivedRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
+  '/b/$bandSlug/gigs/': typeof AppBBandSlugGigsIndexRoute
   '/b/$bandSlug/setlists/': typeof AppBBandSlugSetlistsIndexRoute
   '/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
+  '/b/$bandSlug/gigs/$gigId/edit': typeof AppBBandSlugGigsGigIdEditRoute
   '/b/$bandSlug/setlists/$setlistId/live': typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
 export interface FileRoutesByTo {
@@ -176,12 +205,16 @@ export interface FileRoutesByTo {
   '/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/b/$bandSlug': typeof AppBBandSlugIndexRoute
+  '/b/$bandSlug/gigs/$gigId': typeof AppBBandSlugGigsGigIdRoute
+  '/b/$bandSlug/gigs/new': typeof AppBBandSlugGigsNewRoute
   '/b/$bandSlug/setlists/$setlistId': typeof AppBBandSlugSetlistsSetlistIdRoute
   '/b/$bandSlug/setlists/archived': typeof AppBBandSlugSetlistsArchivedRoute
   '/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
+  '/b/$bandSlug/gigs': typeof AppBBandSlugGigsIndexRoute
   '/b/$bandSlug/setlists': typeof AppBBandSlugSetlistsIndexRoute
   '/b/$bandSlug/songs': typeof AppBBandSlugSongsIndexRoute
+  '/b/$bandSlug/gigs/$gigId/edit': typeof AppBBandSlugGigsGigIdEditRoute
   '/b/$bandSlug/setlists/$setlistId/live': typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
 export interface FileRoutesById {
@@ -200,12 +233,16 @@ export interface FileRoutesById {
   '/_app/b/$bandSlug/lineup': typeof AppBBandSlugLineupRoute
   '/_app/b/$bandSlug/settings': typeof AppBBandSlugSettingsRoute
   '/_app/b/$bandSlug/': typeof AppBBandSlugIndexRoute
+  '/_app/b/$bandSlug/gigs/$gigId': typeof AppBBandSlugGigsGigIdRoute
+  '/_app/b/$bandSlug/gigs/new': typeof AppBBandSlugGigsNewRoute
   '/_app/b/$bandSlug/setlists/$setlistId': typeof AppBBandSlugSetlistsSetlistIdRoute
   '/_app/b/$bandSlug/setlists/archived': typeof AppBBandSlugSetlistsArchivedRoute
   '/_app/b/$bandSlug/songs/$songId': typeof AppBBandSlugSongsSongIdRoute
   '/_app/b/$bandSlug/songs/archived': typeof AppBBandSlugSongsArchivedRoute
+  '/_app/b/$bandSlug/gigs/': typeof AppBBandSlugGigsIndexRoute
   '/_app/b/$bandSlug/setlists/': typeof AppBBandSlugSetlistsIndexRoute
   '/_app/b/$bandSlug/songs/': typeof AppBBandSlugSongsIndexRoute
+  '/_app/b/$bandSlug/gigs/$gigId_/edit': typeof AppBBandSlugGigsGigIdEditRoute
   '/_app/b/$bandSlug/setlists/$setlistId_/live': typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
 export interface FileRouteTypes {
@@ -224,12 +261,16 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug/settings'
     | '/b/$bandSlug/'
+    | '/b/$bandSlug/gigs/$gigId'
+    | '/b/$bandSlug/gigs/new'
     | '/b/$bandSlug/setlists/$setlistId'
     | '/b/$bandSlug/setlists/archived'
     | '/b/$bandSlug/songs/$songId'
     | '/b/$bandSlug/songs/archived'
+    | '/b/$bandSlug/gigs/'
     | '/b/$bandSlug/setlists/'
     | '/b/$bandSlug/songs/'
+    | '/b/$bandSlug/gigs/$gigId/edit'
     | '/b/$bandSlug/setlists/$setlistId/live'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -245,12 +286,16 @@ export interface FileRouteTypes {
     | '/b/$bandSlug/lineup'
     | '/b/$bandSlug/settings'
     | '/b/$bandSlug'
+    | '/b/$bandSlug/gigs/$gigId'
+    | '/b/$bandSlug/gigs/new'
     | '/b/$bandSlug/setlists/$setlistId'
     | '/b/$bandSlug/setlists/archived'
     | '/b/$bandSlug/songs/$songId'
     | '/b/$bandSlug/songs/archived'
+    | '/b/$bandSlug/gigs'
     | '/b/$bandSlug/setlists'
     | '/b/$bandSlug/songs'
+    | '/b/$bandSlug/gigs/$gigId/edit'
     | '/b/$bandSlug/setlists/$setlistId/live'
   id:
     | '__root__'
@@ -268,12 +313,16 @@ export interface FileRouteTypes {
     | '/_app/b/$bandSlug/lineup'
     | '/_app/b/$bandSlug/settings'
     | '/_app/b/$bandSlug/'
+    | '/_app/b/$bandSlug/gigs/$gigId'
+    | '/_app/b/$bandSlug/gigs/new'
     | '/_app/b/$bandSlug/setlists/$setlistId'
     | '/_app/b/$bandSlug/setlists/archived'
     | '/_app/b/$bandSlug/songs/$songId'
     | '/_app/b/$bandSlug/songs/archived'
+    | '/_app/b/$bandSlug/gigs/'
     | '/_app/b/$bandSlug/setlists/'
     | '/_app/b/$bandSlug/songs/'
+    | '/_app/b/$bandSlug/gigs/$gigId_/edit'
     | '/_app/b/$bandSlug/setlists/$setlistId_/live'
   fileRoutesById: FileRoutesById
 }
@@ -386,6 +435,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugSettingsRouteImport
       parentRoute: typeof AppBBandSlugRoute
     }
+    '/_app/b/$bandSlug/gigs/': {
+      id: '/_app/b/$bandSlug/gigs/'
+      path: '/gigs'
+      fullPath: '/b/$bandSlug/gigs/'
+      preLoaderRoute: typeof AppBBandSlugGigsIndexRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
+    '/_app/b/$bandSlug/gigs/$gigId': {
+      id: '/_app/b/$bandSlug/gigs/$gigId'
+      path: '/gigs/$gigId'
+      fullPath: '/b/$bandSlug/gigs/$gigId'
+      preLoaderRoute: typeof AppBBandSlugGigsGigIdRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
+    '/_app/b/$bandSlug/gigs/new': {
+      id: '/_app/b/$bandSlug/gigs/new'
+      path: '/gigs/new'
+      fullPath: '/b/$bandSlug/gigs/new'
+      preLoaderRoute: typeof AppBBandSlugGigsNewRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
     '/_app/b/$bandSlug/setlists/': {
       id: '/_app/b/$bandSlug/setlists/'
       path: '/setlists'
@@ -428,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBBandSlugSongsArchivedRouteImport
       parentRoute: typeof AppBBandSlugRoute
     }
+    '/_app/b/$bandSlug/gigs/$gigId_/edit': {
+      id: '/_app/b/$bandSlug/gigs/$gigId_/edit'
+      path: '/gigs/$gigId/edit'
+      fullPath: '/b/$bandSlug/gigs/$gigId/edit'
+      preLoaderRoute: typeof AppBBandSlugGigsGigIdEditRouteImport
+      parentRoute: typeof AppBBandSlugRoute
+    }
     '/_app/b/$bandSlug/setlists/$setlistId_/live': {
       id: '/_app/b/$bandSlug/setlists/$setlistId_/live'
       path: '/setlists/$setlistId/live'
@@ -442,12 +519,16 @@ interface AppBBandSlugRouteChildren {
   AppBBandSlugLineupRoute: typeof AppBBandSlugLineupRoute
   AppBBandSlugSettingsRoute: typeof AppBBandSlugSettingsRoute
   AppBBandSlugIndexRoute: typeof AppBBandSlugIndexRoute
+  AppBBandSlugGigsGigIdRoute: typeof AppBBandSlugGigsGigIdRoute
+  AppBBandSlugGigsNewRoute: typeof AppBBandSlugGigsNewRoute
   AppBBandSlugSetlistsSetlistIdRoute: typeof AppBBandSlugSetlistsSetlistIdRoute
   AppBBandSlugSetlistsArchivedRoute: typeof AppBBandSlugSetlistsArchivedRoute
   AppBBandSlugSongsSongIdRoute: typeof AppBBandSlugSongsSongIdRoute
   AppBBandSlugSongsArchivedRoute: typeof AppBBandSlugSongsArchivedRoute
+  AppBBandSlugGigsIndexRoute: typeof AppBBandSlugGigsIndexRoute
   AppBBandSlugSetlistsIndexRoute: typeof AppBBandSlugSetlistsIndexRoute
   AppBBandSlugSongsIndexRoute: typeof AppBBandSlugSongsIndexRoute
+  AppBBandSlugGigsGigIdEditRoute: typeof AppBBandSlugGigsGigIdEditRoute
   AppBBandSlugSetlistsSetlistIdLiveRoute: typeof AppBBandSlugSetlistsSetlistIdLiveRoute
 }
 
@@ -455,12 +536,16 @@ const AppBBandSlugRouteChildren: AppBBandSlugRouteChildren = {
   AppBBandSlugLineupRoute: AppBBandSlugLineupRoute,
   AppBBandSlugSettingsRoute: AppBBandSlugSettingsRoute,
   AppBBandSlugIndexRoute: AppBBandSlugIndexRoute,
+  AppBBandSlugGigsGigIdRoute: AppBBandSlugGigsGigIdRoute,
+  AppBBandSlugGigsNewRoute: AppBBandSlugGigsNewRoute,
   AppBBandSlugSetlistsSetlistIdRoute: AppBBandSlugSetlistsSetlistIdRoute,
   AppBBandSlugSetlistsArchivedRoute: AppBBandSlugSetlistsArchivedRoute,
   AppBBandSlugSongsSongIdRoute: AppBBandSlugSongsSongIdRoute,
   AppBBandSlugSongsArchivedRoute: AppBBandSlugSongsArchivedRoute,
+  AppBBandSlugGigsIndexRoute: AppBBandSlugGigsIndexRoute,
   AppBBandSlugSetlistsIndexRoute: AppBBandSlugSetlistsIndexRoute,
   AppBBandSlugSongsIndexRoute: AppBBandSlugSongsIndexRoute,
+  AppBBandSlugGigsGigIdEditRoute: AppBBandSlugGigsGigIdEditRoute,
   AppBBandSlugSetlistsSetlistIdLiveRoute:
     AppBBandSlugSetlistsSetlistIdLiveRoute,
 }

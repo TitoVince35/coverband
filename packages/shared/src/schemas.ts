@@ -8,6 +8,14 @@ import { FIELD_MAX_LENGTH } from "./bands";
 import { CONTACT_MESSAGE, CONTACT_SUBJECTS } from "./contact";
 import { DOCUMENT_LIMITS } from "./documents";
 import { MAX_SONG_DURATION } from "./duration";
+import {
+  GIG_MAX_LENGTH,
+  GIG_TYPES,
+  isGigDate,
+  isTimeOfDay,
+  VENUE_LIMITS,
+  VENUE_MAX_LENGTH,
+} from "./gigs";
 import { MAX_INSTRUMENTS } from "./instruments";
 import { MUSICAL_KEYS } from "./keys";
 import { LANGUAGES, type Language } from "./languages";
@@ -234,3 +242,58 @@ export const setlistContentBody = z.object({
       { message: `At most ${SETLIST_LIMITS.songs} songs in a setlist` },
     ),
 });
+
+/** A web link (a venue's, a gig's program): an http(s) address and an optional title. */
+export const webLinkInput = z.object({
+  url: z
+    .string()
+    .trim()
+    .max(VENUE_MAX_LENGTH.url)
+    .refine((value) => parseMediaUrl(value) !== null, { message: "Not a web address" }),
+  title: optionalText(VENUE_MAX_LENGTH.linkTitle).default(null),
+});
+
+/** A venue's details (brief 034): name and city required, unique within the band. */
+export const venueBody = z.object({
+  name: text(VENUE_MAX_LENGTH.name),
+  city: text(VENUE_MAX_LENGTH.city),
+  address: optionalText(VENUE_MAX_LENGTH.address).default(null),
+  links: z.array(webLinkInput).max(VENUE_LIMITS.links).default([]),
+  description: optionalText(VENUE_MAX_LENGTH.description).default(null),
+});
+
+/** A date as `YYYY-MM-DD`. */
+const gigDate = z.string().refine(isGigDate, { message: "Not a date" });
+/** A time of day as `HH:MM`, or none. */
+const timeOfDay = z
+  .string()
+  .refine((value) => value === "" || isTimeOfDay(value), { message: "Not a time" })
+  .nullable()
+  .transform((value) => value || null);
+
+/**
+ * A gig's venue in its form: the band's venue (`id`, its details as edited: they change for
+ * every gig there), or a new one (no `id`), saved with the gig.
+ */
+export const gigVenueInput = venueBody.extend({ id: z.uuid().optional() });
+
+/** A gig's main details (brief 034): a date, and a title or a venue, or both. */
+const gigFields = z.object({
+  date: gigDate,
+  title: optionalText(GIG_MAX_LENGTH.title).default(null),
+  type: z.enum(GIG_TYPES).default("public"),
+  showTime: timeOfDay.default(null),
+  venue: gigVenueInput.nullable().default(null),
+});
+
+const titleOrVenue = (gig: { title: string | null; venue: unknown }) =>
+  gig.title !== null || gig.venue !== null;
+const titleOrVenueMessage = { message: "A gig needs a title or a venue", path: ["title"] };
+
+/** A new gig. */
+export const gigBody = gigFields.refine(titleOrVenue, titleOrVenueMessage);
+
+/** A gig's changes, read at `version`: a save on an older one is refused (409 gig_outdated). */
+export const gigUpdateBody = gigFields
+  .extend({ version: z.number().int().min(1) })
+  .refine(titleOrVenue, titleOrVenueMessage);

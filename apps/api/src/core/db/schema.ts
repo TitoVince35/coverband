@@ -2,6 +2,7 @@
 
 export * from "../../adapters/auth-schema";
 export * from "../../modules/bands/schema";
+export * from "../../modules/gigs/schema";
 export * from "../../modules/instruments/schema";
 export * from "../../modules/invitations/schema";
 export * from "../../modules/notifications/schema";

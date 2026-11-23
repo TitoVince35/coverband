@@ -452,6 +452,93 @@
       "done": "Setlist dupliquée : voici la copie"
     }
   },
+  "gigs": {
+    "title": "Concerts",
+    "back": "Concerts",
+    "optional": "(facultatif)",
+    "pastReadOnly": "Les concerts passés sont en lecture seule.",
+    "empty": {
+      "next": "Aucun concert à venir. Ajoutez le prochain : une date, et un titre ou un lieu.",
+      "past": "Pas encore de concert passé.",
+      "all": "Pas encore de concert. Ajoutez le premier : une date, et un titre ou un lieu."
+    },
+    "filter": {
+      "label": "Quels concerts",
+      "next": "À venir",
+      "past": "Passés",
+      "all": "Tous"
+    },
+    "status": {
+      "proposed": "Proposé",
+      "settled": "Confirmé",
+      "cancelled": "Annulé"
+    },
+    "type": {
+      "public": "Concert public",
+      "private": "Événement privé",
+      "recording": "Enregistrement"
+    },
+    "new": {
+      "button": "Nouveau concert",
+      "title": "Nouveau concert"
+    },
+    "edit": {
+      "button": "Modifier",
+      "title": "Modifier le concert"
+    },
+    "form": {
+      "intro": "Une date, et un titre ou un lieu (ou les deux). Tout le reste peut attendre.",
+      "date": "Date",
+      "showTime": "Heure du concert",
+      "title": "Titre",
+      "titlePlaceholder": "Fête de la musique, mariage de Claire et Tom…",
+      "type": "Type",
+      "created": "Concert créé",
+      "saved": "Concert enregistré",
+      "missing": {
+        "date": "Choisissez une date",
+        "titleOrVenue": "Ajoutez un titre ou un lieu",
+        "venueName": "Ajoutez le nom du lieu",
+        "venueCity": "Ajoutez la ville du lieu"
+      }
+    },
+    "venue": {
+      "title": "Lieu",
+      "new": "nouveau",
+      "list": "Les lieux du groupe",
+      "searchPlaceholder": "Les lieux du groupe…",
+      "newButton": "Nouveau lieu",
+      "newNamed": "Nouveau lieu « {{name}} »",
+      "gigCount_zero": "Aucun concert",
+      "gigCount_one": "{{count}} concert",
+      "gigCount_other": "{{count}} concerts",
+      "usedBy_zero": "Un lieu du groupe",
+      "usedBy_one": "Un lieu du groupe, utilisé par {{count}} concert",
+      "usedBy_other": "Un lieu du groupe, utilisé par {{count}} concerts",
+      "chooseExisting": "Choisir un lieu existant",
+      "change": "Changer",
+      "name": "Nom",
+      "city": "Ville",
+      "address": "Adresse",
+      "links": "Liens web",
+      "description": "Description",
+      "descriptionPlaceholder": "Petite scène, déchargement par la porte de derrière…",
+      "sharedHint": "Les modifications ici changent ce lieu pour tous les concerts du groupe qui s'y tiennent."
+    },
+    "links": {
+      "addButton": "Ajouter un lien",
+      "add": "Ajouter",
+      "url": "Adresse web",
+      "urlPlaceholder": "lapeniche-spectacle.fr",
+      "title": "Titre",
+      "titlePlaceholder": "Titre (facultatif)",
+      "remove": "Retirer le lien {{link}}"
+    },
+    "view": {
+      "showTime": "Sur scène à {{time}}",
+      "directions": "Itinéraire"
+    }
+  },
   "login": {
     "title": "Connexion",
     "description": "Bon retour sur {{appName}}.",
@@ -676,7 +763,9 @@
     "setlist_title_taken": "Le groupe a déjà une setlist avec ce titre.",
     "too_many_setlists": "Le groupe a autant de setlists que possible : archivez-en une pour faire de la place.",
     "setlist_archived": "Cette setlist est archivée : restaurez-la pour la modifier.",
-    "setlist_outdated": "Cette setlist a changé entre-temps : rechargez-la, puis refaites votre changement."
+    "setlist_outdated": "Cette setlist a changé entre-temps : rechargez-la, puis refaites votre changement.",
+    "venue_taken": "Le groupe a déjà un lieu de ce nom dans cette ville : choisissez-le dans la liste.",
+    "gig_outdated": "Ce concert a été modifié entre-temps : rechargez-le, puis refaites votre modification."
   },
   "instruments": {
     "picker": {
@@ -731,7 +820,10 @@
     "setlistArchived": "{{name}} a archivé {{setlist}}",
     "setlistRestored": "{{name}} a restauré {{setlist}}",
     "setlistDeleted": "{{name}} a supprimé {{setlist}}",
-    "setlistUpdated": "{{name}} a modifié {{setlist}}"
+    "setlistUpdated": "{{name}} a modifié {{setlist}}",
+    "gigTitle": "le concert « {{title}} »",
+    "aGig": "un concert",
+    "gigCreated": "{{name}} a créé {{gig}}"
   },
   "contact": {
     "title": "Nous contacter",
