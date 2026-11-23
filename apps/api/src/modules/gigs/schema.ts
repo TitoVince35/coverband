@@ -1,4 +1,4 @@
-import { GIG_STATUSES, GIG_TYPES, type WebLink } from "@coverband/shared";
+import { BAND_CONTACT_TYPES, GIG_STATUSES, GIG_TYPES, type WebLink } from "@coverband/shared";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -9,6 +9,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -20,6 +21,7 @@ import { setlists } from "../setlists/schema";
 
 export const gigType = pgEnum("gig_type", GIG_TYPES);
 export const gigStatus = pgEnum("gig_status", GIG_STATUSES);
+export const bandContactType = pgEnum("band_contact_type", BAND_CONTACT_TYPES);
 
 /**
  * A band's venues (brief 034, #326): where its gigs take place. Name and city are unique within
@@ -108,5 +110,70 @@ export const gigs = pgTable(
     index().on(table.venueId),
     index().on(table.setlistId),
     check("gigs_title_or_venue", sql`${table.title} is not null or ${table.venueId} is not null`),
+  ],
+);
+
+/**
+ * A band's contacts (#329): the people of its gigs (organizers, technicians, musicians), entered
+ * once and linked, never copied: a changed phone number shows on every gig and venue. Other
+ * people's personal details: the band deletes them (#334).
+ */
+export const contacts = pgTable(
+  "contacts",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    bandId: uuid()
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    type: bandContactType().notNull(),
+    phone: text(),
+    email: text(),
+    notes: text(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp({ withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index().on(table.bandId)],
+);
+
+/** A gig's own contacts (#329), in the order they were added; its venue's show before them. */
+export const gigContacts = pgTable(
+  "gig_contacts",
+  {
+    gigId: uuid()
+      .notNull()
+      .references(() => gigs.id, { onDelete: "cascade" }),
+    contactId: uuid()
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    bandId: uuid()
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    position: integer().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.gigId, table.contactId] }), index().on(table.contactId)],
+);
+
+/** A venue's usual people (#329): shown on every gig at the venue. */
+export const venueContacts = pgTable(
+  "venue_contacts",
+  {
+    venueId: uuid()
+      .notNull()
+      .references(() => venues.id, { onDelete: "cascade" }),
+    contactId: uuid()
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    bandId: uuid()
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    position: integer().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.venueId, table.contactId] }),
+    index().on(table.contactId),
   ],
 );

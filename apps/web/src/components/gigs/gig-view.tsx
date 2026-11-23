@@ -2,6 +2,7 @@ import { Ban, MapPin, Navigation } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { GigProgram, GigSetlistCard, GoodToKnow } from "@/components/gigs/gig-blocks";
+import { GigContactsList } from "@/components/gigs/gig-contacts";
 import { GigStatusBadge } from "@/components/gigs/gig-status";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/use-language";
@@ -57,6 +58,11 @@ export function GigView({
       </div>
       {gig.venue && <VenueCard venue={gig.venue} />}
       {gig.setlistId && <GigSetlistCard bandSlug={bandSlug} setlistId={gig.setlistId} />}
+      <GigContactsList
+        venueName={gig.venue?.name ?? null}
+        venueContacts={gig.venue?.contacts ?? []}
+        gigContacts={gig.contacts}
+      />
       {children}
       <GigProgram gig={gig} />
       <GoodToKnow gig={gig} />

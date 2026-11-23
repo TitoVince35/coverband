@@ -612,6 +612,37 @@
       "backlinePlaceholder": "Batterie, ampli basse",
       "technicians": "Techniciens fournis",
       "notes": "Notes"
+    },
+    "contacts": {
+      "title": "Contacts",
+      "fromVenue": "Du lieu ({{venue}})",
+      "thisGig": "Ce concert",
+      "add": "Ajouter un contact",
+      "edit": "Modifier le contact",
+      "addButton": "Ajouter",
+      "addButtonLong": "Ajouter un contact",
+      "type": "Type",
+      "types": {
+        "organizer": "Orga",
+        "technical": "Technique",
+        "musician": "Zicos"
+      },
+      "name": "Nom",
+      "known": "Les contacts du groupe",
+      "suggestHint": "Les contacts du groupe sont suggérés : une personne, les mêmes coordonnées sur chaque concert.",
+      "sharedHint": "Un contact du groupe : les modifications ici s'appliquent à chaque concert et lieu où il figure.",
+      "phone": "Téléphone",
+      "email": "E-mail",
+      "notes": "Notes",
+      "alsoVenue": "Aussi un contact du lieu",
+      "alsoVenueHint": "{{venue}} : affiché aussi sur ses prochains concerts",
+      "removeGig": "Retirer du concert",
+      "removeVenue": "Retirer du lieu",
+      "gigCount_one": "{{count}} concert",
+      "gigCount_other": "{{count}} concerts",
+      "unused": "Sur aucun concert ni lieu",
+      "call": "Appeler {{name}}",
+      "mail": "Écrire à {{name}}"
     }
   },
   "login": {
@@ -907,7 +938,8 @@
     "gigCancelled": "{{name}} a annulé {{gig}}",
     "gigDeleted": "{{name}} a supprimé {{gig}}",
     "gigProgramLinkAdded": "{{name}} a ajouté un lien au programme de {{gig}}",
-    "gigProgramUpdated": "{{name}} a modifié le programme de {{gig}}"
+    "gigProgramUpdated": "{{name}} a modifié le programme de {{gig}}",
+    "gigContactAdded": "{{name}} a ajouté un contact à {{gig}}"
   },
   "contact": {
     "title": "Nous contacter",

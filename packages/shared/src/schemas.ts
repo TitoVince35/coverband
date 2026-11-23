@@ -9,6 +9,8 @@ import { CONTACT_MESSAGE, CONTACT_SUBJECTS } from "./contact";
 import { DOCUMENT_LIMITS } from "./documents";
 import { MAX_SONG_DURATION } from "./duration";
 import {
+  BAND_CONTACT_MAX_LENGTH,
+  BAND_CONTACT_TYPES,
   GIG_LIMITS,
   GIG_MAX_LENGTH,
   GIG_TYPES,
@@ -254,6 +256,9 @@ export const webLinkInput = z.object({
   title: optionalText(VENUE_MAX_LENGTH.linkTitle).default(null),
 });
 
+/** Contacts linked to a gig or a venue (#329): the band's contacts' ids; absent, unchanged. */
+const contactIds = z.array(z.uuid()).max(GIG_LIMITS.contacts).optional();
+
 /** A venue's details (brief 034): name and city required, unique within the band. */
 export const venueBody = z.object({
   name: text(VENUE_MAX_LENGTH.name),
@@ -261,6 +266,26 @@ export const venueBody = z.object({
   address: optionalText(VENUE_MAX_LENGTH.address).default(null),
   links: z.array(webLinkInput).max(VENUE_LIMITS.links).default([]),
   description: optionalText(VENUE_MAX_LENGTH.description).default(null),
+  // Its usual people (#329), shown on every gig there.
+  contactIds,
+});
+
+/** A band's contact (#329): name and type required; phone, email and notes optional. */
+export const bandContactBody = z.object({
+  name: text(BAND_CONTACT_MAX_LENGTH.name),
+  type: z.enum(BAND_CONTACT_TYPES),
+  phone: optionalText(BAND_CONTACT_MAX_LENGTH.phone).default(null),
+  email: z
+    .string()
+    .trim()
+    .max(BAND_CONTACT_MAX_LENGTH.email)
+    .refine((value) => value === "" || z.email().safeParse(value).success, {
+      message: "Not an email address",
+    })
+    .nullable()
+    .default(null)
+    .transform((value) => value || null),
+  notes: optionalText(BAND_CONTACT_MAX_LENGTH.notes).default(null),
 });
 
 /** A date as `YYYY-MM-DD`. */
@@ -296,6 +321,8 @@ const gigFields = z.object({
   backlineNotes: optionalText(GIG_MAX_LENGTH.backlineNotes).default(null),
   techniciansProvided: z.boolean().default(false),
   notes: optionalText(GIG_MAX_LENGTH.notes).default(null),
+  // Its own contacts (#329), after its venue's.
+  contactIds,
 });
 
 const titleOrVenue = (gig: { title: string | null; venue: unknown }) =>

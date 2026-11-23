@@ -27,6 +27,9 @@ export {
 } from "./errors";
 export {
   addDays,
+  BAND_CONTACT_MAX_LENGTH,
+  BAND_CONTACT_TYPES,
+  type BandContactType,
   DEFAULT_TIME_ZONE,
   firstCurrentGigDate,
   GIG_DAY_END_HOUR,
@@ -45,6 +48,7 @@ export {
   isTimeOfDay,
   isTimeZone,
   localDateTime,
+  telHref,
   VENUE_LIMITS,
   VENUE_MAX_LENGTH,
   type WebLink,

@@ -169,6 +169,13 @@
       "when": 1795392935477,
       "tag": "0023_gig_setlist_program",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795393703096,
+      "tag": "0024_gig_contacts",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import type { GigFilter, GigType, WebLink } from "@coverband/shared";
+import type { BandContactType, GigFilter, GigType, WebLink } from "@coverband/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ApiRequestError, ensureOk } from "@/lib/errors";
@@ -71,6 +71,7 @@ export type VenueInput = {
   address: string | null;
   links: WebLink[];
   description: string | null;
+  contactIds?: string[];
 };
 
 /** A gig's main details, as its form sends them. */
@@ -90,6 +91,7 @@ export type GigInput = {
   backlineNotes: string | null;
   techniciansProvided: boolean;
   notes: string | null;
+  contactIds?: string[];
 };
 
 /** Creates a gig, with a new venue saved along; throws `venue_taken`. */
@@ -148,4 +150,54 @@ export async function deleteGig(bandSlug: string, gigId: string) {
       query: { tz: deviceTimeZone() },
     }),
   );
+}
+
+/** The band's contacts (#329), by name, with where they're used. */
+export const bandContactsQuery = (bandSlug: string) =>
+  queryOptions({
+    queryKey: ["bands", bandSlug, "contacts"],
+    queryFn: async () =>
+      (
+        await (
+          await ensureOk(
+            await api.bands[":bandSlug"].contacts.$get({ param: { bandSlug }, query: {} }),
+          )
+        ).json()
+      ).contacts,
+  });
+
+export type BandContactSummary = Awaited<
+  ReturnType<ReturnType<typeof bandContactsQuery>["queryFn"] & {}>
+>[number];
+
+/** A contact as a gig or a venue lists it. */
+export type BandContact = {
+  id: string;
+  name: string;
+  type: BandContactType;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+};
+
+/** A contact's details, as its dialog sends them. */
+export type BandContactInput = Omit<BandContact, "id">;
+
+/** Adds a contact to the band. */
+export async function createBandContact(bandSlug: string, json: BandContactInput) {
+  const res = await api.bands[":bandSlug"].contacts.$post({ param: { bandSlug }, json });
+  return (await (await ensureOk(res)).json()).contact;
+}
+
+/** Changes a contact's details: every gig and venue listing it shows them. */
+export async function updateBandContact(
+  bandSlug: string,
+  contactId: string,
+  json: BandContactInput,
+) {
+  const res = await api.bands[":bandSlug"].contacts[":contactId"].$patch({
+    param: { bandSlug, contactId },
+    json,
+  });
+  return (await (await ensureOk(res)).json()).contact;
 }

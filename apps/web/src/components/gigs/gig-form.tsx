@@ -6,6 +6,7 @@ import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useGigRights } from "@/components/gigs/gig-actions";
+import { GigContactsField } from "@/components/gigs/gig-contacts";
 import {
   type ExtrasDraft,
   GigExtraInfoFields,
@@ -29,6 +30,7 @@ import { keepGigDraft, takeGigDraft } from "@/lib/gig-draft";
 import { formatGigDate, formatShortGigDate } from "@/lib/gig-format";
 import { parsePay, payText } from "@/lib/gig-rules";
 import {
+  type BandContact,
   createGig,
   type Gig,
   type GigInput,
@@ -48,6 +50,8 @@ type Draft = {
   title: string;
   type: GigType;
   venue: VenueState;
+  /** Its own contacts (#329); the venue's are in `venue`. */
+  contacts: BandContact[];
 } & ExtrasDraft;
 
 const draftOf = (gig: Gig | undefined): Draft => ({
@@ -68,6 +72,7 @@ const draftOf = (gig: Gig | undefined): Draft => ({
   backlineNotes: gig?.backlineNotes ?? "",
   techniciansProvided: gig?.techniciansProvided ?? false,
   notes: gig?.notes ?? "",
+  contacts: gig?.contacts ?? [],
 });
 
 /** The form's first values: the gig's, or the draft kept while a new setlist was made, with it. */
@@ -170,6 +175,7 @@ export function GigForm({
         backlineNotes: draft.sharedBackline ? draft.backlineNotes.trim() || null : null,
         techniciansProvided: draft.techniciansProvided,
         notes: draft.notes.trim() || null,
+        contactIds: draft.contacts.map((contact) => contact.id),
       };
       const saved = gig
         ? await updateGig(bandSlug, gig.id, { ...input, version: gig.version })
@@ -311,6 +317,23 @@ export function GigForm({
         onCreateSetlist={() => keepGigDraft(gig?.id ?? "new", draft)}
       />
       <GigProgramFields value={draft} onChange={set} />
+      <GigContactsField
+        bandSlug={bandSlug}
+        venueName={draft.venue.mode === "none" ? null : draft.venue.fields.name.trim() || null}
+        venueContacts={draft.venue.mode === "none" ? [] : draft.venue.fields.contacts}
+        gigContacts={draft.contacts}
+        onGigContacts={(contacts) => set({ contacts })}
+        onVenueContacts={(contacts) =>
+          setDraft((current) =>
+            current.venue.mode === "none"
+              ? current
+              : {
+                  ...current,
+                  venue: { ...current.venue, fields: { ...current.venue.fields, contacts } },
+                },
+          )
+        }
+      />
       <GigExtraInfoFields value={draft} onChange={set} payInvalid={missing === "pay"} />
 
       {/* Save stays at the bottom of the screen, above the band's bar on a phone. */}
