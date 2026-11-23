@@ -31,6 +31,16 @@ export type BandContactType = (typeof BAND_CONTACT_TYPES)[number];
 /** Length limits for a band's contact. */
 export const BAND_CONTACT_MAX_LENGTH = { name: 100, phone: 40, email: 254, notes: 1000 } as const;
 
+/**
+ * A gig's posters (#330): images to share on social networks, at most `perGig`, `maxBytes` each
+ * (after the browser shrinks them), a title each.
+ */
+export const GIG_POSTER_LIMITS = { perGig: 5, maxBytes: 5 * 1024 * 1024, title: 100 } as const;
+
+/** A poster's file, served by the API to the band's members. */
+export const posterUrl = (bandSlug: string, gigId: string, posterId: string) =>
+  `/api/bands/${bandSlug}/gigs/${gigId}/posters/${posterId}/file`;
+
 /** A phone number as a `tel:` link wants it: digits and a leading +, nothing else. */
 export const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
 export const VENUE_MAX_LENGTH = {

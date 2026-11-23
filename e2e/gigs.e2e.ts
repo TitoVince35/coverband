@@ -1,5 +1,6 @@
+import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
-import { addSong, type Band, dateIn, newBand } from "./support";
+import { addGig, addSong, type Band, dateIn, newBand } from "./support";
 
 // Gigs (brief 034): create, list and edit a gig, with its venue (#326).
 test.describe.configure({ mode: "serial" });
@@ -248,4 +249,34 @@ test("a contact added to the venue appears on the next gig there (#329)", async 
   await leader.getByRole("button", { name: "Save" }).click();
   await expect(leader.getByRole("link", { name: "Call Yann Le Goff" })).toBeVisible();
   await expect(leader.getByText("Nico")).toBeVisible();
+});
+
+test("a poster added, viewed, downloaded and removed (#330)", async () => {
+  const gigId = await addGig(band, { date: dateIn(70), title: "Poster night" });
+  await leader.goto(`/b/${band.slug}/gigs/${gigId}/edit`);
+  await expect(leader.getByText("0 of 5 · 5 MB at most")).toBeVisible();
+  await leader
+    .locator("input[type=file]")
+    .setInputFiles(fileURLToPath(new URL("./fixtures/photo.jpg", import.meta.url)));
+  const dialog = leader.getByRole("dialog");
+  await expect(dialog.getByLabel("Title")).toHaveValue("photo");
+  await dialog.getByLabel("Title").fill("Saturday flyer");
+  await dialog.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(leader.getByText("1 of 5 · 5 MB at most")).toBeVisible();
+
+  // The compact view: opened full screen, downloaded.
+  await leader.getByRole("link", { name: "Gigs" }).first().click();
+  await leader.goto(`/b/${band.slug}/gigs/${gigId}`);
+  await leader.getByRole("button", { name: "Open the poster Saturday flyer" }).click();
+  await expect(leader.getByRole("dialog").getByRole("img")).toBeVisible();
+  await leader.getByRole("button", { name: "Close" }).click();
+  const download = leader.waitForEvent("download");
+  await leader.getByRole("link", { name: "Download Saturday flyer" }).click();
+  expect((await download).suggestedFilename()).toMatch(/^Saturday flyer\.(webp|jpg)$/);
+
+  // Removed, confirmed, from the form.
+  await leader.goto(`/b/${band.slug}/gigs/${gigId}/edit`);
+  await leader.getByRole("button", { name: "Remove the poster Saturday flyer" }).click();
+  await leader.getByRole("alertdialog").getByRole("button", { name: "Remove" }).click();
+  await expect(leader.getByText("0 of 5 · 5 MB at most")).toBeVisible();
 });

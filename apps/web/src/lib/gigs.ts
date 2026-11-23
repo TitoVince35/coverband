@@ -201,3 +201,50 @@ export async function updateBandContact(
   });
   return (await (await ensureOk(res)).json()).contact;
 }
+
+/**
+ * Uploads a gig's poster (#330), reporting its progress (0 to 1), like a song's documents: the
+ * one request through XMLHttpRequest. Errors are the API's (ApiRequestError) or the network's.
+ */
+export function uploadPoster(
+  bandSlug: string,
+  gigId: string,
+  file: File,
+  title: string,
+  onProgress: (done: number) => void,
+) {
+  const form = new FormData();
+  form.set("file", file);
+  form.set("title", title);
+  const tz = encodeURIComponent(deviceTimeZone());
+  return new Promise<void>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", `/api/bands/${bandSlug}/gigs/${gigId}/posters?tz=${tz}`);
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(event.loaded / event.total);
+    };
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        resolve();
+        return;
+      }
+      void ensureOk({
+        ok: false,
+        status: request.status,
+        json: async () => JSON.parse(request.responseText) as unknown,
+      }).catch(reject);
+    };
+    request.onerror = () => reject(new TypeError("Network error"));
+    request.send(form);
+  });
+}
+
+/** Removes a gig's poster (who added it, or the band leader). */
+export async function removePoster(bandSlug: string, gigId: string, posterId: string) {
+  await ensureOk(
+    await api.bands[":bandSlug"].gigs[":gigId"].posters[":posterId"].$delete({
+      param: { bandSlug, gigId, posterId },
+      query: { tz: deviceTimeZone() },
+    }),
+  );
+}

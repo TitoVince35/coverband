@@ -29,6 +29,7 @@ import {
   deleteDisabledBand,
   membershipsOfUsers,
 } from "../bands/service";
+import { bandPosterKeys } from "../gigs/service";
 import { instrumentsOfUsers } from "../instruments/service";
 import {
   countPendingInvitations,
@@ -82,8 +83,9 @@ export async function deleteBand(
   const keys = await db.transaction(async (tx) => {
     const documents = await bandDocumentKeys(tx, id);
     const exports = await bandExportKeys(tx, id);
+    const posters = await bandPosterKeys(tx, id);
     const logo = await deleteDisabledBand(tx, id, name, actorId);
-    return [...documents, ...exports, ...logo];
+    return [...documents, ...exports, ...posters, ...logo];
   });
   for (const key of keys) {
     try {

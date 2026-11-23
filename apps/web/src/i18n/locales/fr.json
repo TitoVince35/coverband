@@ -643,6 +643,27 @@
       "unused": "Sur aucun concert ni lieu",
       "call": "Appeler {{name}}",
       "mail": "Écrire à {{name}}"
+    },
+    "posters": {
+      "title": "Affiches",
+      "count": "{{count}} sur {{max}} · {{mb}} Mo maximum",
+      "afterSave": "Les affiches s'ajoutent une fois le concert enregistré.",
+      "add": "Ajouter une affiche",
+      "addTitle": "Ajouter une affiche",
+      "addHint": "Une image à partager sur les réseaux sociaux : elle est allégée avant l'envoi.",
+      "posterTitle": "Titre",
+      "addButton": "Ajouter",
+      "sending": "Envoi de l'affiche",
+      "added": "Affiche ajoutée",
+      "open": "Ouvrir l'affiche {{title}}",
+      "remove": "Retirer l'affiche {{title}}",
+      "removeTitle": "Retirer « {{title}} » ?",
+      "removeDescription": "L'affiche est supprimée pour tous les membres du groupe.",
+      "removeConfirm": "Retirer",
+      "removed": "Affiche retirée",
+      "download": "Télécharger {{title}}",
+      "share": "Partager {{title}}",
+      "offline": "Les affiches ont besoin du réseau."
     }
   },
   "login": {
@@ -874,7 +895,8 @@
     "gig_outdated": "Ce concert a été modifié entre-temps : rechargez-le, puis refaites votre modification.",
     "gig_settled": "Ce concert est confirmé : reportez-le pour changer sa date, son titre ou son lieu, annulez-le avant de le supprimer.",
     "gig_cancelled": "Ce concert est annulé : il ne peut plus être modifié.",
-    "gig_past": "Ce concert est passé : les concerts passés sont en lecture seule."
+    "gig_past": "Ce concert est passé : les concerts passés sont en lecture seule.",
+    "too_many_posters": "Ce concert a déjà toutes ses affiches : retirez-en une d'abord."
   },
   "instruments": {
     "picker": {
@@ -939,7 +961,8 @@
     "gigDeleted": "{{name}} a supprimé {{gig}}",
     "gigProgramLinkAdded": "{{name}} a ajouté un lien au programme de {{gig}}",
     "gigProgramUpdated": "{{name}} a modifié le programme de {{gig}}",
-    "gigContactAdded": "{{name}} a ajouté un contact à {{gig}}"
+    "gigContactAdded": "{{name}} a ajouté un contact à {{gig}}",
+    "gigPosterAdded": "{{name}} a ajouté une affiche à {{gig}}"
   },
   "contact": {
     "title": "Nous contacter",
