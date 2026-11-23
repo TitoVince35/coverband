@@ -13,6 +13,7 @@ type Gig = {
   version: number;
   setlistId: string | null;
   getInTime: string | null;
+  soundcheckTime: string | null;
   programLinks: { url: string; title: string | null }[];
   programNotes: string | null;
   payCents: number | null;
@@ -49,6 +50,7 @@ describe.skipIf(!databaseUrl)("a gig's setlist, program and extra info (#328)", 
     const res = await create({
       setlistId,
       getInTime: "18:30",
+      soundcheckTime: "19:15",
       programLinks: [{ url: "https://example.com/event", title: "Facebook event" }],
       programNotes: "Two sets, break at 22:00",
       payCents: 40000,
@@ -62,6 +64,7 @@ describe.skipIf(!databaseUrl)("a gig's setlist, program and extra info (#328)", 
     expect(await gigOf(res)).toMatchObject({
       setlistId,
       getInTime: "18:30",
+      soundcheckTime: "19:15",
       programLinks: [{ url: "https://example.com/event", title: "Facebook event" }],
       programNotes: "Two sets, break at 22:00",
       payCents: 40000,
@@ -101,6 +104,7 @@ describe.skipIf(!databaseUrl)("a gig's setlist, program and extra info (#328)", 
       programLinks: [{ url: "https://example.com/poster", title: null }],
       programNotes: "Release party",
       getInTime: "19:00",
+      soundcheckTime: "19:30",
     });
     expect(res.status).toBe(200);
     const events = await activityOf(t.db, gig.id);
@@ -108,8 +112,17 @@ describe.skipIf(!databaseUrl)("a gig's setlist, program and extra info (#328)", 
       ["gig.created", null],
       ["gig.program_link_added", { count: 1 }],
       ["gig.program_updated", null],
-      ["gig.updated", { fields: "getInTime" }],
+      ["gig.updated", { fields: "getInTime,soundcheckTime" }],
     ]);
+  });
+
+  test("the soundcheck time is optional, HH:MM, and can be cleared (#348)", async () => {
+    const gig = await gigOf(await create({ soundcheckTime: "17:45" }));
+    expect(gig.soundcheckTime).toBe("17:45");
+    expect((await edit(gig, { soundcheckTime: "5 pm" })).status).toBe(400);
+    const cleared = await gigOf(await edit(gig, { soundcheckTime: null }));
+    expect(cleared.soundcheckTime).toBeNull();
+    expect((await gigOf(await create({}))).soundcheckTime).toBeNull();
   });
 
   test("the pay is whole cents, within its limit", async () => {

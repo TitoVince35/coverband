@@ -65,6 +65,7 @@ const draftOf = (gig: Gig | undefined): Draft => ({
     : { mode: "none", search: "" },
   setlistId: gig?.setlistId ?? null,
   getInTime: gig?.getInTime ?? "",
+  soundcheckTime: gig?.soundcheckTime ?? "",
   programLinks: gig?.programLinks ?? [],
   programNotes: gig?.programNotes ?? "",
   pay: payText(gig?.payCents ?? null),
@@ -80,7 +81,8 @@ const draftOf = (gig: Gig | undefined): Draft => ({
 function firstDraft(gig: Gig | undefined, newSetlist: string | undefined): Draft {
   if (!newSetlist) return draftOf(gig);
   const kept = takeGigDraft<Draft>(gig?.id ?? "new");
-  return { ...(kept ?? draftOf(gig)), setlistId: newSetlist };
+  // Over the gig's own values: a draft kept by an older build may miss a newer field.
+  return { ...draftOf(gig), ...kept, setlistId: newSetlist };
 }
 
 /** What the gig still needs before Save, in the order the form asks for it; null when ready. */
@@ -168,6 +170,7 @@ export function GigForm({
         venue: venueInput(draft.venue),
         setlistId: draft.setlistId,
         getInTime: draft.getInTime || null,
+        soundcheckTime: draft.soundcheckTime || null,
         programLinks: draft.programLinks,
         programNotes: draft.programNotes.trim() || null,
         payCents: parsePay(draft.pay) ?? null,

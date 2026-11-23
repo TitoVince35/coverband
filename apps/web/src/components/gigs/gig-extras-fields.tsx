@@ -17,6 +17,7 @@ import { setlistQuery, setlistsQuery } from "@/lib/setlists";
 export type ExtrasDraft = {
   setlistId: string | null;
   getInTime: string;
+  soundcheckTime: string;
   programLinks: WebLink[];
   programNotes: string;
   pay: string;
@@ -165,6 +166,15 @@ export function GigExtraInfoFields({
             type="time"
             value={value.getInTime}
             onChange={(event) => onChange({ getInTime: event.target.value })}
+          />
+        </div>
+        <div className="min-w-0 space-y-1.5">
+          <Label htmlFor={`${id}-soundcheck`}>{t("gigs.extras.soundcheck")}</Label>
+          <Input
+            id={`${id}-soundcheck`}
+            type="time"
+            value={value.soundcheckTime}
+            onChange={(event) => onChange({ soundcheckTime: event.target.value })}
           />
         </div>
         <div className="min-w-0 space-y-1.5">

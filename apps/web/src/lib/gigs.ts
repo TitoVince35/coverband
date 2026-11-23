@@ -84,6 +84,7 @@ export type GigInput = {
   venue: VenueInput | null;
   setlistId: string | null;
   getInTime: string | null;
+  soundcheckTime: string | null;
   programLinks: WebLink[];
   programNotes: string | null;
   payCents: number | null;

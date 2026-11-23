@@ -318,6 +318,8 @@ const gigFields = z.object({
   // Its setlist, program and extra info (#328).
   setlistId: z.uuid().nullable().default(null),
   getInTime: timeOfDay.default(null),
+  // The soundcheck (#348).
+  soundcheckTime: timeOfDay.default(null),
   programLinks: z.array(webLinkInput).max(GIG_LIMITS.programLinks).default([]),
   programNotes: optionalText(GIG_MAX_LENGTH.programNotes).default(null),
   payCents: z.number().int().min(0).max(GIG_LIMITS.payCents).nullable().default(null),
