@@ -60,6 +60,9 @@ function TodaysGig({ bandSlug, gig }: { bandSlug: string; gig: GigSummary }) {
   const details = [
     gig.venue?.city,
     gig.getInTime ? t("gigs.view.getIn", { time: formatTimeOfDay(gig.getInTime, language) }) : null,
+    gig.soundcheckTime
+      ? t("gigs.view.soundcheck", { time: formatTimeOfDay(gig.soundcheckTime, language) })
+      : null,
     gig.showTime
       ? t("gigs.view.showTime", { time: formatTimeOfDay(gig.showTime, language) })
       : null,
