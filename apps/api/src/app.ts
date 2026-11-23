@@ -22,7 +22,7 @@ import { bandRoutes } from "./modules/bands/routes";
 import { contactRoutes } from "./modules/contact/routes";
 import { bandContactRoutes } from "./modules/gigs/contacts-routes";
 import { gigJournalSource } from "./modules/gigs/journal";
-import { gigRoutes } from "./modules/gigs/routes";
+import { gigRoutes, POSTER_UPLOAD_MAX_SIZE } from "./modules/gigs/routes";
 import { venueRoutes } from "./modules/gigs/venues-routes";
 import { instrumentRoutes } from "./modules/instruments/routes";
 import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
@@ -146,6 +146,11 @@ export function createApp({ deps, webDistDir, adminDistDir }: AppOptions) {
           method: "POST",
           path: /^\/api\/bands\/[^/]+\/songs\/[^/]+\/documents$/,
           maxSize: DOCUMENT_UPLOAD_MAX_SIZE,
+        },
+        {
+          method: "POST",
+          path: /^\/api\/bands\/[^/]+\/gigs\/[^/]+\/posters$/,
+          maxSize: POSTER_UPLOAD_MAX_SIZE,
         },
       ],
     ),

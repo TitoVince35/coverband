@@ -19,6 +19,10 @@ export const PHOTO_SIZE = 1600;
 /** Photos are encoded until they are this small, at most; the server's limit is far above it. */
 export const PHOTO_MAX_BYTES = 600_000;
 
+/** A gig's poster (#330): sharper, to post on social networks, within the API's limit. */
+export const POSTER_SIZE = 2048;
+export const POSTER_MAX_BYTES = 2_500_000;
+
 /** A photo, shrunk before upload; never an SVG (the API refuses it) nor a GIF. */
 export function isPhoto(file: { type: string }) {
   return file.type.startsWith("image/") && !["image/svg+xml", "image/gif"].includes(file.type);
@@ -39,17 +43,20 @@ const PHOTO_DECODE_SIDE = 2400;
 
 /**
  * A photo shrunk as hard as reading allows (#239): within PHOTO_SIZE, then smaller sizes until it
- * fits PHOTO_MAX_BYTES; WebP, else JPEG (Safari can't encode WebP). The EXIF orientation is
+ * fits PHOTO_MAX_BYTES (a gig's poster asks for more, #330); WebP, else JPEG (Safari can't encode WebP). The EXIF orientation is
  * applied; HEIC is converted where the browser reads it. Throws when it can't read the image.
  *
  * A phone's JPEG is decoded already reduced (`decodeImage`, #257): at full size, a 50-megapixel
  * photo takes hundreds of MB, and Android kills the page.
  */
-export async function shrinkPhoto(file: File): Promise<File> {
-  const image = await decodeImage(file, PHOTO_DECODE_SIDE);
+export async function shrinkPhoto(
+  file: File,
+  { size: largest = PHOTO_SIZE, maxBytes = PHOTO_MAX_BYTES } = {},
+): Promise<File> {
+  const image = await decodeImage(file, Math.max(PHOTO_DECODE_SIDE, largest));
   try {
     let smallest: Blob | null = null;
-    for (const size of sizesFrom(PHOTO_SIZE)) {
+    for (const size of sizesFrom(largest)) {
       const { width, height } = fitWithin(image.width, image.height, size);
       const canvas = document.createElement("canvas");
       canvas.width = width;
@@ -63,7 +70,7 @@ export async function shrinkPhoto(file: File): Promise<File> {
         // A browser that can't encode the type gives PNG: tried next anyway.
         if (blob.type !== type) continue;
         if (!smallest || blob.size < smallest.size) smallest = blob;
-        if (blob.size <= PHOTO_MAX_BYTES) return asFile(blob, file.name);
+        if (blob.size <= maxBytes) return asFile(blob, file.name);
       }
     }
     if (!smallest) throw new Error("Encoding failed");

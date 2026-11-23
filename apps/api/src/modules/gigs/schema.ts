@@ -177,3 +177,29 @@ export const venueContacts = pgTable(
     index().on(table.contactId),
   ],
 );
+
+/**
+ * A gig's posters (#330): images in the band's bucket (`storage_key`), served by the API to the
+ * band's members only, deleted with the gig (its service deletes the files).
+ */
+export const gigPosters = pgTable(
+  "gig_posters",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    bandId: uuid()
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    gigId: uuid()
+      .notNull()
+      .references(() => gigs.id, { onDelete: "cascade" }),
+    title: text().notNull(),
+    contentType: text().notNull(),
+    extension: text().notNull(),
+    size: integer().notNull(),
+    storageKey: text().notNull(),
+    // Who added it: they may remove it, as the band leader may. Null once their account goes.
+    addedById: uuid().references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index().on(table.gigId), index().on(table.bandId)],
+);

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { GigProgram, GigSetlistCard, GoodToKnow } from "@/components/gigs/gig-blocks";
 import { GigContactsList } from "@/components/gigs/gig-contacts";
+import { PostersList } from "@/components/gigs/gig-posters";
 import { GigStatusBadge } from "@/components/gigs/gig-status";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/use-language";
@@ -66,6 +67,7 @@ export function GigView({
       {children}
       <GigProgram gig={gig} />
       <GoodToKnow gig={gig} />
+      <PostersList bandSlug={bandSlug} gig={gig} />
     </div>
   );
 }

@@ -46,6 +46,7 @@ const SENTENCES = {
   "gig.program_link_added": "journal.gigProgramLinkAdded",
   "gig.program_updated": "journal.gigProgramUpdated",
   "gig.contact_added": "journal.gigContactAdded",
+  "gig.poster_added": "journal.gigPosterAdded",
 } as const satisfies Partial<Record<ActivityAction, string>>;
 
 /** The status a song was given, as a word of the sentence. */

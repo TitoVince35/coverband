@@ -54,6 +54,8 @@ export const ACTIVITY_ACTIONS = [
   "gig.contact_added",
   "band_contact.created",
   "band_contact.updated",
+  "gig.poster_added",
+  "gig.poster_removed",
 ] as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number];

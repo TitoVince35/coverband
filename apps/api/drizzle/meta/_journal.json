@@ -176,6 +176,13 @@
       "when": 1795393703096,
       "tag": "0024_gig_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795394097494,
+      "tag": "0025_gig_posters",
+      "breakpoints": true
     }
   ]
 }

@@ -1,13 +1,15 @@
-import { DEFAULT_TIME_ZONE, GIG_FILTERS, isTimeZone } from "@coverband/shared";
-import { gigBody, gigCancelBody, gigUpdateBody } from "@coverband/shared/schemas";
+import { DEFAULT_TIME_ZONE, GIG_FILTERS, GIG_POSTER_LIMITS, isTimeZone } from "@coverband/shared";
+import { addPosterBody, gigBody, gigCancelBody, gigUpdateBody } from "@coverband/shared/schemas";
 import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 import { apiError } from "../../core/errors";
+import { fileName } from "../../core/http/file-name";
 import type { SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import { type BandEnv, requireMember } from "../bands/guard";
+import { addPoster, readPoster, removePoster } from "./posters.service";
 import { pushGigChange } from "./push";
 import {
   cancelGig,
@@ -15,12 +17,17 @@ import {
   deleteGig,
   getGig,
   listGigs,
+  lockEditableGig,
   postponeGig,
   settleGig,
   updateGig,
 } from "./service";
 
 const gigParam = z.object({ bandSlug: z.string(), gigId: z.uuid() });
+const posterParam = gigParam.extend({ posterId: z.uuid() });
+
+/** Largest poster upload request: the image plus its title and the multipart framing. */
+export const POSTER_UPLOAD_MAX_SIZE = GIG_POSTER_LIMITS.maxBytes + 64 * 1024;
 
 /** Which gigs, by "A gig's day" in the member's time zone (the app sends the device's). */
 const listQuery = z.object({
@@ -155,12 +162,67 @@ export function gigRoutes(deps: AppDeps) {
         zValidator("query", tzQuery, validationHook),
         async (c) => {
           const deleted = await deleteGig(
-            db,
+            { db, storage: deps.storage, log: c.var.log },
             manager(c),
             c.req.valid("param").gigId,
             when(c.req.valid("query").tz),
           );
           return deleted ? c.body(null, 204) : apiError(c, 404, "Gig not found");
+        },
+      )
+      // A poster (#330), a multipart form: the image (shrunk by the browser), its title. On a
+      // gig that can still change.
+      .post(
+        "/:gigId/posters",
+        zValidator("param", gigParam, validationHook),
+        zValidator("query", tzQuery, validationHook),
+        zValidator("form", addPosterBody, validationHook),
+        async (c) => {
+          const { gigId } = c.req.valid("param");
+          const { file, title } = c.req.valid("form");
+          const at = when(c.req.valid("query").tz);
+          const poster = await addPoster(
+            { db, storage: deps.storage, log: c.var.log },
+            who(c),
+            gigId,
+            { bytes: new Uint8Array(await file.arrayBuffer()), title },
+            (tx) => lockEditableGig(tx, c.var.band.id, gigId, at),
+          );
+          return poster ? c.json({ poster }, 201) : apiError(c, 404, "Gig not found");
+        },
+      )
+      // Who added it, or the band leader.
+      .delete(
+        "/:gigId/posters/:posterId",
+        zValidator("param", posterParam, validationHook),
+        zValidator("query", tzQuery, validationHook),
+        async (c) => {
+          const { gigId, posterId } = c.req.valid("param");
+          const at = when(c.req.valid("query").tz);
+          const removed = await removePoster(
+            { db, storage: deps.storage, log: c.var.log },
+            manager(c),
+            gigId,
+            posterId,
+            (tx) => lockEditableGig(tx, c.var.band.id, gigId, at),
+          );
+          return removed ? c.body(null, 204) : apiError(c, 404, "Poster not found");
+        },
+      )
+      // Its file, for the band's members only. Never replaced: cached for good.
+      .get(
+        "/:gigId/posters/:posterId/file",
+        zValidator("param", posterParam, validationHook),
+        async (c) => {
+          const { gigId, posterId } = c.req.valid("param");
+          const poster = await readPoster(deps, c.var.band.id, gigId, posterId);
+          if (!poster) return apiError(c, 404, "Poster not found");
+          return c.body(poster.body, 200, {
+            "content-type": poster.type,
+            "content-length": String(poster.size),
+            "content-disposition": `inline; ${fileName(poster.title, poster.extension)}`,
+            "cache-control": "private, max-age=31536000, immutable",
+          });
         },
       )
   );

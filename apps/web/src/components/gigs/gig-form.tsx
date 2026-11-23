@@ -13,6 +13,7 @@ import {
   GigProgramFields,
   GigSetlistField,
 } from "@/components/gigs/gig-extras-fields";
+import { PostersField } from "@/components/gigs/gig-posters";
 import { GigStatusBadge } from "@/components/gigs/gig-status";
 import {
   VenueField,
@@ -334,6 +335,7 @@ export function GigForm({
           )
         }
       />
+      <PostersField bandSlug={bandSlug} gig={gig} />
       <GigExtraInfoFields value={draft} onChange={set} payInvalid={missing === "pay"} />
 
       {/* Save stays at the bottom of the screen, above the band's bar on a phone. */}

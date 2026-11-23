@@ -12,8 +12,13 @@ import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { gigs, users, venues } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
+import type { AppDeps } from "../../deps";
 import { getSetlist } from "../setlists/service";
 import { contactsOfGigs, contactsOfVenues, setGigContacts } from "./contacts.service";
+import { deletePosterFiles, gigPosterKeys, postersOfGigs } from "./posters.service";
+
+export { bandPosterKeys } from "./posters.service";
+
 import {
   insertVenue,
   type Member,
@@ -222,9 +227,16 @@ async function withContacts(db: Db | Tx, bandId: string, rows: ReturnType<typeof
     bandId,
     rows.flatMap((gig) => (gig.venue ? [gig.venue.id] : [])),
   );
+  // Its posters (#330), oldest first: the web app builds their files' URLs (`posterUrl`).
+  const posters = await postersOfGigs(
+    db,
+    bandId,
+    rows.map((gig) => gig.id),
+  );
   return rows.map((gig) => ({
     ...gig,
     contacts: own.get(gig.id) ?? [],
+    posters: posters.get(gig.id) ?? [],
     venue: gig.venue ? { ...gig.venue, contacts: ofVenues.get(gig.venue.id) ?? [] } : null,
   }));
 }
@@ -425,6 +437,17 @@ export function updateGig(
   );
 }
 
+/**
+ * Locks a gig whose content may still change (its posters, #330): false when the band has no
+ * such gig; refused when it's cancelled or past.
+ */
+export async function lockEditableGig(tx: Tx, bandId: string, id: string, when: When) {
+  const current = await lockGig(tx, bandId, id);
+  if (!current) return false;
+  checkEditable(current, when);
+  return true;
+}
+
 /** Locks a gig for a status change by its creator or a band leader; null when there's none. */
 async function lockForManager(tx: Tx, member: GigMember, id: string) {
   const current = await lockGig(tx, member.bandId, id);
@@ -506,16 +529,23 @@ export function cancelGig(db: Db, member: GigMember, id: string, reason: string,
 /**
  * Its creator or a band leader deletes a gig (#327): a proposed or cancelled one, or a past one
  * whatever its status (a mistake can be removed); a settled one is cancelled first. Its venue
- * stays in the band's list. False when the band has no such gig.
+ * stays in the band's list; its posters' files go once it's gone. False when the band has no
+ * such gig.
  */
-export function deleteGig(db: Db, member: GigMember, id: string, when: When) {
-  return db.transaction(async (tx) => {
+export async function deleteGig(
+  deps: Pick<AppDeps, "db" | "storage" | "log">,
+  member: GigMember,
+  id: string,
+  when: When,
+) {
+  const keys = await deps.db.transaction(async (tx) => {
     const current = await lockForManager(tx, member, id);
-    if (!current) return false;
+    if (!current) return null;
     const past = gigDay(current.date, when.now, when.timeZone) === "past";
     if (current.status === "settled" && !past) {
       throw new GigSettledError("This gig is settled: cancel it before deleting it");
     }
+    const posterKeys = await gigPosterKeys(tx, id);
     await tx.delete(gigs).where(eq(gigs.id, id));
     await recordActivity(tx, {
       action: "gig.deleted",
@@ -523,6 +553,9 @@ export function deleteGig(db: Db, member: GigMember, id: string, when: When) {
       actorId: member.userId,
       target: { type: "gig", id },
     });
-    return true;
+    return posterKeys;
   });
+  if (!keys) return false;
+  await deletePosterFiles(deps, keys);
+  return true;
 }
