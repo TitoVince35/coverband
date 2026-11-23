@@ -3,6 +3,7 @@ import { Mail, Phone, Plus } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ContactDialog, type ContactPlace } from "@/components/gigs/contact-dialog";
+import { GigBlock } from "@/components/gigs/gig-blocks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { BandContact } from "@/lib/gigs";
@@ -192,10 +193,9 @@ export function GigContactsList({
       </div>
     );
   return (
-    <section className="space-y-2">
-      <h3 className="font-heading font-semibold">{t("gigs.contacts.title")}</h3>
+    <GigBlock title={t("gigs.contacts.title")}>
       {venueName && group(t("gigs.contacts.fromVenue", { venue: venueName }), venueContacts)}
       {group(t("gigs.contacts.thisGig"), gigContacts)}
-    </section>
+    </GigBlock>
   );
 }
