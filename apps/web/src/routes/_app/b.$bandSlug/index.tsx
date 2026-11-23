@@ -5,10 +5,11 @@ import { useTranslation } from "react-i18next";
 import { BandJournal } from "@/components/band/band-journal";
 import { BandLogo } from "@/components/band/band-logo";
 import { BandOverview } from "@/components/band/band-overview";
+import { TodaysGigCard, UpcomingGigsCard } from "@/components/gigs/home-gigs";
 import { bandQuery } from "@/lib/bands";
 
-// Band home page: the band's logo (#177; without one, the band leader's way to add it, #222), the
-// band's numbers (#284), then its journal (#84).
+// Band home page: today's gig (#331), the band's logo (#177; without one, the band leader's way to
+// add it, #222), the band's numbers (#284), its upcoming gigs (#331), then its journal (#84).
 export const Route = createFileRoute("/_app/b/$bandSlug/")({
   component: BandHome,
 });
@@ -23,6 +24,7 @@ function BandHome() {
 
   return (
     <section className="space-y-4">
+      <TodaysGigCard bandSlug={bandSlug} />
       {data.band.logo ? (
         <BandLogo band={data.band} size="large" />
       ) : (
@@ -39,6 +41,7 @@ function BandHome() {
         )
       )}
       <BandOverview bandSlug={bandSlug} />
+      <UpcomingGigsCard bandSlug={bandSlug} />
       <BandJournal bandSlug={bandSlug} />
     </section>
   );

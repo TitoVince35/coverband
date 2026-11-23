@@ -664,6 +664,17 @@
       "download": "Télécharger {{title}}",
       "share": "Partager {{title}}",
       "offline": "Les affiches ont besoin du réseau."
+    },
+    "home": {
+      "today_one": "Concert du jour",
+      "today_other": "Concerts du jour",
+      "setlist": "Setlist : {{title}} · {{duration}}",
+      "view": "Voir le concert",
+      "live": "Setlist en live",
+      "upcoming_one": "{{count}} concert à venir",
+      "upcoming_other": "{{count}} concerts à venir",
+      "upcomingList": "Concerts à venir",
+      "all": "Tous les concerts"
     }
   },
   "login": {
@@ -909,8 +920,7 @@
     "songs": "Morceaux",
     "setlists": "Setlists",
     "members": "Membres",
-    "gigs": "Concerts à venir",
-    "soon": "(bientôt)"
+    "gigs": "Concerts à venir"
   },
   "journal": {
     "title": "Activité récente",

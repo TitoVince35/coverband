@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { CalendarDays, ListMusic, ListOrdered, type LucideIcon, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useHomeGigs } from "@/components/gigs/home-gigs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { membersQuery } from "@/lib/bands";
@@ -18,7 +19,7 @@ const total = (...lists: (readonly unknown[] | undefined)[]) =>
 
 /**
  * The band's numbers on its home page (#284): songs and setlists (archived ones included),
- * members, and gigs to come (not there yet). Read from what the app already has, offline too;
+ * members, and gigs to come (#331: today's and upcoming ones, cancelled ones left out). Read from what the app already has, offline too;
  * each tile opens its page, with the band tabs' icon.
  */
 export function BandOverview({ bandSlug }: { bandSlug: string }) {
@@ -28,6 +29,7 @@ export function BandOverview({ bandSlug }: { bandSlug: string }) {
   const setlists = useQuery(setlistsQuery(bandSlug)).data;
   const archivedSetlists = useQuery(archivedSetlistsQuery(bandSlug)).data;
   const members = useQuery(membersQuery(bandSlug)).data;
+  const home = useHomeGigs(bandSlug);
   const params = { bandSlug };
 
   return (
@@ -69,17 +71,11 @@ export function BandOverview({ bandSlug }: { bandSlug: string }) {
             </Tile>
           </li>
           <li>
-            {/* Gigs don't exist yet: a preview, not a link. */}
-            <Tile
-              icon={CalendarDays}
-              count="—"
-              label={t("overview.gigs")}
-              hint={t("overview.soon")}
-            >
+            <Tile icon={CalendarDays} count={home?.toCome ?? null} label={t("overview.gigs")}>
               {(tile) => (
-                <div aria-disabled className={cn(tileBox, "opacity-60")}>
+                <Link to="/b/$bandSlug/gigs" params={params} className={tileLink}>
                   {tile}
-                </div>
+                </Link>
               )}
             </Tile>
           </li>

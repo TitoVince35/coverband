@@ -664,6 +664,17 @@
       "download": "Download {{title}}",
       "share": "Share {{title}}",
       "offline": "Posters need the network."
+    },
+    "home": {
+      "today_one": "Today's gig",
+      "today_other": "Today's gigs",
+      "setlist": "Setlist: {{title}} · {{duration}}",
+      "view": "View the gig",
+      "live": "Live setlist",
+      "upcoming_one": "{{count}} upcoming gig",
+      "upcoming_other": "{{count}} upcoming gigs",
+      "upcomingList": "Upcoming gigs",
+      "all": "All gigs"
     }
   },
   "login": {
@@ -909,8 +920,7 @@
     "songs": "Songs",
     "setlists": "Setlists",
     "members": "Members",
-    "gigs": "Gigs to come",
-    "soon": "(coming soon)"
+    "gigs": "Gigs to come"
   },
   "journal": {
     "title": "Latest activity",

@@ -280,3 +280,51 @@ test("a poster added, viewed, downloaded and removed (#330)", async () => {
   await leader.getByRole("alertdialog").getByRole("button", { name: "Remove" }).click();
   await expect(leader.getByText("0 of 5 · 5 MB at most")).toBeVisible();
 });
+
+test("the band home shows today's gig and the upcoming ones (#331)", async ({ browser }) => {
+  const home = await newBand(browser, "GigHome");
+  const page = home.leader;
+  try {
+    // Nothing yet: no cards.
+    await expect(page.getByText("Today's gig")).toBeHidden();
+    const today = await addGig(home, {
+      date: dateIn(0),
+      title: "Tonight at Le Ty Anna",
+      getInTime: "18:30",
+      showTime: "21:00",
+      venue: { name: "Le Ty Anna", city: "Rennes" },
+    });
+    for (const [days, title] of [
+      [3, "Wedding"],
+      [10, "Festival"],
+      [20, "Studio day"],
+    ] as const) {
+      await addGig(home, { date: dateIn(days), title });
+    }
+    const cancelled = await addGig(home, { date: dateIn(5), title: "Called off" });
+    await page.request.post(`/api/bands/${home.slug}/gigs/${cancelled}/cancel`, {
+      data: { reason: "Rain" },
+    });
+    await page.reload();
+
+    const card = page.getByRole("region", { name: "Today's gig" });
+    await expect(card).toContainText("Tonight at Le Ty Anna");
+    await expect(card).toContainText("Rennes · Get in 6:30 PM · On stage 9:00 PM");
+    await card.getByRole("link", { name: "View the gig" }).click();
+    await expect(page).toHaveURL(new RegExp(`/gigs/${today}$`));
+    await page.getByRole("link", { name: "Home" }).first().click();
+
+    // Upcoming: the cancelled one left out, the soonest first.
+    await expect(page.getByText("3 upcoming gigs")).toBeVisible();
+    const upcoming = page.getByRole("list", { name: "Upcoming gigs" });
+    await expect(upcoming.getByRole("listitem")).toHaveCount(3);
+    await expect(upcoming.getByRole("listitem").first()).toContainText("Wedding");
+    // The overview's gigs to come, a link to the gigs page.
+    const toCome = page.getByRole("link", { name: /Gigs to come/ });
+    await expect(toCome).toContainText("4");
+    await toCome.click();
+    await expect(page.getByRole("heading", { name: "Gigs" })).toBeVisible();
+  } finally {
+    await page.context().close();
+  }
+});

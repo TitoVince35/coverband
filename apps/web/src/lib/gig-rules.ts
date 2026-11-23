@@ -83,3 +83,28 @@ export function formatPay(cents: number, language: string) {
     minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
   }).format(cents / 100);
 }
+
+/** How many upcoming gigs the band home's card lists (#331). */
+export const HOME_UPCOMING_GIGS = 5;
+
+/**
+ * The band home's gigs (#331), from its next gigs at `now`, cancelled ones left out: today's
+ * (by "A gig's day": still today's until 6 AM the next morning), and the upcoming ones, the
+ * soonest first, the first HOME_UPCOMING_GIGS with how many there are in all.
+ */
+export function homeGigs<T extends { date: string; status: string }>(
+  gigs: readonly T[],
+  now = new Date(),
+) {
+  const live = gigs.filter((gig) => gig.status !== "cancelled");
+  const today = live.filter((gig) => dayOf(gig, now) === "today");
+  const upcoming = live
+    .filter((gig) => dayOf(gig, now) === "upcoming")
+    .sort((a, b) => a.date.localeCompare(b.date));
+  return {
+    today,
+    upcoming: upcoming.slice(0, HOME_UPCOMING_GIGS),
+    upcomingCount: upcoming.length,
+    toCome: today.length + upcoming.length,
+  };
+}
