@@ -20,6 +20,8 @@ const ci = Boolean(process.env.CI);
 /** The fake push service devices subscribe to in these tests (`push.e2e.ts`, #261). */
 export const FAKE_PUSH_PORT = 3104;
 const fakePush = `https://localhost:${FAKE_PUSH_PORT}`;
+/** The fake Nominatim venues' addresses are placed with (`fake-nominatim.ts`, #333). */
+export const FAKE_NOMINATIM_PORT = 3105;
 /** This run's VAPID key (#261): a throwaway, as a fresh database's subscriptions need no other. */
 const vapidKey = generateKeyPairSync("ec", { namedCurve: "prime256v1" })
   .privateKey.export({ type: "pkcs8", format: "pem" })
@@ -74,6 +76,7 @@ export default defineConfig({
         ADMIN_URL: ADMIN_APP_URL,
         ADMIN_DIST_DIR: "apps/admin/dist",
         LRCLIB_URL: `http://localhost:${FAKE_LRCLIB_PORT}`,
+        NOMINATIM_URL: `http://localhost:${FAKE_NOMINATIM_PORT}`,
         DEEZER_URL: `${fakeMusic}/deezer`,
         YOUTUBE_API_KEY: "e2e-youtube-key",
         YOUTUBE_API_URL: `${fakeMusic}/youtube/v3`,
@@ -100,6 +103,7 @@ export default defineConfig({
         WEB_DIST_DIR: "apps/web/dist",
         BETA_ACCESS_CODE: GATED_ACCESS_CODE,
         LRCLIB_URL: `http://localhost:${FAKE_LRCLIB_PORT}`,
+        NOMINATIM_URL: `http://localhost:${FAKE_NOMINATIM_PORT}`,
         DEEZER_URL: `${fakeMusic}/deezer`,
         YOUTUBE_API_KEY: "e2e-youtube-key",
         YOUTUBE_API_URL: `${fakeMusic}/youtube/v3`,
@@ -119,6 +123,13 @@ export default defineConfig({
       url: `${fakeMusic}/health`,
       reuseExistingServer: !ci,
       env: { PORT: String(FAKE_MUSIC_PORT) },
+    },
+    // Nor do venues' addresses reach the real Nominatim (#333).
+    {
+      command: "bun fake-nominatim.ts",
+      url: `http://localhost:${FAKE_NOMINATIM_PORT}/health`,
+      reuseExistingServer: !ci,
+      env: { PORT: String(FAKE_NOMINATIM_PORT) },
     },
     // Nor do pushes reach a browser's push service (#262).
     {

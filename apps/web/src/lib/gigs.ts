@@ -72,6 +72,7 @@ export type VenueInput = {
   links: WebLink[];
   description: string | null;
   contactIds?: string[];
+  coordinates?: { latitude: number; longitude: number };
 };
 
 /** A gig's main details, as its form sends them. */

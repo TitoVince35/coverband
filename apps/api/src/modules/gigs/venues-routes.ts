@@ -7,7 +7,7 @@ import type { SessionEnv } from "../../core/http/session";
 import { validationHook } from "../../core/http/validation";
 import type { AppDeps } from "../../deps";
 import { requireMember } from "../bands/guard";
-import { getVenue, listVenues, updateVenue } from "./venues.service";
+import { getVenue, listVenues, locateVenue, updateVenue } from "./venues.service";
 
 const venueParam = z.object({ bandSlug: z.string(), venueId: z.uuid() });
 const listQuery = z.object({ q: z.string().max(100).optional() });
@@ -16,7 +16,8 @@ const listQuery = z.object({ q: z.string().max(100).optional() });
  * A band's venues (brief 034), under /api/bands/:bandSlug/venues: every member searches them
  * (the gig form's venue box) and changes their details, which every gig there shows.
  */
-export function venueRoutes({ db }: AppDeps) {
+export function venueRoutes(deps: AppDeps) {
+  const { db } = deps;
   return new Hono<SessionEnv>()
     .use(requireMember(db))
     .get("/", zValidator("query", listQuery, validationHook), async (c) => {
@@ -38,7 +39,11 @@ export function venueRoutes({ db }: AppDeps) {
           c.req.valid("param").venueId,
           c.req.valid("json"),
         );
-        return venue ? c.json({ venue }) : apiError(c, 404, "Venue not found");
+        if (!venue) return apiError(c, 404, "Venue not found");
+        // Placed on the map (#333) once saved, when its address changed.
+        const moved = await locateVenue({ ...deps, log: c.var.log }, c.var.band.id, venue.id);
+        const saved = moved ? await getVenue(db, c.var.band.id, venue.id) : venue;
+        return c.json({ venue: saved ?? venue });
       },
     );
 }

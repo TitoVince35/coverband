@@ -34,7 +34,7 @@ describe("security headers", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     // Previews before upload and offline logos are blob: URLs the app makes itself.
-    expect(csp).toContain("img-src 'self' data: blob:");
+    expect(csp).toContain("img-src 'self' data: blob: https://tile.openstreetmap.org");
   });
 
   test("are set on errors and Better Auth responses", async () => {

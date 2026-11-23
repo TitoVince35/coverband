@@ -183,6 +183,13 @@
       "when": 1795394097494,
       "tag": "0025_gig_posters",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795394907953,
+      "tag": "0026_venue_coordinates",
+      "breakpoints": true
     }
   ]
 }

@@ -328,3 +328,54 @@ test("the band home shows today's gig and the upcoming ones (#331)", async ({ br
     await page.context().close();
   }
 });
+
+test("the venue on a map, its pin dragged to correct it (#333)", async () => {
+  // OpenStreetMap's tiles never reached: a blank tile instead.
+  await leader.route("https://tile.openstreetmap.org/**", (route) =>
+    route.fulfill({ contentType: "image/png", body: Buffer.alloc(0) }),
+  );
+  await leader.goto(`/b/${band.slug}/gigs/new`);
+  await leader.getByLabel("Date", { exact: true }).fill(dateIn(80));
+  await leader.getByRole("combobox", { name: "Venue" }).fill("Le Ty Anna");
+  await leader.getByRole("option", { name: "New venue “Le Ty Anna”" }).click();
+  await leader.getByLabel("City").fill("Rennes");
+  await leader.getByLabel(/^Address/).fill("19 place Sainte-Anne");
+  await expect(leader.getByText("The map shows once the venue is saved")).toBeVisible();
+  await leader.getByRole("button", { name: "Save" }).click();
+
+  // Found from the address by the API: the compact view shows it, credited.
+  const map = leader.getByRole("img", { name: "Map: Le Ty Anna, 19 place Sainte-Anne, Rennes" });
+  await expect(map).toBeVisible();
+  await expect(map.getByRole("link", { name: "© OpenStreetMap" })).toBeVisible();
+  const tiles = map.locator("img");
+  await expect(tiles.first()).toHaveAttribute("src", /^https:\/\/tile\.openstreetmap\.org\/16\//);
+
+  // In the form, the pin is dragged (here, with the keyboard): kept once saved.
+  await leader.getByRole("link", { name: "Edit" }).click();
+  const pin = leader.getByRole("button", { name: /The venue's pin/ });
+  await expect(pin).toBeVisible();
+  const before = await tiles.first().getAttribute("src");
+  for (let i = 0; i < 40; i++) await pin.press("ArrowRight");
+  await expect.poll(() => tiles.first().getAttribute("src")).not.toBe(before);
+  await leader.getByRole("button", { name: "Save" }).click();
+  await expect(leader).toHaveURL(/\/gigs\/[0-9a-f-]+$/);
+  await expect(map).toBeVisible();
+  const gigId = new URL(leader.url()).pathname.split("/").at(-1);
+  const saved = (await (
+    await leader.request.get(`/api/bands/${band.slug}/gigs/${gigId}`)
+  ).json()) as {
+    gig: { venue: { longitude: number } };
+  };
+  expect(saved.gig.venue.longitude).toBeGreaterThan(-1.6801);
+
+  // An address the geocoder doesn't find: no map, Directions stays.
+  await leader.goto(`/b/${band.slug}/gigs/new`);
+  await leader.getByLabel("Date", { exact: true }).fill(dateIn(81));
+  await leader.getByRole("combobox", { name: "Venue" }).fill("Nowhere club");
+  await leader.getByRole("option", { name: "New venue “Nowhere club”" }).click();
+  await leader.getByLabel("City").fill("Rennes");
+  await leader.getByLabel(/^Address/).fill("1 rue de Nulle Part");
+  await leader.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByRole("link", { name: "Directions" })).toBeVisible();
+  await expect(leader.getByRole("img", { name: /^Map:/ })).toHaveCount(0);
+});

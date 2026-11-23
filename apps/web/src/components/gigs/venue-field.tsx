@@ -2,6 +2,7 @@ import { VENUE_LIMITS, VENUE_MAX_LENGTH, type WebLink } from "@coverband/shared"
 import { MapPin, Plus, Search } from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { VenueMap } from "@/components/gigs/venue-map";
 import { WebLinksEditor } from "@/components/gigs/web-links-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,10 @@ export type VenueFields = {
   description: string;
   /** Its usual people (#329), shown on every gig there. */
   contacts: BandContact[];
+  /** On the map (#333), and whether its pin was dragged in this form. */
+  latitude: number | null;
+  longitude: number | null;
+  pinMoved: boolean;
 };
 
 /**
@@ -38,6 +43,9 @@ export const emptyVenueFields = (name = ""): VenueFields => ({
   links: [],
   description: "",
   contacts: [],
+  latitude: null,
+  longitude: null,
+  pinMoved: false,
 });
 
 /** A venue as the API gives it, as form fields. */
@@ -48,6 +56,8 @@ export const venueFields = (venue: {
   links: WebLink[];
   description: string | null;
   contacts?: BandContact[];
+  latitude?: number | null;
+  longitude?: number | null;
 }): VenueFields => ({
   name: venue.name,
   city: venue.city,
@@ -55,6 +65,9 @@ export const venueFields = (venue: {
   links: venue.links,
   description: venue.description ?? "",
   contacts: venue.contacts ?? [],
+  latitude: venue.latitude ?? null,
+  longitude: venue.longitude ?? null,
+  pinMoved: false,
 });
 
 /** What a venue state saves: null without a venue; never an incomplete one (see `venueMissing`). */
@@ -69,6 +82,10 @@ export function venueInput(state: VenueState): VenueInput | null {
     links: fields.links,
     description: fields.description.trim() || null,
     contactIds: fields.contacts.map((contact) => contact.id),
+    // A dragged pin is kept for the address; else the API finds it from the address.
+    ...(fields.pinMoved && fields.latitude !== null && fields.longitude !== null
+      ? { coordinates: { latitude: fields.latitude, longitude: fields.longitude } }
+      : {}),
   };
 }
 
@@ -183,6 +200,25 @@ export function VenueField({
             onChange={(event) => set({ address: event.target.value })}
           />
         </div>
+        {fields.latitude !== null && fields.longitude !== null ? (
+          <div className="space-y-1">
+            <VenueMap
+              className="rounded-lg"
+              point={{ latitude: fields.latitude, longitude: fields.longitude }}
+              label={[fields.name, fields.address, fields.city].filter(Boolean).join(", ")}
+              onMove={
+                disabled
+                  ? undefined
+                  : ({ latitude, longitude }) => set({ latitude, longitude, pinMoved: true })
+              }
+            />
+            <p className="text-muted-foreground text-xs">{t("gigs.map.dragHint")}</p>
+          </div>
+        ) : (
+          fields.address.trim() && (
+            <p className="text-muted-foreground text-xs">{t("gigs.map.afterSave")}</p>
+          )
+        )}
         <WebLinksEditor
           label={t("gigs.venue.links")}
           links={fields.links}

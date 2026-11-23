@@ -182,6 +182,8 @@ const gigColumns = {
   venueAddress: venues.address,
   venueLinks: venues.links,
   venueDescription: venues.description,
+  venueLatitude: venues.latitude,
+  venueLongitude: venues.longitude,
 };
 
 type GigRow = Awaited<ReturnType<typeof selectGigs>>[number];
@@ -194,6 +196,8 @@ function shaped({
   venueAddress,
   venueLinks,
   venueDescription,
+  venueLatitude,
+  venueLongitude,
   ...gig
 }: GigRow) {
   return {
@@ -207,6 +211,8 @@ function shaped({
             address: venueAddress,
             links: venueLinks ?? [],
             description: venueDescription,
+            latitude: venueLatitude,
+            longitude: venueLongitude,
           }
         : null,
   };
