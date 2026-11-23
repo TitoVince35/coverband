@@ -12,10 +12,10 @@ import type { Gig } from "@/lib/gigs";
 import { enterFullscreen } from "@/lib/live";
 import { setlistQuery } from "@/lib/setlists";
 
-/** A compact view's block: its title, then its content. */
+/** A compact view's block, a card: its title, then its content. */
 export function GigBlock({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="space-y-2">
+    <section className="space-y-2 rounded-xl border bg-card p-3">
       <h3 className="font-heading font-semibold">{title}</h3>
       {children}
     </section>
@@ -110,7 +110,10 @@ export function GoodToKnow({ gig }: { gig: Gig }) {
       {facts.length > 0 && (
         <ul className="flex flex-wrap gap-1.5">
           {facts.map((fact) => (
-            <li key={fact} className="break-words rounded-4xl border bg-card px-3 py-1 text-sm">
+            <li
+              key={fact}
+              className="break-words rounded-4xl border bg-background px-3 py-1 text-sm"
+            >
               {fact}
             </li>
           ))}
