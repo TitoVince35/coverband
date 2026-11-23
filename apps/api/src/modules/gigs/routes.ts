@@ -15,6 +15,7 @@ import {
   cancelGig,
   createGig,
   deleteGig,
+  type Gig,
   getGig,
   listGigs,
   lockEditableGig,
@@ -22,6 +23,7 @@ import {
   settleGig,
   updateGig,
 } from "./service";
+import { locateVenue } from "./venues.service";
 
 const gigParam = z.object({ bandSlug: z.string(), gigId: z.uuid() });
 const posterParam = gigParam.extend({ posterId: z.uuid() });
@@ -54,6 +56,12 @@ export function gigRoutes(deps: AppDeps) {
     isLeader: c.var.membership.role === "leader",
   });
   const when = (tz: string | undefined) => ({ now: new Date(), timeZone: timeZoneOf(tz) });
+  // A gig just saved, its venue placed on the map (#333): read again when it moved.
+  const located = async (c: Context<BandEnv>, gig: Gig | null) => {
+    if (!gig?.venue) return gig;
+    const moved = await locateVenue({ ...deps, log: c.var.log }, c.var.band.id, gig.venue.id);
+    return moved ? getGig(db, c.var.band.id, gig.id) : gig;
+  };
 
   return (
     new Hono<SessionEnv>()
@@ -67,7 +75,7 @@ export function gigRoutes(deps: AppDeps) {
         return c.json({ gigs });
       })
       .post("/", zValidator("json", gigBody, validationHook), async (c) => {
-        const gig = await createGig(db, who(c), c.req.valid("json"));
+        const gig = await located(c, await createGig(db, who(c), c.req.valid("json")));
         return gig ? c.json({ gig }, 201) : apiError(c, 500, "Gig not created");
       })
       .get("/:gigId", zValidator("param", gigParam, validationHook), async (c) => {
@@ -80,12 +88,15 @@ export function gigRoutes(deps: AppDeps) {
         zValidator("query", tzQuery, validationHook),
         zValidator("json", gigUpdateBody, validationHook),
         async (c) => {
-          const gig = await updateGig(
-            db,
-            who(c),
-            c.req.valid("param").gigId,
-            c.req.valid("json"),
-            when(c.req.valid("query").tz),
+          const gig = await located(
+            c,
+            await updateGig(
+              db,
+              who(c),
+              c.req.valid("param").gigId,
+              c.req.valid("json"),
+              when(c.req.valid("query").tz),
+            ),
           );
           return gig ? c.json({ gig }) : apiError(c, 404, "Gig not found");
         },

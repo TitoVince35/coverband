@@ -675,6 +675,12 @@
       "upcoming_other": "{{count}} upcoming gigs",
       "upcomingList": "Upcoming gigs",
       "all": "All gigs"
+    },
+    "map": {
+      "label": "Map: {{place}}",
+      "pin": "The venue's pin: drag it, or move it with the arrow keys",
+      "dragHint": "Placed from the address. Drag the pin if it's off.",
+      "afterSave": "The map shows once the venue is saved with its address."
     }
   },
   "login": {

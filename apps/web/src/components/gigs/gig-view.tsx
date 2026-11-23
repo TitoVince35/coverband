@@ -5,6 +5,7 @@ import { GigProgram, GigSetlistCard, GoodToKnow } from "@/components/gigs/gig-bl
 import { GigContactsList } from "@/components/gigs/gig-contacts";
 import { PostersList } from "@/components/gigs/gig-posters";
 import { GigStatusBadge } from "@/components/gigs/gig-status";
+import { VenueMap } from "@/components/gigs/venue-map";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/use-language";
 import { formatDate } from "@/lib/format";
@@ -57,7 +58,21 @@ export function GigView({
         <p>{formatGigDate(gig.date, language, new Date().getFullYear())}</p>
         {times.length > 0 && <p className="text-muted-foreground text-sm">{times.join(" · ")}</p>}
       </div>
-      {gig.venue && <VenueCard venue={gig.venue} />}
+      {gig.venue && (
+        <VenueCard
+          venue={gig.venue}
+          map={
+            gig.venue.latitude !== null && gig.venue.longitude !== null ? (
+              <VenueMap
+                point={{ latitude: gig.venue.latitude, longitude: gig.venue.longitude }}
+                label={[gig.venue.name, gig.venue.address, gig.venue.city]
+                  .filter(Boolean)
+                  .join(", ")}
+              />
+            ) : undefined
+          }
+        />
+      )}
       {gig.setlistId && <GigSetlistCard bandSlug={bandSlug} setlistId={gig.setlistId} />}
       <GigContactsList
         venueName={gig.venue?.name ?? null}

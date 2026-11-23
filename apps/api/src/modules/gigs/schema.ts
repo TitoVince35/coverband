@@ -4,6 +4,7 @@ import {
   boolean,
   check,
   date,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -40,6 +41,11 @@ export const venues = pgTable(
     address: text(),
     links: jsonb().$type<WebLink[]>().default([]).notNull(),
     description: text(),
+    // On the map (#333): found from its address by Nominatim, or its pin dragged; null without.
+    latitude: doublePrecision(),
+    longitude: doublePrecision(),
+    // The address (with its city) the coordinates belong to: one request per address saved.
+    geocodedQuery: text(),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp({ withTimezone: true })
       .defaultNow()

@@ -269,6 +269,10 @@ export const venueBody = z.object({
   description: optionalText(VENUE_MAX_LENGTH.description).default(null),
   // Its usual people (#329), shown on every gig there.
   contactIds,
+  // Its pin dragged on the map (#333): kept for its address. Absent: found from the address.
+  coordinates: z
+    .object({ latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180) })
+    .optional(),
 });
 
 /** A band's contact (#329): name and type required; phone, email and notes optional. */

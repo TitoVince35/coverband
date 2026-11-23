@@ -675,6 +675,12 @@
       "upcoming_other": "{{count}} concerts à venir",
       "upcomingList": "Concerts à venir",
       "all": "Tous les concerts"
+    },
+    "map": {
+      "label": "Carte : {{place}}",
+      "pin": "L'épingle du lieu : faites-la glisser, ou déplacez-la avec les flèches",
+      "dragHint": "Placée d'après l'adresse. Faites glisser l'épingle si elle est à côté.",
+      "afterSave": "La carte s'affiche une fois le lieu enregistré avec son adresse."
     }
   },
   "login": {

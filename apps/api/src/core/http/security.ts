@@ -4,6 +4,9 @@ import { createMiddleware } from "hono/factory";
 import { secureHeaders } from "hono/secure-headers";
 import { apiError } from "../errors";
 
+/** Where a venue's map loads its tiles from (#333): OpenStreetMap's tile servers. */
+export const OSM_TILES_ORIGIN = "https://tile.openstreetmap.org";
+
 /**
  * CSP hash of the inline theme script in `apps/web/index.html`.
  * `security.test.ts` fails when the script changes and shows the new value.
@@ -39,8 +42,8 @@ export function securityHeaders({ hsts }: { hsts: boolean }) {
       // React style props and the toast library set inline styles.
       styleSrc: ["'self'", "'unsafe-inline'"],
       // blob: images the app makes itself: an avatar's or logo's preview before upload, a band
-      // logo saved for offline use.
-      imgSrc: ["'self'", "data:", "blob:"],
+      // logo saved for offline use. A venue's map (#333): OpenStreetMap's tiles.
+      imgSrc: ["'self'", "data:", "blob:", OSM_TILES_ORIGIN],
       fontSrc: ["'self'"],
       connectSrc: ["'self'"],
       workerSrc: ["'self'"],

@@ -1,5 +1,6 @@
 import type { Auth } from "./adapters/auth";
 import type { MusicCatalog } from "./adapters/deezer";
+import type { Geocoder } from "./adapters/geocoder";
 import type { LyricsProvider } from "./adapters/lyrics";
 import type { Mailer } from "./adapters/mail/mailer";
 import type { PushKeys, PushSender } from "./adapters/push";
@@ -21,6 +22,8 @@ export type AppDeps = {
   storage: Storage;
   /** Where song lyrics are searched online (LRCLIB). */
   lyrics: LyricsProvider;
+  /** Where a venue's address is placed on the map (Nominatim, #333). */
+  geocoder: Geocoder;
   /** Where a new song's details are looked up (Deezer, #199). */
   catalog: MusicCatalog;
   /** Where a new song's videos are searched (YouTube, #200); absent without an API key. */

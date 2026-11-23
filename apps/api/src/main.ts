@@ -2,6 +2,7 @@ import { APP_NAME } from "@coverband/shared";
 import rootPackage from "../../../package.json" with { type: "json" };
 import { createAuth } from "./adapters/auth";
 import { createDeezerCatalog } from "./adapters/deezer";
+import { createNominatimGeocoder } from "./adapters/geocoder";
 import { createLrclibProvider } from "./adapters/lyrics";
 import { createSmtpMailer } from "./adapters/mail/mailer";
 import { createWebPushSender, PUSH_SERVICE_HOSTS, vapidKeys, vapidSubject } from "./adapters/push";
@@ -43,6 +44,10 @@ const app = createApp({
     lyrics: createLrclibProvider({
       userAgent: `${APP_NAME} (${env.BETTER_AUTH_URL})`,
       baseUrl: env.LRCLIB_URL,
+    }),
+    geocoder: createNominatimGeocoder({
+      userAgent: `${APP_NAME} (${env.BETTER_AUTH_URL})`,
+      baseUrl: env.NOMINATIM_URL,
     }),
     catalog: createDeezerCatalog({ baseUrl: env.DEEZER_URL }),
     ...(env.YOUTUBE_API_KEY && {
