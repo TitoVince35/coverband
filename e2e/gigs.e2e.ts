@@ -171,7 +171,7 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   await leader.getByLabel("Pay (€)").fill("400");
   await leader.getByLabel(/^About the pay/).fill("cash on the night");
   await leader.getByLabel("Shared backline").check();
-  await leader.getByLabel("What the shared backline has").fill("drums, bass amp");
+  await leader.getByLabel("What the shared backline has").fill("Drum kit\nBass amp");
   await leader.getByLabel("Technicians provided").check();
   await leader.getByLabel("Notes").fill("Parking behind the bar");
   await leader.getByRole("button", { name: "Save" }).click();
@@ -186,7 +186,10 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   );
   await expect(leader.getByText("20:00 The Lunatics, 21:15 us")).toBeVisible();
   await expect(leader.getByText("€400 · cash on the night")).toBeVisible();
-  await expect(leader.getByText("Shared backline: drums, bass amp")).toBeVisible();
+  // The shared backline on its own lines, as typed.
+  const backline = leader.getByText("Drum kit Bass amp");
+  await expect(backline).toBeVisible();
+  expect(await backline.innerText()).toBe("Drum kit\nBass amp");
   await expect(leader.getByText("Technicians provided")).toBeVisible();
   await expect(leader.getByText("Parking behind the bar")).toBeVisible();
 
