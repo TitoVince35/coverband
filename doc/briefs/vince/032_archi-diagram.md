@@ -52,3 +52,5 @@ The page's source is in `doc/diagrams/`; the `infra-diagrams` skill regenerates 
 
 - **v1.0**, Thursday 2026/11/12: first version (app version 0.13.0).
 - **v1.1**, Monday 2026/11/23: Nominatim (geocoding) and OpenStreetMap's tiles for the venue maps (#333).
+- **v1.2**, Monday 2026/11/23: app version 0.16.0 (gigs, brief 034): gig posters in Object Storage, gigs kept offline on the phones.
+- **v1.3**, Monday 2026/11/23: OpenStreetMap's Nominatim and tiles side by side, under an "OpenStreetMap" label.

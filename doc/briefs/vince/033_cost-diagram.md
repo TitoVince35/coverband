@@ -31,3 +31,5 @@ The page's source is in `doc/diagrams/`; the `infra-diagrams` skill regenerates 
 - **v1.4**, Friday 2026/11/13: "On the Internet" renamed "Third-party services".
 - **v1.5**, Friday 2026/11/13: in the "Every service" table, "Characteristics" and "Cost or limitation" as wide as each other (the cost notes wrap); same figures.
 - **v1.6**, Monday 2026/11/23: Nominatim (geocoding) and OpenStreetMap's tiles for the venue maps (#333).
+- **v1.7**, Monday 2026/11/23: gig posters in Object Storage (app version 0.16.0); same figures, bills to 2026/11/12.
+- **v1.8**, Monday 2026/11/23: bills to the 23rd: ≈ €16.62 a month (was €21.45), under the €20 budget alert; GitHub Actions volume refreshed; Nominatim and the tiles side by side, as on the architecture page.
