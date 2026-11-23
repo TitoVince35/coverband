@@ -493,6 +493,11 @@
       "title": "Titre",
       "titlePlaceholder": "Fête de la musique, mariage de Claire et Tom…",
       "type": "Type",
+      "types": {
+        "public": "Public",
+        "private": "Privé",
+        "recording": "Enregistrement"
+      },
       "created": "Concert créé",
       "saved": "Concert enregistré",
       "missing": {

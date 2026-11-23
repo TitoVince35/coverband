@@ -493,6 +493,11 @@
       "title": "Title",
       "titlePlaceholder": "Fête de la musique, Claire & Tom's wedding…",
       "type": "Type",
+      "types": {
+        "public": "Public",
+        "private": "Private",
+        "recording": "Recording"
+      },
       "created": "Gig created",
       "saved": "Gig saved",
       "missing": {

@@ -272,7 +272,7 @@ export function GigForm({
             <label
               key={type}
               className={cn(
-                "flex h-10 cursor-pointer items-center rounded-4xl border px-4 text-sm has-focus-visible:ring-2 has-focus-visible:ring-ring",
+                "flex h-10 cursor-pointer items-center whitespace-nowrap rounded-4xl border px-3 text-sm has-focus-visible:ring-2 has-focus-visible:ring-ring",
                 draft.type === type
                   ? "border-primary bg-primary/10 font-semibold"
                   : "text-muted-foreground",
@@ -286,7 +286,7 @@ export function GigForm({
                 onChange={() => set({ type })}
                 className="sr-only"
               />
-              {t(`gigs.type.${type}`)}
+              {t(`gigs.form.types.${type}`)}
             </label>
           ))}
         </div>

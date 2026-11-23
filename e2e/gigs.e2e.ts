@@ -35,7 +35,7 @@ test("a member creates a gig with a new venue, then one at that venue, and edits
   await expect(leader.getByText("Add the venue's city")).toBeVisible();
   await leader.getByLabel("City").fill("Rennes");
   await leader.getByLabel(/^Address/).fill("264 avenue du Général Patton");
-  await leader.getByLabel("Private event").check({ force: true });
+  await leader.getByLabel("Private", { exact: true }).check({ force: true });
   await save.click();
 
   // The compact view: status, type, venue, Directions.
