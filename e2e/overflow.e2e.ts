@@ -155,6 +155,8 @@ const opens = async (p: Page, ...names: string[]) => {
 };
 
 test("pages fit a narrow phone", async () => {
+  // Every page or dialog in one test: past 30 s on CI's runners.
+  test.slow();
   const b = `/b/${band.slug}`;
   for (const [name, url] of [
     ["Account", "/account"],
@@ -193,6 +195,8 @@ test("pages fit a narrow phone", async () => {
 });
 
 test("dialogs and menus fit a narrow phone", async () => {
+  // Every page or dialog in one test: past 30 s on CI's runners.
+  test.slow();
   const b = `/b/${band.slug}`;
   const song = `${b}/songs/${songId}`;
   for (const [name, url, open] of [
