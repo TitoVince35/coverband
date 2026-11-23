@@ -453,3 +453,32 @@ test("the band's venues and contacts: a duplicate merged, another deleted (#334)
     leader.getByRole("region", { name: "Contacts" }).getByText("Yann the sound tech"),
   ).toBeVisible();
 });
+
+test("saving a gig keeps the venue's contacts added meanwhile elsewhere (#329)", async () => {
+  const api = `/api/bands/${band.slug}`;
+  const gigId = await addGig(band, {
+    date: dateIn(70),
+    venue: { name: "Le Bar'Hic", city: "Rennes" },
+  });
+  // The form is open on one phone...
+  await leader.goto(`/b/${band.slug}/gigs/${gigId}/edit`);
+  await expect(leader.getByLabel("City")).toHaveValue("Rennes");
+  // ...while the venue's contact is added on another one.
+  const gig = (await (await leader.request.get(`${api}/gigs/${gigId}`)).json()) as {
+    gig: { venue: { id: string } };
+  };
+  const contact = (await (
+    await leader.request.post(`${api}/contacts`, { data: { name: "Romu", type: "organizer" } })
+  ).json()) as { contact: { id: string } };
+  const linked = await leader.request.patch(`${api}/venues/${gig.gig.venue.id}`, {
+    data: { name: "Le Bar'Hic", city: "Rennes", contactIds: [contact.contact.id] },
+  });
+  expect(linked.ok()).toBe(true);
+
+  // Saved from the first phone: the venue keeps its contact.
+  await leader.getByLabel(/^Title/).fill("Bar'Hic night");
+  await leader.getByRole("button", { name: "Save" }).click();
+  await expect(leader.getByRole("heading", { name: "Bar'Hic night" })).toBeVisible();
+  await expect(leader.getByText("From the venue (Le Bar'Hic)")).toBeVisible();
+  await expect(leader.getByText("Romu")).toBeVisible();
+});

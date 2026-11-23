@@ -141,6 +141,14 @@ export function GigForm({
     chosen.mode === "existing"
       ? { ...chosen, gigs: venues.find((venue) => venue.id === chosen.id)?.gigs ?? chosen.gigs }
       : chosen;
+  // The venue's contacts: the band's venue's current ones (the venues' list, fetched again after
+  // any change) until changed here, never the copy the form was opened with.
+  const venueContacts =
+    chosen.mode === "none"
+      ? []
+      : chosen.mode === "existing" && !chosen.fields.contactsEdited
+        ? (venues.find((venue) => venue.id === chosen.id)?.contacts ?? chosen.fields.contacts)
+        : chosen.fields.contacts;
 
   const postpone = useMutation({
     networkMode: "always",
@@ -324,7 +332,7 @@ export function GigForm({
       <GigContactsField
         bandSlug={bandSlug}
         venueName={draft.venue.mode === "none" ? null : draft.venue.fields.name.trim() || null}
-        venueContacts={draft.venue.mode === "none" ? [] : draft.venue.fields.contacts}
+        venueContacts={venueContacts}
         gigContacts={draft.contacts}
         onGigContacts={(contacts) => set({ contacts })}
         onVenueContacts={(contacts) =>
@@ -333,7 +341,10 @@ export function GigForm({
               ? current
               : {
                   ...current,
-                  venue: { ...current.venue, fields: { ...current.venue.fields, contacts } },
+                  venue: {
+                    ...current.venue,
+                    fields: { ...current.venue.fields, contacts, contactsEdited: true },
+                  },
                 },
           )
         }

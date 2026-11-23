@@ -21,6 +21,11 @@ export type VenueFields = {
   description: string;
   /** Its usual people (#329), shown on every gig there. */
   contacts: BandContact[];
+  /**
+   * Whether they were changed in this form: only then does saving send them. Else the venue's
+   * current ones stay, never an older copy the form was opened with (#329).
+   */
+  contactsEdited: boolean;
   /** On the map (#333), and whether its pin was dragged in this form. */
   latitude: number | null;
   longitude: number | null;
@@ -43,6 +48,7 @@ export const emptyVenueFields = (name = ""): VenueFields => ({
   links: [],
   description: "",
   contacts: [],
+  contactsEdited: false,
   latitude: null,
   longitude: null,
   pinMoved: false,
@@ -65,6 +71,7 @@ export const venueFields = (venue: {
   links: venue.links,
   description: venue.description ?? "",
   contacts: venue.contacts ?? [],
+  contactsEdited: false,
   latitude: venue.latitude ?? null,
   longitude: venue.longitude ?? null,
   pinMoved: false,
@@ -81,7 +88,10 @@ export function venueInput(state: VenueState): VenueInput | null {
     address: fields.address.trim() || null,
     links: fields.links,
     description: fields.description.trim() || null,
-    contactIds: fields.contacts.map((contact) => contact.id),
+    // A new venue's, or the band's venue's when changed here: else unchanged (absent).
+    ...(state.mode === "new" || fields.contactsEdited
+      ? { contactIds: fields.contacts.map((contact) => contact.id) }
+      : {}),
     // A dragged pin is kept for the address; else the API finds it from the address.
     ...(fields.pinMoved && fields.latitude !== null && fields.longitude !== null
       ? { coordinates: { latitude: fields.latitude, longitude: fields.longitude } }
