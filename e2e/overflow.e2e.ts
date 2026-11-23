@@ -24,6 +24,12 @@ test.beforeAll(async ({ browser }) => {
   band = await newBand(browser, "Overflowingly-Long-Band-Name-For-Phones");
   page = band.leader;
   await page.setViewportSize({ width: 320, height: 800 });
+  // The installed app, notifications not on yet: the home page offers them (#353).
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "standalone", { value: true });
+    Object.defineProperty(Notification, "permission", { get: () => "default" });
+    PushManager.prototype.getSubscription = async () => null;
+  });
   songId = await addSong(band, {
     title: LONG_TITLE,
     artist: "The Imaginary Orchestra of Somewhere Very Far Away and Their Friends",
@@ -151,7 +157,6 @@ const opens = async (p: Page, ...names: string[]) => {
 test("pages fit a narrow phone", async () => {
   const b = `/b/${band.slug}`;
   for (const [name, url] of [
-    ["Bands", "/"],
     ["Account", "/account"],
     ["Contact", "/contact"],
     ["Band home", b],
@@ -174,6 +179,8 @@ test("pages fit a narrow phone", async () => {
   ] as const) {
     await test.step(name, () => check(url));
   }
+  await test.step("Bands, with the notifications offer", () =>
+    check("/", async (p) => p.getByText("Stay in the loop")));
   await test.step("Song, every block open", () =>
     check(`${b}/songs/${songId}`, async (p) => {
       for (const name of ["Details", "Lyrics", "Documents", "History"]) {

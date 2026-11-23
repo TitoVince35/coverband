@@ -111,3 +111,34 @@ test("a note from the team is pushed to the devices with notifications on (#262)
     await sql.end();
   }
 });
+
+test("the installed app's home page offers to turn notifications on, until dismissed (#353)", async ({
+  page,
+}) => {
+  await fakePushService(page);
+  // Opened from the home screen.
+  await page.addInitScript(() => Object.defineProperty(navigator, "standalone", { value: true }));
+  await login(page, ADMIN, PASSWORD);
+  await page.goto("/");
+  const offer = page.getByText("Stay in the loop");
+  await expect(offer).toBeVisible();
+
+  await page.getByRole("button", { name: "Don't show again" }).click();
+  await expect(offer).toBeHidden();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /Welcome to/ })).toBeVisible();
+  await expect(offer).toBeHidden();
+
+  // Back (as on another device), then turned on: the card leaves.
+  await page.evaluate(() => localStorage.removeItem("coverband-push-offer-dismissed"));
+  await page.reload();
+  await page.getByRole("button", { name: "Turn on notifications" }).click();
+  await expect(page.getByText("Notifications turned on")).toBeVisible();
+  await expect(offer).toBeHidden();
+  expect(await devicesOf(ADMIN)).toEqual([expect.stringContaining(`localhost:${FAKE_PUSH_PORT}`)]);
+  // Logging out forgets this device (no reload before: the fake subscription lives in the page).
+  await page.getByRole("button", { name: "Account" }).click();
+  await page.getByRole("menuitem", { name: "Log out" }).click();
+  await expect(page).toHaveURL(/\/login/);
+  expect(await devicesOf(ADMIN)).toEqual([]);
+});
