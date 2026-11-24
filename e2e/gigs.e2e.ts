@@ -431,8 +431,13 @@ test("the band's venues and contacts: a duplicate merged, another deleted (#334)
   await leader.getByRole("alertdialog").getByRole("button", { name: "Delete the contact" }).click();
   await expect(list.getByText("Claire Martin")).toBeHidden();
 
-  // The venues page: a venue with a gig can't be deleted.
+  // The venues page: a venue with a gig can't be deleted. Its sub-menu leads back to the gigs (#356).
   await leader.getByRole("link", { name: "Venues" }).first().click();
+  const pages = leader.getByRole("navigation", { name: "Gigs, venues and contacts" });
+  await expect(pages.getByRole("link", { name: "Gigs" })).toHaveAttribute(
+    "href",
+    `/b/${band.slug}/gigs`,
+  );
   await leader
     .getByRole("list", { name: "Venues" })
     .getByRole("link", { name: /Le Mondo Bizarro/ })
