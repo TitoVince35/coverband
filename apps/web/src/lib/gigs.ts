@@ -82,7 +82,8 @@ export type GigInput = {
   type: GigType;
   showTime: string | null;
   venue: VenueInput | null;
-  setlistId: string | null;
+  /** Its setlist to make (#358), while it has none: a copy of `from`, or a new one. */
+  setlist: { from: string | null } | null;
   getInTime: string | null;
   soundcheckTime: string | null;
   programLinks: WebLink[];

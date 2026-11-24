@@ -45,10 +45,8 @@ describe.skipIf(!databaseUrl)("a gig's setlist, program and extra info (#328)", 
   beforeAll(() => t.setUp({ lea: "leader", max: "musician" }));
   afterAll(() => t.cleanUp());
 
-  test("a gig keeps its setlist, program and extra info", async () => {
-    const setlistId = await setlist("lea", "One set");
+  test("a gig keeps its program and extra info", async () => {
     const res = await create({
-      setlistId,
       getInTime: "18:30",
       soundcheckTime: "19:15",
       programLinks: [{ url: "https://example.com/event", title: "Facebook event" }],
@@ -62,7 +60,7 @@ describe.skipIf(!databaseUrl)("a gig's setlist, program and extra info (#328)", 
     });
     expect(res.status).toBe(201);
     expect(await gigOf(res)).toMatchObject({
-      setlistId,
+      setlistId: null,
       getInTime: "18:30",
       soundcheckTime: "19:15",
       programLinks: [{ url: "https://example.com/event", title: "Facebook event" }],
@@ -76,20 +74,20 @@ describe.skipIf(!databaseUrl)("a gig's setlist, program and extra info (#328)", 
     });
   });
 
-  test("another band's setlist, or an archived one, is refused when chosen", async () => {
+  test("another band's setlist, or an archived one, is refused as a template", async () => {
     const theirs = await setlist("zoe", "Theirs", otherSlug);
-    expect((await create({ setlistId: theirs })).status).toBe(400);
+    expect((await create({ setlist: { from: theirs } })).status).toBe(400);
     const archived = await setlist("lea", "Old set");
     await call(`/bands/${slug}/setlists/${archived}/archive`, "lea", { method: "POST" });
-    expect((await create({ setlistId: archived })).status).toBe(400);
+    expect((await create({ setlist: { from: archived } })).status).toBe(400);
   });
 
-  test("an archived setlist stays linked; a deleted one leaves the gig without one", async () => {
-    const setlistId = await setlist("lea", "Wedding set");
-    let gig = await gigOf(await create({ setlistId }));
+  test("its setlist archived stays linked; deleted, the gig has none", async () => {
+    let gig = await gigOf(await create({ title: "Wedding", setlist: { from: null } }));
+    const setlistId = gig.setlistId;
     await call(`/bands/${slug}/setlists/${setlistId}/archive`, "lea", { method: "POST" });
     // Saved again with the archived setlist still linked: allowed.
-    const res = await edit(gig, { notes: "Still the wedding set" });
+    const res = await edit(gig, { notes: "Still the wedding set", setlist: null });
     expect(res.status).toBe(200);
     gig = await gigOf(res);
     expect(gig.setlistId).toBe(setlistId);

@@ -6,14 +6,19 @@ import {
   gigDay,
   type WebLink,
 } from "@coverband/shared";
-import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
 import { gigs, users, venues } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
 import type { AppDeps } from "../../deps";
-import { getSetlist } from "../setlists/service";
+import {
+  archiveGigSetlist,
+  createGigSetlist,
+  getSetlist,
+  nameGigSetlist,
+} from "../setlists/service";
 import { contactsOfGigs, contactsOfVenues, setGigContacts } from "./contacts.service";
 import { deletePosterFiles, gigPosterKeys, postersOfGigs } from "./posters.service";
 
@@ -100,7 +105,8 @@ export type GigInput = {
 
 /** A gig's setlist, program and extra info (#328), as its form sends them. */
 export type GigExtras = {
-  setlistId: string | null;
+  /** Its setlist to make (#358), while it has none: a copy of `from`, or a new one. */
+  setlist?: { from: string | null } | null | undefined;
   getInTime: string | null;
   soundcheckTime: string | null;
   programLinks: WebLink[];
@@ -129,9 +135,8 @@ const extraColumns = {
   notes: gigs.notes,
 };
 
-/** The extras of a form's input, as stored. */
-const extrasOf = (input: GigExtras): Omit<GigExtras, "contactIds"> => ({
-  setlistId: input.setlistId,
+/** The extras of a form's input, as stored (its setlist is made apart). */
+const extrasOf = (input: GigExtras): Omit<GigExtras, "contactIds" | "setlist"> => ({
   getInTime: input.getInTime,
   soundcheckTime: input.soundcheckTime,
   programLinks: input.programLinks,
@@ -144,19 +149,42 @@ const extrasOf = (input: GigExtras): Omit<GigExtras, "contactIds"> => ({
   notes: input.notes,
 });
 
+/** The gig already has its setlist (#358): it never changes. */
+export class GigSetlistLinkedError extends AppError {
+  constructor() {
+    super("gig_setlist_linked", "This gig already has its setlist");
+  }
+}
+
 /**
- * Refuses a setlist newly chosen for a gig that isn't one of the band's current setlists (an
- * archived one stays linked, but isn't chosen anew).
+ * Makes a gig's setlist (#358) and links it: a copy of one of the band's current setlists, or a
+ * new one, named after the gig (`name`: its title, else its venue's name). Refuses a setlist that
+ * isn't one of the band's current ones.
  */
-async function checkSetlist(
+async function makeGigSetlist(
   tx: Tx,
-  bandId: string,
-  setlistId: string | null,
-  current?: string | null,
+  member: Member,
+  gig: { id: string; name: string; date: string },
+  from: string | null,
 ) {
-  if (!setlistId || setlistId === current) return;
-  const setlist = await getSetlist(tx, bandId, setlistId);
-  if (!setlist || setlist.archivedAt) throw new UnknownSetlistError();
+  if (from) {
+    const template = await getSetlist(tx, member.bandId, from);
+    if (!template || template.archivedAt) throw new UnknownSetlistError();
+  }
+  const setlistId = await createGigSetlist(tx, member, gig, from);
+  await tx.update(gigs).set({ setlistId }).where(eq(gigs.id, gig.id));
+}
+
+/** A gig's name in its setlist's title: its title, else its venue's (a gig has one or both). */
+const nameOf = (title: string | null, venue: GigInput["venue"]) => title ?? venue?.name ?? "";
+
+/** The band's gigs' setlists (#358): each setlist's gig, for the setlists' pages. */
+export async function gigSetlistIds(db: Db, bandId: string) {
+  const rows = await db
+    .select({ id: gigs.id, setlistId: gigs.setlistId })
+    .from(gigs)
+    .where(and(eq(gigs.bandId, bandId), isNotNull(gigs.setlistId)));
+  return new Map(rows.map((row) => [row.setlistId ?? "", row.id]));
 }
 
 const cancellers = alias(users, "cancellers");
@@ -312,7 +340,6 @@ export function createGig(db: Db, member: Member, input: GigInput) {
   return venueChecked(() =>
     db.transaction(async (tx) => {
       const venueId = await venueOf(tx, member, input.venue);
-      await checkSetlist(tx, member.bandId, input.setlistId);
       const [gig] = await tx
         .insert(gigs)
         .values({
@@ -327,6 +354,15 @@ export function createGig(db: Db, member: Member, input: GigInput) {
         })
         .returning({ id: gigs.id });
       if (!gig) throw new Error("Gig not inserted");
+      if (input.setlist) {
+        const name = nameOf(input.title, input.venue);
+        await makeGigSetlist(
+          tx,
+          member,
+          { id: gig.id, name, date: input.date },
+          input.setlist.from,
+        );
+      }
       await recordActivity(tx, {
         action: "gig.created",
         bandId: member.bandId,
@@ -395,8 +431,8 @@ export function updateGig(
       ) {
         throw new GigSettledError();
       }
+      if (input.setlist && current.setlistId) throw new GigSetlistLinkedError();
       const venueId = await venueOf(tx, member, input.venue);
-      await checkSetlist(tx, member.bandId, input.setlistId, current.setlistId);
       const next = {
         date: input.date,
         title: input.title,
@@ -414,6 +450,13 @@ export function updateGig(
         .update(gigs)
         .set({ ...next, version: sql`${gigs.version} + 1` })
         .where(eq(gigs.id, id));
+      // Its setlist (#358): made now, or named after the gig again.
+      const gigName = { name: nameOf(input.title, input.venue), date: input.date };
+      if (input.setlist) {
+        await makeGigSetlist(tx, member, { id, ...gigName }, input.setlist.from);
+      } else if (current.setlistId) {
+        await nameGigSetlist(tx, member, current.setlistId, gigName);
+      }
       const event = (
         action:
           | "gig.updated"
@@ -439,7 +482,10 @@ export function updateGig(
         const contactsAdded = await setGigContacts(tx, member.bandId, id, input.contactIds);
         if (contactsAdded > 0) await event("gig.contact_added", { count: contactsAdded });
       }
-      const others = fields.filter((field) => field !== "programLinks" && field !== "programNotes");
+      const others: string[] = fields.filter(
+        (field) => field !== "programLinks" && field !== "programNotes",
+      );
+      if (input.setlist) others.push("setlistId");
       if (others.length > 0) await event("gig.updated", { fields: others.join(",") });
       return getGig(tx, member.bandId, id);
     }),
@@ -555,6 +601,8 @@ export async function deleteGig(
       throw new GigSettledError("This gig is settled: cancel it before deleting it");
     }
     const posterKeys = await gigPosterKeys(tx, id);
+    // Its setlist stays, archived (#358).
+    if (current.setlistId) await archiveGigSetlist(tx, member, current.setlistId);
     await tx.delete(gigs).where(eq(gigs.id, id));
     await recordActivity(tx, {
       action: "gig.deleted",

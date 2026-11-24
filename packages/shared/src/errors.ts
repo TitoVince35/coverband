@@ -46,6 +46,8 @@ export const ERROR_CODES = [
   "gig_settled",
   "gig_cancelled",
   "gig_past",
+  "gig_setlist_linked",
+  "setlist_named_by_gig",
   "too_many_posters",
   "venue_in_use",
 ] as const;

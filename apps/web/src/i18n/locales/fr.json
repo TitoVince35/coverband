@@ -456,7 +456,9 @@
       "button": "Dupliquer",
       "copyTitle": "{{title}} (copie)",
       "done": "Setlist dupliquée : voici la copie"
-    }
+    },
+    "forGig": "Pour un concert",
+    "gigLink": "Au nom de son concert : voir le concert"
   },
   "gigs": {
     "title": "Concerts",
@@ -600,11 +602,11 @@
     "setlist": {
       "title": "Setlist",
       "none": "Pas encore de setlist",
-      "archived": "{{title}} (archivée)",
-      "create": "Créer une setlist",
-      "hint": "Les setlists en cours du groupe (pas les archivées). Une nouvelle s'ouvre dans l'éditeur, puis revient ici.",
-      "backHint": "Cette setlist a été créée pour un concert : retour à son formulaire, avec cette setlist choisie.",
-      "back": "Retour au concert"
+      "new": "Une nouvelle setlist",
+      "from": "Une copie de",
+      "hint": "Créée à l'enregistrement du concert, à son nom : « {{title}} ». Modifiez-la ensuite comme toute setlist.",
+      "needsName": "Donnez d'abord au concert une date, et un titre ou une salle : sa setlist porte son nom.",
+      "linked": "La setlist de ce concert, à son nom : modifiez-la depuis sa page."
     },
     "program": {
       "title": "Programme",
@@ -974,6 +976,8 @@
     "gig_settled": "Ce concert est confirmé : reportez-le pour changer sa date, son titre ou son lieu, annulez-le avant de le supprimer.",
     "gig_cancelled": "Ce concert est annulé : il ne peut plus être modifié.",
     "gig_past": "Ce concert est passé : les concerts passés sont en lecture seule.",
+    "gig_setlist_linked": "Ce concert a déjà sa setlist : elle ne change jamais.",
+    "setlist_named_by_gig": "Cette setlist porte le nom de son concert : elle suit son nom et sa date.",
     "too_many_posters": "Ce concert a déjà toutes ses affiches : retirez-en une d'abord.",
     "venue_in_use": "Des concerts ont lieu ici : ce lieu ne peut pas être supprimé."
   },

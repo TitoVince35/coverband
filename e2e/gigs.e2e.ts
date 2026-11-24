@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
-import { addGig, addSong, type Band, dateIn, newBand } from "./support";
+import { addGig, addSetlist, addSong, type Band, dateIn, newBand } from "./support";
 
 // Gigs (brief 034): create, list and edit a gig, with its venue (#326).
 test.describe.configure({ mode: "serial" });
@@ -133,31 +133,31 @@ test("its creator settles, postpones, cancels and deletes a gig (#327)", async (
   await expect(leader.getByText("Lea Leader deleted a gig")).toBeVisible();
 });
 
-test("a gig with its setlist, program and extra info, then Live (#328)", async () => {
-  await addSong(band, {
+test("a gig with its setlist, program and extra info, then Live (#328, #358)", async () => {
+  const song = await addSong(band, {
     title: "Hey Joe",
     artist: "Jimi Hendrix",
     standardDuration: 210,
     status: "ready",
   });
+  await addSetlist(band, "Summer set", [{ songs: [song] }]);
+  const { setlists } = (await (
+    await leader.request.get(`/api/bands/${band.slug}/setlists`)
+  ).json()) as {
+    setlists: { id: string; title: string }[];
+  };
+  const summer = setlists.find((setlist) => setlist.title === "Summer set")?.id ?? "";
+  const date = dateIn(40);
   await leader.goto(`/b/${band.slug}/gigs/new`);
-  await leader.getByLabel("Date", { exact: true }).fill(dateIn(40));
+  // Its setlist is named after the gig: nothing to choose before it has a name.
+  const setlistSelect = leader.getByRole("combobox", { name: "Setlist" });
+  await expect(setlistSelect).toBeDisabled();
+  await leader.getByLabel("Date", { exact: true }).fill(date);
   await leader.getByLabel("Title", { exact: true }).fill("Rock night #12");
 
-  // A new setlist, made from the form: it opens in the editor, then leads back to the gig.
-  await leader.getByRole("button", { name: "Create setlist" }).click();
-  await leader.getByRole("dialog").getByLabel("Title").fill("Rock night set");
-  await leader.getByRole("dialog").getByRole("button", { name: "New setlist" }).click();
-  await expect(leader.getByRole("heading", { name: "Rock night set" })).toBeVisible();
-  await leader.getByRole("button", { name: "Add songs" }).click();
-  const songs = leader.getByRole("dialog").getByRole("list", { name: "Songs to add" });
-  await songs.getByRole("button", { name: /^Hey Joe/ }).click();
-  await leader.getByRole("dialog").getByRole("button", { name: "Add 1 song to Part 1" }).click();
-  await expect(leader.getByText("Saved", { exact: true })).toBeVisible();
-  await leader.getByRole("link", { name: "Back to the gig" }).click();
-  // The form as it was, the new setlist chosen.
-  await expect(leader.getByLabel("Title", { exact: true })).toHaveValue("Rock night #12");
-  await expect(leader.getByRole("combobox", { name: "Setlist" })).toHaveValue(/.+/);
+  // A copy of the band's setlist, made when the gig is saved, named after it.
+  await setlistSelect.selectOption(summer);
+  await expect(leader.getByText(`named after it: “Rock night #12 · ${date}”`)).toBeVisible();
 
   // Program and extra info.
   await leader.getByRole("button", { name: "Add a link" }).click();
@@ -197,7 +197,34 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   await expect(leader.getByText("Technicians provided")).toBeVisible();
   await expect(leader.getByText("Parking behind the bar")).toBeVisible();
 
+  // The gig's own setlist, named after it: never renamed by hand, marked on the setlists page.
+  const gigPage = leader.url();
+  await setlistCard.click();
+  await expect(leader.getByRole("heading", { name: `Rock night #12 · ${date}` })).toBeVisible();
+  await expect(
+    leader.getByRole("link", { name: "Named after its gig: view the gig" }),
+  ).toBeVisible();
+  await leader.getByRole("button", { name: /^Actions for Rock night/ }).click();
+  await expect(leader.getByRole("menuitem", { name: "Duplicate" })).toBeVisible();
+  await expect(leader.getByRole("menuitem", { name: "Rename" })).toHaveCount(0);
+  await leader.keyboard.press("Escape");
+  await leader.goto(`/b/${band.slug}/setlists`);
+  const list = leader.getByRole("list", { name: "Setlists" });
+  await expect(
+    list
+      .getByRole("listitem")
+      .filter({ hasText: "Rock night #12" })
+      .getByRole("img", { name: "For a gig" }),
+  ).toBeVisible();
+  await expect(
+    list
+      .getByRole("listitem")
+      .filter({ hasText: "Summer set" })
+      .getByRole("img", { name: "For a gig" }),
+  ).toHaveCount(0);
+
   // Live opens the setlist's live mode.
+  await leader.goto(gigPage);
   await leader.getByRole("link", { name: "Live" }).click();
   await expect(leader).toHaveURL(/\/setlists\/[^/]+\/live$/);
   await expect(leader.getByText("Hey Joe")).toBeVisible();
