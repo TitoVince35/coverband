@@ -36,6 +36,7 @@ The sub-menu of the venues and contacts pages (reached from the band's menu) sho
 - **A deleted gig** archives its setlist.
 - **The band's limit of 50 current setlists** stays as is for now; archiving a gig's setlist once its day is over may come later.
 - **A new gig's form:** "Create setlist" is disabled until the form has a title or a venue, with a hint saying why.
+- **The setlists page** marks a gig's setlist with the gigs' icon (added after settling).
 - **Templates:** the band's current setlists, other gigs' setlists included.
 - **Existing gigs** follow the new rules through a migration: every gig linked to a setlist gets its own copy (same parts and songs, archived if the original is), named after the gig and linked to it. The originals stay as they are, as templates. A setlist shared by several gigs thus gives one copy per gig. The migration only adds (a column, then copies), so the release still serving while it runs keeps working.
 
