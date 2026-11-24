@@ -1,21 +1,19 @@
 import { GIG_LIMITS, GIG_MAX_LENGTH, type WebLink } from "@coverband/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useId, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { WebLinksEditor } from "@/components/gigs/web-links-editor";
 import { formatSetlistDuration } from "@/components/setlists/setlist-duration";
-import { SetlistTitleDialog } from "@/components/setlists/setlist-title-dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useOnline } from "@/lib/online";
 import { setlistQuery, setlistsQuery } from "@/lib/setlists";
 
 /** A gig's setlist, program and extra info (#328), as the form holds them (texts as typed). */
 export type ExtrasDraft = {
-  setlistId: string | null;
+  /** The setlist to make with the gig (#358), while it has none. */
+  setlist: { from: string | null } | null;
   getInTime: string;
   soundcheckTime: string;
   programLinks: WebLink[];
@@ -31,79 +29,85 @@ export type ExtrasDraft = {
 const sectionTitle = "font-heading font-semibold text-base";
 
 /**
- * The gig form's setlist (the band's current setlists, the linked one even archived; "Create
- * setlist" opens the new one in the editor, `onCreateSetlist` keeping the form's draft first).
+ * The gig form's setlist (#358). A gig without one: none yet, a new one, or a copy of one of the
+ * band's current setlists, made when the gig is saved and named after it (`title`: null until the
+ * form has a title or a venue, which the name needs). A gig with one: that setlist, which never
+ * changes.
  */
 export function GigSetlistField({
   bandSlug,
-  gigKey,
+  linkedId,
+  title,
   value,
   onChange,
-  onCreateSetlist,
 }: {
   bandSlug: string;
-  /** The gig's id, or "new": where the new setlist leads back to. */
-  gigKey: string;
-  value: string | null;
-  onChange: (setlistId: string | null) => void;
-  onCreateSetlist: () => void;
+  /** The gig's own setlist, once it has one. */
+  linkedId: string | null;
+  /** The setlist's future title, from the form; null while the gig has no name yet. */
+  title: string | null;
+  value: { from: string | null } | null;
+  onChange: (value: { from: string | null } | null) => void;
 }) {
   const { t } = useTranslation();
   const id = useId();
-  const online = useOnline();
-  const [creating, setCreating] = useState(false);
   const setlists = useQuery(setlistsQuery(bandSlug)).data ?? [];
-  // The linked setlist, when it's archived (not in the current ones).
-  const linked = useQuery({
-    ...setlistQuery(bandSlug, value ?? ""),
-    enabled: value !== null && !setlists.some((setlist) => setlist.id === value),
-  }).data;
+  const linked = useQuery({ ...setlistQuery(bandSlug, linkedId ?? ""), enabled: !!linkedId }).data;
 
   return (
     <section aria-labelledby={`${id}-title`} className="space-y-2">
       <h3 id={`${id}-title`} className={sectionTitle}>
         {t("gigs.setlist.title")}
       </h3>
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          aria-labelledby={`${id}-title`}
-          value={value ?? ""}
-          onChange={(event) => onChange(event.target.value || null)}
-          className="h-10 min-w-0 flex-1 basis-48 rounded-4xl border border-input bg-input/30 px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm"
-        >
-          <option value="">{t("gigs.setlist.none")}</option>
-          {linked?.archivedAt && (
-            <option value={linked.id}>{t("gigs.setlist.archived", { title: linked.title })}</option>
+      {linkedId ? (
+        <>
+          {linked && (
+            <Link
+              to="/b/$bandSlug/setlists/$setlistId"
+              params={{ bandSlug, setlistId: linkedId }}
+              className="block break-words text-primary text-sm underline-offset-4 hover:underline"
+            >
+              {linked.title}
+            </Link>
           )}
-          {setlists.map((setlist) => (
-            <option key={setlist.id} value={setlist.id}>
-              {setlist.title} · {formatSetlistDuration(t, setlist.duration)}
-            </option>
-          ))}
-        </select>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!online}
-          onClick={() => {
-            onCreateSetlist();
-            setCreating(true);
-          }}
-        >
-          <Plus />
-          {t("gigs.setlist.create")}
-        </Button>
-      </div>
-      <p className="text-muted-foreground text-xs">{t("gigs.setlist.hint")}</p>
-      <SetlistTitleDialog
-        bandSlug={bandSlug}
-        open={creating}
-        onOpenChange={setCreating}
-        forGig={gigKey}
-      />
+          <p className="text-muted-foreground text-xs">{t("gigs.setlist.linked")}</p>
+        </>
+      ) : (
+        <>
+          <select
+            aria-labelledby={`${id}-title`}
+            aria-describedby={`${id}-hint`}
+            disabled={title === null}
+            value={value ? (value.from ?? NEW) : ""}
+            onChange={(event) => {
+              const choice = event.target.value;
+              onChange(choice ? { from: choice === NEW ? null : choice } : null);
+            }}
+            className="h-10 w-full min-w-0 rounded-4xl border border-input bg-input/30 px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50 md:text-sm"
+          >
+            <option value="">{t("gigs.setlist.none")}</option>
+            <option value={NEW}>{t("gigs.setlist.new")}</option>
+            {setlists.length > 0 && (
+              <optgroup label={t("gigs.setlist.from")}>
+                {setlists.map((setlist) => (
+                  <option key={setlist.id} value={setlist.id}>
+                    {setlist.title} · {formatSetlistDuration(t, setlist.duration)}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+          <p id={`${id}-hint`} className="break-words text-muted-foreground text-xs">
+            {title === null ? t("gigs.setlist.needsName") : t("gigs.setlist.hint", { title })}
+          </p>
+        </>
+      )}
     </section>
   );
 }
+
+/** The select's value for a new, empty setlist. */
+const NEW = "new";
 
 /** The gig form's program (#328): web links to the show's advertising, and free text. */
 export function GigProgramFields({

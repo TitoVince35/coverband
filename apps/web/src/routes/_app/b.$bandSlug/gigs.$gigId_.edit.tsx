@@ -12,18 +12,15 @@ import { gigQuery } from "@/lib/gigs";
 // Editing a gig (brief 034): its form, a page of its own, outside the compact view's page.
 export const Route = createFileRoute("/_app/b/$bandSlug/gigs/$gigId_/edit")({
   // After Postpone, the form starts on the date.
-  // Back from a setlist made from the form (#328): its draft again, that setlist chosen.
-  validateSearch: (search: Record<string, unknown>): { focus?: "date"; setlist?: string } => ({
-    ...(search.focus === "date" ? { focus: "date" as const } : {}),
-    ...(typeof search.setlist === "string" ? { setlist: search.setlist } : {}),
-  }),
+  validateSearch: (search: Record<string, unknown>): { focus?: "date" } =>
+    search.focus === "date" ? { focus: "date" as const } : {},
   component: EditGigPage,
 });
 
 function EditGigPage() {
   const { t } = useTranslation();
   const { bandSlug, gigId } = Route.useParams();
-  const { focus, setlist } = Route.useSearch();
+  const { focus } = Route.useSearch();
   const gig = useQuery(gigQuery(bandSlug, gigId));
   const rights = useGigRights(
     bandSlug,
@@ -56,13 +53,7 @@ function EditGigPage() {
         </p>
       ) : (
         // Saved since: a fresh form on the new version.
-        <GigForm
-          key={gig.data.version}
-          bandSlug={bandSlug}
-          gig={gig.data}
-          focus={focus}
-          newSetlist={setlist}
-        />
+        <GigForm key={gig.data.version} bandSlug={bandSlug} gig={gig.data} focus={focus} />
       )}
     </section>
   );

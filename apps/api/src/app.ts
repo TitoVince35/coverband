@@ -23,6 +23,7 @@ import { contactRoutes } from "./modules/contact/routes";
 import { bandContactRoutes } from "./modules/gigs/contacts-routes";
 import { gigJournalSource } from "./modules/gigs/journal";
 import { gigRoutes, POSTER_UPLOAD_MAX_SIZE } from "./modules/gigs/routes";
+import { gigSetlistIds } from "./modules/gigs/service";
 import { venueRoutes } from "./modules/gigs/venues-routes";
 import { instrumentRoutes } from "./modules/instruments/routes";
 import { bandInvitationRoutes, leaderInvitationRoutes } from "./modules/invitations/routes";
@@ -78,7 +79,7 @@ function createApi(deps: AppDeps) {
       .route("/bands/:bandSlug/songs", songRoutes(deps))
       .route("/bands/:bandSlug/songs/:songId/documents", documentRoutes(deps))
       .route("/bands/:bandSlug/songs/:songId/activity", songHistoryRoutes(deps, JOURNAL_SOURCES))
-      .route("/bands/:bandSlug/setlists", setlistRoutes(deps))
+      .route("/bands/:bandSlug/setlists", setlistRoutes(deps, gigSetlistIds))
       .route("/bands/:bandSlug/gigs", gigRoutes(deps))
       .route("/bands/:bandSlug/venues", venueRoutes(deps))
       .route("/bands/:bandSlug/contacts", bandContactRoutes(deps))

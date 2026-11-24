@@ -3,9 +3,11 @@ import {
   addDays,
   firstCurrentGigDate,
   gigDay,
+  gigSetlistTitle,
   inGigFilter,
   isGigDate,
   isTimeOfDay,
+  isTitledAfter,
   localDateTime,
 } from "./gigs";
 
@@ -104,5 +106,26 @@ describe("form values", () => {
     expect(isTimeOfDay("00:05")).toBe(true);
     expect(isTimeOfDay("24:00")).toBe(false);
     expect(isTimeOfDay("9:00")).toBe(false);
+  });
+});
+
+describe("gigSetlistTitle (#358)", () => {
+  test("the gig's name, then its date", () => {
+    expect(gigSetlistTitle("Le Bar'Hic", "2026-12-05", 100)).toBe("Le Bar'Hic · 2026-12-05");
+  });
+
+  test("a long name is cut: the date and a number always fit", () => {
+    const title = gigSetlistTitle("x".repeat(200), "2026-12-05", 100);
+    expect(title.endsWith(" · 2026-12-05")).toBe(true);
+    expect(title.length).toBe(97);
+  });
+});
+
+describe("isTitledAfter", () => {
+  test("the base, or the base numbered", () => {
+    expect(isTitledAfter("Gig · 2026-12-05", "Gig · 2026-12-05")).toBe(true);
+    expect(isTitledAfter("Gig · 2026-12-05 2", "Gig · 2026-12-05")).toBe(true);
+    expect(isTitledAfter("Gig · 2026-12-05 (copy)", "Gig · 2026-12-05")).toBe(false);
+    expect(isTitledAfter("Other · 2026-12-05", "Gig · 2026-12-05")).toBe(false);
   });
 });

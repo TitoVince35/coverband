@@ -143,3 +143,22 @@ export function isTimeZone(value: string) {
 
 /** The time zone of a request that names none, or one the runtime doesn't know. */
 export const DEFAULT_TIME_ZONE = "Europe/Paris";
+
+/** Room kept at the end of a gig's setlist title for the number added when it's taken (" 99"). */
+const NUMBER_ROOM = 3;
+
+/**
+ * The title of a gig's setlist (#358): the gig's name (its title, else its venue's name) and its
+ * date as stored, the same in every language: "Le Bar'Hic · 2026-12-05". The name is cut so the
+ * date and a number (when the title is taken) always fit.
+ */
+export function gigSetlistTitle(name: string, date: string, maxLength: number) {
+  const suffix = ` · ${date}`;
+  return `${name.slice(0, maxLength - suffix.length - NUMBER_ROOM).trimEnd()}${suffix}`;
+}
+
+/** Whether a setlist's title is `base`, or `base` numbered because it was taken ("… 2"). */
+export function isTitledAfter(title: string, base: string) {
+  if (title === base) return true;
+  return title.startsWith(`${base} `) && /^\d+$/.test(title.slice(base.length + 1));
+}

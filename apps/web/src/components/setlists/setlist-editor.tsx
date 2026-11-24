@@ -119,7 +119,11 @@ function useAutosave(bandSlug: string, setlist: Setlist) {
       });
       if (saved) {
         version.current = saved.version;
-        queryClient.setQueryData(setlistQuery(bandSlug, setlist.id).queryKey, saved);
+        // Its gig (#358) doesn't change with its content.
+        queryClient.setQueryData(setlistQuery(bandSlug, setlist.id).queryKey, (cached) => ({
+          ...saved,
+          gigId: cached?.gigId ?? null,
+        }));
       }
       void queryClient.invalidateQueries({
         queryKey: ["bands", bandSlug, "setlists"],

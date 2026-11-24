@@ -1,4 +1,10 @@
-import { SETLIST_LIMITS, SETLIST_MAX_LENGTH, setlistDuration } from "@coverband/shared";
+import {
+  gigSetlistTitle,
+  isTitledAfter,
+  SETLIST_LIMITS,
+  SETLIST_MAX_LENGTH,
+  setlistDuration,
+} from "@coverband/shared";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
@@ -422,6 +428,71 @@ export function duplicateSetlist(db: Db, member: Member, id: string, title: stri
       );
     }),
   );
+}
+
+/**
+ * A gig's setlist (#358), in the gig's transaction: a copy of the band's setlist `from` (the
+ * caller checked it), or a new one with one empty part, titled after the gig (`gigSetlistTitle`,
+ * numbered when taken), within the band's limit; `setlist.created`. Returns its id.
+ */
+export async function createGigSetlist(
+  tx: Tx,
+  member: Member,
+  gig: { name: string; date: string },
+  from: string | null,
+) {
+  await checkSetlistRoom(tx, member.bandId);
+  const content = from ? await storedContent(tx, from) : [{ name: null, songs: [] }];
+  const created = await insertSetlist(
+    tx,
+    member,
+    await freeTitle(
+      tx,
+      member.bandId,
+      gigSetlistTitle(gig.name, gig.date, SETLIST_MAX_LENGTH.title),
+    ),
+    content,
+    from ? { from } : undefined,
+  );
+  if (!created) throw new Error("Setlist not inserted");
+  return created.id;
+}
+
+/**
+ * Renames a gig's setlist after the gig (#358), in the gig's transaction, archived too: nothing when
+ * its title already is the gig's (numbered or not); `setlist.renamed` otherwise.
+ */
+export async function nameGigSetlist(
+  tx: Tx,
+  member: Member,
+  id: string,
+  gig: { name: string; date: string },
+) {
+  const current = await lockSetlist(tx, member.bandId, id);
+  if (!current) return;
+  const base = gigSetlistTitle(gig.name, gig.date, SETLIST_MAX_LENGTH.title);
+  if (isTitledAfter(current.title, base)) return;
+  const title = await freeTitle(tx, member.bandId, base);
+  await tx.update(setlists).set({ title }).where(eq(setlists.id, id));
+  await recordActivity(tx, {
+    action: "setlist.renamed",
+    bandId: member.bandId,
+    actorId: member.userId,
+    target: { type: "setlist", id },
+  });
+}
+
+/** Archives a gig's setlist when the gig is deleted (#358), in its transaction; `setlist.archived`. */
+export async function archiveGigSetlist(tx: Tx, member: Member, id: string) {
+  const current = await lockSetlist(tx, member.bandId, id);
+  if (!current || current.archivedAt) return;
+  await tx.update(setlists).set({ archivedAt: new Date() }).where(eq(setlists.id, id));
+  await recordActivity(tx, {
+    action: "setlist.archived",
+    bandId: member.bandId,
+    actorId: member.userId,
+    target: { type: "setlist", id },
+  });
 }
 
 /** Locks one setlist of the band for a change; null when the band has none with this id. */

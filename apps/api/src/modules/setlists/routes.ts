@@ -3,7 +3,8 @@ import { setlistContentBody, setlistTitleBody } from "@coverband/shared/schemas"
 import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
-import { apiError } from "../../core/errors";
+import type { Db } from "../../core/db/client";
+import { AppError, apiError } from "../../core/errors";
 import { fileName } from "../../core/http/file-name";
 import { hit, type RateLimitRule } from "../../core/http/rate-limit";
 import type { SessionEnv } from "../../core/http/session";
@@ -52,11 +53,33 @@ export const SETLIST_EXPORTS: RateLimitRule = {
 };
 
 /**
+ * The band's gigs' setlists (#358): each setlist's gig. Given by the gigs module through the app
+ * (`src/app.ts`), which this module can't use itself (the gigs module uses it).
+ */
+export type GigSetlists = (db: Db, bandId: string) => Promise<Map<string, string>>;
+
+/** A gig's setlist is named after its gig (#358): never renamed by hand. */
+export class SetlistNamedByGigError extends AppError {
+  constructor() {
+    super("setlist_named_by_gig", "This setlist is named after its gig");
+  }
+}
+
+/**
  * A band's setlists (brief 026), under /api/bands/:bandSlug/setlists: every member lists,
  * creates, renames, archives and restores them; the band leader and a setlist's author delete it.
+ * Each one says its gig (`gigId`, #358), whose setlist can't be renamed.
  */
-export function setlistRoutes({ db, storage }: AppDeps) {
+export function setlistRoutes(
+  { db, storage }: AppDeps,
+  gigSetlists: GigSetlists = async () => new Map(),
+) {
   const who = (c: Context<BandEnv>) => ({ bandId: c.var.band.id, userId: c.var.user.id });
+  /** Setlists with their gig's id, or null. */
+  const withGigs = async <T extends { id: string }>(bandId: string, list: T[]) => {
+    const gigOf = await gigSetlists(db, bandId);
+    return list.map((setlist) => ({ ...setlist, gigId: gigOf.get(setlist.id) ?? null }));
+  };
 
   return (
     new Hono<SessionEnv>()
@@ -64,21 +87,28 @@ export function setlistRoutes({ db, storage }: AppDeps) {
       // The current setlists, or the archived ones with ?archived=true.
       .get("/", zValidator("query", listQuery, validationHook), async (c) => {
         const archived = c.req.valid("query").archived === "true";
-        return c.json({ setlists: await listSetlists(db, c.var.band.id, { archived }) });
+        const list = await listSetlists(db, c.var.band.id, { archived });
+        return c.json({ setlists: await withGigs(c.var.band.id, list) });
       })
       .post("/", zValidator("json", setlistTitleBody, validationHook), async (c) => {
         const setlist = await createSetlist(db, who(c), c.req.valid("json").title);
         return c.json({ setlist }, 201);
       })
       // Every setlist, archived ones too, with its parts and songs, for offline use (#274).
-      .get("/details", async (c) => c.json({ setlists: await setlistDetails(db, c.var.band.id) }))
+      .get("/details", async (c) =>
+        c.json({
+          setlists: await withGigs(c.var.band.id, await setlistDetails(db, c.var.band.id)),
+        }),
+      )
       .get("/:setlistId", zValidator("param", setlistParam, validationHook), async (c) => {
         const setlist = await getSetlistWithContent(
           db,
           c.var.band.id,
           c.req.valid("param").setlistId,
         );
-        return setlist ? c.json({ setlist }) : apiError(c, 404, "Setlist not found");
+        if (!setlist) return apiError(c, 404, "Setlist not found");
+        const [withGig] = await withGigs(c.var.band.id, [setlist]);
+        return c.json({ setlist: withGig ?? { ...setlist, gigId: null } });
       })
       // Its whole content, read at a version: a save on an older one is refused (409).
       // Its export (brief 030): the stored file while it shows the same, otherwise a new one.
@@ -139,6 +169,10 @@ export function setlistRoutes({ db, storage }: AppDeps) {
         zValidator("param", setlistParam, validationHook),
         zValidator("json", setlistTitleBody, validationHook),
         async (c) => {
+          const { setlistId } = c.req.valid("param");
+          if ((await gigSetlists(db, c.var.band.id)).has(setlistId)) {
+            throw new SetlistNamedByGigError();
+          }
           const setlist = await renameSetlist(
             db,
             who(c),

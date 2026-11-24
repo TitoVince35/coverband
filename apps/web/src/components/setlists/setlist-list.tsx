@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatSetlistDuration } from "@/components/setlists/setlist-duration";
 import { SetlistMenu } from "@/components/setlists/setlist-menu";
@@ -79,7 +80,17 @@ export function SetlistList({
             params={{ bandSlug, setlistId: setlist.id }}
             className="min-w-0 flex-1 space-y-1 rounded-xl py-3 pl-4 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <p className="truncate font-semibold">{setlist.title}</p>
+            <p className="flex min-w-0 items-center gap-1.5 font-semibold">
+              {/* A gig's setlist (#358), with the gigs' icon. */}
+              {setlist.gigId && (
+                <CalendarDays
+                  role="img"
+                  aria-label={t("setlists.forGig")}
+                  className="size-4 shrink-0 text-primary"
+                />
+              )}
+              <span className="truncate">{setlist.title}</span>
+            </p>
             <p className="flex flex-wrap gap-x-3 text-sm tabular-nums">
               <span className="font-semibold">{formatSetlistDuration(t, setlist.duration)}</span>
               <span className="text-muted-foreground">

@@ -315,8 +315,10 @@ const gigFields = z.object({
   type: z.enum(GIG_TYPES).default("public"),
   showTime: timeOfDay.default(null),
   venue: gigVenueInput.nullable().default(null),
-  // Its setlist, program and extra info (#328).
-  setlistId: z.uuid().nullable().default(null),
+  // Its setlist (#358): made when the gig has none yet, a copy of a band's setlist (`from`) or a
+  // new one (`from` null), named after the gig; absent or null, nothing. Then program and extra
+  // info (#328).
+  setlist: z.object({ from: z.uuid().nullable() }).nullable().default(null),
   getInTime: timeOfDay.default(null),
   // The soundcheck (#348).
   soundcheckTime: timeOfDay.default(null),

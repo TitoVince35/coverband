@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
-import { addGig, addSong, type Band, dateIn, newBand } from "./support";
+import { addGig, addSetlist, addSong, type Band, dateIn, newBand } from "./support";
 
 // Gigs (brief 034): create, list and edit a gig, with its venue (#326).
 test.describe.configure({ mode: "serial" });
@@ -133,31 +133,31 @@ test("its creator settles, postpones, cancels and deletes a gig (#327)", async (
   await expect(leader.getByText("Lea Leader deleted a gig")).toBeVisible();
 });
 
-test("a gig with its setlist, program and extra info, then Live (#328)", async () => {
-  await addSong(band, {
+test("a gig with its setlist, program and extra info, then Live (#328, #358)", async () => {
+  const song = await addSong(band, {
     title: "Hey Joe",
     artist: "Jimi Hendrix",
     standardDuration: 210,
     status: "ready",
   });
+  await addSetlist(band, "Summer set", [{ songs: [song] }]);
+  const { setlists } = (await (
+    await leader.request.get(`/api/bands/${band.slug}/setlists`)
+  ).json()) as {
+    setlists: { id: string; title: string }[];
+  };
+  const summer = setlists.find((setlist) => setlist.title === "Summer set")?.id ?? "";
+  const date = dateIn(40);
   await leader.goto(`/b/${band.slug}/gigs/new`);
-  await leader.getByLabel("Date", { exact: true }).fill(dateIn(40));
+  // Its setlist is named after the gig: nothing to choose before it has a name.
+  const setlistSelect = leader.getByRole("combobox", { name: "Setlist" });
+  await expect(setlistSelect).toBeDisabled();
+  await leader.getByLabel("Date", { exact: true }).fill(date);
   await leader.getByLabel("Title", { exact: true }).fill("Rock night #12");
 
-  // A new setlist, made from the form: it opens in the editor, then leads back to the gig.
-  await leader.getByRole("button", { name: "Create setlist" }).click();
-  await leader.getByRole("dialog").getByLabel("Title").fill("Rock night set");
-  await leader.getByRole("dialog").getByRole("button", { name: "New setlist" }).click();
-  await expect(leader.getByRole("heading", { name: "Rock night set" })).toBeVisible();
-  await leader.getByRole("button", { name: "Add songs" }).click();
-  const songs = leader.getByRole("dialog").getByRole("list", { name: "Songs to add" });
-  await songs.getByRole("button", { name: /^Hey Joe/ }).click();
-  await leader.getByRole("dialog").getByRole("button", { name: "Add 1 song to Part 1" }).click();
-  await expect(leader.getByText("Saved", { exact: true })).toBeVisible();
-  await leader.getByRole("link", { name: "Back to the gig" }).click();
-  // The form as it was, the new setlist chosen.
-  await expect(leader.getByLabel("Title", { exact: true })).toHaveValue("Rock night #12");
-  await expect(leader.getByRole("combobox", { name: "Setlist" })).toHaveValue(/.+/);
+  // A copy of the band's setlist, made when the gig is saved, named after it.
+  await setlistSelect.selectOption(summer);
+  await expect(leader.getByText(`named after it: “Rock night #12 · ${date}”`)).toBeVisible();
 
   // Program and extra info.
   await leader.getByRole("button", { name: "Add a link" }).click();
@@ -180,7 +180,10 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   // The compact view: times, setlist, program, good to know.
   await expect(leader.getByRole("heading", { name: "Rock night #12" })).toBeVisible();
   await expect(leader.getByText("Get in 6:30 PM · Soundcheck 7:15 PM")).toBeVisible();
-  await expect(leader.getByRole("link", { name: /Rock night set/ })).toContainText("1 song");
+  // Headed "Setlist", its own title being the gig's name (#357); one part: no number of parts.
+  const setlistCard = leader.getByRole("link", { name: /^Setlist \d/ });
+  await expect(setlistCard).toContainText("1 song");
+  await expect(setlistCard).not.toContainText("part");
   await expect(leader.getByRole("link", { name: "Facebook event" })).toHaveAttribute(
     "href",
     "https://example.com/rock-night",
@@ -194,7 +197,34 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   await expect(leader.getByText("Technicians provided")).toBeVisible();
   await expect(leader.getByText("Parking behind the bar")).toBeVisible();
 
+  // The gig's own setlist, named after it: never renamed by hand, marked on the setlists page.
+  const gigPage = leader.url();
+  await setlistCard.click();
+  await expect(leader.getByRole("heading", { name: `Rock night #12 · ${date}` })).toBeVisible();
+  await expect(
+    leader.getByRole("link", { name: "Named after its gig: view the gig" }),
+  ).toBeVisible();
+  await leader.getByRole("button", { name: /^Actions for Rock night/ }).click();
+  await expect(leader.getByRole("menuitem", { name: "Duplicate" })).toBeVisible();
+  await expect(leader.getByRole("menuitem", { name: "Rename" })).toHaveCount(0);
+  await leader.keyboard.press("Escape");
+  await leader.goto(`/b/${band.slug}/setlists`);
+  const list = leader.getByRole("list", { name: "Setlists" });
+  await expect(
+    list
+      .getByRole("listitem")
+      .filter({ hasText: "Rock night #12" })
+      .getByRole("img", { name: "For a gig" }),
+  ).toBeVisible();
+  await expect(
+    list
+      .getByRole("listitem")
+      .filter({ hasText: "Summer set" })
+      .getByRole("img", { name: "For a gig" }),
+  ).toHaveCount(0);
+
   // Live opens the setlist's live mode.
+  await leader.goto(gigPage);
   await leader.getByRole("link", { name: "Live" }).click();
   await expect(leader).toHaveURL(/\/setlists\/[^/]+\/live$/);
   await expect(leader.getByText("Hey Joe")).toBeVisible();
@@ -337,54 +367,59 @@ test("the band home shows today's gig and the upcoming ones (#331)", async ({ br
 });
 
 test("the venue on a map, its pin dragged to correct it (#333)", async () => {
-  // OpenStreetMap's tiles never reached: a blank tile instead.
+  // OpenStreetMap's tiles never reached: a blank tile instead. Removed after: the next tests share
+  // this page, and an interception left on it can stall a reload's scripts (the service worker).
   await leader.route("https://tile.openstreetmap.org/**", (route) =>
     route.fulfill({ contentType: "image/png", body: Buffer.alloc(0) }),
   );
-  await leader.goto(`/b/${band.slug}/gigs/new`);
-  await leader.getByLabel("Date", { exact: true }).fill(dateIn(80));
-  await leader.getByRole("combobox", { name: "Venue" }).fill("Le Ty Anna");
-  await leader.getByRole("option", { name: "New venue “Le Ty Anna”" }).click();
-  await leader.getByLabel("City").fill("Rennes");
-  await leader.getByLabel(/^Address/).fill("19 place Sainte-Anne");
-  await expect(leader.getByText("The map shows once the venue is saved")).toBeVisible();
-  await leader.getByRole("button", { name: "Save" }).click();
+  try {
+    await leader.goto(`/b/${band.slug}/gigs/new`);
+    await leader.getByLabel("Date", { exact: true }).fill(dateIn(80));
+    await leader.getByRole("combobox", { name: "Venue" }).fill("Le Ty Anna");
+    await leader.getByRole("option", { name: "New venue “Le Ty Anna”" }).click();
+    await leader.getByLabel("City").fill("Rennes");
+    await leader.getByLabel(/^Address/).fill("19 place Sainte-Anne");
+    await expect(leader.getByText("The map shows once the venue is saved")).toBeVisible();
+    await leader.getByRole("button", { name: "Save" }).click();
 
-  // Found from the address by the API: the compact view shows it, credited.
-  const map = leader.getByRole("img", { name: "Map: Le Ty Anna, 19 place Sainte-Anne, Rennes" });
-  await expect(map).toBeVisible();
-  await expect(map.getByRole("link", { name: "© OpenStreetMap" })).toBeVisible();
-  const tiles = map.locator("img");
-  await expect(tiles.first()).toHaveAttribute("src", /^https:\/\/tile\.openstreetmap\.org\/16\//);
+    // Found from the address by the API: the compact view shows it, credited.
+    const map = leader.getByRole("img", { name: "Map: Le Ty Anna, 19 place Sainte-Anne, Rennes" });
+    await expect(map).toBeVisible();
+    await expect(map.getByRole("link", { name: "© OpenStreetMap" })).toBeVisible();
+    const tiles = map.locator("img");
+    await expect(tiles.first()).toHaveAttribute("src", /^https:\/\/tile\.openstreetmap\.org\/16\//);
 
-  // In the form, the pin is dragged (here, with the keyboard): kept once saved.
-  await leader.getByRole("link", { name: "Edit" }).click();
-  const pin = leader.getByRole("button", { name: /The venue's pin/ });
-  await expect(pin).toBeVisible();
-  const before = await tiles.first().getAttribute("src");
-  for (let i = 0; i < 40; i++) await pin.press("ArrowRight");
-  await expect.poll(() => tiles.first().getAttribute("src")).not.toBe(before);
-  await leader.getByRole("button", { name: "Save" }).click();
-  await expect(leader).toHaveURL(/\/gigs\/[0-9a-f-]+$/);
-  await expect(map).toBeVisible();
-  const gigId = new URL(leader.url()).pathname.split("/").at(-1);
-  const saved = (await (
-    await leader.request.get(`/api/bands/${band.slug}/gigs/${gigId}`)
-  ).json()) as {
-    gig: { venue: { longitude: number } };
-  };
-  expect(saved.gig.venue.longitude).toBeGreaterThan(-1.6801);
+    // In the form, the pin is dragged (here, with the keyboard): kept once saved.
+    await leader.getByRole("link", { name: "Edit" }).click();
+    const pin = leader.getByRole("button", { name: /The venue's pin/ });
+    await expect(pin).toBeVisible();
+    const before = await tiles.first().getAttribute("src");
+    for (let i = 0; i < 40; i++) await pin.press("ArrowRight");
+    await expect.poll(() => tiles.first().getAttribute("src")).not.toBe(before);
+    await leader.getByRole("button", { name: "Save" }).click();
+    await expect(leader).toHaveURL(/\/gigs\/[0-9a-f-]+$/);
+    await expect(map).toBeVisible();
+    const gigId = new URL(leader.url()).pathname.split("/").at(-1);
+    const saved = (await (
+      await leader.request.get(`/api/bands/${band.slug}/gigs/${gigId}`)
+    ).json()) as {
+      gig: { venue: { longitude: number } };
+    };
+    expect(saved.gig.venue.longitude).toBeGreaterThan(-1.6801);
 
-  // An address the geocoder doesn't find: no map, Directions stays.
-  await leader.goto(`/b/${band.slug}/gigs/new`);
-  await leader.getByLabel("Date", { exact: true }).fill(dateIn(81));
-  await leader.getByRole("combobox", { name: "Venue" }).fill("Nowhere club");
-  await leader.getByRole("option", { name: "New venue “Nowhere club”" }).click();
-  await leader.getByLabel("City").fill("Rennes");
-  await leader.getByLabel(/^Address/).fill("1 rue de Nulle Part");
-  await leader.getByRole("button", { name: "Save" }).click();
-  await expect(leader.getByRole("link", { name: "Directions" })).toBeVisible();
-  await expect(leader.getByRole("img", { name: /^Map:/ })).toHaveCount(0);
+    // An address the geocoder doesn't find: no map, Directions stays.
+    await leader.goto(`/b/${band.slug}/gigs/new`);
+    await leader.getByLabel("Date", { exact: true }).fill(dateIn(81));
+    await leader.getByRole("combobox", { name: "Venue" }).fill("Nowhere club");
+    await leader.getByRole("option", { name: "New venue “Nowhere club”" }).click();
+    await leader.getByLabel("City").fill("Rennes");
+    await leader.getByLabel(/^Address/).fill("1 rue de Nulle Part");
+    await leader.getByRole("button", { name: "Save" }).click();
+    await expect(leader.getByRole("link", { name: "Directions" })).toBeVisible();
+    await expect(leader.getByRole("img", { name: /^Map:/ })).toHaveCount(0);
+  } finally {
+    await leader.unrouteAll({ behavior: "ignoreErrors" });
+  }
 });
 
 test("the band's venues and contacts: a duplicate merged, another deleted (#334)", async () => {
@@ -426,8 +461,13 @@ test("the band's venues and contacts: a duplicate merged, another deleted (#334)
   await leader.getByRole("alertdialog").getByRole("button", { name: "Delete the contact" }).click();
   await expect(list.getByText("Claire Martin")).toBeHidden();
 
-  // The venues page: a venue with a gig can't be deleted.
+  // The venues page: a venue with a gig can't be deleted. Its sub-menu leads back to the gigs (#356).
   await leader.getByRole("link", { name: "Venues" }).first().click();
+  const pages = leader.getByRole("navigation", { name: "Gigs, venues and contacts" });
+  await expect(pages.getByRole("link", { name: "Gigs" })).toHaveAttribute(
+    "href",
+    `/b/${band.slug}/gigs`,
+  );
   await leader
     .getByRole("list", { name: "Venues" })
     .getByRole("link", { name: /Le Mondo Bizarro/ })

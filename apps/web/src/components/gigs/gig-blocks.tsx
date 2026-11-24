@@ -23,8 +23,9 @@ export function GigBlock({ title, children }: { title: string; children: ReactNo
 }
 
 /**
- * The gig's setlist (#328): its title, songs and duration, and Live (the live mode, offline too),
- * from the setlist's own query (kept offline).
+ * The gig's setlist (#328): headed "Setlist" (#357: its title is the gig's own name), its songs,
+ * its parts when more than one, its duration, and Live (the live mode, offline too), from the
+ * setlist's own query (kept offline).
  */
 export function GigSetlistCard({ bandSlug, setlistId }: { bandSlug: string; setlistId: string }) {
   const { t } = useTranslation();
@@ -39,9 +40,15 @@ export function GigSetlistCard({ bandSlug, setlistId }: { bandSlug: string; setl
         params={{ bandSlug, setlistId }}
         className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <span className="block break-words font-semibold">{setlist.title}</span>
+        <span className="block font-semibold">{t("gigs.setlist.title")}</span>
         <span className="block text-muted-foreground text-sm">
-          {t("setlists.songCount", { count: songs.length })} · {songsDuration(t, songs)}
+          {[
+            t("setlists.songCount", { count: songs.length }),
+            setlist.parts.length > 1 && t("setlists.partCount", { count: setlist.parts.length }),
+            songsDuration(t, songs),
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </span>
       </Link>
       <Button asChild size="sm">
