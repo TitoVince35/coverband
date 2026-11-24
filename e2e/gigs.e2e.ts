@@ -180,7 +180,10 @@ test("a gig with its setlist, program and extra info, then Live (#328)", async (
   // The compact view: times, setlist, program, good to know.
   await expect(leader.getByRole("heading", { name: "Rock night #12" })).toBeVisible();
   await expect(leader.getByText("Get in 6:30 PM · Soundcheck 7:15 PM")).toBeVisible();
-  await expect(leader.getByRole("link", { name: /Rock night set/ })).toContainText("1 song");
+  // Headed "Setlist", its own title being the gig's name (#357); one part: no number of parts.
+  const setlistCard = leader.getByRole("link", { name: /^Setlist \d/ });
+  await expect(setlistCard).toContainText("1 song");
+  await expect(setlistCard).not.toContainText("part");
   await expect(leader.getByRole("link", { name: "Facebook event" })).toHaveAttribute(
     "href",
     "https://example.com/rock-night",
