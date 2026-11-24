@@ -456,7 +456,9 @@
       "button": "Duplicate",
       "copyTitle": "{{title}} (copy)",
       "done": "Setlist duplicated: this is the copy"
-    }
+    },
+    "forGig": "For a gig",
+    "gigLink": "Named after its gig: view the gig"
   },
   "gigs": {
     "title": "Gigs",
@@ -600,11 +602,11 @@
     "setlist": {
       "title": "Setlist",
       "none": "No setlist yet",
-      "archived": "{{title}} (archived)",
-      "create": "Create setlist",
-      "hint": "The band's current setlists (not archived). A new one opens in the editor, then comes back here.",
-      "backHint": "This setlist was made for a gig: back to its form, with this setlist chosen.",
-      "back": "Back to the gig"
+      "new": "A new setlist",
+      "from": "A copy of",
+      "hint": "Made when the gig is saved, named after it: “{{title}}”. Then edit it like any setlist.",
+      "needsName": "Give the gig a date, and a title or a venue first: its setlist is named after it.",
+      "linked": "This gig's own setlist, named after it: edit it from its page."
     },
     "program": {
       "title": "Program",
@@ -974,6 +976,8 @@
     "gig_settled": "This gig is settled: postpone it to change its date, title or venue, cancel it before deleting it.",
     "gig_cancelled": "This gig is cancelled: it can't be changed any more.",
     "gig_past": "This gig is over: past gigs are read-only.",
+    "gig_setlist_linked": "This gig already has its setlist: it never changes.",
+    "setlist_named_by_gig": "This setlist is named after its gig: it follows the gig's name and date.",
     "too_many_posters": "This gig has as many posters as it can: remove one first.",
     "venue_in_use": "Gigs take place at this venue: it can't be deleted."
   },

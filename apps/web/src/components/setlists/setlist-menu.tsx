@@ -36,13 +36,20 @@ import {
 
 type Props = {
   bandSlug: string;
-  setlist: { id: string; title: string; createdById: string | null; archivedAt: string | null };
+  setlist: {
+    id: string;
+    title: string;
+    createdById: string | null;
+    archivedAt: string | null;
+    /** Its gig (#358): named after it, never renamed by hand. */
+    gigId: string | null;
+  };
   /** Deleting from the setlist's own page goes back to the list. */
   onDeleted?: () => void;
 };
 
 /**
- * A setlist's actions (#271): rename and archive (current ones), restore (archived ones),
+ * A setlist's actions (#271): rename (current ones, not a gig's, #358) and archive (current ones), restore (archived ones),
  * duplicate (#273: the copy then opens), and delete for good (the band leader and its author).
  */
 export function SetlistMenu({ bandSlug, setlist, onDeleted }: Props) {
@@ -116,7 +123,7 @@ export function SetlistMenu({ bandSlug, setlist, onDeleted }: Props) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-48">
-          {!archived && (
+          {!archived && !setlist.gigId && (
             <DropdownMenuItem disabled={!online} onSelect={() => setRenaming(true)}>
               <Pencil />
               {t("setlists.rename.title")}

@@ -1,5 +1,5 @@
 import type { WebLink } from "@coverband/shared";
-import { and, asc, count, desc, eq, ilike, max, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNotNull, isNull, max, or, sql } from "drizzle-orm";
 import type { Coordinates, Geocoder } from "../../adapters/geocoder";
 import { recordActivity } from "../../core/activity/record";
 import type { Db, Tx } from "../../core/db/client";
@@ -7,6 +7,7 @@ import { isUniqueViolation } from "../../core/db/pg-errors";
 import { gigs, venues } from "../../core/db/schema";
 import { AppError } from "../../core/errors";
 import type { Logger } from "../../core/log";
+import { nameGigSetlist } from "../setlists/service";
 import { contactsOfVenues, setVenueContacts } from "./contacts.service";
 
 /** The band already has a venue with this name in this city, whatever their case. */
@@ -167,7 +168,19 @@ export async function writeVenue(
       target: { type: "venue", id },
     });
   }
+  if (current.name !== input.name) await nameSetlistsAtVenue(tx, member, id, input.name);
   return id;
+}
+
+/** A venue renamed (#358): the setlists of the gigs there named after it (those without a title). */
+async function nameSetlistsAtVenue(tx: Tx, member: Member, venueId: string, name: string) {
+  const rows = await tx
+    .select({ setlistId: gigs.setlistId, date: gigs.date })
+    .from(gigs)
+    .where(and(eq(gigs.venueId, venueId), isNull(gigs.title), isNotNull(gigs.setlistId)));
+  for (const row of rows) {
+    if (row.setlistId) await nameGigSetlist(tx, member, row.setlistId, { name, date: row.date });
+  }
 }
 
 /** Adds a venue to the band; records `venue.created`. Run inside `venueChecked`. */

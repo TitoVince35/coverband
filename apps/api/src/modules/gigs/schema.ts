@@ -116,7 +116,8 @@ export const gigs = pgTable(
   (table) => [
     index().on(table.bandId, table.date),
     index().on(table.venueId),
-    index().on(table.setlistId),
+    // One gig per setlist (#358): a gig's setlist is its own copy.
+    uniqueIndex("gigs_setlist_unique").on(table.setlistId),
     check("gigs_title_or_venue", sql`${table.title} is not null or ${table.venueId} is not null`),
   ],
 );
